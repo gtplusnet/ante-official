@@ -1,0 +1,335 @@
+<div class="container">
+    <section id="overview">
+        <h2>Overview</h2>
+        <p>
+            The School Gate API provides a comprehensive solution for managing school attendance and security.
+            Track student and guardian check-ins/check-outs, manage gate devices, and receive real-time
+            notifications through our REST API and WebSocket connections.
+        </p>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Key Features</h4>
+            <ul class="feature-list">
+                <li>Student and guardian attendance tracking</li>
+                <li>Real-time WebSocket notifications</li>
+                <li>Multiple gate support</li>
+                <li>QR code and biometric support</li>
+                <li>Offline sync capability</li>
+                <li>Photo capture for verification</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="authentication">
+        <h2>Authentication</h2>
+        <p>
+            The School Gate API uses license key authentication. Each gate device requires a valid license key
+            to access the API endpoints. License keys are generated and managed through the Device Management interface.
+        </p>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Required Header</h4>
+            <pre><code>x-license-key: your_license_key_here</code></pre>
+        </div>
+
+        <p>License keys are associated with specific gates and have permissions based on the school's configuration.</p>
+    </section>
+
+    <section id="endpoints">
+        <h2>API Endpoints</h2>
+
+        <h3>Device Validation</h3>
+        {{> api-doc/endpoint-card
+            method="POST"
+            path="/validate"
+            description="Validate device license and retrieve gate configuration"
+            requestBody='{"licenseKey":"ABC123XYZ","deviceInfo":{"name":"Gate Device 1","macAddress":"00:11:22:33:44:55"}}'
+            responseExample='{"valid":true,"gate":{"id":"gate_1","name":"Main Gate"},"schoolInfo":{"name":"Example School","logo":"https://..."}}'
+        }}
+
+        <h3>Attendance Tracking</h3>
+        {{> api-doc/endpoint-card
+            method="POST"
+            path="/check-in"
+            description="Record student or guardian check-in at the gate"
+            requestBody='{"studentId":"STU001","gateId":"gate_1","timestamp":"2024-03-14T07:30:00Z","photo":"base64_image","temperature":36.5}'
+            responseExample='{"success":true,"attendanceId":"att_123","studentName":"John Doe","checkInTime":"2024-03-14T07:30:00Z","gate":"Main Gate"}'
+        }}
+
+        {{> api-doc/endpoint-card
+            method="POST"
+            path="/check-out"
+            description="Record student or guardian check-out from school"
+            requestBody='{"studentId":"STU001","gateId":"gate_1","timestamp":"2024-03-14T15:30:00Z","photo":"base64_image"}'
+            responseExample='{"success":true,"attendanceId":"att_123","studentName":"John Doe","checkOutTime":"2024-03-14T15:30:00Z","duration":"8h 0m"}'
+        }}
+
+        <h3>Data Synchronization</h3>
+        {{> api-doc/endpoint-card
+            method="POST"
+            path="/sync"
+            description="Sync offline attendance records in batch"
+            requestBody='{"records":[{"studentId":"STU001","type":"check-in","timestamp":"2024-03-14T07:30:00Z"},{"studentId":"STU002","type":"check-in","timestamp":"2024-03-14T07:35:00Z"}],"gateId":"gate_1"}'
+            responseExample='{"processed":2,"failed":0,"errors":[]}'
+        }}
+
+        <h3>Status and Monitoring</h3>
+        {{> api-doc/endpoint-card
+            method="POST"
+            path="/status"
+            description="Get current gate status and attendance statistics"
+            parameters='[{"name":"gateId","required":true,"description":"Gate identifier"}]'
+            responseExample='{"checkInsToday":150,"checkOutsToday":120,"currentlyPresent":30,"lastActivity":"2024-03-14T15:45:00Z"}'
+        }}
+
+        {{> api-doc/endpoint-card
+            method="POST"
+            path="/students"
+            description="Search and retrieve student information for verification"
+            parameters='[{"name":"search","required":false,"description":"Search by name or ID"},{"name":"gradeLevel","required":false,"description":"Filter by grade level"},{"name":"limit","required":false,"description":"Maximum results (default: 20)"}]'
+            responseExample='[{"studentId":"STU001","firstName":"John","lastName":"Doe","gradeLevel":"Grade 10","section":"A","photo":"https://..."}]'
+        }}
+
+        {{> api-doc/endpoint-card
+            method="POST"
+            path="/heartbeat"
+            description="Send device heartbeat to maintain connection and update status"
+            requestBody='{"deviceInfo":{"uptime":3600,"freeMemory":"512MB","attendanceCount":150},"statistics":{"checkIns":100,"checkOuts":50}}'
+            responseExample='{"acknowledged":true,"serverTime":"2024-03-14T15:45:00Z","config":{"syncInterval":60}}'
+        }}
+    </section>
+
+    {{#if hasWebSocket}}
+    <section id="websocket">
+        <h2>Real-time Updates (Socket.io)</h2>
+        <p>
+            Connect to our Socket.io server for real-time notifications and updates. This enables instant
+            communication between the gate devices and the school management system.
+        </p>
+
+        <div class="info-box">
+            <strong>Socket.io URL:</strong>
+            <pre><code>{{wsUrl}}</code></pre>
+            <strong>Namespace:</strong>
+            <pre><code>/gate</code></pre>
+        </div>
+
+        <h3>Connection Example</h3>
+        <pre><code>const io = require('socket.io-client');
+const socket = io('{{wsUrl}}/gate');
+
+socket.on('connect', () => {
+    console.log('Connected to Socket.io server');
+
+    // Authenticate with license key
+    socket.emit('auth', {
+        type: 'auth',
+        licenseKey: 'your_license_key_here'
+    });
+});
+
+socket.on('attendance', (data) => {
+    // New attendance record
+    console.log('New attendance:', data);
+});
+
+socket.on('alert', (data) => {
+    // Security alert
+    console.log('Alert:', data);
+});
+
+socket.on('config', (data) => {
+    // Configuration update
+    console.log('Config update:', data);
+});
+
+socket.on('disconnect', () => {
+    console.log('Disconnected from server');
+});</code></pre>
+
+        <h3>Message Types</h3>
+        <div class="endpoint">
+            <div class="param">
+                <span class="param-name">attendance</span>
+                <span class="param-description">Real-time attendance notifications</span>
+            </div>
+            <div class="param">
+                <span class="param-name">alert</span>
+                <span class="param-description">Security alerts and warnings</span>
+            </div>
+            <div class="param">
+                <span class="param-name">config</span>
+                <span class="param-description">Configuration updates from server</span>
+            </div>
+            <div class="param">
+                <span class="param-name">heartbeat</span>
+                <span class="param-description">Keep-alive messages</span>
+            </div>
+        </div>
+    </section>
+    {{/if}}
+
+    <section id="quickstart">
+        <h2>Quick Start Guide</h2>
+
+        <div class="info-box success">
+            <h4>Step 1: Obtain License Key</h4>
+            <p>Request a license key from your school administrator through the Device Management interface.</p>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 2: Validate License</h4>
+            <p>Validate your license key and retrieve gate configuration:</p>
+            <pre><code>POST {{baseUrl}}/validate
+{
+    "licenseKey": "your_license_key",
+    "deviceInfo": {
+        "name": "Gate Device 1"
+    }
+}</code></pre>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 3: Configure Device</h4>
+            <p>Set up your gate device with the validated license key and gate information.</p>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 4: Start Tracking</h4>
+            <p>Begin recording student and guardian attendance using the check-in and check-out endpoints.</p>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 5: Monitor Status</h4>
+            <p>Use the status endpoint and WebSocket connection to monitor real-time attendance and receive notifications.</p>
+        </div>
+    </section>
+
+    <section id="errors">
+        <h2>Error Handling</h2>
+
+        <p>The API uses standard HTTP status codes to indicate success or failure:</p>
+
+        <div class="endpoint">
+            <h4>Common Status Codes</h4>
+            <div class="param">
+                <span class="param-name">200 OK</span>
+                <span class="param-description">Request successful</span>
+            </div>
+            <div class="param">
+                <span class="param-name">400 Bad Request</span>
+                <span class="param-description">Invalid request parameters or data format</span>
+            </div>
+            <div class="param">
+                <span class="param-name">401 Unauthorized</span>
+                <span class="param-description">Invalid or expired license key</span>
+            </div>
+            <div class="param">
+                <span class="param-name">404 Not Found</span>
+                <span class="param-description">Student, gate, or resource not found</span>
+            </div>
+            <div class="param">
+                <span class="param-name">409 Conflict</span>
+                <span class="param-description">Duplicate attendance entry detected</span>
+            </div>
+            <div class="param">
+                <span class="param-name">429 Too Many Requests</span>
+                <span class="param-description">Rate limit exceeded</span>
+            </div>
+            <div class="param">
+                <span class="param-name">500 Internal Server Error</span>
+                <span class="param-description">Server error, please retry</span>
+            </div>
+        </div>
+
+        <h4>Error Response Format</h4>
+        <pre><code>{
+    "error": "Student not found",
+    "code": "STUDENT_NOT_FOUND",
+    "details": {
+        "studentId": "STU999",
+        "suggestion": "Please verify the student ID"
+    }
+}</code></pre>
+
+        <h3 style="color: var(--error-color); margin-top: 2rem;">⚠️ Common Error Codes</h3>
+
+        <div class="error-codes-grid">
+            <div class="error-code-card">
+                <div class="error-code-header">
+                    <span class="error-code">INVALID_LICENSE</span>
+                    <span class="error-status" data-status="401">401</span>
+                </div>
+                <div class="error-code-description">License key is invalid, expired, or has been deactivated</div>
+                <div class="error-code-solution">
+                    <strong>Solution:</strong> Contact school administrator to verify or renew license key
+                </div>
+            </div>
+
+            <div class="error-code-card">
+                <div class="error-code-header">
+                    <span class="error-code">STUDENT_NOT_FOUND</span>
+                    <span class="error-status" data-status="404">404</span>
+                </div>
+                <div class="error-code-description">Student ID does not exist in the system database</div>
+                <div class="error-code-solution">
+                    <strong>Solution:</strong> Verify student ID format and ensure student is enrolled
+                </div>
+            </div>
+
+            <div class="error-code-card">
+                <div class="error-code-header">
+                    <span class="error-code">GATE_NOT_FOUND</span>
+                    <span class="error-status" data-status="404">404</span>
+                </div>
+                <div class="error-code-description">Gate ID is not registered or has been removed</div>
+                <div class="error-code-solution">
+                    <strong>Solution:</strong> Validate gate ID from license endpoint response
+                </div>
+            </div>
+
+            <div class="error-code-card">
+                <div class="error-code-header">
+                    <span class="error-code">DUPLICATE_CHECK_IN</span>
+                    <span class="error-status" data-status="409">409</span>
+                </div>
+                <div class="error-code-description">Student has already checked in without checking out</div>
+                <div class="error-code-solution">
+                    <strong>Solution:</strong> Perform check-out before attempting new check-in
+                </div>
+            </div>
+
+            <div class="error-code-card">
+                <div class="error-code-header">
+                    <span class="error-code">NO_CHECK_IN_RECORD</span>
+                    <span class="error-status" data-status="404">404</span>
+                </div>
+                <div class="error-code-description">No active check-in record found for check-out attempt</div>
+                <div class="error-code-solution">
+                    <strong>Solution:</strong> Ensure student has checked in before check-out
+                </div>
+            </div>
+
+            <div class="error-code-card">
+                <div class="error-code-header">
+                    <span class="error-code">INVALID_TIMESTAMP</span>
+                    <span class="error-status" data-status="400">400</span>
+                </div>
+                <div class="error-code-description">Timestamp is in the future or exceeds 24-hour threshold</div>
+                <div class="error-code-solution">
+                    <strong>Solution:</strong> Sync device clock and use ISO 8601 format
+                </div>
+            </div>
+        </div>
+
+        <h4 style="margin-top: 2rem;">Error Response Format</h4>
+        <div class="json-block" data-json='{
+            "success": false,
+            "error": {
+                "code": "STUDENT_NOT_FOUND",
+                "message": "Student with ID STU001 not found",
+                "timestamp": "2024-03-14T10:30:00Z"
+            }
+        }'></div>
+    </section>
+</div>

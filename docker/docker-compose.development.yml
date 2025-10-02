@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: ante-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-ante}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ante_password}
+      POSTGRES_DB: ${DB_NAME:-ante_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ante-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-ante}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: ante-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ante-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API (Development)
+  backend:
+    image: node:20-alpine
+    container_name: ante-backend
+    working_dir: /app
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${DB_USER:-ante}:${DB_PASSWORD:-ante_password}@postgres:5432/${DB_NAME:-ante_db}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-your-jwt-secret}
+      PORT: 3000
+      SOCKET_PORT: 4000
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+      - "${SOCKET_PORT:-4000}:4000"
+    volumes:
+      - ./backend:/app
+      - backend_node_modules:/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ante-network
+    command: sh -c "yarn install && npx prisma generate && yarn dev"
+
+  # Frontend Application (Development)
+  frontend:
+    image: node:20-alpine
+    container_name: ante-frontend
+    working_dir: /app
+    environment:
+      NODE_ENV: development
+      VITE_API_URL: http://localhost:3000
+      VITE_SOCKET_URL: ws://localhost:4000
+    ports:
+      - "${FRONTEND_PORT:-9000}:9000"
+    volumes:
+      - ./frontends/frontend-main:/app
+      - frontend_node_modules:/app/node_modules
+    networks:
+      - ante-network
+    command: sh -c "yarn install && yarn dev --host 0.0.0.0"
+
+  # Database Admin Tool (Development only)
+  adminer:
+    image: adminer
+    container_name: ante-adminer
+    ports:
+      - "${ADMINER_PORT:-8080}:8080"
+    networks:
+      - ante-network
+    depends_on:
+      - postgres
+
+  # Email Testing Tool (Development only)
+  mailhog:
+    image: mailhog/mailhog
+    container_name: ante-mailhog
+    ports:
+      - "${MAILHOG_SMTP_PORT:-1025}:1025"
+      - "${MAILHOG_WEB_PORT:-8025}:8025"
+    networks:
+      - ante-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_node_modules:
+  frontend_node_modules:
+
+networks:
+  ante-network:
+    driver: bridge

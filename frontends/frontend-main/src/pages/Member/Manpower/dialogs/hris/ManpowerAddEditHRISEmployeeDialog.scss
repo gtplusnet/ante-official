@@ -1,0 +1,500 @@
+/* ==========================================================================
+   Material Design 3 Flat UI - Employee Dialog (Dense)
+   ========================================================================== */
+
+/* CSS Custom Properties for Material Design 3 */
+:root {
+  /* Colors */
+  --md3-primary: #1976d2;
+  --md3-on-primary: #ffffff;
+  --md3-primary-container: #d2e3ff;
+  --md3-on-primary-container: #001c3b;
+
+  --md3-surface: #fefbff;
+  --md3-surface-variant: #f7f2fa;
+  --md3-surface-container: #f3f0f4;
+  --md3-on-surface: #1d1b20;
+  --md3-on-surface-variant: #49454f;
+
+  --md3-outline: #79747e;
+  --md3-outline-variant: #cac4d0;
+  --md3-surface-border: #e7e0ec;
+
+  /* Spacing - Dense */
+  --md3-space-xs: 2px;
+  --md3-space-sm: 4px;
+  --md3-space-md: 8px;
+  --md3-space-lg: 12px;
+  --md3-space-xl: 16px;
+
+  /* Border Radius */
+  --md3-border-radius-xs: 4px;
+  --md3-border-radius-sm: 6px;
+  --md3-border-radius-md: 8px;
+
+  /* Transitions */
+  --md3-transition-short: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dialog Container */
+.dialog-card {
+  max-width: 960px;
+  width: 100%;
+  background-color: var(--md3-surface);
+  border-radius: var(--md3-border-radius-md);
+  overflow: hidden;
+}
+
+/* Tab Content Area */
+.tab-content {
+  background: var(--md3-surface);
+  padding: var(--md3-space-md) !important;
+  padding-right: var(--md3-space-sm) !important; /* Make room for scrollbar */
+  max-height: calc(100vh - 240px);
+  overflow-y: scroll; /* Always show scrollbar */
+  overflow-x: hidden;
+  position: relative;
+
+  /* Flat surface - no elevation */
+  box-shadow: none !important;
+  border: 1px solid var(--md3-surface-border);
+
+  /* Force webkit to show scrollbars */
+  &::-webkit-scrollbar {
+    -webkit-appearance: none;
+    display: block !important;
+    visibility: visible !important;
+  }
+
+}
+/* Form Fields - Dense Flat Design */
+.q-field--outlined .q-field__control {
+  height: 36px !important; /* Dense height */
+  border-radius: var(--md3-border-radius-xs) !important;
+  background: var(--md3-surface) !important;
+
+  &:before {
+    border: 1px solid var(--md3-outline-variant) !important;
+    border-radius: var(--md3-border-radius-xs) !important;
+    transition: var(--md3-transition-short);
+  }
+
+  &:after {
+    display: none !important; /* Remove shadow */
+  }
+
+  &:hover:before {
+    border-color: var(--md3-outline) !important;
+  }
+}
+
+/* Focused state */
+.q-field--focused .q-field__control:before {
+  border-color: var(--md3-primary) !important;
+  border-width: 2px !important;
+}
+
+/* Input padding adjustments for dense */
+.q-field__native,
+.q-select__dropdown-icon {
+  padding: 0 var(--md3-space-md) !important;
+  font-size: 13px !important;
+}
+
+/* Labels */
+.label,
+.q-mb-xs {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: var(--md3-on-surface) !important;
+  margin-bottom: var(--md3-space-xs) !important;
+  letter-spacing: 0.5px;
+}
+
+/* Row and Column Spacing - Dense */
+.row {
+  margin: 0 -var(--md3-space-sm) !important;
+}
+
+/* File Upload Area - Flat Design */
+.custom-file-upload {
+  .upload-box {
+    background: var(--md3-surface-variant);
+    border: 1px dashed var(--md3-outline-variant);
+    border-radius: var(--md3-border-radius-sm);
+    padding: var(--md3-space-lg);
+    min-height: 80px; /* Dense height */
+    transition: var(--md3-transition-short);
+
+    &:hover {
+      border-color: var(--md3-primary);
+      background: var(--md3-primary-container);
+    }
+  }
+
+  .upload-icon {
+    color: var(--md3-on-surface-variant);
+    font-size: 24px !important;
+  }
+
+  .upload-text {
+    color: var(--md3-on-surface-variant);
+    font-size: 12px;
+    margin-top: var(--md3-space-sm);
+  }
+
+  .upload-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--md3-on-surface);
+    margin-bottom: var(--md3-space-xs);
+  }
+}
+
+/* Tab Navigation - Material Design 3 */
+.page-tabs {
+  display: flex;
+  background-color: var(--md3-surface-container);
+  border: 1px solid var(--md3-surface-border);
+  border-radius: var(--md3-border-radius-sm);
+  padding: 2px;
+  overflow: hidden;
+  margin-bottom: var(--md3-space-md);
+
+  .tab {
+    flex: 1;
+    padding: var(--md3-space-sm) var(--md3-space-md);
+    background-color: transparent;
+    border: none;
+    border-radius: var(--md3-border-radius-xs);
+    cursor: pointer;
+    transition: var(--md3-transition-short);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--md3-on-surface-variant);
+    text-align: center;
+
+    &:hover {
+      background-color: rgba(25, 118, 210, 0.08);
+      color: var(--md3-primary);
+    }
+
+    &.active {
+      background-color: var(--md3-primary);
+      color: var(--md3-on-primary);
+    }
+  }
+}
+
+/* Select Dropdown Icons */
+.q-select__dropdown-icon {
+  color: var(--md3-on-surface-variant) !important;
+  font-size: 20px !important;
+}
+
+/* Dialog Actions */
+.q-dialog__inner {
+  padding: var(--md3-space-md) !important;
+}
+
+/* Scrollbar Styling - Always visible */
+.tab-content {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: var(--md3-outline-variant) var(--md3-surface-variant); /* Firefox */
+
+  &::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+    opacity: 1 !important;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #e0e0e0;
+    border-radius: 6px;
+    margin: 4px;
+    opacity: 1 !important;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #9e9e9e;
+    border-radius: 6px;
+    border: none;
+    opacity: 1 !important;
+
+    &:hover {
+      background-color: #757575;
+    }
+  }
+
+  /* Force scrollbar to always be visible */
+  &::-webkit-scrollbar-thumb:vertical {
+    min-height: 40px;
+  }
+}
+
+/* Error States */
+.q-field--error .q-field__control:before {
+  border-color: #dc3545 !important;
+}
+
+/* Disabled States */
+.q-field--disabled {
+  opacity: 0.6;
+
+  .q-field__control {
+    background-color: var(--md3-surface-variant) !important;
+  }
+}
+
+/* Helper Text */
+.q-field__messages {
+  font-size: 11px !important;
+  margin-top: var(--md3-space-xs) !important;
+}
+
+/* Dense Dialog Padding */
+.q-dialog__inner--minimized {
+  padding: 0 !important;
+}
+
+/* Card Padding Adjustments */
+.q-card__section {
+  padding: var(--md3-space-md) !important;
+}
+
+/* Icon Adjustments */
+.q-icon {
+  font-size: 24px !important;
+}
+
+/* Remove all shadows for flat design */
+* {
+  box-shadow: none !important;
+}
+
+/* Prevent nested scrollbars */
+.q-dialog__inner {
+  max-height: 90vh !important;
+  overflow: hidden !important;
+
+  .q-card {
+    max-height: 100% !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+  }
+
+  .q-card__section {
+    overflow: visible !important;
+  }
+}
+
+/* Ensure only tab-content has scrollbar */
+.q-dialog {
+  overflow: hidden !important;
+}
+
+/* Remove scrollbar from dialog content wrapper - more specific selector */
+.q-card__section.dialog-content,
+.q-card__section--vert.dialog-content,
+.q-dialog .dialog-content {
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
+}
+
+/* Ensure flat inputs */
+.q-field--standout .q-field__control {
+  box-shadow: none !important;
+  background: var(--md3-surface) !important;
+}
+
+/* Dialog Header Override */
+.q-dialog__inner {
+  .q-card {
+    box-shadow: none !important;
+    border-radius: var(--md3-border-radius-md) !important;
+    overflow: hidden;
+  }
+
+  .q-card__section--vert {
+    padding: var(--md3-space-md) !important;
+  }
+}
+
+/* Dialog Title Bar */
+.q-bar {
+  background-color: var(--md3-primary) !important;
+  box-shadow: none !important;
+  padding: var(--md3-space-md) !important;
+  height: 48px !important;
+}
+
+/* Contract Information Spacing Fix */
+.tab-content > p:nth-of-type(2) {
+  margin-top: var(--md3-space-lg) !important;
+  margin-bottom: var(--md3-space-md) !important;
+}
+
+/* Other Details Spacing Fix */
+.tab-content > p:nth-of-type(3) {
+  margin-top: var(--md3-space-lg) !important;
+  margin-bottom: var(--md3-space-md) !important;
+}
+
+/* Ensure proper field vertical spacing */
+.row > [class*="col-"] {
+}
+
+/* Fix text color consistency */
+.q-field__native,
+.q-select__dropdown-icon,
+.label,
+.q-mb-xs,
+.text-title-medium {
+  color: var(--md3-on-surface) !important;
+}
+
+/* Fix select dropdown styling */
+.q-select {
+  .q-field__control {
+    background-color: var(--md3-surface) !important;
+
+    &:before {
+      border-color: var(--md3-outline-variant) !important;
+    }
+  }
+
+  &.q-field--focused .q-field__control:before {
+    border-color: var(--md3-primary) !important;
+  }
+}
+
+/* Ensure consistent button spacing in Other Details section */
+.select-container {
+  display: flex;
+  gap: var(--md3-space-sm);
+  align-items: center;
+
+  .select-field {
+    flex: 1;
+  }
+
+  .add-button {
+    flex-shrink: 0;
+    .q-btn {
+      height: 36px !important;
+      width: 36px !important;
+      padding: 0 !important;
+      min-width: 36px !important;
+    }
+  }
+}
+
+/* Fix bordered button style */
+.bordered-btn {
+  border: 1px solid var(--md3-outline-variant) !important;
+  background-color: var(--md3-surface) !important;
+  color: var(--md3-on-surface) !important;
+  box-shadow: none !important;
+
+  &:hover {
+    background-color: rgba(25, 118, 210, 0.08) !important;
+    border-color: var(--md3-primary) !important;
+  }
+
+  .q-icon {
+    font-size: 18px !important;
+  }
+}
+
+/* Fix spacing for Other Details section */
+.Mani {
+  margin-top: 0 !important;
+}
+
+/* Fix input label spacing */
+.g-input {
+  .label {
+    display: block;
+    margin-bottom: 2px !important;
+  }
+}
+
+/* Dialog Actions Bar */
+.q-card__actions {
+  padding: var(--md3-space-md) !important;
+  background-color: var(--md3-surface) !important;
+  border-top: 1px solid var(--md3-surface-border) !important;
+}
+
+/* Ensure action buttons are visible */
+.q-form > .column {
+  min-height: 100%;
+
+  > .row:last-child {
+    margin-top: var(--md3-space-xl);
+    padding-top: var(--md3-space-md);
+    background: var(--md3-surface);
+    border-top: 1px solid var(--md3-surface-border);
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+  }
+}
+
+/* Fix button spacing in actions */
+.q-gutter-sm > * {
+  margin: var(--md3-space-sm) !important;
+}
+
+/* Hide upload area until it has content */
+.custom-file-upload:empty {
+  display: none;
+}
+
+/* Ensure dropdown arrow is visible */
+.q-field__append {
+  color: var(--md3-on-surface-variant) !important;
+}
+
+/* Override Quasar dialog defaults */
+.q-dialog__backdrop {
+  background-color: rgba(0, 0, 0, 0.32) !important;
+}
+
+/* Input field labels - ensure consistency */
+.q-field__label {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: var(--md3-on-surface) !important;
+}
+
+/* Fix dropdown selects */
+.q-select {
+  .q-field__native {
+    min-height: 24px !important;
+    display: flex;
+    align-items: center;
+  }
+
+  .q-field__control {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .q-field__control-container {
+    padding-top: 0 !important;
+  }
+}
+
+/* Ensure file input has proper styling */
+.q-file {
+  .q-field__native {
+    color: var(--md3-on-surface-variant);
+  }
+
+  .q-field__control {
+    cursor: pointer;
+  }
+}

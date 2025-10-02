@@ -1,0 +1,42 @@
+.title {
+  background-color: #eee;
+  padding: 10px;
+  text-align: center;
+  margin-top: 20px;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+
+  thead {
+    background-color: #f2f2f2;
+    tr {
+      th {
+        padding: 5px;
+        border: 1px solid #ccc; // Added border to td
+      }
+    }
+  }
+
+  tbody {
+    border: 1px solid #ccc; // Added border to tbody
+    tr {
+      &:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+
+      td {
+        border: 1px solid #ccc; // Added border to td
+        input {
+          width: 100%;
+          padding: 5px;
+          border: none;
+        }
+      }
+    }
+  }
+}

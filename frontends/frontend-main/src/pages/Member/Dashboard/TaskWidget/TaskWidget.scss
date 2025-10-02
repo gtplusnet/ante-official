@@ -1,0 +1,376 @@
+.task-content {
+  // Remove fixed height to allow natural content flow
+  min-height: 300px;
+  overflow-y: visible;
+  overflow-x: hidden;
+
+  // Remove scrollbar completely on mobile
+  @media (max-width: 768px) {
+    min-height: 420px;
+    overflow: visible;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Hide scrollbar for Firefox */
+    scrollbar-width: none;
+
+    /* Hide scrollbar for IE and Edge */
+    -ms-overflow-style: none;
+  }
+
+  // Keep subtle scrollbar on desktop
+  @media (min-width: 769px) {
+    height: 420px;
+    overflow-y: auto;
+
+    // Custom scrollbar for desktop
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f4f4f4;
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: #d9d9d9;
+      border-radius: 3px;
+    }
+  }
+
+  .task-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    @media (max-width: 768px) {
+      gap: 8px;
+    }
+  }
+
+  .task-item {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    background-color: #F8F9FC;
+    border-radius: 12px;
+    transition: all 0.2s ease-in-out;
+
+    @media (max-width: 768px) {
+      padding: 14px 12px;
+    }
+
+    @media (max-width: 480px) {
+      padding: 12px;
+    }
+
+    &:hover {
+      box-shadow: 0px 1px 4px 0px rgba(133, 146, 173, 0.2);
+    }
+
+    @media (max-width: 768px) {
+      &:active {
+        transform: scale(0.98);
+        background-color: #F3F4F8;
+        box-shadow: none;
+      }
+    }
+
+    // Mobile-specific layout changes
+    @media (max-width: 768px) {
+      .row:first-child {
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 8px;
+      }
+
+      .row:last-child {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+    }
+
+    .task-page-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .task-page-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .task-title {
+      font-weight: 600;
+    }
+
+    .task-assignee {
+      font-weight: 600;
+      font-size: 14px;
+      color: #181d36;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 20%;
+
+      span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      @media (max-width: 768px) {
+        font-size: 12px;
+        color: #666;
+        font-weight: 400;
+
+        .q-tooltip {
+          display: none;
+        }
+
+        &::before {
+          content: "by ";
+          color: #999;
+          margin-right: 4px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        font-size: 11px;
+      }
+    }
+
+    .chip-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #fff;
+      gap: 8px;
+      flex-wrap: wrap;
+
+      @media (max-width: 768px) {
+        gap: 6px;
+      }
+
+      @media (max-width: 480px) {
+        gap: 4px;
+      }
+
+      .chip-level {
+        height: 20px;
+        padding: 1px 10px;
+        background-color: #FFB74D;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+
+        @media (max-width: 768px) {
+          padding: 0 6px;
+
+          .q-icon {
+            font-size: 12px !important;
+          }
+        }
+      }
+
+      .chip-filing {
+        height: 20px;
+        padding: 1px 10px;
+        background-color: #90CAF9;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+
+        @media (max-width: 768px) {
+          padding: 0 6px;
+
+          .q-icon {
+            font-size: 12px !important;
+          }
+        }
+      }
+
+      .chip-status {
+        height: 20px;
+        padding: 1px 10px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #9e9e9e;
+        opacity: 0;
+
+        &.pending {
+          opacity: 1;
+          background-color: #FFF59D;
+        }
+
+        &.approved {
+          opacity: 1;
+          background-color: #A5D6A7;
+        }
+
+        &.rejected {
+          opacity: 1;
+          background-color: #EF9A9A;
+        }
+
+        &.cancelled {
+          opacity: 1;
+          background-color: #DDE1F0;
+        }
+
+        @media (max-width: 768px) {
+          padding: 0 6px;
+          white-space: nowrap;
+        }
+      }
+
+      // Generic chip tag for normal tasks
+      .chip-tag {
+        height: 20px;
+        padding: 1px 10px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        @media (max-width: 768px) {
+          height: 20px;
+          padding: 0 8px;
+          font-size: 11px;
+          white-space: nowrap;
+        }
+      }
+    }
+
+    .task-date {
+      color: #747786;
+      font-weight: 600;
+
+      @media (max-width: 768px) {
+        font-size: 11px;
+        font-weight: 400;
+        color: #999;
+        white-space: nowrap;
+        margin-left: auto;
+      }
+
+      @media (max-width: 480px) {
+        font-size: 10px;
+      }
+    }
+
+
+  }
+}
+
+
+.task-title-text {
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Task widget actions container */
+.task-widget-actions {
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  width: 100%;
+
+  .task-menu-wrapper {
+    display: none;
+
+    @media (min-width: 600px) {
+      display: block;
+    }
+  }
+}
+
+.task-tabs-wrapper {
+  /* Take all available space */
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  /* Prevent overflow */
+  min-width: 0;
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+    /* Ensure full width on mobile */
+    width: 100%;
+  }
+}
+
+// Removed q-pagination styles as GlobalWidgetPagination handles its own styling
+
+.filing-request {
+  color: #181d36;
+  font-size: 14px;
+}
+
+.PENDING {
+  padding: 1px;
+  width: 70px;
+  color: #fff;
+  text-align: center;
+  background-color: #fb8c00;
+  border-radius: 50px;
+}
+
+.APPROVED {
+  padding: 1px;
+  width: 70px;
+  color: #fff;
+  text-align: center;
+  background-color: #4caf50;
+  border-radius: 50px;
+}
+
+.REJECTED {
+  padding: 1px;
+  width: 70px;
+  color: #fff;
+  text-align: center;
+  background-color: #f44336;
+  border-radius: 50px;
+}
+
+.divider {
+  border: 1px dashed #999999;
+}
+
+.breaktime-text {
+  color: #4caf50;
+}
+
+// Rotating animation for sync icon
+@keyframes rotate-sync {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.rotating-icon {
+  animation: rotate-sync 1s linear infinite;
+}

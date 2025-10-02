@@ -1,0 +1,96 @@
+export default {
+  defaultOrderBy: 'lastName',
+  defaultOrderType: 'asc',
+  search: [
+    {
+      key: 'firstName',
+      label: 'Search by First Name',
+      column: 'firstName',
+    },
+    {
+      key: 'lastName',
+      label: 'Search by Last Name',
+      column: 'lastName',
+    },
+    {
+      key: 'email',
+      label: 'Search by Email',
+      column: 'email',
+    },
+    {
+      key: 'contactNumber',
+      label: 'Search by Contact Number',
+      column: 'contactNumber',
+    },
+  ],
+  filters: [
+    {
+      key: 'isActive',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { label: 'Active', value: true },
+        { label: 'Inactive', value: false },
+      ],
+    },
+  ],
+  columns: [
+    {
+      key: 'name',
+      label: 'Name',
+      class: 'text-left',
+      field: 'name',
+      sortable: true,
+    },
+    {
+      key: 'email',
+      label: 'Email',
+      class: 'text-center',
+      field: 'email',
+      sortable: true,
+    },
+    {
+      key: 'contactNumber',
+      label: 'Contact Number',
+      class: 'text-center',
+      field: 'contactNumber',
+      sortable: true,
+    },
+    {
+      key: 'studentCount',
+      label: 'Students',
+      class: 'text-center',
+      field: 'studentCount',
+      sortable: true,
+    },
+    {
+      key: 'lastLogin',
+      label: 'Last Login',
+      class: 'text-center',
+      field: 'lastLogin',
+      sortable: true,
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      align: 'center',
+      field: 'isActive',
+      sortable: true,
+    },
+  ],
+  exportHeaders: [
+    'firstName',
+    'lastName',
+    'middleName',
+    'email',
+    'contactNumber',
+    'alternateNumber',
+    'address',
+    'occupation',
+    'dateOfBirth',
+    'studentCount',
+    'lastLogin',
+    'isActive',
+    'createdAt',
+  ],
+};

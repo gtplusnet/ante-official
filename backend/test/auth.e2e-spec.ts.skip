@@ -1,0 +1,505 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication, HttpStatus } from '@nestjs/common';
+import * as request from 'supertest';
+import { AuthController } from '@modules/auth/auth/auth.controller';
+import { AuthService } from '@modules/auth/auth/auth.service';
+import { PrismaService } from '@common/prisma.service';
+import { EncryptionService } from '@common/encryption.service';
+import { UtilityService } from '@common/utility.service';
+import { EmailService } from '@modules/communication/email/email.service';
+import { ConfigModule } from '@nestjs/config';
+import {
+  createMockPrismaService,
+  createMockEncryptionService,
+  createMockUtilityService,
+  createMockAccount,
+  createMockEmailService,
+  cleanupMocks,
+} from './setup';
+
+describe('Authentication (e2e)', () => {
+  let app: INestApplication;
+  let prismaService: any;
+  let encryptionService: any;
+  let authService: AuthService;
+
+  // Test credentials
+  const testUser = {
+    username: 'guillermotabligan',
+    password: 'water123',
+    email: 'guillermotabligan00@gmail.com',
+    firstName: 'Guillermo',
+    lastName: 'Tabligan',
+  };
+
+  const mockUser = createMockAccount({
+    username: testUser.username,
+    email: testUser.email,
+    firstName: testUser.firstName,
+    lastName: testUser.lastName,
+    password: 'hashed-water123',
+    key: 'mock-key',
+  });
+
+  beforeAll(async () => {
+    // Set up test environment
+    process.env.NODE_ENV = 'test';
+    process.env.JWT_SECRET = 'test-jwt-secret';
+    process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test_db';
+    
+    // Create mock services
+    const mockPrismaService = createMockPrismaService();
+    const mockEncryptionServiceImpl = createMockEncryptionService();
+    const mockUtilityServiceImpl = createMockUtilityService();
+    const mockEmailService = createMockEmailService();
+
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot({
+          envFilePath: '.env.test',
+          isGlobal: true,
+        }),
+      ],
+      controllers: [AuthController],
+      providers: [
+        AuthService,
+        {
+          provide: PrismaService,
+          useValue: mockPrismaService,
+        },
+        {
+          provide: EncryptionService,
+          useValue: mockEncryptionServiceImpl,
+        },
+        {
+          provide: UtilityService,
+          useValue: mockUtilityServiceImpl,
+        },
+        {
+          provide: EmailService,
+          useValue: mockEmailService,
+        },
+      ],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    prismaService = moduleFixture.get<PrismaService>(PrismaService);
+    encryptionService = moduleFixture.get<EncryptionService>(EncryptionService);
+    authService = moduleFixture.get<AuthService>(AuthService);
+    
+    await app.init();
+  });
+
+  beforeEach(() => {
+    cleanupMocks();
+  });
+
+  afterAll(async () => {
+    if (app) {
+      await app.close();
+    }
+  });
+
+  describe('/auth/signup (POST)', () => {
+    it('should create a new user account successfully', async () => {
+      // Mock company lookup
+      prismaService.company.findUnique.mockResolvedValue({
+        id: 'test-company-id',
+        companyName: 'Test Company',
+      });
+      
+      // Mock user creation
+      prismaService.account.create.mockResolvedValue(mockUser);
+      
+      // Mock token creation
+      prismaService.accountToken.create.mockResolvedValue({
+        id: 'token-id',
+        token: 'mock-token-12345678901234567890123456789012345678901234567890',
+        accountId: mockUser.id,
+        createdAt: new Date(),
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/auth/signup')
+        .send({
+          username: testUser.username,
+          email: testUser.email,
+          password: testUser.password,
+          firstName: testUser.firstName,
+          lastName: testUser.lastName,
+          companyName: 'Test Company',
+        })
+        .expect(HttpStatus.CREATED);
+
+      expect(response.body).toMatchObject({
+        success: true,
+        message: expect.any(String),
+        data: {
+          account: expect.objectContaining({
+            id: mockUser.id,
+            username: testUser.username,
+            email: testUser.email,
+            firstName: testUser.firstName,
+            lastName: testUser.lastName,
+          }),
+          token: expect.any(String),
+        },
+      });
+
+      // Verify prisma calls
+      expect(prismaService.account.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          username: testUser.username,
+          email: testUser.email,
+          firstName: testUser.firstName,
+          lastName: testUser.lastName,
+          password: expect.any(String),
+          key: expect.any(String),
+        }),
+      });
+    });
+
+    it('should reject signup with invalid email', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/signup')
+        .send({
+          username: 'testuser',
+          email: 'invalid-email',
+          password: 'password123',
+          firstName: 'Test',
+          lastName: 'User',
+          companyName: 'Test Company',
+        })
+        .expect(HttpStatus.BAD_REQUEST);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('email');
+    });
+
+    it('should reject signup with weak password', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/signup')
+        .send({
+          username: 'testuser',
+          email: 'test@example.com',
+          password: '123',
+          firstName: 'Test',
+          lastName: 'User',
+          companyName: 'Test Company',
+        })
+        .expect(HttpStatus.BAD_REQUEST);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('password');
+    });
+
+    it('should reject signup with duplicate username', async () => {
+      // Mock existing user
+      prismaService.account.create.mockRejectedValue({
+        code: 'P2002',
+        meta: { target: ['username'] },
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/auth/signup')
+        .send({
+          username: testUser.username,
+          email: 'different@example.com',
+          password: testUser.password,
+          firstName: testUser.firstName,
+          lastName: testUser.lastName,
+          companyName: 'Test Company',
+        })
+        .expect(HttpStatus.CONFLICT);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('username');
+    });
+
+    it('should reject signup with missing required fields', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/signup')
+        .send({
+          username: testUser.username,
+          // missing email, password, firstName, lastName, companyName
+        })
+        .expect(HttpStatus.BAD_REQUEST);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('required');
+    });
+  });
+
+  describe('/auth/login (POST)', () => {
+    it('should login successfully with valid credentials', async () => {
+      // Mock user lookup
+      prismaService.account.findFirst.mockResolvedValue({
+        ...mockUser,
+        company: {
+          id: 'test-company-id',
+          companyName: 'Test Company',
+          isActive: true,
+        },
+      });
+
+      // Mock password comparison
+      encryptionService.comparePassword.mockReturnValue(true);
+      
+      // Mock token creation
+      prismaService.accountToken.create.mockResolvedValue({
+        id: 'token-id',
+        token: 'mock-login-token-1234567890123456789012345678901234567890',
+        accountId: mockUser.id,
+        createdAt: new Date(),
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          username: testUser.username,
+          password: testUser.password,
+        })
+        .expect(HttpStatus.OK);
+
+      expect(response.body).toMatchObject({
+        success: true,
+        message: expect.any(String),
+        data: {
+          account: expect.objectContaining({
+            id: mockUser.id,
+            username: testUser.username,
+            email: testUser.email,
+          }),
+          token: expect.any(String),
+        },
+      });
+
+      // Verify password was checked
+      expect(encryptionService.comparePassword).toHaveBeenCalledWith(
+        testUser.password,
+        mockUser.password,
+      );
+    });
+
+    it('should login successfully with email instead of username', async () => {
+      // Mock user lookup by email
+      prismaService.account.findFirst.mockResolvedValue({
+        ...mockUser,
+        company: {
+          id: 'test-company-id',
+          companyName: 'Test Company',
+          isActive: true,
+        },
+      });
+
+      encryptionService.comparePassword.mockReturnValue(true);
+      
+      prismaService.accountToken.create.mockResolvedValue({
+        id: 'token-id',
+        token: 'mock-email-login-token-123456789012345678901234567890123456',
+        accountId: mockUser.id,
+        createdAt: new Date(),
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          username: testUser.email,
+          password: testUser.password,
+        })
+        .expect(HttpStatus.OK);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.account.email).toBe(testUser.email);
+    });
+
+    it('should reject login with invalid username', async () => {
+      // Mock user not found
+      prismaService.account.findFirst.mockResolvedValue(null);
+
+      const response = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          username: 'nonexistentuser',
+          password: 'password123',
+        })
+        .expect(HttpStatus.UNAUTHORIZED);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Invalid credentials');
+    });
+
+    it('should reject login with incorrect password', async () => {
+      // Mock user lookup
+      prismaService.account.findFirst.mockResolvedValue({
+        ...mockUser,
+        company: {
+          id: 'test-company-id',
+          companyName: 'Test Company',
+          isActive: true,
+        },
+      });
+
+      // Mock password comparison failure
+      encryptionService.comparePassword.mockReturnValue(false);
+
+      const response = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          username: testUser.username,
+          password: 'wrongpassword',
+        })
+        .expect(HttpStatus.UNAUTHORIZED);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Invalid credentials');
+    });
+
+    it('should reject login with inactive company', async () => {
+      // Mock user with inactive company
+      prismaService.account.findFirst.mockResolvedValue({
+        ...mockUser,
+        company: {
+          id: 'test-company-id',
+          companyName: 'Test Company',
+          isActive: false,
+        },
+      });
+
+      encryptionService.comparePassword.mockReturnValue(true);
+
+      const response = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          username: testUser.username,
+          password: testUser.password,
+        })
+        .expect(HttpStatus.UNAUTHORIZED);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('account is inactive');
+    });
+
+    it('should reject login with missing credentials', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          username: testUser.username,
+          // missing password
+        })
+        .expect(HttpStatus.BAD_REQUEST);
+
+      expect(response.body.success).toBe(false);
+    });
+  });
+
+  describe('Token Authentication', () => {
+    const mockToken = '1234567890123456789012345678901234567890';
+
+    it('should access protected route with valid token', async () => {
+      // Mock token validation
+      prismaService.accountToken.findFirst.mockResolvedValue({
+        id: 'token-id',
+        token: mockToken,
+        accountId: mockUser.id,
+        createdAt: new Date(),
+        account: {
+          ...mockUser,
+          company: {
+            id: 'test-company-id',
+            companyName: 'Test Company',
+            isActive: true,
+          },
+        },
+      });
+
+      const response = await request(app.getHttpServer())
+        .get('/account')
+        .set('token', mockToken)
+        .expect(HttpStatus.OK);
+
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should reject access with invalid token', async () => {
+      // Mock token not found
+      prismaService.accountToken.findFirst.mockResolvedValue(null);
+
+      const response = await request(app.getHttpServer())
+        .get('/account')
+        .set('token', 'invalid-token')
+        .expect(HttpStatus.UNAUTHORIZED);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Invalid or expired token');
+    });
+
+    it('should reject access without token', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/account')
+        .expect(HttpStatus.UNAUTHORIZED);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('token required');
+    });
+
+    it('should reject access with token for inactive account', async () => {
+      // Mock token with inactive account
+      prismaService.accountToken.findFirst.mockResolvedValue({
+        id: 'token-id',
+        token: mockToken,
+        accountId: mockUser.id,
+        createdAt: new Date(),
+        account: {
+          ...mockUser,
+          isActive: false,
+          company: {
+            id: 'test-company-id',
+            companyName: 'Test Company',
+            isActive: true,
+          },
+        },
+      });
+
+      const response = await request(app.getHttpServer())
+        .get('/account')
+        .set('token', mockToken)
+        .expect(HttpStatus.UNAUTHORIZED);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('account is inactive');
+    });
+  });
+
+  describe('Password Reset Flow', () => {
+    it('should send password reset email for valid email', async () => {
+      // Mock user lookup
+      prismaService.account.findFirst.mockResolvedValue(mockUser);
+
+      const response = await request(app.getHttpServer())
+        .post('/auth/forgot-password')
+        .send({
+          email: testUser.email,
+        })
+        .expect(HttpStatus.OK);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('password reset instructions');
+    });
+
+    it('should return success even for non-existent email (security)', async () => {
+      // Mock user not found
+      prismaService.account.findFirst.mockResolvedValue(null);
+
+      const response = await request(app.getHttpServer())
+        .post('/auth/forgot-password')
+        .send({
+          email: 'nonexistent@example.com',
+        })
+        .expect(HttpStatus.OK);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('password reset instructions');
+    });
+  });
+});

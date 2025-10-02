@@ -1,0 +1,91 @@
+# Grype configuration file for Backend
+# Documentation: https://github.com/anchore/grype#configuration
+
+# Configure database settings
+db:
+  # Auto-update the vulnerability database
+  auto-update: true
+  # Update database if it's older than this many hours
+  update-available-timeout: 12h
+  # Validate the database age against this value
+  validate-age: true
+  # Maximum database age before warning
+  max-allowed-built-age: 120h
+
+# Configure which package types to scan
+package:
+  cataloger:
+    enabled: true
+    scope: "all-layers"
+
+# Configure vulnerability matching
+match:
+  # Include CPE matches
+  java:
+    using-cpes: true
+  python:
+    using-cpes: true
+  javascript:
+    using-cpes: true
+  dotnet:
+    using-cpes: true
+  golang:
+    using-cpes: true
+  ruby:
+    using-cpes: true
+
+# Configure output settings
+output:
+  # Suppress warnings in output
+  quiet: false
+
+# Ignore specific vulnerabilities (add CVE IDs as needed)
+ignore:
+  # Example: Ignore specific CVEs that are false positives or not applicable
+  # - vulnerability: CVE-2023-12345
+  #   reason: "False positive - not applicable to our usage"
+  # - vulnerability: GHSA-abcd-1234-wxyz
+  #   reason: "Accepted risk - low impact in our environment"
+  
+  # Ignore vulnerabilities in test/development dependencies
+  # - package:
+  #     name: "jest"
+  #     type: "npm"
+  #   reason: "Development dependency only"
+
+# Set minimum severity level for matches
+# Options: negligible, low, medium, high, critical
+fail-on-severity: high
+
+# Registry configuration for authenticated registries
+registry:
+  auth:
+    - authority: ghcr.io
+      # GitHub Container Registry uses token authentication
+      # Token will be provided via environment variable or docker login
+
+# Additional file globs to exclude from scanning
+exclude:
+  - "**/node_modules/**"
+  - "**/test/**"
+  - "**/tests/**"
+  - "**/__tests__/**"
+  - "**/dist/**"
+  - "**/build/**"
+  - "**/.git/**"
+  - "**/vendor/**"
+  - "**/coverage/**"
+  - "**/prisma/migrations/**"
+
+# Log settings
+log:
+  level: "warn"  # Options: trace, debug, info, warn, error, fatal, panic
+  file: ""       # Leave empty to log to stdout
+
+# Development mode settings
+dev:
+  profile-cpu: false
+  profile-mem: false
+
+# Check for application updates
+check-for-app-update: true

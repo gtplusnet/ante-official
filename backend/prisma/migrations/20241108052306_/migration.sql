@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "PurchaseOrder" ADD COLUMN     "balance" DOUBLE PRECISION NOT NULL DEFAULT 0;

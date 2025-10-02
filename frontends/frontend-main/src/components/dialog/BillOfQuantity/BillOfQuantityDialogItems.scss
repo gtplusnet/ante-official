@@ -1,0 +1,30 @@
+/* Excel-like styling for editable cells */
+.editable-cell {
+  position: relative;
+  cursor: cell;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #f0f8ff;
+  }
+}
+
+.inline-edit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+
+  .excel-like-input {
+    width: 100%;
+    height: 100%;
+    padding: 2px 5px;
+    border: 2px solid #1a73e8;
+    outline: none;
+    background-color: #fff;
+    font-size: 12px;
+    box-sizing: border-box;
+  }
+}

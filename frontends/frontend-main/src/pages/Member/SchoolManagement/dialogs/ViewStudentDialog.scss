@@ -1,0 +1,291 @@
+/* Material Design 3 - ViewStudentDialog with TemplateDialog */
+
+/* MD3 Color Tokens */
+:root {
+  --md3-surface: #FAFBFD;
+  --md3-surface-container-low: #F5F6F8;
+  --md3-surface-container: #EFF0F2;
+  --md3-surface-container-high: #E8E9EB;
+  --md3-on-surface: #1B1C1E;
+  --md3-on-surface-variant: #44474C;
+  --md3-outline-variant: #C5C6CA;
+  --md3-outline: #74777F;
+  --md3-primary-container: #E1E7FF;
+  --md3-on-primary-container: #001946;
+  --md3-success-container: #D1F2D5;
+  --md3-on-success-container: #072711;
+  --md3-error-container: #FFD9D6;
+  --md3-on-error-container: #410E0B;
+}
+
+/* Main Content Wrapper */
+.md3-content {
+  padding: 12px;
+}
+
+/* Dense Grid Layout */
+.md3-content-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 16px;
+  
+  @media (max-width: 1000px) {
+    grid-template-columns: 240px 1fr;
+    gap: 12px;
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* Profile Section */
+.md3-profile-section {
+  background-color: var(--md3-surface-container-low);
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid var(--md3-outline-variant);
+  height: fit-content;
+}
+
+.md3-profile-header {
+  text-align: center;
+  margin-bottom: 16px;
+
+  .md3-avatar {
+    border-radius: 50%;
+    border: 1px solid var(--q-gray);
+    margin-bottom: 8px;
+  }
+
+  .md3-student-name {
+    font-size: var(--font-title-medium);
+    font-weight: var(--weight-title-medium);
+    color: var(--q-dark);
+    line-height: 1.3;
+    margin-bottom: 3px;
+  }
+
+  .md3-student-number {
+    font-size: var(--font-body-medium);
+    color: var(--q-dark);
+    margin-bottom: 6px;
+  }
+
+  .md3-status-chip {
+    border-radius: 8px;
+    width: fit-content;
+    padding: 2px 8px;
+    margin: 0 auto;
+    font-size: var(--font-label-small);
+    font-weight: var(--weight-label-small);
+    
+    &.active {
+      background-color: var(--q-positive);
+      color: #fff;
+    }
+    
+    &.inactive {
+      background-color: var(--q-negative);
+      color: #fff;
+    }
+  }
+}
+
+/* QR Code Section */
+.md3-qr-section {
+  background-color: var(--md3-surface-container);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  border: 1px solid var(--md3-outline-variant);
+
+  .md3-qr-title {
+    font-size: var(--font-label-small);
+    font-weight: var(--weight-label-small);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .md3-qr-code {
+    margin-bottom: 6px;
+  }
+
+  .md3-qr-description {
+    font-size: var(--font-label-small);
+    color: var(--md3-on-surface-variant);
+    margin-bottom: 6px;
+  }
+
+  .md3-qr-value {
+    background-color: var(--md3-surface-container-high);
+    border-radius: 6px;
+    padding: 6px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9px;
+    color: var(--md3-on-surface-variant);
+    word-break: break-all;
+    border: 1px solid var(--md3-outline-variant);
+  }
+}
+
+/* Details Section */
+.md3-details-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Information Cards */
+.md3-info-card {
+  background-color: var(--md3-surface-container-low);
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid var(--md3-outline-variant);
+
+  .md3-section-title {
+    font-size: var(--font-title-small);
+    font-weight: var(--weight-title-small);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+/* Dense Field Grid */
+.md3-field-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(auto, 1fr));
+  gap: 12px;
+
+  .gr-section {
+    grid-column: span 3;
+  }
+
+  .adviser-section {
+    grid-column: span 2;
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
+
+/* Field */
+.md3-field {
+  .md3-field-label {
+    font-size: var(--font-label-small);
+    font-weight: var(--weight-label-small);
+    color: var(--q-gray);
+    letter-spacing: 0.2px;
+  }
+
+  .md3-field-value {
+    font-size: var(--font-label-medium);
+    font-weight: var(--weight-label-medium);
+    letter-spacing: 0.2px;
+    line-height: 1.4;
+
+    &.empty {
+      color: var(--q-gray-light);
+      font-style: italic;
+    }
+  }
+}
+
+/* Guardian Card */
+.md3-guardian-card {
+  background-color: var(--md3-surface-container);
+  border-radius: 8px;
+  padding: 10px;
+  border: 1px solid var(--md3-outline-variant);
+  margin-top: 6px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .md3-content {
+    padding: 8px;
+  }
+
+  .md3-content-grid {
+    gap: 10px;
+  }
+
+  .md3-profile-section {
+    padding: 10px;
+  }
+
+  .md3-info-card {
+    padding: 10px;
+  }
+
+  .md3-profile-header {
+    margin-bottom: 12px;
+
+    .md3-student-name {
+      font-size: 14px;
+    }
+
+    .md3-student-number {
+      font-size: 11px;
+    }
+  }
+
+  .md3-qr-section {
+    padding: 8px;
+
+    .md3-qr-code svg {
+      width: 100px !important;
+      height: 100px !important;
+    }
+  }
+}
+
+/* Loading States */
+.md3-skeleton {
+  background: linear-gradient(90deg, 
+    var(--md3-surface-container) 25%, 
+    var(--md3-surface-container-high) 50%, 
+    var(--md3-surface-container) 75%
+  );
+  background-size: 200% 100%;
+  animation: md3-skeleton 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes md3-skeleton {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  :root {
+    --md3-outline-variant: #000000;
+    --md3-outline: #000000;
+  }
+
+  .md3-info-card,
+  .md3-profile-section,
+  .md3-qr-section,
+  .md3-guardian-card {
+    border-width: 2px;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .md3-skeleton {
+    animation: none;
+    background: var(--md3-surface-container-high);
+  }
+}

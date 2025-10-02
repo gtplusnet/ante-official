@@ -1,0 +1,2 @@
+-- CreateEnum
+CREATE TYPE "PayeeType" AS ENUM ('SUPPLIER', 'CLIENT', 'EMPLOYEE', 'GOVERNMENT', 'OTHER');

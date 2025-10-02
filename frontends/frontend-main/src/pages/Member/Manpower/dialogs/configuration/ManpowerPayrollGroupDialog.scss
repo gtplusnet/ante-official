@@ -1,0 +1,102 @@
+.dialog-card {
+  max-width: 700px;
+}
+
+.page-tabs {
+  display: flex;
+  overflow: hidden;
+  background-color: #fff;
+  width: 100%;
+
+  .tab {
+    font-size: 14px;
+    text-align: center;
+    color: var(--q-dark);
+    padding: 10px 0;
+    flex-grow: 1;
+    background-color: #fff;
+    cursor: pointer;
+    font-weight: 400;
+    transition: all 0.3s;
+
+    &:hover {
+      color: var(--q-primary);
+      background-color: #ddd;
+    }
+
+    &.active {
+      font-weight: 600;
+      color: var(--q-primary);
+      background-color: #fff;
+      border-bottom: 3px solid #2a41cc;
+    }
+  }
+}
+
+.salary {
+  gap: 10px;
+}
+
+.custom-container {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  transition: border-color 0.3s ease-in-out;
+}
+
+.custom-container {
+  border-color: #2a40cb;
+}
+
+.dialog-content {
+  height: 500px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #d9d9d9;
+    border-radius: 50px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: #f4f4f4;
+    border-radius: 50px;
+  }
+}
+
+.action-btn {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.rounded-container {
+  border-radius: 8px;
+}
+
+.table-container {
+  background-color: #ededf2;
+  border-radius: 8px;
+}
+
+.overtime-table {
+  width: 100%;
+
+  tbody {
+    tr {
+      td {
+        padding-bottom: 6px;
+        .input {
+          border-radius: 4px;
+          border: none;
+          height: 40px;
+          width: 115px;
+        }
+      }
+    }
+  }
+}

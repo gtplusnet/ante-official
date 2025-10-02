@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Project" ADD COLUMN     "downpaymentAmount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "retentionAmount" DOUBLE PRECISION NOT NULL DEFAULT 0;

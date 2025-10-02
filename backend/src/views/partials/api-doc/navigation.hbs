@@ -1,0 +1,16 @@
+<nav>
+    <div class="container">
+        <ul>
+            <li><a href="#overview" class="active">Overview</a></li>
+            <li><a href="#authentication">Authentication</a></li>
+            <li><a href="#endpoints">Endpoints</a></li>
+            {{#if hasWebSocket}}
+            <li><a href="#websocket">Socket.io</a></li>
+            {{/if}}
+            {{#if hasQuickStart}}
+            <li><a href="#quickstart">Quick Start</a></li>
+            {{/if}}
+            <li><a href="#errors">Error Handling</a></li>
+        </ul>
+    </div>
+</nav>

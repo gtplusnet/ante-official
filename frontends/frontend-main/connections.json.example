@@ -1,0 +1,12 @@
+[
+  {
+    "NAME": "Staging",
+    "API_URL": "https://staging-api.example.com",
+    "SOCKET_URL": "wss://staging-socket.example.com"
+  },
+  {
+    "NAME": "Production",
+    "API_URL": "https://api.example.com",
+    "SOCKET_URL": "wss://socket.example.com"
+  }
+]

@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "ItemReceiptType" ADD VALUE 'RESERVED_FOR_TRANSFER';

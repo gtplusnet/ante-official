@@ -1,0 +1,104 @@
+# Dependencies
+node_modules/
+.yarn/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories
+.vscode/
+.idea/
+*.code-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+.docker/
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+tmp/
+temp/
+
+# Backup files
+*.backup
+*.bak
+ante-backup-*
+backups/
+backend/.env.local.backup-*
+backend/.env.production.new
+
+# Production docker compose (contains secrets)
+docker/docker-compose.production.yml
+docker/docker-compose.staging.yml
+docker/archive/
+
+# Deployment artifacts
+/tmp/ante-deploy.tar.gz
+/tmp/ante-prod-deploy.tar.gz
+
+# Local development
+*.local
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Certificates (except examples)
+*.pem
+*.key
+*.crt
+!*.example.*
+
+# Deployment keys (never commit these!)
+.github/deployment-keys/
+
+# Debug folder
+debug/
+
+# Issue tracking folder (temporary)
+to_fix/
+
+# Test results and reports
+test-results/
+playwright-report/
+playwright-testing/test-results/
+playwright-testing/reports/
+playwright-testing/logs/
+playwright-testing/node_modules/
+playwright-testing/yarn.lock
+playwright-testing/package-lock.json
+playwright-testing/playwright-testing/
+playwright-testing/screenshots/
+coverage/
+
+# Build artifacts
+dist/
+dist.tar.gz
+*.tar.gz
+
+# Database dumps and backups
+*.dump
+*.sql.env.secrets
+
+# Submodule content protection
+frontends/user-manual/

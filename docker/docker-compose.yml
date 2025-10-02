@@ -1,0 +1,235 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: ante-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-ante}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ante_password}
+      POSTGRES_DB: ${DB_NAME:-ante_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ante-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-ante}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: ante-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ante-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:7
+    container_name: ante-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: jdev
+      MONGO_INITDB_ROOT_PASSWORD: water123
+      MONGO_INITDB_DATABASE: ante-test
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - ante-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: ante-backend
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      # DATABASE_URL now comes from .env file (Supabase)
+      # DATABASE_URL: postgresql://${DB_USER:-ante}:${DB_PASSWORD:-ante_password}@postgres:5432/${DB_NAME:-ante_db}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "3000:3000"
+      - "4000:4000"
+      - "4001:4001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      # postgres: # Now using Supabase instead of local PostgreSQL
+      #   condition: service_healthy
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    networks:
+      - ante-network
+    command: yarn dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend Main Application
+  frontend-main:
+    build:
+      context: ./frontends/frontend-main
+      dockerfile: Dockerfile
+      target: development
+    container_name: ante-frontend-main
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      ENVIRONMENT: development
+      VITE_ENVIRONMENT: development
+      VITE_API_URL: http://backend:3000
+      VITE_SOCKET_URL: ws://backend:4000
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./frontends/frontend-main:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - ante-network
+    command: yarn dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # User Manual Documentation
+  user-manual:
+    build:
+      context: ./frontends/user-manual
+      dockerfile: Dockerfile
+      target: development
+    container_name: ante-user-manual
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "9001:5173"
+    volumes:
+      - ./frontends/user-manual:/app
+      - /app/node_modules
+    networks:
+      - ante-network
+    command: yarn docs:dev --host 0.0.0.0 --port 5173
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Gate App (School Attendance)
+  frontend-gate-app:
+    build:
+      context: ./frontends/frontend-gate-app
+      dockerfile: Dockerfile
+      target: development
+    container_name: ante-frontend-gate-app
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+      NEXT_PUBLIC_SOCKET_URL: ws://localhost:4000
+    ports:
+      - "9002:3000"
+    volumes:
+      - ./frontends/frontend-gate-app:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    networks:
+      - ante-network
+    command: yarn dev -p 3000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Guardian App (Parent Portal)
+  frontend-guardian-app:
+    build:
+      context: ./frontends/frontend-guardian-app
+      dockerfile: Dockerfile
+      target: development
+    container_name: ante-frontend-guardian-app
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+      NEXT_PUBLIC_SOCKET_URL: ws://localhost:4000
+    ports:
+      - "9003:3000"
+    volumes:
+      - ./frontends/frontend-guardian-app:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    networks:
+      - ante-network
+    command: yarn dev -p 3000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy (Optional - for production-like setup)
+  nginx:
+    image: nginx:alpine
+    container_name: ante-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./frontends/frontend-main/dist/spa:/usr/share/nginx/html
+    depends_on:
+      - backend
+      - frontend-main
+      - user-manual
+      - frontend-gate-app
+      - frontend-guardian-app
+    networks:
+      - ante-network
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+  redis_data:
+  mongodb_data:
+
+networks:
+  ante-network:
+    driver: bridge

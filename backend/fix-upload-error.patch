@@ -1,0 +1,36 @@
+--- a/src/infrastructure/file-upload/file-upload/file-upload.service.ts
++++ b/src/infrastructure/file-upload/file-upload/file-upload.service.ts
+@@ -3,6 +3,7 @@ import {
+   Injectable,
+   NotFoundException,
+   BadRequestException,
++  UnauthorizedException,
+   Optional,
+ } from '@nestjs/common';
+ import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
+@@ -210,6 +211,15 @@ export class FileUploadService {
+     file: MulterFile,
+     options: MediaUploadDto,
+   ): Promise<Files> {
++    // Check if authentication is present
++    if (!this.utility.accountInformation?.id) {
++      this.utility.log(
++        'Error: No account information available for file upload',
++      );
++      throw new UnauthorizedException(
++        'Authentication required for file upload',
++      );
++    }
++
+     // Validate file
+     const validationResult = this.validateMediaFile(file);
+     if (!validationResult.valid) {
+@@ -274,7 +284,7 @@ export class FileUploadService {
+         url: '',
+         size: file.size,
+         companyId: this.utility.companyId,
+-        uploadedById: this.utility.accountInformation.id,
++        uploadedById: this.utility.accountInformation?.id || null,
+         fieldName: file.fieldname,
+         originalName: file.originalname,
+         encoding: file.encoding || null,

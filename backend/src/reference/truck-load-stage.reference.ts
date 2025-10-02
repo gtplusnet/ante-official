@@ -1,0 +1,46 @@
+export default [
+  {
+    key: 'FOR_SECURING',
+    label: 'For Securing',
+    nextStage: 'FOR_PACKING',
+    nextStageLabel: 'For Packing',
+    color: 'red',
+    textColor: 'white',
+  },
+  {
+    key: 'FOR_PACKING',
+    label: 'For Packing',
+    nextStage: 'FOR_LOADING',
+    nextStageLabel: 'For Loading',
+    color: 'orange-8',
+    textColor: 'white',
+  },
+  {
+    key: 'FOR_LOADING',
+    label: 'For Loading',
+    nextStage: 'FOR_DELIVERY',
+    nextStageLabel: 'For Delivery',
+    color: 'green',
+    textColor: 'white',
+  },
+  {
+    key: 'FOR_DELIVERY',
+    label: 'For Delivery',
+    nextStage: 'OUT_FOR_DELIVERY',
+    nextStageLabel: 'Out for Delivery',
+    color: 'blue',
+    textColor: 'white',
+  },
+  {
+    key: 'OUT_FOR_DELIVERY',
+    label: 'Out for Delivery',
+    color: 'blue',
+    textColor: 'white',
+  },
+  {
+    key: 'FOR_PICKUP',
+    label: 'For Pickup',
+    color: 'orange',
+    textColor: 'white',
+  },
+];

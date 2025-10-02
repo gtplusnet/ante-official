@@ -1,0 +1,638 @@
+@use "sass:color";
+
+// Material Design 3 Variables
+$md3-surface: #ffffff;
+$md3-surface-variant: #f5f5f5;
+$md3-on-surface: #1a1a1a;
+$md3-on-surface-variant: #6b6b6b;
+$md3-primary: #1976d2;
+$md3-primary-container: #e3f2fd;
+$md3-on-primary: #ffffff;
+$md3-secondary-container: #f3e5f5;
+$md3-outline: #e0e0e0;
+$md3-outline-variant: #f0f0f0;
+$md3-error: #ba1a1a;
+$md3-surface-tint: rgba(25, 118, 210, 0.05);
+
+// MD3 elevation (using box-shadow instead of shadows for flat design)
+$md3-elevation-1: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$md3-elevation-2: 0 2px 4px 0 rgba(0, 0, 0, 0.08);
+$md3-elevation-3: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
+
+// MD3 Typography
+$md3-body-large: 16px;
+$md3-body-medium: 14px;
+$md3-body-small: 12px;
+$md3-label-large: 14px;
+$md3-label-medium: 12px;
+$md3-label-small: 11px;
+
+// Mention styling with MD3
+:deep(.q-editor .mention),
+:deep(.discussion-container .message-content .mention) {
+  background-color: $md3-primary-container;
+  border: none;
+  border-radius: 16px;
+  padding: 2px 8px;
+  color: $md3-primary;
+  font-weight: 500;
+  font-size: $md3-body-medium;
+  cursor: default;
+  user-select: none;
+  display: inline-block;
+  line-height: 1.5;
+}
+
+// Mention dropdown with MD3 design
+.mention-dropdown {
+  position: fixed;
+  background: $md3-surface;
+  border: none;
+  border-radius: 12px;
+  box-shadow: $md3-elevation-3;
+  width: 320px;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 9999;
+
+  .mention-dropdown-list {
+    overflow-y: visible;
+    max-height: none;
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+  }
+
+  .mention-user {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    gap: 12px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 200ms ease;
+    margin: 2px 0;
+
+    &:hover {
+      background-color: $md3-surface-tint;
+    }
+
+    &:active {
+      background-color: rgba($md3-primary, 0.12);
+    }
+    
+    // Fix for non-square images in mention dropdown
+    :deep(.q-avatar) {
+      img {
+        object-fit: cover;
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    .q-item-label {
+      font-size: $md3-body-medium;
+      color: $md3-on-surface;
+      font-weight: 400;
+      line-height: 1.5;
+    }
+
+    .q-item-label[caption] {
+      font-size: $md3-label-medium;
+      color: $md3-on-surface-variant;
+      margin-top: 2px;
+    }
+  }
+
+  .mention-dropdown-empty {
+    padding: 16px;
+    text-align: center;
+    color: $md3-on-surface-variant;
+    font-size: $md3-body-medium;
+  }
+}
+
+// Discussion input area with MD3
+.discussion-input-message {
+  margin-top: 16px;
+  background-color: $md3-surface;
+  border-radius: 12px;
+  padding: 16px;
+
+  .editor {
+    position: relative;
+    margin-bottom: 12px;
+
+    :deep(.q-editor) {
+      border: 1px solid $md3-outline;
+      border-radius: 8px;
+      background-color: $md3-surface;
+      transition: border-color 200ms ease;
+
+      &:hover {
+        border-color: $md3-on-surface-variant;
+      }
+
+      &.q-editor--focused {
+        border-color: $md3-primary;
+        outline: 1px solid $md3-primary;
+      }
+
+      .q-editor__content {
+        font-size: $md3-body-medium;
+        color: $md3-on-surface;
+        line-height: 1.5;
+        padding: 12px;
+        min-height: 56px;
+      }
+
+      .q-editor__toolbar {
+        border-bottom: 1px solid $md3-outline-variant;
+        background-color: $md3-surface-variant;
+        padding: 4px;
+      }
+    }
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+
+    :deep(.q-btn) {
+      border-radius: 20px;
+      text-transform: none;
+      font-weight: 500;
+      font-size: $md3-label-large;
+      padding: 6px 20px;
+      height: 36px;
+      line-height: 1;
+      box-shadow: none;
+      transition: all 200ms ease;
+      
+      // Fix vertical alignment
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      
+      // Ensure proper spacing for icon and text
+      .q-icon {
+        font-size: 18px;
+        margin-right: 4px;
+      }
+      
+      // Adjust text alignment
+      span {
+        display: inline-flex;
+        align-items: center;
+        line-height: 1;
+      }
+
+      &.q-btn--unelevated {
+        background-color: $md3-primary;
+        color: $md3-on-primary;
+
+        &:hover {
+          background-color: color.scale($md3-primary, $lightness: -17%);
+          box-shadow: $md3-elevation-1;
+        }
+
+        &:active {
+          background-color: color.scale($md3-primary, $lightness: -26%);
+        }
+
+        &:disabled {
+          background-color: rgba($md3-on-surface, 0.12);
+          color: rgba($md3-on-surface, 0.38);
+        }
+      }
+    }
+  }
+}
+
+// Attachment preview styles
+.attachment-preview {
+  background-color: $md3-surface-variant;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba($md3-primary, 0.12);
+  transition: all 200ms ease;
+  
+  &:hover {
+    border-color: rgba($md3-primary, 0.24);
+    box-shadow: $md3-elevation-1;
+  }
+  
+  .attachment-preview-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    
+    .attachment-info {
+      flex: 1;
+      min-width: 0; // Allow text truncation
+      
+      .attachment-name {
+        font-size: $md3-body-medium;
+        color: $md3-on-surface;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin-bottom: 2px;
+      }
+      
+      .attachment-size {
+        font-size: $md3-label-small;
+        color: $md3-on-surface-variant;
+      }
+    }
+  }
+}
+
+// Attach button styling
+.discussion-input-message {
+  .q-btn--outline {
+    &:not(:disabled) {
+      border-width: 1.5px;
+      font-weight: 500;
+      
+      &:hover {
+        background-color: rgba($md3-primary, 0.08);
+      }
+    }
+  }
+}
+
+// Discussion container with MD3
+.discussion-container {
+  height: calc(100vh - 350px);
+  background-color: $md3-surface-variant;
+  overflow-y: auto;
+  border-radius: 12px;
+  border: none;
+  padding: 16px;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+
+  // Custom scrollbar for MD3
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba($md3-on-surface, 0.2);
+    border-radius: 4px;
+
+    &:hover {
+      background-color: rgba($md3-on-surface, 0.3);
+    }
+  }
+
+  .discussion {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 0;
+    margin-bottom: 4px;
+    flex-direction: row;
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 20px;
+      background-color: $md3-primary-container;
+      overflow: hidden;
+      flex-shrink: 0;
+
+      :deep(.q-avatar) {
+        width: 100%;
+        height: 100%;
+        border-radius: 20px;
+        
+        img {
+          object-fit: cover;
+          width: 100%;
+          height: 100%;
+        }
+      }
+    }
+
+    .message {
+      max-width: 70%;
+      min-width: 200px;
+
+      .details {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 4px;
+
+        .person-name {
+          font-size: $md3-label-medium;
+          font-weight: 500;
+          color: $md3-on-surface;
+          line-height: 1.4;
+        }
+
+        .activity-text {
+          font-size: $md3-label-small;
+          color: $md3-on-surface-variant;
+          line-height: 1.4;
+        }
+      }
+
+      .message-content {
+        font-size: $md3-body-medium;
+        color: $md3-on-surface;
+        background-color: $md3-surface;
+        border-radius: 16px;
+        border-top-left-radius: 4px;
+        padding: 12px 16px;
+        border: none;
+        box-shadow: $md3-elevation-1;
+        line-height: 1.5;
+        word-wrap: break-word;
+
+        // Better text rendering
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      
+      .message-attachment {
+        margin-top: 8px;
+        
+        .message-attachment-image {
+          max-width: 300px;
+          max-height: 400px;
+          border-radius: 12px;
+          cursor: pointer;
+          transition: opacity 200ms ease;
+          box-shadow: $md3-elevation-1;
+          
+          &:hover {
+            opacity: 0.9;
+          }
+        }
+        
+        .message-attachment-file {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background-color: $md3-surface;
+          border-radius: 12px;
+          padding: 12px;
+          box-shadow: $md3-elevation-1;
+          
+          .q-icon {
+            color: $md3-primary;
+          }
+          
+          .file-name {
+            font-size: $md3-body-medium;
+            color: $md3-on-surface;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          
+          .q-btn {
+            flex-shrink: 0;
+          }
+        }
+      }
+
+      .time {
+        font-size: $md3-label-small;
+        color: $md3-on-surface-variant;
+        margin-top: 4px;
+        padding-left: 4px;
+      }
+    }
+
+    // Self message styling
+    &.self-message {
+      flex-direction: row-reverse;
+
+      .message {
+        .details {
+          flex-direction: row-reverse;
+        }
+
+        .message-content {
+          background-color: $md3-primary;
+          color: $md3-on-primary;
+          border-radius: 16px;
+          border-top-right-radius: 4px;
+          border-top-left-radius: 16px;
+
+          .mention {
+            background-color: rgba($md3-on-primary, 0.2);
+            color: $md3-on-primary;
+          }
+        }
+      }
+    }
+  }
+
+  // Empty state
+  .text-center.text-grey {
+    color: $md3-on-surface-variant;
+    font-size: $md3-body-medium;
+    padding: 32px;
+  }
+
+  // Loading state
+  :deep(.q-inner-loading) {
+    background-color: rgba($md3-surface, 0.8);
+    border-radius: 12px;
+  }
+
+  // Load more button
+  :deep(.q-btn) {
+    &.q-btn--flat {
+      color: $md3-primary;
+      font-weight: 500;
+      font-size: $md3-label-large;
+      padding: 6px 16px;
+      height: 32px;
+      line-height: 1;
+      border-radius: 20px;
+      transition: background-color 200ms ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      
+      .q-icon {
+        font-size: 18px;
+        margin-right: 4px;
+      }
+
+      &:hover {
+        background-color: rgba($md3-primary, 0.08);
+      }
+
+      &:active {
+        background-color: rgba($md3-primary, 0.12);
+      }
+    }
+  }
+}
+
+// Dialog adjustments for MD3
+:deep(.q-dialog__inner) {
+  padding: 16px;
+
+  .q-card {
+    border-radius: 28px;
+    box-shadow: $md3-elevation-3;
+  }
+}
+
+// Smooth transitions
+* {
+  transition: background-color 200ms ease, border-color 200ms ease;
+}
+
+// Discussion Watchers MD3 Styles
+.discussion-watchers {
+  display: flex;
+  align-items: center;
+  margin-right: 8px; // MD3 1-unit spacing
+  
+  .watchers-container {
+    display: flex;
+    align-items: center;
+    
+    .watcher-avatar {
+      margin-left: -8px; // MD3 overlap spacing
+      border: 2px solid $md3-surface; // Clean separation border
+      transition: all 150ms cubic-bezier(0.2, 0, 0, 1); // MD3 standard easing
+      cursor: pointer;
+      position: relative;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); // Subtle depth
+      
+      &:first-child {
+        margin-left: 0; // No overlap for first avatar
+      }
+      
+      &:hover {
+        transform: scale(1.1); // MD3 hover interaction
+        box-shadow: $md3-elevation-1; // Subtle elevation on hover
+        z-index: 999 !important; // Ensure hover avatar is on top
+      }
+      
+      img {
+        border-radius: 50%; // Perfect circle
+        object-fit: cover;
+        width: 100%;
+        height: 100%;
+      }
+    }
+    
+    .overflow-indicator {
+      margin-left: 4px; // Half-unit spacing
+      padding: 4px 8px; // MD3 compact padding
+      background: $md3-surface-variant;
+      color: $md3-on-surface-variant;
+      border-radius: 12px; // MD3 small component radius
+      font-size: $md3-label-small; // 11px MD3 scale
+      font-weight: 500;
+      line-height: 1.2;
+      cursor: pointer;
+      transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1);
+      
+      &:hover {
+        background: $md3-outline;
+      }
+      
+      span {
+        display: block;
+      }
+    }
+  }
+  
+  .watchers-loading {
+    display: flex;
+    align-items: center;
+    
+    .loading-avatar {
+      margin-left: -8px;
+      border: 2px solid $md3-surface;
+      border-radius: 50%;
+      
+      &:first-child {
+        margin-left: 0;
+      }
+    }
+  }
+}
+
+// Enhanced tooltip styling for watchers
+.watcher-tooltip {
+  background: $md3-surface-variant !important;
+  color: $md3-on-surface !important;
+  font-size: $md3-label-medium !important; // 12px MD3 scale
+  font-weight: 400 !important;
+  border-radius: 8px !important; // MD3 tooltip radius
+  padding: 6px 8px !important;
+  box-shadow: $md3-elevation-2 !important;
+  border: none !important;
+}
+
+// Responsive adjustments for mobile watchers
+@media (max-width: 768px) {
+  .discussion-watchers {
+    margin-right: 4px;
+    
+    .watchers-container {
+      .watcher-avatar {
+        margin-left: -6px; // Smaller overlap on mobile
+        
+        &:first-child {
+          margin-left: 0;
+        }
+      }
+      
+      .overflow-indicator {
+        margin-left: 2px;
+        padding: 2px 6px;
+        font-size: 10px;
+      }
+    }
+  }
+}
+
+// Image viewer styles
+.image-viewer-card {
+  background-color: rgba(0, 0, 0, 0.9);
+  
+  .q-bar {
+    background-color: #000 !important;
+    padding: 12px 16px;
+    font-size: $md3-body-medium;
+  }
+  
+  .image-viewer-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 56px); // Subtract bar height
+    padding: 0;
+    overflow: auto;
+    
+    .fullscreen-image {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+      margin: auto;
+    }
+  }
+}

@@ -1,0 +1,210 @@
+<script>
+    // Theme toggle functionality
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+    }
+
+    // Load saved theme
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        // Format JSON blocks client-side with proper 2-space indentation
+        document.querySelectorAll('.json-block[data-json]').forEach(block => {
+            try {
+                // Get the raw JSON from data attribute
+                const jsonString = block.getAttribute('data-json');
+                const jsonObj = JSON.parse(jsonString);
+
+                // Format with 2-space indentation
+                const formatted = JSON.stringify(jsonObj, null, 2);
+
+                // Apply syntax highlighting
+                const highlighted = formatted
+                    .replace(/"([^"]+)":/g, '<span class="json-key">"$1"</span>:')
+                    .replace(/: "([^"]*)"/g, ': <span class="json-string">"$1"</span>')
+                    .replace(/: (\d+\.?\d*)/g, ': <span class="json-number">$1</span>')
+                    .replace(/: (true|false)/g, ': <span class="json-boolean">$1</span>')
+                    .replace(/: (null)/g, ': <span class="json-null">$1</span>');
+
+                // Set the formatted HTML
+                block.innerHTML = '<code>' + highlighted + '</code>';
+            } catch (e) {
+                console.error('Failed to format JSON:', e);
+                // Fallback to raw JSON if parsing fails
+                block.innerHTML = '<code>' + block.getAttribute('data-json') + '</code>';
+            }
+        });
+
+        // Smooth scroll for navigation
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                if (href.startsWith('#')) {
+                    e.preventDefault();
+                    const target = document.querySelector(href);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+
+                        // Update active state
+                        document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+                        this.classList.add('active');
+                    }
+                }
+            });
+        });
+
+        // Tab functionality
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabGroup = this.getAttribute('data-tab-group');
+                const targetId = this.getAttribute('data-tab');
+
+                // Update tabs
+                document.querySelectorAll(`.tab[data-tab-group="${tabGroup}"]`).forEach(t => {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+
+                // Update content
+                document.querySelectorAll(`.tab-content[data-tab-group="${tabGroup}"]`).forEach(content => {
+                    content.classList.remove('active');
+                });
+                const targetContent = document.getElementById(targetId);
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                }
+            });
+        });
+
+        // Format and highlight code blocks
+        document.querySelectorAll('.code-block[data-code]').forEach(block => {
+            const rawCode = block.getAttribute('data-code');
+            const language = block.getAttribute('data-language');
+
+            // Decode HTML entities from the data attribute
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = rawCode;
+            let code = textarea.value;
+
+            // Replace template variables - using escaped patterns to avoid Handlebars processing
+            // Determine API path based on current page URL
+            const currentPath = window.location.pathname;
+            let apiBasePath = '/api/public/school-guardian'; // default
+            if (currentPath.includes('/gate')) {
+                apiBasePath = '/api/public/gate-device';
+            } else if (currentPath.includes('/guardian')) {
+                apiBasePath = '/api/public/school-guardian';
+            }
+
+            code = code.replace(/\{\{baseUrl\}\}/g, window.location.origin + apiBasePath);
+            code = code.replace(/\{\{wsUrl\}\}/g, 'ws://localhost:4000');
+
+            // Store clean code for copy functionality
+            block.setAttribute('data-clean-code', code);
+
+            // Apply syntax highlighting based on language
+            let highlighted = code;
+
+            if (language === 'python') {
+                highlighted = highlighted
+                    // Keywords (must come before strings to avoid matching inside strings)
+                    .replace(/\b(import|from|as|def|class|return|if|else|elif|for|while|with|try|except|raise|finally|pass|break|continue|lambda|yield|assert|del|global|nonlocal|in|is|not|and|or|True|False|None)\b/g, '<span class="keyword">$1</span>')
+                    // Built-in functions
+                    .replace(/\b(print|open|len|range|str|int|float|list|dict|set|tuple|type|isinstance|hasattr|getattr|setattr|delattr|all|any|sum|min|max|abs|round|zip|map|filter|sorted|reversed|enumerate)\b/g, '<span class="function">$1</span>')
+                    // Strings (both single and double quotes)
+                    .replace(/("[^"]*"|'[^']*')/g, '<span class="string">$1</span>')
+                    // Comments
+                    .replace(/(#.*$)/gm, '<span class="comment">$1</span>')
+                    // Numbers
+                    .replace(/\b(\d+\.?\d*)\b/g, '<span class="number">$1</span>');
+            } else if (language === 'nodejs' || language === 'javascript') {
+                highlighted = highlighted
+                    // Keywords
+                    .replace(/\b(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|try|catch|finally|throw|new|typeof|instanceof|this|class|extends|super|import|export|from|async|await|yield|null|undefined|true|false)\b/g, '<span class="keyword">$1</span>')
+                    // Built-in objects and methods
+                    .replace(/\b(console|require|module|exports|process|Buffer|JSON|Math|Date|Array|Object|String|Number|Boolean|Promise|Set|Map|WeakSet|WeakMap)\b/g, '<span class="function">$1</span>')
+                    // Strings (both single and double quotes, including template literals)
+                    .replace(/("[^"]*"|'[^']*'|`[^`]*`)/g, '<span class="string">$1</span>')
+                    // Comments
+                    .replace(/(\/\/.*$)/gm, '<span class="comment">$1</span>')
+                    .replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="comment">$1</span>')
+                    // Numbers
+                    .replace(/\b(\d+\.?\d*)\b/g, '<span class="number">$1</span>');
+            } else if (language === 'curl' || language === 'bash') {
+                highlighted = highlighted
+                    // Commands
+                    .replace(/^(curl|wget|POST|GET|PUT|DELETE)\b/gm, '<span class="keyword">$1</span>')
+                    // Flags
+                    .replace(/\s(-[a-zA-Z]+|--[a-zA-Z-]+)/g, ' <span class="function">$1</span>')
+                    // Strings
+                    .replace(/("[^"]*"|'[^']*')/g, '<span class="string">$1</span>')
+                    // URLs
+                    .replace(/(https?:\/\/[^\s]+)/g, '<span class="string">$1</span>')
+                    // Comments
+                    .replace(/(#.*$)/gm, '<span class="comment">$1</span>');
+            }
+
+            // Set the highlighted code as HTML
+            block.innerHTML = highlighted;
+        });
+
+        // Style error status badges based on status code
+        document.querySelectorAll('.error-status').forEach(badge => {
+            const status = badge.textContent.trim();
+            const statusColors = {
+                '400': '#ff9800',
+                '401': '#f44336',
+                '404': '#9c27b0',
+                '409': '#ff5722',
+                '500': '#e91e63'
+            };
+
+            if (statusColors[status]) {
+                badge.style.backgroundColor = statusColors[status];
+            }
+        });
+
+        // Copy code functionality
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const codeElement = this.parentElement.querySelector('code');
+                // Get the clean code from data attribute or fall back to text content
+                const code = codeElement.getAttribute('data-clean-code') || codeElement.textContent;
+                navigator.clipboard.writeText(code).then(() => {
+                    const originalText = this.textContent;
+                    this.textContent = 'Copied!';
+                    setTimeout(() => {
+                        this.textContent = originalText;
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy:', err);
+                });
+            });
+        });
+    });
+
+    // Highlight active section based on scroll
+    window.addEventListener('scroll', function() {
+        const sections = document.querySelectorAll('section[id]');
+        const scrollPos = window.scrollY + 100;
+
+        sections.forEach(section => {
+            const top = section.offsetTop;
+            const height = section.offsetHeight;
+            const id = section.getAttribute('id');
+
+            if (scrollPos >= top && scrollPos < top + height) {
+                document.querySelectorAll('nav a').forEach(a => {
+                    a.classList.remove('active');
+                    if (a.getAttribute('href') === `#${id}`) {
+                        a.classList.add('active');
+                    }
+                });
+            }
+        });
+    });
+</script>

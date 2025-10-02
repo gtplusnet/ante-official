@@ -1,0 +1,42 @@
+export default [
+  {
+    key: 'SUPPLIER_OUTSOURCING',
+    label: 'Supplier Outsourcing',
+    color: 'red',
+    textColor: 'white',
+    nextStage: 'MATERIALS_APPROVAL',
+    nextStageLabel: 'Materials Approval',
+  },
+  {
+    key: 'MATERIALS_APPROVAL',
+    label: 'Materials Approval',
+    color: 'orange-9',
+    textColor: 'white',
+    nextStage: 'CANVASSING',
+    nextStageLabel: 'Canvassing',
+  },
+  {
+    key: 'CANVASSING',
+    label: 'Canvassing',
+    color: 'orange',
+    textColor: 'white',
+    nextStage: 'SUPPLIER_SELECTION',
+    nextStageLabel: 'Supplier Selection',
+  },
+  {
+    key: 'SUPPLIER_SELECTION',
+    label: 'Supplier Selection',
+    color: 'green',
+    textColor: 'white',
+    nextStage: 'PURCHASE_ORDER',
+    nextStageLabel: 'Purchase Order',
+  },
+  {
+    key: 'PURCHASE_ORDER',
+    label: 'Purchase Order',
+    color: 'blue',
+    textColor: 'white',
+    nextStage: 'DELIVERY',
+    nextStageLabel: 'Delivery',
+  },
+];

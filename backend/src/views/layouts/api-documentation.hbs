@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+
+    {{> api-doc/styles}}
+
+    {{#if theme}}
+    <style>
+        :root {
+            --primary-color: {{theme.primaryColor}};
+            --secondary-color: {{theme.secondaryColor}};
+            --header-bg: {{theme.headerGradient}};
+            --header-bg-dark: {{theme.headerGradientDark}};
+        }
+
+        [data-theme="dark"] {
+            --header-bg: var(--header-bg-dark);
+        }
+    </style>
+    {{/if}}
+</head>
+<body>
+    {{> api-doc/header}}
+
+    {{> api-doc/navigation}}
+
+    <main>
+        {{{body}}}
+    </main>
+
+    {{> api-doc/footer}}
+
+    {{> api-doc/scripts}}
+</body>
+</html>

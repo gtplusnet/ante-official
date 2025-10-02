@@ -1,0 +1,865 @@
+/* ==========================================================================
+   Material Design 3 Flat - Employee Dialog
+   Complete redesign following MD3 2025 principles
+   ========================================================================== */
+
+
+/* ==========================================================================
+   CSS Custom Properties (Design Tokens)
+   ========================================================================== */
+:root {
+  /* Colors - Material Design 3 */
+  --md3-primary: #1976d2;
+  --md3-on-primary: #ffffff;
+  --md3-primary-container: #d2e3ff;
+  --md3-on-primary-container: #001c3b;
+
+  --md3-surface: #fefbff;
+  --md3-surface-variant: #f7f2fa;
+  --md3-surface-container: #f3f0f4;
+  --md3-surface-container-high: #ede8ec;
+  --md3-on-surface: #1d1b20;
+  --md3-on-surface-variant: #49454f;
+
+  --md3-outline: #79747e;
+  --md3-outline-variant: #cac4d0;
+  --md3-surface-border: #e7e0ec;
+
+  --md3-success: #28a745;
+  --md3-warning: #ffc107;
+  --md3-error: #dc3545;
+  --md3-info: #17a2b8;
+
+  /* Spacing - 8dp Grid System */
+  --md3-space-xs: 4px;
+  --md3-space-sm: 8px;
+  --md3-space-md: 16px;
+  --md3-space-lg: 24px;
+  --md3-space-xl: 32px;
+  --md3-space-2xl: 48px;
+  --md3-space-3xl: 64px;
+
+  /* Border Radius */
+  --md3-border-radius-xs: 4px;
+  --md3-border-radius-sm: 8px;
+  --md3-border-radius-md: 12px;
+  --md3-border-radius-lg: 16px;
+  --md3-border-radius-xl: 24px;
+
+  /* Transitions */
+  --md3-transition-short: 200ms cubic-bezier(0.2, 0, 0, 1);
+  --md3-transition-medium: 300ms cubic-bezier(0.2, 0, 0, 1);
+  --md3-transition-long: 500ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ==========================================================================
+   Typography System - Material Design 3
+   ========================================================================== */
+.md3-display-large {
+  font-family: 'Roboto', sans-serif;
+  font-size: 57px;
+  font-weight: 400;
+  line-height: 64px;
+  letter-spacing: -0.25px;
+  color: var(--md3-on-surface);
+}
+
+.md3-headline-large {
+  font-family: 'Roboto', sans-serif;
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 40px;
+  color: var(--md3-on-surface);
+}
+
+.md3-title-large {
+  font-family: 'Roboto', sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 28px;
+  color: var(--md3-on-surface);
+  margin: 0 0 var(--md3-space-md) 0;
+}
+
+.md3-title-medium {
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: 0.15px;
+  color: var(--md3-on-surface);
+  margin: 0 0 var(--md3-space-sm) 0;
+}
+
+.md3-label-large {
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.1px;
+  color: var(--md3-on-surface);
+}
+
+.md3-body-large {
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  letter-spacing: 0.5px;
+  color: var(--md3-on-surface-variant);
+}
+
+.md3-body-medium {
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: 0.25px;
+  color: var(--md3-on-surface-variant);
+}
+
+.md3-body-small {
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: 0.4px;
+  color: var(--md3-on-surface-variant);
+}
+
+/* ==========================================================================
+   Dialog Layout - Clean Flex Structure
+   ========================================================================== */
+.dialog-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 600px;
+  max-height: 100vh;
+
+  /* Force flat design on ALL Quasar inputs/selects immediately */
+  .q-field--outlined {
+    .q-field__control {
+      box-shadow: none !important;
+
+      &:before {
+        border: 1px solid var(--md3-outline-variant) !important;
+        border-radius: var(--md3-border-radius-sm) !important;
+        box-shadow: none !important;
+        transition: border-color 0.36s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      }
+
+      &:after {
+        display: none !important;
+        box-shadow: none !important;
+      }
+
+      &:hover:before {
+        border-color: var(--md3-outline) !important;
+        box-shadow: none !important;
+      }
+    }
+
+    &.q-field--focused .q-field__control:before {
+      border-color: var(--md3-primary) !important;
+      border-width: 2px !important;
+      box-shadow: none !important;
+    }
+  }
+
+  /* Force flat design on ALL buttons */
+  .q-btn {
+    box-shadow: none !important;
+
+    &:before {
+      box-shadow: none !important;
+    }
+
+    &.q-btn--unelevated {
+      box-shadow: none !important;
+    }
+
+    .q-ripple {
+      display: none !important;
+    }
+  }
+}
+
+.tab-header {
+  flex-shrink: 0;
+  margin-bottom: var(--md3-space-sm);
+}
+
+.tab-content-container {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: var(--md3-space-xs);
+  background-color: #fff;
+
+  /* Custom scrollbar */
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: var(--md3-outline-variant) var(--md3-surface-variant); /* Firefox */
+}
+
+.universal-action-bar {
+  flex-shrink: 0;
+  background: var(--md3-surface);
+  border-top: 1px solid var(--md3-surface-border);
+  padding: var(--md3-space-md) 0 0 0;
+  margin-top: var(--md3-space-md);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--md3-space-sm);
+}
+
+/* ==========================================================================
+   Tab Navigation - Modern Pill Style
+   ========================================================================== */
+.page-tabs {
+  display: flex;
+  background-color: var(--md3-surface-container);
+  border: 1px solid var(--md3-surface-border);
+  border-radius: var(--md3-border-radius-sm);
+  padding: 2px;
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  /* Custom scrollbar for horizontal overflow */
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--md3-outline-variant);
+    border-radius: 2px;
+  }
+
+  .tab {
+    @extend .md3-label-large;
+    flex-shrink: 0;
+    padding: var(--md3-space-sm) var(--md3-space-md);
+    background-color: transparent;
+    border: none;
+    border-radius: var(--md3-border-radius-xs);
+    cursor: pointer;
+    transition: all var(--md3-transition-short);
+    white-space: nowrap;
+    font-size: 13px;
+
+    &:hover {
+      background-color: rgba(25, 118, 210, 0.08);
+      color: var(--md3-primary);
+    }
+
+    &.active {
+      background-color: var(--md3-primary);
+      color: var(--md3-on-primary);
+      font-weight: 500;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--md3-primary);
+      outline-offset: 2px;
+    }
+  }
+}
+
+/* ==========================================================================
+   Surface Components - Clean Card Design
+   ========================================================================== */
+.md3-surface {
+  background: var(--md3-surface);
+  border: 1px solid var(--md3-surface-border);
+  border-radius: var(--md3-border-radius-md);
+  padding: var(--md3-space-md);
+  margin-bottom: var(--md3-space-md);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.md3-surface-variant {
+  background: var(--md3-surface-variant);
+  border-radius: var(--md3-border-radius-sm);
+  padding: var(--md3-space-md);
+  margin-bottom: var(--md3-space-md);
+}
+
+/* ==========================================================================
+   Form Components - Inputs, Selects, Buttons
+   ========================================================================== */
+
+/* Manual Field Labels */
+.md3-field-label {
+  @extend .md3-label-large;
+  display: block;
+  margin-bottom: var(--md3-space-xs);
+  color: var(--md3-on-surface);
+  font-weight: 500;
+  font-size: 12px;
+
+  .optional {
+    font-weight: 400;
+    color: var(--md3-on-surface-variant);
+    font-size: 12px;
+  }
+}
+
+/* Input Fields */
+.md3-input {
+  .q-field__control {
+    height: 40px !important;
+    border-radius: var(--md3-border-radius-sm) !important;
+    background: var(--md3-surface) !important;
+    box-shadow: none !important;
+
+    &:before {
+      border: 1px solid var(--md3-outline-variant) !important;
+      border-radius: var(--md3-border-radius-sm) !important;
+      box-shadow: none !important;
+    }
+
+    &:after {
+      display: none !important;
+    }
+
+    &:hover:before {
+      border-color: var(--md3-outline) !important;
+    }
+  }
+
+  .q-field__native {
+    @extend .md3-body-medium;
+    padding: 0 var(--md3-space-md) !important;
+  }
+
+  .q-field__label {
+    display: none !important; // Hide Quasar's built-in label
+  }
+
+  .q-field__prepend {
+    padding-left: var(--md3-space-md) !important;
+  }
+
+  &.q-field--focused {
+    .q-field__control:before {
+      border-color: var(--md3-primary) !important;
+      border-width: 2px !important;
+      box-shadow: none !important;
+    }
+  }
+
+  &.q-field--error {
+    .q-field__control:before {
+      border-color: var(--md3-error) !important;
+    }
+  }
+}
+
+/* Select Fields */
+.md3-select {
+  @extend .md3-input;
+
+  .q-field__append {
+    padding-right: var(--md3-space-md) !important;
+  }
+
+  .q-field__control-container {
+    padding-top: 0 !important;
+  }
+
+  .q-field__label {
+    display: none !important; // Hide Quasar's built-in label for selects too
+  }
+}
+
+/* Buttons - Material Design 3 */
+.md3-button {
+  @extend .md3-label-large;
+  min-height: 36px !important;
+  border-radius: var(--md3-border-radius-sm) !important;
+  padding: 0 var(--md3-space-md) !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  transition: all var(--md3-transition-short) !important;
+  font-size: 13px !important;
+
+  &:focus-visible {
+    outline: 2px solid var(--md3-primary);
+    outline-offset: 2px;
+  }
+}
+
+.md3-button-filled {
+  @extend .md3-button;
+  background-color: var(--md3-primary) !important;
+  color: var(--md3-on-primary) !important;
+  border: none !important;
+  box-shadow: none !important;
+
+  &:hover {
+    background-color: color-mix(in srgb, var(--md3-primary) 92%, black) !important;
+    box-shadow: none !important;
+  }
+
+  &:active {
+    background-color: color-mix(in srgb, var(--md3-primary) 88%, black) !important;
+    box-shadow: none !important;
+  }
+
+  &:before {
+    box-shadow: none !important;
+  }
+}
+
+.md3-button-outlined {
+  @extend .md3-button;
+  background-color: transparent !important;
+  color: var(--md3-primary) !important;
+  border: 1px solid var(--md3-primary) !important;
+  box-shadow: none !important;
+
+  &:hover {
+    background-color: rgba(25, 118, 210, 0.08) !important;
+    box-shadow: none !important;
+  }
+
+  &:before {
+    box-shadow: none !important;
+  }
+}
+
+.md3-button-text {
+  @extend .md3-button;
+  background-color: transparent !important;
+  color: var(--md3-primary) !important;
+  border: none !important;
+  box-shadow: none !important;
+
+  &:hover {
+    background-color: rgba(25, 118, 210, 0.08) !important;
+    box-shadow: none !important;
+  }
+
+  &:before {
+    box-shadow: none !important;
+  }
+}
+
+/* Input with Extension (for + buttons) */
+.input-with-extension {
+  display: flex;
+  align-items: center;
+  gap: var(--md3-space-sm);
+
+  .md3-select,
+  .md3-input {
+    flex: 1;
+  }
+
+  .extension-btn {
+    flex-shrink: 0;
+    height: var(--md3-space-2xl) !important;
+    width: var(--md3-space-2xl) !important;
+    border-radius: 50% !important;
+    background-color: transparent !important;
+    color: var(--md3-primary) !important;
+    border: 1px solid var(--md3-primary) !important;
+
+    &:hover {
+      background-color: rgba(25, 118, 210, 0.08) !important;
+    }
+  }
+}
+
+/* ==========================================================================
+   Table Components - Clean Data Display
+   ========================================================================== */
+.md3-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--md3-surface);
+  border-radius: var(--md3-border-radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--md3-surface-border);
+
+  th {
+    @extend .md3-label-large;
+    background: var(--md3-surface-variant);
+    padding: var(--md3-space-md);
+    text-align: left;
+    color: var(--md3-on-surface);
+    border-bottom: 1px solid var(--md3-surface-border);
+    font-weight: 500;
+  }
+
+  td {
+    @extend .md3-body-medium;
+    padding: var(--md3-space-md);
+    color: var(--md3-on-surface-variant);
+    border-bottom: 1px solid var(--md3-outline-variant);
+    vertical-align: middle;
+  }
+
+  tr {
+    transition: background-color var(--md3-transition-short);
+
+    &:hover {
+      background-color: var(--md3-surface-container);
+    }
+
+    &:last-child td {
+      border-bottom: none;
+    }
+  }
+}
+
+/* ==========================================================================
+   Chip Components - Status Indicators
+   ========================================================================== */
+.md3-chip {
+  @extend .md3-label-large;
+  display: inline-flex;
+  align-items: center;
+  padding: var(--md3-space-xs) var(--md3-space-md) !important;
+  border-radius: var(--md3-border-radius-sm) !important;
+  border: 1px solid var(--md3-outline-variant) !important;
+  background-color: var(--md3-surface-variant) !important;
+  color: var(--md3-on-surface-variant) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+
+  &.md3-chip-primary {
+    background-color: var(--md3-primary-container) !important;
+    color: var(--md3-on-primary-container) !important;
+    border-color: var(--md3-primary) !important;
+  }
+
+  &.md3-chip-success {
+    background-color: color-mix(in srgb, var(--md3-success) 20%, white) !important;
+    color: var(--md3-success) !important;
+    border-color: var(--md3-success) !important;
+  }
+
+  &.md3-chip-warning {
+    background-color: color-mix(in srgb, var(--md3-warning) 20%, white) !important;
+    color: color-mix(in srgb, var(--md3-warning) 80%, black) !important;
+    border-color: var(--md3-warning) !important;
+  }
+
+  &.md3-chip-error {
+    background-color: color-mix(in srgb, var(--md3-error) 20%, white) !important;
+    color: var(--md3-error) !important;
+    border-color: var(--md3-error) !important;
+  }
+}
+
+/* ==========================================================================
+   Loading and Empty States
+   ========================================================================== */
+.md3-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--md3-space-3xl) var(--md3-space-lg);
+
+  .md3-spinner {
+    color: var(--md3-primary) !important;
+    margin-bottom: var(--md3-space-md);
+  }
+
+  .md3-loading-text {
+    @extend .md3-body-medium;
+    color: var(--md3-on-surface-variant);
+  }
+}
+
+.md3-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--md3-space-3xl) var(--md3-space-lg);
+  text-align: center;
+
+  .md3-empty-icon {
+    color: var(--md3-outline) !important;
+    margin-bottom: var(--md3-space-md);
+  }
+
+  .md3-empty-title {
+    @extend .md3-title-medium;
+    margin-bottom: var(--md3-space-sm);
+  }
+
+  .md3-empty-description {
+    @extend .md3-body-medium;
+    color: var(--md3-on-surface-variant);
+    margin-bottom: var(--md3-space-lg);
+    max-width: 300px;
+  }
+}
+
+/* ==========================================================================
+   Responsive Design - Mobile First
+   ========================================================================== */
+@media (max-width: 768px) {
+  .dialog-layout {
+    padding: var(--md3-space-md);
+    min-height: 500px;
+    max-height: 95vh;
+  }
+
+  .page-tabs {
+    .tab {
+      padding: var(--md3-space-sm) var(--md3-space-md);
+      font-size: 12px;
+    }
+  }
+
+  .md3-surface {
+    padding: var(--md3-space-md);
+    margin-bottom: var(--md3-space-md);
+  }
+
+  .universal-action-bar {
+    gap: var(--md3-space-sm);
+
+    .md3-button {
+      min-width: auto;
+      padding: 0 var(--md3-space-md) !important;
+    }
+  }
+
+  .md3-table {
+    font-size: 12px;
+
+    th, td {
+      padding: var(--md3-space-sm);
+    }
+  }
+}
+
+@media (min-width: 1024px) {
+  .dialog-layout {
+    min-height: 700px;
+  }
+
+  .tab-content-container {
+    padding-right: var(--md3-space-sm);
+  }
+}
+
+/* ==========================================================================
+   Accessibility Enhancements
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Focus visible styles */
+*:focus-visible {
+  outline: 2px solid var(--md3-primary);
+  outline-offset: 2px;
+  border-radius: var(--md3-border-radius-xs);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --md3-surface-border: #000000;
+    --md3-outline: #000000;
+    --md3-outline-variant: #666666;
+  }
+}
+
+/* ==========================================================================
+   Compact Mode Styles - Dense Layout
+   ========================================================================== */
+.employee-details-tab.compact {
+  /* Reduce surface padding */
+  .md3-surface {
+    padding: var(--md3-space-md);
+    margin-bottom: var(--md3-space-md);
+  }
+
+  /* Smaller field labels */
+  .md3-field-label {
+    font-size: 12px;
+    margin-bottom: var(--md3-space-xs);
+  }
+
+  /* Denser inputs */
+  .md3-input,
+  .md3-select {
+    .q-field__control {
+      height: 40px !important;
+      min-height: 40px !important;
+    }
+
+    .q-field__native {
+      font-size: 13px;
+      padding: 0 var(--md3-space-sm) !important;
+    }
+
+    .q-field__prepend {
+      padding-left: var(--md3-space-sm) !important;
+    }
+
+    .q-field__append {
+      padding-right: var(--md3-space-sm) !important;
+    }
+  }
+
+  /* Smaller section titles */
+  .md3-title-medium {
+    font-size: 18px;
+    line-height: 24px;
+    margin: 0 0 var(--md3-space-sm) 0;
+  }
+
+  /* Compact button extensions */
+  .input-with-extension {
+    gap: var(--md3-space-xs);
+
+    .extension-btn {
+      height: 40px !important;
+      width: 40px !important;
+
+      .q-icon {
+        font-size: 18px;
+      }
+    }
+  }
+
+  /* Tighter row spacing */
+  .row {
+    &.q-col-gutter-sm {
+      margin: -4px;
+
+      > .col,
+      > [class*="col-"] {
+        padding: 4px;
+      }
+    }
+  }
+
+  /* Reduce icon sizes in prepend slots */
+  .q-icon {
+    font-size: 18px;
+  }
+}
+
+/* ==========================================================================
+   Quasar Component Overrides - Ensure Flat Design
+   ========================================================================== */
+/* Global overrides for all Quasar components in the dialog */
+/* Dialog Layout */
+.dialog-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 70vh; /* Minimum height to ensure content is visible */
+  max-height: 70vh; /* Maximum height to ensure it doesn't go off screen */
+  overflow: hidden; /* Prevent double scrollbars */
+}
+
+/* Tab Content Container */
+.tab-content-container {
+  flex: 1;
+  overflow-y: auto; /* Enable vertical scrolling when content overflows */
+  padding: 16px;
+}
+
+/* Tab Header */
+.tab-header {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
+  padding: 8px 16px 0;
+  margin-bottom: 0;
+}
+
+/* Expanding div - will push content up when needed */
+.dialog-layout > div:last-child {
+  flex: 1 0 auto;
+}
+
+.q-dialog__inner {
+  .dialog-layout {
+    /* Remove all shadows from Quasar components */
+    .q-field--outlined .q-field__control {
+      box-shadow: none !important;
+    }
+
+    .q-field--outlined .q-field__control:before {
+      box-shadow: none !important;
+    }
+
+    .q-field--outlined .q-field__control:hover:before {
+      box-shadow: none !important;
+    }
+
+    .q-field--outlined.q-field--focused .q-field__control:before {
+      box-shadow: none !important;
+    }
+
+    /* Ensure consistent input styling */
+    .q-input, .q-select {
+      font-family: 'Roboto', sans-serif;
+    }
+
+    /* Remove ripple effects for flat design */
+    .q-btn .q-ripple {
+      display: none !important;
+    }
+
+    /* Ensure tabs have no shadows */
+    .q-tab {
+      box-shadow: none !important;
+    }
+
+    /* Card shadows removal */
+    .q-card {
+      box-shadow: none !important;
+    }
+  }
+
+  /* Apply to all tab content */
+  .employee-details-tab,
+  .contract-details-tab,
+  .job-details-tab,
+  .government-tab,
+  .shift-tab,
+  .service-leave-tab,
+  .allowance-tab,
+  .deduction-tab,
+  .documentation-tab {
+    .q-field--outlined .q-field__control {
+      box-shadow: none !important;
+
+      &:before {
+        box-shadow: none !important;
+      }
+    }
+
+    .q-btn {
+      box-shadow: none !important;
+
+      &:before {
+        box-shadow: none !important;
+      }
+    }
+  }
+}

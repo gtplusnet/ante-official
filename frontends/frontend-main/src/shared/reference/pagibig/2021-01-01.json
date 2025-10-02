@@ -1,0 +1,7 @@
+{
+  "employeeMinimumShare": 100,
+  "employeeMinimumPercentage": 2,
+  "percentage": 2,
+  "maximumEmployerShare": 100,
+  "maximumEmployeeShare": 100
+}

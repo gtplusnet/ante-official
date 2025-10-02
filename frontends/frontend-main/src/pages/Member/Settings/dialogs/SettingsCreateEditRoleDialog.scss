@@ -1,0 +1,26 @@
+.dialog-card {
+  max-width: 1100px;
+  min-height: 600px;
+}
+
+.scope-container {
+  border: 1px solid #eee;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+
+.user-level-tree-container {
+  border: 1px solid #eee;
+  padding: 5px;
+  border-radius: 5px;
+
+  .module-name {
+    font-weight: 600;
+    width: 100%;
+  }
+
+  .user-level-list {
+    padding-left: 2em;
+  }
+}

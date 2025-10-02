@@ -1,0 +1,133 @@
+table {
+  user-select: none;
+  table-layout: fixed;
+  background-color: #fff;
+
+  thead {
+    tr {
+      th {
+        border: 1px solid #ddd;
+        background-color: #fafafa;
+      }
+    }
+  }
+  tbody {
+    &.loading {
+      opacity: 0.5;
+    }
+    tr {
+      cursor: pointer;
+
+      &:hover {
+        background-color: #fafafa;
+      }
+      
+      &.on-leave {
+        background-color: #e3f2fd !important;
+        
+        td {
+          color: #1976d2;
+          font-weight: 500;
+        }
+        
+        &:hover {
+          background-color: #bbdefb !important;
+        }
+      }
+      td {
+        border: 1px solid #ddd;
+        padding: 7px;
+        text-align: center;
+
+        .attendance {
+          font-weight: 500;
+          font-size: 12px;
+          display: block;
+          color: white;
+          padding: 2px;
+          border-radius: 5px;
+          width: 100%;
+          cursor: pointer;
+
+          &.absent {
+            background-color: #f44336;
+          }
+          &.present {
+            background-color: #4caf50;
+          }
+          &.partial {
+            background-color: #ff9800;
+          }
+        }
+
+        .td-button {
+          font-weight: bold;
+          font-size: 12px;
+          display: block;
+          background-color: rgb(196, 22, 22);
+          color: white;
+          padding: 2px;
+          border-radius: 5px;
+          width: 100%;
+          cursor: pointer;
+        }
+        
+        .leave-badge {
+          display: inline-flex;
+          align-items: center;
+          background-color: #1976d2;
+          color: white;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-size: 11px;
+          font-weight: 600;
+          
+          .q-icon {
+            margin-right: 2px;
+          }
+        }
+        
+        &.icon-cell {
+          .q-icon {
+            cursor: default;
+          }
+        }
+
+        .holiday-indicator-wrapper {
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          
+          .holiday-overridden {
+            outline: 2px solid #ff9800;
+            outline-offset: 1px;
+            border-radius: 50%;
+          }
+          
+          .override-indicator {
+            color: #ff9800;
+            position: absolute;
+            bottom: -4px;
+            right: -4px;
+            background: white;
+            border-radius: 50%;
+            
+            &.override-enabled {
+              color: #4caf50;
+            }
+          }
+        }
+      }
+    }
+
+    &.total {
+      tr {
+        td {
+          font-weight: 500;
+          background-color: #fff5e7;
+        }
+      }
+    }
+  }
+}

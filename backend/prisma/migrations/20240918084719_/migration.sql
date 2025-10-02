@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "ItemReceipt" ADD COLUMN     "code" TEXT NOT NULL DEFAULT 'TEST-0000',
+ADD COLUMN     "number" INTEGER NOT NULL DEFAULT 0;

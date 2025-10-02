@@ -1,0 +1,113 @@
+.tabs-wrapper {
+  display: block;
+
+  @media (max-width: 767px) {
+    display: none;
+  }
+}
+
+.tabs {
+  .tab {
+    background-color: #f8f9fc;
+    border: solid 1px var(--q-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &.tab-active {
+      background-color: #dde1f0cc;
+      color: white;
+    }
+
+    &:first-child {
+      padding: 6px 10px 6px 16px;
+      border-top-left-radius: 50px;
+      border-bottom-left-radius: 50px;
+    }
+
+    &:last-child {
+      padding: 6px 16px 6px 10px;
+      border-top-right-radius: 50px;
+      border-bottom-right-radius: 50px;
+    }
+  }
+}
+
+.date-picker {
+  :deep(.q-field__control) {
+    min-height: 36px !important;
+    height: 36px !important;
+    font-size: 12px !important;
+  }
+
+  :deep(.q-field__native),
+  :deep(.q-field__input) {
+    min-height: 36px !important;
+  }
+
+  :deep(.q-field__marginal) {
+    height: 36px !important;
+  }
+}
+
+// Mobile responsive styles
+@media (max-width: 768px) {
+  .attendance-content {
+    min-height: 500px;
+
+    .view-timesheet-btn {
+      display: none;
+    }
+
+    // .date-section {
+    //   .col-6 {
+    //     width: 100% !important;
+    //     max-width: 100% !important;
+    //   }
+
+    //   .col {
+    //     width: 100% !important;
+    //     max-width: 100% !important;
+
+    //     .col-8 {
+    //       width: 100% !important;
+    //       max-width: 100% !important;
+    //     }
+    //   }
+
+    //   .text-title-small {
+    //     font-size: 14px;
+    //   }
+    // }
+  }
+
+  .tabs {
+    .tab {
+      .q-icon {
+        font-size: 18px !important;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .attendance-content {
+    .date-section {
+      align-items: stretch !important;
+      gap: 5px;
+
+      .col-6 {
+        width: 57.5% !important;
+        max-width: 100% !important;
+      }
+
+      .col-11 {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+
+      .text-title-small {
+        font-size: 12px;
+      }
+    }
+  }
+}

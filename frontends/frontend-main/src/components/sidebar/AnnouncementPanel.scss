@@ -1,0 +1,55 @@
+.announcement-dialog {
+  .announcement-card {
+    width: 400px;
+    height: 100vh;
+    overflow-y: auto;
+
+    // Mobile responsiveness
+    @media (max-width: 768px) {
+      width: 60vw;
+      height: 100dvh;
+    }
+
+    @media (max-width: 599px) {
+      width: 100vw;
+    }
+
+    .announcement-wrapper {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+      max-height: 100dvh; // Adjust based on header height
+    }
+
+    .announcement-header {
+      padding: 16px;
+      background-color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+
+      .row {
+        display: flex;
+        align-items: center;
+      }
+    }
+
+    .announcement-skeleton {
+      border-bottom: 1px solid #e0e0e0;
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    .empty-state {
+      min-height: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}

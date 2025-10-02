@@ -1,0 +1,114 @@
+.canvass-dialog {
+  table {
+    background-color: #f3f3f3 !important;
+    table-layout: fixed;
+    width: 100%;
+    background-color: #fff;
+    border: 1px solid #eee;
+    border-collapse: collapse;
+
+    &.supplier-selection {
+      font-size: 14px;
+    }
+
+    td {
+      border: 1px solid #eee;
+      text-align: center;
+
+      .price-update {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        background-color: #fff;
+      }
+    }
+
+    thead {
+      tr {
+        th {
+          border: 1px solid #eee;
+
+          .delete {
+            opacity: 0.3;
+            transition: all 0.3s;
+          }
+
+          &:hover {
+            .delete {
+              opacity: 0.5;
+
+              &:hover {
+                opacity: 1;
+              }
+            }
+          }
+          &.terms {
+            font-weight: 500;
+            font-size: 14px;
+            padding: 10px;
+          }
+
+          &.select {
+            padding: 0 10px;
+            background-color: #fff;
+          }
+          &.select-supplier {
+            padding: 0 10px;
+            font-weight: normal;
+          }
+        }
+      }
+    }
+
+    tbody {
+      background-color: #fafafa;
+
+      tr {
+        td {
+          .select-item {
+            padding: 0 10px;
+          }
+          .input {
+            padding: 0 10px;
+            text-align: center;
+            background-color: #fff;
+          }
+          .amount {
+            font-size: 14px;
+            font-weight: 500;
+          }
+          .stock {
+            font-size: 14px;
+            color: grey;
+          }
+          &.delete {
+            cursor: pointer;
+            opacity: 0.5;
+
+            &:hover {
+              opacity: 1;
+            }
+          }
+
+          &.selection {
+            background-color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+
+            &:hover {
+              background-color: #fae8e1;
+            }
+
+            &.selected {
+              background-color: #e7cec4;
+            }
+          }
+        }
+
+        &.inactive {
+          opacity: 0.5;
+        }
+      }
+    }
+  }
+}

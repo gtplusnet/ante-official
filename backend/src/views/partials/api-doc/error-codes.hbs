@@ -1,0 +1,25 @@
+<div class="error-codes-section">
+    <h3 class="error-codes-title">{{title}}</h3>
+    {{#if description}}
+    <p class="error-codes-description">{{description}}</p>
+    {{/if}}
+
+    <div class="error-codes-grid">
+        {{#each errors}}
+        <div class="error-code-card">
+            <div class="error-code-header">
+                <span class="error-code">{{this.code}}</span>
+                {{#if this.status}}
+                <span class="error-status">{{this.status}}</span>
+                {{/if}}
+            </div>
+            <div class="error-code-description">{{this.description}}</div>
+            {{#if this.solution}}
+            <div class="error-code-solution">
+                <strong>Solution:</strong> {{this.solution}}
+            </div>
+            {{/if}}
+        </div>
+        {{/each}}
+    </div>
+</div>

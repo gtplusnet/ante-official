@@ -1,0 +1,53 @@
+{
+  "name": "geer-guardian-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:gtplusnet/geer-guardian-app.git",
+  "author": "Guillermo Tabligan <guillermo@geer.solutions>",
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev -p 5010",
+    "build": "next build",
+    "start": "next start -p 5010",
+    "static": "next build",
+    "cap:add": "cap add",
+    "cap:sync": "cap sync",
+    "cap:open:ios": "cap open ios",
+    "cap:open:android": "cap open android",
+    "mobile:ios": "yarn static && npx cap sync ios && npx cap open ios",
+    "mobile:android": "yarn static && npx cap sync android && npx cap open android",
+    "backend:install": "cd backend && yarn install",
+    "backend:dev": "cd backend && yarn dev",
+    "backend:build": "cd backend && yarn build",
+    "backend:start": "cd backend && yarn start"
+  },
+  "dependencies": {
+    "@capacitor/cli": "^7.4.1",
+    "@capacitor/core": "^7.4.1",
+    "@capacitor/push-notifications": "^7.0.1",
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.57.2",
+    "@types/node": "^24.0.12",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "autoprefixer": "^10.4.21",
+    "axios": "^1.10.0",
+    "date-fns": "^4.1.0",
+    "firebase": "^11.10.0",
+    "html5-qrcode": "^2.3.8",
+    "next": "^15.3.5",
+    "postcss": "^8.5.6",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-icons": "^5.5.0",
+    "socket.io-client": "^4.8.1",
+    "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2",
+    "@tailwindcss/postcss": "^4.1.11",
+    "ignore-loader": "^0.1.2",
+    "tailwindcss": "3.4.1"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}

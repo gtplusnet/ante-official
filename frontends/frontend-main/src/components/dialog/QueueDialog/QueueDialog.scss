@@ -1,0 +1,53 @@
+.dialog-card {
+  width: 100%;
+  min-height: 500px;
+  min-width: 800px;
+  background-color: #fafafa;
+}
+
+.queue-dialog {
+  .title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+ .log-list {
+    margin-top: 15px;
+    background-color: #fff;
+    width: 100%;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    height: 410px;
+    overflow-y: scroll;
+
+    .log {
+      padding: 10px;
+      border-bottom: 1px solid #e0e0e0;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+
+      .message {
+        font-size: 14px;
+        color: #333;
+        transition: all 0.2s ease-in-out;
+      }
+      .status {
+        opacity: 0.6;
+        transition: all 0.2s ease-in-out;
+      }
+
+      &:hover {
+        .message {
+          font-weight: 600;
+        }
+        .status {
+          opacity: 1;
+        }
+      }
+    }
+  }
+}

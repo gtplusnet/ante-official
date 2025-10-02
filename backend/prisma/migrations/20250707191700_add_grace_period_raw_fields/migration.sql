@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "EmployeeTimekeepingComputed" ADD COLUMN     "rawLateMinutes" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "rawOvertimeMinutes" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "rawUndertimeMinutes" DOUBLE PRECISION NOT NULL DEFAULT 0;

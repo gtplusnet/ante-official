@@ -1,0 +1,459 @@
+// app global css in SCSS form
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
+// Import mobile responsive styles
+@import './mobile-responsive.scss';
+
+// ========================================
+// MATERIAL DESIGN 3 - FLAT DESIGN SYSTEM
+// ========================================
+// CRITICAL: This application uses Material Design 3 with FLAT design
+// NO shadows, NO elevation, NO floating elements
+// Use borders and color variations for depth hierarchy
+// See: /documentation/standards/material-design-3-standards.md
+// ========================================
+
+body {
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  color: #333;
+  background-color: #f5f5f5;
+}
+
+
+// Dynamic Font sizes
+:root{
+  // Font sizes
+  --font-display-large: 57px;
+  --font-headline-large: 32px;
+  --font-headline-medium: 28px;
+  --font-headline-small: 24px;
+  --font-title-large: 22px;
+  --font-title-medium: 16px;
+  --font-title-small: 14px;
+  --font-body-large: 16px;
+  --font-body-medium: 14px;
+  --font-body-small: 12px;
+  --font-label-large: 14px;
+  --font-label-medium: 12px;
+  --font-label-small: 11px;
+
+  // Font weights
+  --weight-display-large: 400;
+  --weight-headline-large: 400; // use 600 if bolder desired
+  --weight-headline-medium: 500;
+  --weight-headline-small: 500; // or 600
+  --weight-title-large: 500;
+  --weight-title-medium: 500;
+  --weight-title-small: 500;
+  --weight-body-large: 400;
+  --weight-body-medium: 400;
+  --weight-body-small: 400;
+  --weight-label-large: 500;
+  --weight-label-medium: 500;
+  --weight-label-small: 500;
+}
+
+$text-variants: (
+  "display-large": --weight-display-large,
+  "headline-large": --weight-headline-large,
+  "headline-medium": --weight-headline-medium,
+  "headline-small": --weight-headline-small,
+  "title-large": --weight-title-large,
+  "title-medium": --weight-title-medium,
+  "title-small": --weight-title-small,
+  "body-large": --weight-body-large,
+  "body-medium": --weight-body-medium,
+  "body-small": --weight-body-small,
+  "label-large": --weight-label-large,
+  "label-medium": --weight-label-medium,
+  "label-small": --weight-label-small
+);
+
+$font-sizes: 8px, 10px, 12px, 14px, 16px, 18px, 20px, 24px, 28px, 32px, 36px, 40px, 48px;
+$font-weights: 100, 200,  300, 400, 500, 600, 700, 800, 900;
+
+
+@each $name, $default-weight in $text-variants {
+  // Base class
+  .text-#{$name} {
+    font-size: var(--font-#{$name}) !important;
+    font-weight: var(#{$default-weight}) !important;
+  }
+
+  // Font-size override
+  @each $size in $font-sizes {
+    .text-#{$name}-f-\[#{$size}\] {
+      font-size: $size !important;
+      font-weight: var(#{$default-weight});
+    }
+
+    // Font-size + weight override
+    @each $weight in $font-weights {
+      .text-#{$name}-\[#{$size}\]-\[#{$weight}\] {
+        font-size: $size !important;
+        font-weight: $weight !important;
+      }
+    }
+  }
+
+  // Weight-only override
+  @each $weight in $font-weights {
+    .text-#{$name}-w-\[#{$weight}\] {
+      font-size: var(--font-#{$name});
+      font-weight: $weight !important;
+    }
+  }
+}
+
+
+.font-fredoka {
+  font-family: 'Fredoka', sans-serif;
+}
+
+.mini-calendar-wrapper {
+  .mini-calendar-day {
+    .fc-daygrid-day-frame.fc-scrollgrid-sync-inner {
+      height: 25px !important;
+    }
+
+    .fc-scroller {
+      background-color: #f4f6fc !important;
+    }
+
+    .fc .mini-calendar-day {
+      min-height: 30px !important;
+    }
+
+    .fc .fc-daygrid-event {
+      display: none !important;
+    }
+  }
+  .fc .fc-toolbar-title {
+    font-size: 10pt !important;
+    font-weight: 600 !important;
+    color: $primary;
+  }
+
+  .fc .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 10px !important;
+    height: 30px !important;
+  }
+
+  .fc-button {
+    background-color: transparent !important;
+    border: none !important;
+    color: $primary !important;
+  }
+
+  .fc .fc-daygrid-day,
+  .fc-scrollgrid-sync-table,
+  .fc-col-header-cell {
+    border: none !important;
+    background-color: #f4f6fc !important;
+  }
+
+  .fc-scrollgrid {
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  td {
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .fc .fc-daygrid-day {
+    background-color: #f4f6fc !important;
+    text-align: center !important;
+  }
+
+  .fc .fc-day-today {
+    background-color: $primary !important;
+    color: #fff !important;
+  }
+  td.fc-day.fc-day-tue.fc-day-today.fc-daygrid-day.mini-calendar-day {
+    display: flex;
+    justify-content: center;
+  }
+
+  a.fc-col-header-cell-cushion {
+    color: #2c2c2c;
+    font-weight: 500;
+  }
+}
+
+.full-calendar-wrapper {
+  border: solid 1px #e6e6e6;
+  border-radius: 25px;
+
+  .fc-col-header-cell {
+    border: none !important;
+  }
+
+  td.fc-day.fc-daygrid-day {
+    border: none !important;
+    margin: 10px !important;
+  }
+
+  .fc .fc-daygrid-day-top {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .fc-daygrid-day-frame.fc-scrollgrid-sync-inner {
+    background-color: #f4f6fc;
+    border-radius: 15px;
+  }
+
+  td.fc-day.fc-daygrid-day {
+    padding: 10px;
+  }
+
+  .fc .fc-daygrid-day.fc-day-today {
+    background-color: transparent;
+  }
+
+  .fc .fc-day-today .fc-daygrid-day-number {
+    padding: 4px;
+    position: relative;
+    background-color: $primary;
+    width: 30px;
+    height: 30px;
+    text-align: center;
+    vertical-align: middle;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 50px;
+  }
+
+  table.fc-scrollgrid.fc-scrollgrid-liquid {
+    border: none !important;
+  }
+
+  .fc,
+  .fc *,
+  .fc ::after,
+  .fc ::before {
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  a.fc-col-header-cell-cushion {
+    color: #979797;
+    font-weight: 500;
+    font-size: 10pt !important;
+  }
+
+  tr {
+    position: relative;
+    bottom: 7px;
+  }
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px;
+  background-color: $accent;
+}
+
+.calendar-dashboard-widget-wrapper {
+  .fc.fc-media-screen.fc-direction-ltr.fc-theme-standard {
+    margin-bottom: 42px;
+  }
+
+  .fc-button {
+    background-color: transparent !important;
+    border: none !important;
+    color: $primary !important;
+  }
+
+  .fc .fc-toolbar-title {
+    font-size: 12pt !important;
+    font-weight: 600 !important;
+    color: $primary;
+  }
+
+  .fc .fc-daygrid-day.fc-day-today {
+    background-color: #a3cfff;
+  }
+
+  a.fc-col-header-cell-cushion {
+    color: $primary;
+    font-weight: 600;
+    font-size: 10pt !important;
+  }
+
+  .fc .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 20px !important;
+    height: 30px !important;
+  }
+}
+
+.clickable-code {
+  color: #027be3;
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.item-tab {
+  display: flex;
+  align-items: baseline;
+  border-left: 1px solid #eee;
+  border-right: 1px solid #eee;
+  border-top: 1px solid #eee;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  background-color: #eee;
+  cursor: pointer;
+
+  .tab {
+    padding: 10px 15px;
+
+    .icon {
+      font-size: 16px;
+    }
+
+    &.active {
+      background-color: #fff;
+      cursor: pointer;
+    }
+  }
+}
+
+.dialog-card {
+  margin-top: -1px !important;
+
+  .information-card {
+    padding: 10px;
+
+    .info-group {
+      display: flex;
+      margin-bottom: 10px;
+
+      .info-label {
+        font-weight: 600;
+        width: 120px;
+      }
+
+      .info-value {
+        font-weight: 400;
+      }
+    }
+  }
+}
+
+.page-content-actions {
+  margin-bottom: -19px;
+  margin-top: 10px;
+  align-items: center;
+
+  .right {
+    padding-bottom: 20px;
+    height: 59px;
+  }
+}
+
+// Material Design 3 - Flat Design Override
+// NO SHADOWS OR ELEVATION - Use borders for depth
+.q-card {
+  border-radius: 8px;
+  // MD3 Flat Design - removed box-shadow, use border instead
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: none !important;
+}
+
+.hyperlink {
+  color: #027be3;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: all 0.3s;
+
+  &:hover {
+    text-decoration: underline;
+    opacity: 1;
+  }
+}
+
+.global-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+
+  thead {
+    tr {
+      th {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        font-weight: bold;
+        color: #333 !important;
+      }
+    }
+  }
+  tbody {
+    &.loading {
+      opacity: 0.5;
+    }
+    tr {
+      td {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+      }
+    }
+  }
+}
+
+.custom-spinner {
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.posted-select-btn {
+  min-width: 240px;
+}
+
+.generated-select-btn {
+  min-width: 320px;
+}
+
+.q-mt-xxs {
+  margin-top: 2px;
+}
+
+// Fix for q-menu positioning to prevent page scrollbar
+.q-menu.q-position-engine {
+  max-height: 300px !important;
+}
+
+// Mobile drawer border radius
+@media (max-width: 768px) {
+  .q-drawer--mobile {
+    border-top-right-radius: 16px !important;
+    border-bottom-right-radius: 16px !important;
+
+    .q-drawer__content {
+      border-top-right-radius: 16px !important;
+      border-bottom-right-radius: 16px !important;
+      overflow: hidden !important;
+    }
+  }
+}

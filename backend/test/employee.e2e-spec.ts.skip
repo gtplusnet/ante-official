@@ -1,0 +1,759 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication, HttpStatus } from '@nestjs/common';
+import * as request from 'supertest';
+import { TestAppModule } from './test-module';
+import { PrismaService } from '@common/prisma.service';
+import { UtilityService } from '@common/utility.service';
+import { EmployeeListService } from '@modules/hr/employee/employee-list/employee-list.service';
+import {
+  createMockPrismaService,
+  createMockUtilityService,
+  createMockAccount,
+  cleanupMocks,
+} from './setup';
+
+describe('Employee/Manpower Management (e2e)', () => {
+  let app: INestApplication;
+  let prismaService: any;
+  let utilityService: any;
+  let employeeService: EmployeeListService;
+
+  // Test authentication token
+  const mockToken = '1234567890123456789012345678901234567890';
+  
+  // Test user with company
+  const mockUser = createMockAccount({
+    id: 'test-account-id',
+    username: 'testmanager',
+    email: 'manager@example.com',
+    firstName: 'Test',
+    lastName: 'Manager',
+    companyId: 'test-company-id',
+  });
+
+  // Test employee data
+  const testEmployee = {
+    firstName: 'John',
+    lastName: 'Doe',
+    email: 'john.doe@company.com',
+    employeeId: 'EMP001',
+    username: 'johndoe',
+    roleId: 'employee-role-id',
+    userLevelId: 'employee-level-id',
+    employmentStatusId: 1,
+    salaryType: 'MONTHLY',
+    salaryAmount: 50000,
+    joiningDate: '2024-01-15',
+    department: 'IT',
+    position: 'Software Developer',
+  };
+
+  const mockEmployee = {
+    id: 'employee-account-id',
+    ...testEmployee,
+    password: 'hashed-password',
+    key: 'encryption-key',
+    companyId: 'test-company-id',
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    company: {
+      id: 'test-company-id',
+      companyName: 'Test Company',
+      isActive: true,
+    },
+  };
+
+  beforeAll(async () => {
+    // Set up test environment
+    process.env.NODE_ENV = 'test';
+    process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test_db';
+    
+    // Create mock services
+    const mockPrismaService = createMockPrismaService();
+    const mockUtilityServiceImpl = createMockUtilityService();
+
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [TestAppModule],
+    })
+      .overrideProvider(PrismaService)
+      .useValue(mockPrismaService)
+      .overrideProvider(UtilityService)
+      .useValue(mockUtilityServiceImpl)
+      .compile();
+
+    app = moduleFixture.createNestApplication();
+    prismaService = moduleFixture.get<PrismaService>(PrismaService);
+    utilityService = moduleFixture.get<UtilityService>(UtilityService);
+    
+    await app.init();
+  });
+
+  beforeEach(() => {
+    cleanupMocks();
+    
+    // Set up authentication mock
+    prismaService.accountToken.findFirst.mockResolvedValue({
+      id: 'token-id',
+      token: mockToken,
+      accountId: mockUser.id,
+      createdAt: new Date(),
+      account: mockUser,
+    });
+    
+    // Set up utility service mock responses
+    utilityService.responseHandler.mockImplementation((promise, response) => {
+      return promise.then((data) => {
+        const result = {
+          success: true,
+          message: 'Operation completed successfully',
+          data,
+        };
+        response.status(200).json(result);
+        return result;
+      }).catch((error) => {
+        const result = {
+          success: false,
+          message: error.message || 'An error occurred',
+          error: error,
+        };
+        response.status(error.statusCode || 500).json(result);
+        return result;
+      });
+    });
+  });
+
+  afterAll(async () => {
+    if (app) {
+      await app.close();
+    }
+  });
+
+  describe('Employee CRUD Operations', () => {
+    describe('POST /hris/employee/add', () => {
+      it('should create a new employee successfully', async () => {
+        // Mock employee creation
+        prismaService.account.create.mockResolvedValue(mockEmployee);
+        
+        const response = await request(app.getHttpServer())
+          .post('/hris/employee/add')
+          .set('token', mockToken)
+          .send(testEmployee)
+          .expect(HttpStatus.OK);
+
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toMatchObject({
+          id: mockEmployee.id,
+          firstName: testEmployee.firstName,
+          lastName: testEmployee.lastName,
+          email: testEmployee.email,
+          username: testEmployee.username,
+        });
+
+        // Verify prisma call
+        expect(prismaService.account.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            firstName: testEmployee.firstName,
+            lastName: testEmployee.lastName,
+            email: testEmployee.email,
+            username: testEmployee.username,
+          }),
+        });
+      });
+
+      it('should reject employee creation with duplicate email', async () => {
+        // Mock duplicate email error
+        prismaService.account.create.mockRejectedValue({
+          code: 'P2002',
+          meta: { target: ['email'] },
+          message: 'Unique constraint failed on email',
+        });
+
+        const response = await request(app.getHttpServer())
+          .post('/hris/employee/add')
+          .set('token', mockToken)
+          .send(testEmployee)
+          .expect(HttpStatus.CONFLICT);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.message).toContain('email already exists');
+      });
+
+      it('should reject employee creation with invalid data', async () => {
+        const invalidEmployee = {
+          ...testEmployee,
+          email: 'invalid-email',
+          salaryAmount: -1000, // Invalid salary
+        };
+
+        const response = await request(app.getHttpServer())
+          .post('/hris/employee/add')
+          .set('token', mockToken)
+          .send(invalidEmployee)
+          .expect(HttpStatus.BAD_REQUEST);
+
+        expect(response.body.success).toBe(false);
+      });
+
+      it('should require authentication token', async () => {
+        const response = await request(app.getHttpServer())
+          .post('/hris/employee/add')
+          .send(testEmployee)
+          .expect(HttpStatus.UNAUTHORIZED);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.message).toContain('token required');
+      });
+    });
+
+    describe('GET /hris/employee/info', () => {
+      it('should retrieve employee information by ID', async () => {
+        // Mock employee lookup
+        prismaService.account.findUnique.mockResolvedValue({
+          ...mockEmployee,
+          employeeProfile: {
+            employeeId: testEmployee.employeeId,
+            department: testEmployee.department,
+            position: testEmployee.position,
+            joiningDate: new Date(testEmployee.joiningDate),
+            salaryType: testEmployee.salaryType,
+            salaryAmount: testEmployee.salaryAmount,
+          },
+        });
+
+        const response = await request(app.getHttpServer())
+          .get('/hris/employee/info')
+          .set('token', mockToken)
+          .query({ accountId: mockEmployee.id })
+          .expect(HttpStatus.OK);
+
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toMatchObject({
+          id: mockEmployee.id,
+          firstName: testEmployee.firstName,
+          lastName: testEmployee.lastName,
+          email: testEmployee.email,
+        });
+      });
+
+      it('should return 404 for non-existent employee', async () => {
+        // Mock employee not found
+        prismaService.account.findUnique.mockResolvedValue(null);
+
+        const response = await request(app.getHttpServer())
+          .get('/hris/employee/info')
+          .set('token', mockToken)
+          .query({ accountId: 'non-existent-id' })
+          .expect(HttpStatus.NOT_FOUND);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.message).toContain('Employee not found');
+      });
+    });
+
+    describe('PATCH /hris/employee/update', () => {
+      it('should update employee information successfully', async () => {
+        const updateData = {
+          accountId: mockEmployee.id,
+          firstName: 'John Updated',
+          lastName: 'Doe Updated',
+          department: 'Engineering',
+          position: 'Senior Developer',
+        };
+
+        // Mock employee update
+        prismaService.account.update.mockResolvedValue({
+          ...mockEmployee,
+          ...updateData,
+          updatedAt: new Date(),
+        });
+
+        const response = await request(app.getHttpServer())
+          .patch('/hris/employee/update')
+          .set('token', mockToken)
+          .send(updateData)
+          .expect(HttpStatus.OK);
+
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.firstName).toBe(updateData.firstName);
+        expect(response.body.data.lastName).toBe(updateData.lastName);
+      });
+
+      it('should validate required fields on update', async () => {
+        const invalidUpdate = {
+          accountId: mockEmployee.id,
+          firstName: '', // Empty first name
+          email: 'invalid-email',
+        };
+
+        const response = await request(app.getHttpServer())
+          .patch('/hris/employee/update')
+          .set('token', mockToken)
+          .send(invalidUpdate)
+          .expect(HttpStatus.BAD_REQUEST);
+
+        expect(response.body.success).toBe(false);
+      });
+    });
+
+    describe('DELETE /hris/employee/delete', () => {
+      it('should soft delete employee successfully', async () => {
+        // Mock soft delete (setting isDeleted flag)
+        prismaService.account.update.mockResolvedValue({
+          ...mockEmployee,
+          isDeleted: true,
+          deletedAt: new Date(),
+        });
+
+        const response = await request(app.getHttpServer())
+          .delete('/hris/employee/delete')
+          .set('token', mockToken)
+          .send({ accountId: mockEmployee.id })
+          .expect(HttpStatus.OK);
+
+        expect(response.body.success).toBe(true);
+        expect(response.body.message).toContain('Employee deleted successfully');
+      });
+
+      it('should prevent deletion of non-existent employee', async () => {
+        // Mock employee not found
+        prismaService.account.findUnique.mockResolvedValue(null);
+
+        const response = await request(app.getHttpServer())
+          .delete('/hris/employee/delete')
+          .set('token', mockToken)
+          .send({ accountId: 'non-existent-id' })
+          .expect(HttpStatus.NOT_FOUND);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.message).toContain('Employee not found');
+      });
+    });
+
+    describe('PATCH /hris/employee/restore', () => {
+      it('should restore deleted employee successfully', async () => {
+        // Mock restore (unsetting isDeleted flag)
+        prismaService.account.update.mockResolvedValue({
+          ...mockEmployee,
+          isDeleted: false,
+          deletedAt: null,
+        });
+
+        const response = await request(app.getHttpServer())
+          .patch('/hris/employee/restore')
+          .set('token', mockToken)
+          .send({ accountId: mockEmployee.id })
+          .expect(HttpStatus.OK);
+
+        expect(response.body.success).toBe(true);
+        expect(response.body.message).toContain('Employee restored successfully');
+      });
+    });
+  });
+
+  describe('Employee Job Details Management', () => {
+    describe('PATCH /hris/employee/update-job-details', () => {
+      it('should update job details successfully', async () => {
+        const jobDetailsUpdate = {
+          accountId: mockEmployee.id,
+          department: 'Engineering',
+          position: 'Tech Lead',
+          salaryType: 'MONTHLY',
+          salaryAmount: 75000,
+          joiningDate: '2024-02-01',
+        };
+
+        // Mock job details update
+        prismaService.employeeProfile.update.mockResolvedValue({
+          id: 'profile-id',
+          accountId: mockEmployee.id,
+          ...jobDetailsUpdate,
+        });
+
+        const response = await request(app.getHttpServer())
+          .patch('/hris/employee/update-job-details')
+          .set('token', mockToken)
+          .send(jobDetailsUpdate)
+          .expect(HttpStatus.OK);
+
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.department).toBe(jobDetailsUpdate.department);
+        expect(response.body.data.position).toBe(jobDetailsUpdate.position);
+        expect(response.body.data.salaryAmount).toBe(jobDetailsUpdate.salaryAmount);
+      });
+
+      it('should validate salary amount is positive', async () => {
+        const invalidJobUpdate = {
+          accountId: mockEmployee.id,
+          salaryAmount: -5000,
+        };
+
+        const response = await request(app.getHttpServer())
+          .patch('/hris/employee/update-job-details')
+          .set('token', mockToken)
+          .send(invalidJobUpdate)
+          .expect(HttpStatus.BAD_REQUEST);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.message).toContain('salary amount must be positive');
+      });
+    });
+
+    describe('PATCH /hris/employee/update-government-details', () => {
+      it('should update government details successfully', async () => {
+        const govDetailsUpdate = {
+          accountId: mockEmployee.id,
+          sssNumber: '12-345678-9',
+          philhealthNumber: 'PH12345678901',
+          tinNumber: '123-456-789-000',
+          pagibigNumber: '1234567890',
+        };
+
+        // Mock government details update
+        prismaService.employeeGovernmentDetails.update.mockResolvedValue({
+          id: 'gov-details-id',
+          accountId: mockEmployee.id,
+          ...govDetailsUpdate,
+        });
+
+        const response = await request(app.getHttpServer())
+          .patch('/hris/employee/update-government-details')
+          .set('token', mockToken)
+          .send(govDetailsUpdate)
+          .expect(HttpStatus.OK);
+
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.sssNumber).toBe(govDetailsUpdate.sssNumber);
+        expect(response.body.data.tinNumber).toBe(govDetailsUpdate.tinNumber);
+      });
+
+      it('should validate government ID formats', async () => {
+        const invalidGovUpdate = {
+          accountId: mockEmployee.id,
+          sssNumber: 'invalid-format',
+          tinNumber: '123',
+        };
+
+        const response = await request(app.getHttpServer())
+          .patch('/hris/employee/update-government-details')
+          .set('token', mockToken)
+          .send(invalidGovUpdate)
+          .expect(HttpStatus.BAD_REQUEST);
+
+        expect(response.body.success).toBe(false);
+      });
+    });
+
+    describe('PATCH /hris/employee/update-schedule', () => {
+      it('should update employee schedule successfully', async () => {
+        const scheduleUpdate = {
+          accountId: mockEmployee.id,
+          scheduleId: 'schedule-id-1',
+          shiftId: 'shift-id-1',
+          effectiveDate: '2024-08-01',
+        };
+
+        // Mock schedule update
+        prismaService.employeeSchedule.create.mockResolvedValue({
+          id: 'employee-schedule-id',
+          ...scheduleUpdate,
+        });
+
+        const response = await request(app.getHttpServer())
+          .patch('/hris/employee/update-schedule')
+          .set('token', mockToken)
+          .send(scheduleUpdate)
+          .expect(HttpStatus.OK);
+
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.scheduleId).toBe(scheduleUpdate.scheduleId);
+      });
+    });
+  });
+
+  describe('Employee Contract Management', () => {
+    describe('POST /hris/employee/contract/add', () => {
+      it('should add employee contract successfully', async () => {
+        const contractData = {
+          accountId: mockEmployee.id,
+          contractData: {
+            contractType: 'REGULAR',
+            startDate: '2024-01-15',
+            endDate: '2025-01-14',
+            salaryAmount: 60000,
+            workingHours: 40,
+            probationPeriod: 6,
+          },
+        };
+
+        // Mock contract creation
+        prismaService.employeeContract.create.mockResolvedValue({
+          id: 'contract-id-1',
+          accountId: mockEmployee.id,
+          ...contractData.contractData,
+          isActive: true,
+          createdAt: new Date(),
+        });
+
+        const response = await request(app.getHttpServer())
+          .post('/hris/employee/contract/add')
+          .set('token', mockToken)
+          .send(contractData)
+          .expect(HttpStatus.OK);
+
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.contractType).toBe(contractData.contractData.contractType);
+        expect(response.body.data.salaryAmount).toBe(contractData.contractData.salaryAmount);
+      });
+
+      it('should validate contract dates', async () => {
+        const invalidContract = {
+          accountId: mockEmployee.id,
+          contractData: {
+            contractType: 'REGULAR',
+            startDate: '2024-12-31',
+            endDate: '2024-01-01', // End date before start date
+            salaryAmount: 50000,
+          },
+        };
+
+        const response = await request(app.getHttpServer())
+          .post('/hris/employee/contract/add')
+          .set('token', mockToken)
+          .send(invalidContract)
+          .expect(HttpStatus.BAD_REQUEST);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.message).toContain('end date must be after start date');
+      });
+    });
+
+    describe('GET /hris/employee/contract/list', () => {
+      it('should retrieve employee contracts', async () => {
+        const mockContracts = [
+          {
+            id: 'contract-1',
+            contractType: 'REGULAR',
+            startDate: new Date('2024-01-15'),
+            endDate: new Date('2025-01-14'),
+            salaryAmount: 60000,
+            isActive: true,
+          },
+          {
+            id: 'contract-2',
+            contractType: 'PROBATIONARY',
+            startDate: new Date('2023-01-15'),
+            endDate: new Date('2023-07-14'),
+            salaryAmount: 45000,
+            isActive: false,
+          },
+        ];
+
+        // Mock contracts lookup
+        prismaService.employeeContract.findMany.mockResolvedValue(mockContracts);
+
+        const response = await request(app.getHttpServer())
+          .get('/hris/employee/contract/list')
+          .set('token', mockToken)
+          .query({ accountId: mockEmployee.id })
+          .expect(HttpStatus.OK);
+
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toHaveLength(2);
+        expect(response.body.data[0].contractType).toBe('REGULAR');
+        expect(response.body.data[1].contractType).toBe('PROBATIONARY');
+      });
+    });
+  });
+
+  describe('Employee Table and Listing', () => {
+    describe('PUT /hris/employee/table', () => {
+      it('should retrieve employee table with pagination', async () => {
+        const mockEmployees = [
+          mockEmployee,
+          {
+            ...mockEmployee,
+            id: 'employee-2',
+            firstName: 'Jane',
+            lastName: 'Smith',
+            email: 'jane.smith@company.com',
+          },
+        ];
+
+        // Mock table query response
+        const mockTableResponse = {
+          list: mockEmployees,
+          currentPage: 1,
+          pagination: {
+            totalPages: 1,
+            totalItems: 2,
+            itemsPerPage: 20,
+            currentPage: 1,
+          },
+        };
+
+        utilityService.responseHandler.mockResolvedValue(mockTableResponse);
+
+        const response = await request(app.getHttpServer())
+          .put('/hris/employee/table')
+          .set('token', mockToken)
+          .query({ page: '1', perPage: '20' })
+          .send({ filters: {}, search: '' })
+          .expect(HttpStatus.OK);
+
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.list).toHaveLength(2);
+        expect(response.body.data.pagination.totalItems).toBe(2);
+      });
+
+      it('should filter employees by search term', async () => {
+        const filteredEmployees = [mockEmployee];
+
+        const mockTableResponse = {
+          list: filteredEmployees,
+          currentPage: 1,
+          pagination: {
+            totalPages: 1,
+            totalItems: 1,
+            itemsPerPage: 20,
+            currentPage: 1,
+          },
+        };
+
+        utilityService.responseHandler.mockResolvedValue(mockTableResponse);
+
+        const response = await request(app.getHttpServer())
+          .put('/hris/employee/table')
+          .set('token', mockToken)
+          .query({ page: '1', perPage: '20' })
+          .send({ filters: {}, search: 'John' })
+          .expect(HttpStatus.OK);
+
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.list).toHaveLength(1);
+        expect(response.body.data.list[0].firstName).toBe('John');
+      });
+    });
+
+    describe('GET /hris/employee/scheduling-list', () => {
+      it('should retrieve employees for scheduling', async () => {
+        const schedulingEmployees = [
+          {
+            id: mockEmployee.id,
+            firstName: mockEmployee.firstName,
+            lastName: mockEmployee.lastName,
+            employeeId: 'EMP001',
+            department: 'IT',
+            currentSchedule: {
+              id: 'schedule-1',
+              name: 'Regular Shift',
+            },
+          },
+        ];
+
+        utilityService.responseHandler.mockResolvedValue({
+          employees: schedulingEmployees,
+          totalCount: 1,
+          currentPage: 1,
+          totalPages: 1,
+        });
+
+        const response = await request(app.getHttpServer())
+          .get('/hris/employee/scheduling-list')
+          .set('token', mockToken)
+          .query({ page: '1', perPage: '20' })
+          .expect(HttpStatus.OK);
+
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.employees).toHaveLength(1);
+        expect(response.body.data.employees[0].currentSchedule.name).toBe('Regular Shift');
+      });
+    });
+  });
+
+  describe('Employee References and Lookups', () => {
+    describe('GET /hris/employee/contract/employment-status', () => {
+      it('should retrieve employment status reference data', async () => {
+        const employmentStatuses = [
+          { id: 1, name: 'REGULAR', label: 'Regular Employee' },
+          { id: 2, name: 'PROBATIONARY', label: 'Probationary Employee' },
+          { id: 3, name: 'CONTRACTUAL', label: 'Contractual Employee' },
+        ];
+
+        utilityService.responseHandler.mockResolvedValue(employmentStatuses);
+
+        const response = await request(app.getHttpServer())
+          .get('/hris/employee/contract/employment-status')
+          .set('token', mockToken)
+          .expect(HttpStatus.OK);
+
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toHaveLength(3);
+        expect(response.body.data[0].name).toBe('REGULAR');
+        expect(response.body.data[1].name).toBe('PROBATIONARY');
+      });
+    });
+
+    describe('GET /hris/employee/scheduling-shifts', () => {
+      it('should retrieve available shifts for scheduling', async () => {
+        const availableShifts = [
+          { id: 'shift-1', name: 'Day Shift', startTime: '08:00', endTime: '17:00' },
+          { id: 'shift-2', name: 'Night Shift', startTime: '20:00', endTime: '05:00' },
+        ];
+
+        utilityService.responseHandler.mockResolvedValue(availableShifts);
+
+        const response = await request(app.getHttpServer())
+          .get('/hris/employee/scheduling-shifts')
+          .set('token', mockToken)
+          .expect(HttpStatus.OK);
+
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toHaveLength(2);
+        expect(response.body.data[0].name).toBe('Day Shift');
+      });
+    });
+  });
+
+  describe('Error Handling and Edge Cases', () => {
+    it('should handle database connection errors gracefully', async () => {
+      // Mock database error
+      prismaService.account.findMany.mockRejectedValue(new Error('Database connection failed'));
+
+      const response = await request(app.getHttpServer())
+        .get('/hris/employee/info')
+        .set('token', mockToken)
+        .query({ accountId: mockEmployee.id })
+        .expect(HttpStatus.INTERNAL_SERVER_ERROR);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Database connection failed');
+    });
+
+    it('should handle concurrent employee creation requests', async () => {
+      // Mock race condition scenario
+      prismaService.account.create
+        .mockResolvedValueOnce(mockEmployee)
+        .mockRejectedValueOnce({
+          code: 'P2002',
+          meta: { target: ['username'] },
+        });
+
+      // First request should succeed
+      const response1 = await request(app.getHttpServer())
+        .post('/hris/employee/add')
+        .set('token', mockToken)
+        .send(testEmployee);
+
+      expect(response1.body.success).toBe(true);
+
+      // Second request with same data should fail
+      const response2 = await request(app.getHttpServer())
+        .post('/hris/employee/add')
+        .set('token', mockToken)
+        .send(testEmployee);
+
+      expect(response2.body.success).toBe(false);
+    });
+  });
+});

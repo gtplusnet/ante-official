@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "ItemReceiptType" ADD VALUE 'IN_TRANSIT_LOADED';

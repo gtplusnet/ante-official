@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Adjustment Filing - Approval Required</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; background-color: #f8f9fa;">
+
+    <!-- Header -->
+    {{> header}}
+
+    <!-- Main Content -->
+    <div style="max-width: 600px; margin: 0 auto; background-color: white;">
+        
+        <!-- Greeting -->
+        <div style="padding: 30px 30px 20px 30px;">
+            <h2 style="margin: 0 0 10px 0; color: #333; font-size: 24px;">Hello {{approverName}},</h2>
+            <p style="margin: 0; color: #6c757d; font-size: 16px;">{{requestorName}} has submitted a <strong>Schedule Adjustment</strong> request for your approval.</p>
+        </div>
+
+        <!-- Filing Details -->
+        <div style="padding: 0 30px 20px 30px;">
+            <div style="background-color: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 4px solid #6f42c1;">
+                <h3 style="margin: 0 0 20px 0; color: #333; font-size: 18px;">🔄 Schedule Adjustment Details</h3>
+                
+                <!-- Employee Information -->
+                <div style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Employee Information</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Full Name</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{requestorName}}</p>
+                        </div>
+                        {{#if employeeId}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Employee ID</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{employeeId}}</p>
+                        </div>
+                        {{/if}}
+                        {{#if department}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Department</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{department}}</p>
+                        </div>
+                        {{/if}}
+                        {{#if position}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Position</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{position}}</p>
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
+
+                <!-- Current Schedule -->
+                <div style="background-color: #e9ecef; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Current Schedule</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Shift Type</p>
+                            <p style="margin: 0; color: #333; font-size: 15px;">{{currentShiftType}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Working Hours</p>
+                            <p style="margin: 0; color: #333; font-size: 15px;">{{currentWorkingHours}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Break Time</p>
+                            <p style="margin: 0; color: #333; font-size: 15px;">{{currentBreakTime}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Total Hours</p>
+                            <p style="margin: 0; color: #333; font-size: 15px;">{{currentTotalHours}} hours</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Requested Schedule -->
+                <div style="background-color: #d4edda; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #c3e6cb;">
+                    <h4 style="margin: 0 0 10px 0; color: #155724; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Requested Schedule</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #155724; font-size: 12px;">Date</p>
+                            <p style="margin: 0; color: #155724; font-size: 15px; font-weight: 500;">{{date}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #155724; font-size: 12px;">Day of Week</p>
+                            <p style="margin: 0; color: #155724; font-size: 15px; font-weight: 500;">{{dayOfWeek}}</p>
+                        </div>
+                        {{#if shiftData}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #155724; font-size: 12px;">New Shift Type</p>
+                            <p style="margin: 0; color: #155724; font-size: 15px; font-weight: 500;">{{shiftData.shiftType}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #155724; font-size: 12px;">New Working Hours</p>
+                            <p style="margin: 0; color: #155724; font-size: 15px; font-weight: 500;">{{newWorkingHours}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #155724; font-size: 12px;">New Break Time</p>
+                            <p style="margin: 0; color: #155724; font-size: 15px; font-weight: 500;">{{newBreakTime}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #155724; font-size: 12px;">Target Hours</p>
+                            <p style="margin: 0; color: #155724; font-size: 15px; font-weight: 500;">{{shiftData.targetHours}} hours</p>
+                        </div>
+                        {{/if}}
+                    </div>
+
+                    {{#if shiftData.workingHours}}
+                    <div style="margin-top: 15px;">
+                        <p style="margin: 0 0 5px 0; color: #155724; font-size: 12px; text-transform: uppercase;">Detailed Working Hours</p>
+                        <div style="background-color: white; padding: 10px; border-radius: 4px;">
+                            {{#each shiftData.workingHours}}
+                            <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #e9ecef;">
+                                <span style="color: #333; font-size: 14px;">
+                                    {{#if this.isBreakTime}}
+                                        🍽️ Break Time
+                                    {{else}}
+                                        💼 Work Time
+                                    {{/if}}
+                                </span>
+                                <span style="color: #333; font-size: 14px; font-weight: 500;">{{this.startTime}} - {{this.endTime}}</span>
+                            </div>
+                            {{/each}}
+                        </div>
+                    </div>
+                    {{/if}}
+                </div>
+
+                <!-- Schedule Comparison -->
+                <div style="background-color: #fff3cd; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #ffeaa7;">
+                    <h4 style="margin: 0 0 10px 0; color: #856404; font-size: 14px;">📊 Schedule Comparison</h4>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                        <tr>
+                            <th style="text-align: left; padding: 5px; color: #856404; border-bottom: 1px solid #ffeaa7;">Aspect</th>
+                            <th style="text-align: center; padding: 5px; color: #856404; border-bottom: 1px solid #ffeaa7;">Current</th>
+                            <th style="text-align: center; padding: 5px; color: #856404; border-bottom: 1px solid #ffeaa7;">Requested</th>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px;">Start Time</td>
+                            <td style="text-align: center; padding: 5px;">{{currentStartTime}}</td>
+                            <td style="text-align: center; padding: 5px; font-weight: 500;">{{newStartTime}}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px;">End Time</td>
+                            <td style="text-align: center; padding: 5px;">{{currentEndTime}}</td>
+                            <td style="text-align: center; padding: 5px; font-weight: 500;">{{newEndTime}}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px;">Total Hours</td>
+                            <td style="text-align: center; padding: 5px;">{{currentTotalHours}}</td>
+                            <td style="text-align: center; padding: 5px; font-weight: 500;">{{newTotalHours}}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Reason for Adjustment -->
+                {{#if remarks}}
+                <div style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Reason for Schedule Adjustment</h4>
+                    <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.6;">{{remarks}}</p>
+                </div>
+                {{/if}}
+
+                <!-- Impact Analysis -->
+                <div style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Impact Considerations</h4>
+                    <ul style="margin: 0; padding-left: 20px; color: #333; font-size: 14px;">
+                        <li>Team coverage during regular shift hours</li>
+                        <li>Client/customer service continuity</li>
+                        <li>Coordination with other team members</li>
+                        <li>Meeting and collaboration schedules</li>
+                        {{#if affectsOvertime}}
+                        <li style="color: #dc3545;">May affect overtime calculations</li>
+                        {{/if}}
+                    </ul>
+                </div>
+
+                <!-- Duration -->
+                {{#if isTemporary}}
+                <div style="background-color: #d1ecf1; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #bee5eb;">
+                    <h4 style="margin: 0 0 5px 0; color: #0c5460; font-size: 14px;">Duration</h4>
+                    <p style="margin: 0; color: #0c5460; font-size: 14px;">
+                        {{#if duration}}
+                            Temporary adjustment for {{duration}}
+                        {{else}}
+                            One-time adjustment for the specified date only
+                        {{/if}}
+                    </p>
+                </div>
+                {{/if}}
+
+                <!-- Status -->
+                <div style="margin-top: 20px; text-align: center;">
+                    <span style="display: inline-block; padding: 8px 20px; background-color: #ffc107; color: #000; border-radius: 20px; font-size: 14px; font-weight: 600;">
+                        ⏳ PENDING APPROVAL
+                    </span>
+                </div>
+
+                <!-- Request Details -->
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef; font-size: 12px; color: #6c757d;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Request ID: #{{filingId}}</span>
+                        <span>Submitted: {{submittedDate}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        {{> action-buttons}}
+
+        <!-- Approval Guidelines -->
+        <div style="padding: 0 30px 30px 30px;">
+            <div style="background-color: #d1ecf1; padding: 20px; border-radius: 8px; border: 1px solid #bee5eb;">
+                <h4 style="margin: 0 0 10px 0; color: #0c5460; font-size: 16px;">📌 Schedule Adjustment Approval Guidelines</h4>
+                <ul style="margin: 0; padding-left: 20px; color: #0c5460; font-size: 14px;">
+                    <li>Verify the business justification for schedule change</li>
+                    <li>Ensure adequate team coverage during regular hours</li>
+                    <li>Check impact on ongoing projects and deadlines</li>
+                    <li>Confirm compliance with company scheduling policies</li>
+                    <li>Consider effects on other team members' schedules</li>
+                    <li>Evaluate if adjustment affects client service hours</li>
+                    <li>Review frequency of schedule adjustment requests</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    {{> footer}}
+
+</body>
+</html>

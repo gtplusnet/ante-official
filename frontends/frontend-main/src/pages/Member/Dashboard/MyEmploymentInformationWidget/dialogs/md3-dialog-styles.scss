@@ -1,0 +1,455 @@
+/* ==========================================================================
+   Material Design 3 - Dense Dialog Styles
+   Shared styles for all employee information dialogs
+   ========================================================================== */
+
+/* MD3 Color Tokens */
+:root {
+  --md3-surface: #FAFBFD;
+  --md3-surface-container-low: #F5F6F8;
+  --md3-surface-container: #EFF0F2;
+  --md3-surface-container-high: #E8E9EB;
+  --md3-on-surface: #1B1C1E;
+  --md3-on-surface-variant: #44474C;
+  --md3-outline-variant: #C5C6CA;
+  --md3-outline: #74777F;
+  --md3-primary-container: #E1E7FF;
+  --md3-on-primary-container: #001946;
+  
+  /* Dense spacing */
+  --md3-dense-padding: 12px;
+  --md3-dense-gap: 8px;
+  --md3-dense-field-height: 40px;
+  --md3-dense-section-gap: 16px;
+}
+
+/* Dense Dialog Container */
+.md3-dialog-dense {
+  .q-card {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+}
+
+/* Dense Header */
+.md3-header-dense {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background-color: var(--md3-surface-container-low);
+  border-bottom: 1px solid var(--md3-outline-variant);
+  
+  .q-icon {
+    color: var(--q-primary);
+  }
+  
+  .md3-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--md3-on-surface);
+    letter-spacing: 0.15px;
+  }
+  
+  .q-btn {
+    margin-left: auto;
+    color: var(--md3-on-surface-variant);
+    
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+  }
+}
+
+/* Dense Content */
+.md3-content-dense {
+  padding: 0; /* Remove padding from q-card-section */
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: var(--md3-surface-container-low);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--md3-outline-variant);
+    border-radius: 3px;
+    
+    &:hover {
+      background: var(--md3-outline);
+    }
+  }
+}
+
+/* Content Wrapper - Use this inside q-card-section for proper padding */
+.md3-dialog-content-wrapper {
+  padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Dense Section */
+.md3-section-dense {
+  background-color: var(--md3-surface-container-low);
+  border-radius: 8px;
+  padding: var(--md3-dense-padding);
+  margin-bottom: var(--md3-dense-section-gap);
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+  
+  .md3-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--md3-on-surface);
+    margin-bottom: 12px;
+    
+    .q-icon {
+      font-size: 18px;
+      color: var(--q-primary);
+    }
+  }
+  
+  .md3-section-subtitle {
+    font-size: 12px;
+    color: var(--md3-on-surface-variant);
+    margin-bottom: 12px;
+  }
+}
+
+/* Dense Form Fields */
+.md3-field-dense {
+  margin-bottom: 12px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+  
+  .md3-field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--md3-on-surface-variant);
+    margin-bottom: 4px;
+    
+    .optional {
+      font-weight: 400;
+      color: var(--md3-outline);
+      font-size: 11px;
+    }
+  }
+  
+  .q-input, .q-select {
+    .q-field__control {
+      height: var(--md3-dense-field-height);
+      
+      &:before {
+        border-color: var(--md3-outline-variant);
+      }
+      
+      &:hover:before {
+        border-color: var(--md3-outline);
+      }
+    }
+    
+    &.q-field--dense {
+      .q-field__control {
+        height: var(--md3-dense-field-height);
+      }
+    }
+  }
+  
+  .q-field__native {
+    font-size: 14px;
+    padding: 0;
+  }
+}
+
+/* Dense Info Display */
+.md3-info-row-dense {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--md3-outline-variant);
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  .md3-info-label {
+    font-size: 13px;
+    color: var(--md3-on-surface-variant);
+    min-width: 140px;
+    flex-shrink: 0;
+  }
+  
+  .md3-info-value {
+    font-size: 14px;
+    color: var(--md3-on-surface);
+    font-weight: 500;
+    flex: 1;
+    
+    &.masked {
+      font-family: 'Courier New', monospace;
+      letter-spacing: 1px;
+    }
+    
+    &.empty {
+      color: var(--md3-outline);
+      font-style: italic;
+      font-weight: 400;
+    }
+  }
+  
+  .md3-info-action {
+    margin-left: auto;
+  }
+}
+
+/* Dense Grid Layout */
+.md3-grid-dense {
+  display: grid;
+  gap: var(--md3-dense-gap);
+  
+  &.cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+    
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  &.cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+    
+    @media (max-width: 900px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  &.cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+    
+    @media (max-width: 1200px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    
+    @media (max-width: 900px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+/* Dense Table */
+.md3-table-dense {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  
+  thead {
+    tr {
+      border-bottom: 1px solid var(--md3-outline-variant);
+    }
+    
+    th {
+      text-align: left;
+      padding: 8px;
+      font-weight: 500;
+      color: var(--md3-on-surface);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+  
+  tbody {
+    tr {
+      border-bottom: 1px solid var(--md3-surface-container);
+      
+      &:hover {
+        background-color: var(--md3-surface-container-low);
+      }
+      
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+    
+    td {
+      padding: 8px;
+      color: var(--md3-on-surface-variant);
+    }
+  }
+}
+
+/* Dense Status Badges */
+.md3-badge-dense {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.25px;
+  text-transform: uppercase;
+  
+  &.active {
+    background-color: #D1F2D5;
+    color: #072711;
+  }
+  
+  &.inactive {
+    background-color: #FFD9D6;
+    color: #410E0B;
+  }
+  
+  &.pending {
+    background-color: #FFF4D1;
+    color: #3B2F00;
+  }
+  
+  &.info {
+    background-color: var(--md3-primary-container);
+    color: var(--md3-on-primary-container);
+  }
+}
+
+/* Dense Cards */
+.md3-card-dense {
+  background-color: white;
+  border: 1px solid var(--md3-outline-variant);
+  border-radius: 8px;
+  padding: 12px;
+  
+  .md3-card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--md3-on-surface);
+    margin-bottom: 8px;
+  }
+  
+  .md3-card-value {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--q-primary);
+    margin-bottom: 4px;
+  }
+  
+  .md3-card-subtitle {
+    font-size: 11px;
+    color: var(--md3-on-surface-variant);
+  }
+}
+
+/* Dense Loading State */
+.md3-loading-dense {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  
+  .q-spinner-dots {
+    color: var(--q-primary);
+  }
+  
+  .loading-text {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--md3-on-surface-variant);
+  }
+}
+
+/* Dense Empty State */
+.md3-empty-dense {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+  
+  .q-icon {
+    font-size: 48px;
+    color: var(--md3-outline);
+    margin-bottom: 12px;
+  }
+  
+  .empty-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--md3-on-surface);
+    margin-bottom: 4px;
+  }
+  
+  .empty-subtitle {
+    font-size: 12px;
+    color: var(--md3-on-surface-variant);
+  }
+}
+
+/* Dense Action Buttons */
+.md3-actions-dense {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 12px;
+  border-top: 1px solid var(--md3-outline-variant);
+  background-color: var(--md3-surface-container-low);
+  
+  .q-btn {
+    font-size: 13px;
+    min-height: 32px;
+  }
+}
+
+/* Utility Classes */
+.text-dense-caption {
+  font-size: 11px;
+  color: var(--md3-on-surface-variant);
+}
+
+.text-dense-body {
+  font-size: 13px;
+  color: var(--md3-on-surface);
+}
+
+.text-dense-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--md3-on-surface);
+}
+
+/* Copy Button */
+.md3-copy-btn {
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: var(--md3-surface-container);
+  }
+  
+  .q-icon {
+    font-size: 16px;
+    color: var(--md3-on-surface-variant);
+  }
+}

@@ -1,0 +1,956 @@
+[
+  {
+    "compensationRange": 4000,
+    "monthlySalaryCredit": {
+      "regular": 4000,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 380,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 180,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 4250,
+    "monthlySalaryCredit": {
+      "regular": 4500,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 427.5,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 202.5,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 4750,
+    "monthlySalaryCredit": {
+      "regular": 5000,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 475,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 225,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 5250,
+    "monthlySalaryCredit": {
+      "regular": 5500,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 522.5,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 247.5,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 5750,
+    "monthlySalaryCredit": {
+      "regular": 6000,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 570,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 270,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 6250,
+    "monthlySalaryCredit": {
+      "regular": 6500,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 617.5,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 292.5,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 6750,
+    "monthlySalaryCredit": {
+      "regular": 7000,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 665,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 315,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 7250,
+    "monthlySalaryCredit": {
+      "regular": 7500,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 712.5,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 337.5,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 7750,
+    "monthlySalaryCredit": {
+      "regular": 8000,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 760,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 360,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 8250,
+    "monthlySalaryCredit": {
+      "regular": 8500,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 807.5,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 382.5,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 8750,
+    "monthlySalaryCredit": {
+      "regular": 9000,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 855,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 405,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 9250,
+    "monthlySalaryCredit": {
+      "regular": 9500,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 902.5,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 427.5,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 9750,
+    "monthlySalaryCredit": {
+      "regular": 10000,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 950,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 450,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 10250,
+    "monthlySalaryCredit": {
+      "regular": 10500,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 997.5,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 472.5,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 10750,
+    "monthlySalaryCredit": {
+      "regular": 11000,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1045,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 495,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 11250,
+    "monthlySalaryCredit": {
+      "regular": 11500,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1092.5,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 517.5,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 11750,
+    "monthlySalaryCredit": {
+      "regular": 12000,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1140,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 540,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 12250,
+    "monthlySalaryCredit": {
+      "regular": 12500,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1187.5,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 562.5,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 12750,
+    "monthlySalaryCredit": {
+      "regular": 13000,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1235,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 585,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 13250,
+    "monthlySalaryCredit": {
+      "regular": 13500,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1282.5,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 607.5,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 13750,
+    "monthlySalaryCredit": {
+      "regular": 14000,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1330,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 630,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 14250,
+    "monthlySalaryCredit": {
+      "regular": 14500,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1377.5,
+        "mpf": 0,
+        "ec": 10
+      },
+      "employee": {
+        "regular": 652.5,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 14750,
+    "monthlySalaryCredit": {
+      "regular": 15000,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1425,
+        "mpf": 0,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 675,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 15250,
+    "monthlySalaryCredit": {
+      "regular": 15500,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1472.5,
+        "mpf": 0,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 697.5,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 15750,
+    "monthlySalaryCredit": {
+      "regular": 16000,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1520,
+        "mpf": 0,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 720,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 16250,
+    "monthlySalaryCredit": {
+      "regular": 16500,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1567.5,
+        "mpf": 0,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 742.5,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 16750,
+    "monthlySalaryCredit": {
+      "regular": 17000,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1615,
+        "mpf": 0,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 765,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 17250,
+    "monthlySalaryCredit": {
+      "regular": 17500,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1662.5,
+        "mpf": 0,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 787.5,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 17750,
+    "monthlySalaryCredit": {
+      "regular": 18000,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1710,
+        "mpf": 0,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 810,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 18250,
+    "monthlySalaryCredit": {
+      "regular": 18500,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1757.5,
+        "mpf": 0,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 832.5,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 18750,
+    "monthlySalaryCredit": {
+      "regular": 19000,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1805,
+        "mpf": 0,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 855,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 19250,
+    "monthlySalaryCredit": {
+      "regular": 19500,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1852.5,
+        "mpf": 0,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 877.5,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 19750,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 0
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 0,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 0
+      }
+    }
+  },
+  {
+    "compensationRange": 20250,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 500
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 47.5,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 22.5
+      }
+    }
+  },
+  {
+    "compensationRange": 20750,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 1000
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 95,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 45
+      }
+    }
+  },
+  {
+    "compensationRange": 21250,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 1500
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 142.5,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 67.5
+      }
+    }
+  },
+  {
+    "compensationRange": 21750,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 2000
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 190,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 90
+      }
+    }
+  },
+  {
+    "compensationRange": 22250,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 2500
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 237.5,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 112.5
+      }
+    }
+  },
+  {
+    "compensationRange": 22750,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 3000
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 285,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 135
+      }
+    }
+  },
+  {
+    "compensationRange": 23250,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 3500
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 332.5,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 157.5
+      }
+    }
+  },
+  {
+    "compensationRange": 23750,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 4000
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 380,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 180
+      }
+    }
+  },
+  {
+    "compensationRange": 24250,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 4500
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 427.5,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 202.5
+      }
+    }
+  },
+  {
+    "compensationRange": 24750,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 5000
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 475,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 225
+      }
+    }
+  },
+  {
+    "compensationRange": 25250,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 5500
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 522.5,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 247.5
+      }
+    }
+  },
+  {
+    "compensationRange": 25750,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 6000
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 570,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 270
+      }
+    }
+  },
+  {
+    "compensationRange": 26250,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 6500
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 617.5,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 292.5
+      }
+    }
+  },
+  {
+    "compensationRange": 26750,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 7000
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 665,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 315
+      }
+    }
+  },
+  {
+    "compensationRange": 27250,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 7500
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 712.5,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 337.5
+      }
+    }
+  },
+  {
+    "compensationRange": 27750,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 8000
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 760,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 360
+      }
+    }
+  },
+  {
+    "compensationRange": 28250,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 8500
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 807.5,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 382.5
+      }
+    }
+  },
+  {
+    "compensationRange": 28750,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 9000
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 855,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 405
+      }
+    }
+  },
+  {
+    "compensationRange": 29250,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 9500
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 902.5,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 427.5
+      }
+    }
+  },
+  {
+    "compensationRange": 29750,
+    "monthlySalaryCredit": {
+      "regular": 20000,
+      "mpf": 10000
+    },
+    "contributionAmount": {
+      "employer": {
+        "regular": 1900,
+        "mpf": 950,
+        "ec": 30
+      },
+      "employee": {
+        "regular": 900,
+        "mpf": 450
+      }
+    }
+  }
+]

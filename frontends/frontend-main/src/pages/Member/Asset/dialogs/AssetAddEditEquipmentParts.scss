@@ -1,0 +1,16 @@
+.equipment {
+  text-align: center;
+  border: 1px dotted #eee;
+  border-radius: 5px;
+  margin-top: 10px;
+
+  .title {
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px;
+    background-color: #e6e5e5;
+    border-radius: 5px;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+}

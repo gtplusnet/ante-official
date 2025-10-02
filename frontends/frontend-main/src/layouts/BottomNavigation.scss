@@ -1,0 +1,111 @@
+.bottom-navigation {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 2000;
+  height: 56px;
+
+  .bottom-nav-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    height: 100%;
+    padding: 0 8px;
+    max-width: 100%;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    justify-content: center;
+    flex: 1;
+    height: 100%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    color: var(--q-gray-light);
+
+    &:active {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    &.active {
+      color: var(--q-dark);
+
+      .q-icon {
+        color: var(--q-dark);
+      }
+    }
+
+    .q-icon {
+      transition: color 0.2s ease;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 500;
+      line-height: 1;
+      text-align: center;
+    }
+
+    &.nav-item-center {
+      .add-button {
+        background-color: var(--q-primary);
+        width: 24px;
+        height: 24px;
+        border-radius: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+      }
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: 8px;
+      right: calc(50% - 16px);
+      font-size: 10px;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      line-height: 16px;
+    }
+  }
+}
+
+
+// Adjust page container for bottom navigation on mobile
+@media (max-width: 768px) {
+  .q-page-container {
+    padding-bottom: 56px !important;
+  }
+
+  // Hide the floating action buttons when bottom nav is shown
+  .floating-button {
+    display: none !important;
+  }
+
+  // Also hide the AI button on mobile when bottom nav is shown
+  .q-page-sticky[data-position='bottom-right'] {
+    &:not(.bottom-navigation) {
+      bottom: 72px !important; // Move AI button above bottom nav
+    }
+  }
+}
+
+// Ensure proper spacing on tablets
+@media (min-width: 600px) and (max-width: 768px) {
+  .bottom-navigation {
+    .bottom-nav-container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+  }
+}

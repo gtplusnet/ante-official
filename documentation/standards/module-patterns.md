@@ -1,0 +1,43 @@
+---
+description: When creating modules in backend use this rules.
+globs: 
+alwaysApply: false
+---
+# Module Rules for Backend Modules
+
+## Always Import CommonModule
+- Every backend module **must** import `CommonModule` from `lib/common.module`.
+- This ensures access to shared services, validators, and utilities across all modules.
+
+### How to Import
+Import `CommonModule` at the top of your module file:
+
+```typescript
+import { CommonModule } from 'lib/common.module';
+```
+
+Then, add it to the `imports` array in your `@Module` decorator:
+
+```typescript
+@Module({
+  imports: [CommonModule],
+  // ... other properties
+})
+```
+
+### Example (from `otp.module.ts`):
+
+```typescript
+import { Module } from '@nestjs/common';
+import { OTPService } from './otp.service';
+import { OTPController } from './otp.controller';
+import { CommonModule } from 'lib/common.module';
+
+@Module({
+  imports: [CommonModule],
+  providers: [OTPService],
+  controllers: [OTPController],
+  exports: [OTPService],
+})
+export class OTPModule {}
+```

@@ -1,0 +1,14 @@
+-- AlterTable
+ALTER TABLE "BillOfQuantity" ALTER COLUMN "totalMaterialCost" SET DEFAULT 0,
+ALTER COLUMN "totalLaborCost" SET DEFAULT 0,
+ALTER COLUMN "totalDirectCost" SET DEFAULT 0,
+ALTER COLUMN "totalCost" SET DEFAULT 0;
+
+-- AlterTable
+ALTER TABLE "BillOfQuantityTable" ALTER COLUMN "quantity" SET DEFAULT 0,
+ALTER COLUMN "materialUnitCost" SET DEFAULT 0,
+ALTER COLUMN "materialTotalCost" SET DEFAULT 0,
+ALTER COLUMN "laborUnitCost" SET DEFAULT 0,
+ALTER COLUMN "laborTotalCost" SET DEFAULT 0,
+ALTER COLUMN "directCost" SET DEFAULT 0,
+ALTER COLUMN "subtotal" SET DEFAULT 0;

@@ -1,0 +1,78 @@
+{
+  "info": {
+    "name": "ai-chat module",
+    "_postman_id": "aichat-conv-collection-001",
+    "description": "Postman collection for ai-chat conversation and messages API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "get or create conversation",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/ai-chat/conversation",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "ai-chat",
+            "conversation"
+          ]
+        }
+      }
+    },
+    {
+      "name": "get messages",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/ai-chat/conversation/messages",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "ai-chat",
+            "conversation",
+            "messages"
+          ]
+        }
+      }
+    },
+    {
+      "name": "add message",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"user\",\n  \"content\": \"Hello, AI!\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/ai-chat/conversation/messages",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "ai-chat",
+            "conversation",
+            "messages"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    }
+  ]
+}

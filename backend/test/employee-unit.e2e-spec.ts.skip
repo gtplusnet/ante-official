@@ -1,0 +1,710 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { HttpStatus } from '@nestjs/common';
+import { EmployeeListController } from '@modules/hr/employee/employee-list/employee-list.controller';
+import { EmployeeListService } from '@modules/hr/employee/employee-list/employee-list.service';
+import { EmployeeDocumentService } from '@modules/hr/employee/employee-document/employee-document.service';
+import { PrismaService } from '@common/prisma.service';
+import { UtilityService } from '@common/utility.service';
+import {
+  createMockPrismaService,
+  createMockUtilityService,
+  createMockAccount,
+  cleanupMocks,
+  createMockResponse,
+} from './setup';
+
+describe('Employee/Manpower Unit Tests', () => {
+  let employeeController: EmployeeListController;
+  let employeeService: EmployeeListService;
+  let employeeDocumentService: EmployeeDocumentService;
+  let prismaService: any;
+  let utilityService: any;
+
+  // Test employee data
+  const testEmployee = {
+    firstName: 'John',
+    lastName: 'Doe',
+    email: 'john.doe@company.com',
+    employeeId: 'EMP001',
+    username: 'johndoe',
+    roleId: 'employee-role-id',
+    userLevelId: 'employee-level-id',
+    employmentStatusId: 1,
+    salaryType: 'MONTHLY',
+    salaryAmount: 50000,
+    joiningDate: '2024-01-15',
+    department: 'IT',
+    position: 'Software Developer',
+  };
+
+  const mockEmployee = createMockAccount({
+    id: 'employee-account-id',
+    firstName: testEmployee.firstName,
+    lastName: testEmployee.lastName,
+    email: testEmployee.email,
+    username: testEmployee.username,
+    companyId: 'test-company-id',
+  });
+
+  beforeAll(async () => {
+    // Create mock services
+    const mockPrismaService = createMockPrismaService();
+    const mockUtilityServiceImpl = createMockUtilityService();
+
+    // Create additional mocks for EmployeeListService dependencies
+    const mockTableHandlerService = {
+      initialize: jest.fn(),
+      getTableData: jest.fn(),
+      constructTableQuery: jest.fn(),
+    };
+
+    const mockEmployeeDocumentServiceImpl = {
+      uploadDocument: jest.fn(),
+      getDocuments: jest.fn(),
+      getDocumentTypes: jest.fn(),
+      updateDocument: jest.fn(),
+      deleteDocument: jest.fn(),
+    };
+
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      controllers: [EmployeeListController],
+      providers: [
+        EmployeeListService,
+        {
+          provide: PrismaService,
+          useValue: mockPrismaService,
+        },
+        {
+          provide: UtilityService,
+          useValue: mockUtilityServiceImpl,
+        },
+        {
+          provide: EmployeeDocumentService,
+          useValue: mockEmployeeDocumentServiceImpl,
+        },
+        {
+          provide: 'TableHandlerService',
+          useValue: mockTableHandlerService,
+        },
+      ],
+    }).compile();
+
+    employeeController = moduleFixture.get<EmployeeListController>(EmployeeListController);
+    employeeService = moduleFixture.get<EmployeeListService>(EmployeeListService);
+    employeeDocumentService = moduleFixture.get<EmployeeDocumentService>(EmployeeDocumentService);
+    prismaService = moduleFixture.get<PrismaService>(PrismaService);
+    utilityService = moduleFixture.get<UtilityService>(UtilityService);
+  });
+
+  beforeEach(() => {
+    cleanupMocks();
+    
+    // Setup default utility service mock behavior
+    utilityService.responseHandler.mockImplementation((promise, response) => {
+      return promise.then((data) => {
+        const result = {
+          success: true,
+          message: 'Operation completed successfully',
+          data,
+        };
+        response.status(200).json(result);
+        return result;
+      }).catch((error) => {
+        const result = {
+          success: false,
+          message: error.message || 'An error occurred',
+          error: error,
+        };
+        response.status(error.statusCode || 500).json(result);
+        return result;
+      });
+    });
+  });
+
+  describe('EmployeeListService', () => {
+    describe('add', () => {
+      it('should create a new employee successfully', async () => {
+        // Mock employee creation
+        prismaService.account.create.mockResolvedValue({
+          ...mockEmployee,
+          employeeProfile: {
+            employeeId: testEmployee.employeeId,
+            department: testEmployee.department,
+            position: testEmployee.position,
+            joiningDate: new Date(testEmployee.joiningDate),
+            salaryType: testEmployee.salaryType,
+            salaryAmount: testEmployee.salaryAmount,
+          },
+        });
+
+        // Set up utility service context
+        utilityService.setAccountInformation.mockImplementation(() => {});
+        utilityService.companyId = 'test-company-id';
+
+        const result = await employeeService.add(testEmployee);
+
+        expect(result).toMatchObject({
+          id: mockEmployee.id,
+          firstName: testEmployee.firstName,
+          lastName: testEmployee.lastName,
+          email: testEmployee.email,
+          username: testEmployee.username,
+        });
+
+        expect(prismaService.account.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            firstName: testEmployee.firstName,
+            lastName: testEmployee.lastName,
+            email: testEmployee.email,
+            username: testEmployee.username,
+            companyId: 'test-company-id',
+          }),
+        });
+      });
+
+      it('should handle duplicate email error', async () => {
+        // Mock duplicate email error
+        prismaService.account.create.mockRejectedValue({
+          code: 'P2002',
+          meta: { target: ['email'] },
+          message: 'Unique constraint failed on email',
+        });
+
+        utilityService.companyId = 'test-company-id';
+
+        await expect(
+          employeeService.add(testEmployee)
+        ).rejects.toThrow('email already exists');
+      });
+
+      it('should validate required fields', async () => {
+        const invalidEmployee = {
+          ...testEmployee,
+          firstName: '',
+          email: 'invalid-email',
+        };
+
+        await expect(
+          employeeService.add(invalidEmployee)
+        ).rejects.toThrow();
+      });
+    });
+
+    describe('info', () => {
+      it('should retrieve employee information by ID', async () => {
+        // Mock employee lookup
+        prismaService.account.findUnique.mockResolvedValue({
+          ...mockEmployee,
+          employeeProfile: {
+            employeeId: testEmployee.employeeId,
+            department: testEmployee.department,
+            position: testEmployee.position,
+            joiningDate: new Date(testEmployee.joiningDate),
+            salaryType: testEmployee.salaryType,
+            salaryAmount: testEmployee.salaryAmount,
+          },
+          role: {
+            id: 'role-id',
+            name: 'Employee',
+          },
+          userLevel: {
+            id: 'level-id',
+            name: 'Standard',
+          },
+        });
+
+        const result = await employeeService.info(mockEmployee.id);
+
+        expect(result).toMatchObject({
+          id: mockEmployee.id,
+          firstName: testEmployee.firstName,
+          lastName: testEmployee.lastName,
+          email: testEmployee.email,
+        });
+
+        expect(prismaService.account.findUnique).toHaveBeenCalledWith({
+          where: { id: mockEmployee.id },
+          include: expect.any(Object),
+        });
+      });
+
+      it('should throw error for non-existent employee', async () => {
+        // Mock employee not found
+        prismaService.account.findUnique.mockResolvedValue(null);
+
+        await expect(
+          employeeService.info('non-existent-id')
+        ).rejects.toThrow('Employee not found');
+      });
+    });
+
+    describe('edit', () => {
+      it('should update employee information successfully', async () => {
+        const updateData = {
+          accountId: mockEmployee.id,
+          firstName: 'John Updated',
+          lastName: 'Doe Updated',
+          department: 'Engineering',
+          position: 'Senior Developer',
+        };
+
+        // Mock employee update
+        prismaService.account.update.mockResolvedValue({
+          ...mockEmployee,
+          firstName: updateData.firstName,
+          lastName: updateData.lastName,
+          updatedAt: new Date(),
+        });
+
+        const result = await employeeService.edit(updateData);
+
+        expect(result.firstName).toBe(updateData.firstName);
+        expect(result.lastName).toBe(updateData.lastName);
+
+        expect(prismaService.account.update).toHaveBeenCalledWith({
+          where: { id: mockEmployee.id },
+          data: expect.objectContaining({
+            firstName: updateData.firstName,
+            lastName: updateData.lastName,
+          }),
+        });
+      });
+
+      it('should validate required fields on update', async () => {
+        const invalidUpdate = {
+          accountId: mockEmployee.id,
+          firstName: '',
+          email: 'invalid-email',
+        };
+
+        await expect(
+          employeeService.edit(invalidUpdate)
+        ).rejects.toThrow();
+      });
+    });
+
+    describe('delete', () => {
+      it('should soft delete employee successfully', async () => {
+        // Mock employee lookup
+        prismaService.account.findUnique.mockResolvedValue(mockEmployee);
+        
+        // Mock soft delete
+        prismaService.account.update.mockResolvedValue({
+          ...mockEmployee,
+          isDeleted: true,
+          deletedAt: new Date(),
+        });
+
+        const result = await employeeService.delete({ accountId: mockEmployee.id });
+
+        expect(result.message).toContain('Employee deleted successfully');
+
+        expect(prismaService.account.update).toHaveBeenCalledWith({
+          where: { id: mockEmployee.id },
+          data: expect.objectContaining({
+            isDeleted: true,
+            deletedAt: expect.any(Date),
+          }),
+        });
+      });
+
+      it('should prevent deletion of non-existent employee', async () => {
+        // Mock employee not found
+        prismaService.account.findUnique.mockResolvedValue(null);
+
+        await expect(
+          employeeService.delete({ accountId: 'non-existent-id' })
+        ).rejects.toThrow('Employee not found');
+      });
+    });
+
+    describe('restore', () => {
+      it('should restore deleted employee successfully', async () => {
+        // Mock deleted employee lookup
+        prismaService.account.findUnique.mockResolvedValue({
+          ...mockEmployee,
+          isDeleted: true,
+          deletedAt: new Date(),
+        });
+        
+        // Mock restore
+        prismaService.account.update.mockResolvedValue({
+          ...mockEmployee,
+          isDeleted: false,
+          deletedAt: null,
+        });
+
+        const result = await employeeService.restore({ accountId: mockEmployee.id });
+
+        expect(result.message).toContain('Employee restored successfully');
+
+        expect(prismaService.account.update).toHaveBeenCalledWith({
+          where: { id: mockEmployee.id },
+          data: expect.objectContaining({
+            isDeleted: false,
+            deletedAt: null,
+          }),
+        });
+      });
+    });
+
+    describe('updateJobDetails', () => {
+      it('should update job details successfully', async () => {
+        const jobDetailsUpdate = {
+          accountId: mockEmployee.id,
+          department: 'Engineering',
+          position: 'Tech Lead',
+          salaryType: 'MONTHLY',
+          salaryAmount: 75000,
+          joiningDate: '2024-02-01',
+        };
+
+        // Mock profile update
+        prismaService.employeeProfile.update.mockResolvedValue({
+          id: 'profile-id',
+          accountId: mockEmployee.id,
+          department: jobDetailsUpdate.department,
+          position: jobDetailsUpdate.position,
+          salaryType: jobDetailsUpdate.salaryType,
+          salaryAmount: jobDetailsUpdate.salaryAmount,
+          joiningDate: new Date(jobDetailsUpdate.joiningDate),
+        });
+
+        const result = await employeeService.updateJobDetails(jobDetailsUpdate);
+
+        expect(result.department).toBe(jobDetailsUpdate.department);
+        expect(result.position).toBe(jobDetailsUpdate.position);
+        expect(result.salaryAmount).toBe(jobDetailsUpdate.salaryAmount);
+
+        expect(prismaService.employeeProfile.update).toHaveBeenCalledWith({
+          where: { accountId: mockEmployee.id },
+          data: expect.objectContaining({
+            department: jobDetailsUpdate.department,
+            position: jobDetailsUpdate.position,
+            salaryAmount: jobDetailsUpdate.salaryAmount,
+          }),
+        });
+      });
+
+      it('should validate salary amount is positive', async () => {
+        const invalidJobUpdate = {
+          accountId: mockEmployee.id,
+          salaryAmount: -5000,
+        };
+
+        await expect(
+          employeeService.updateJobDetails(invalidJobUpdate)
+        ).rejects.toThrow('salary amount must be positive');
+      });
+    });
+
+    describe('updateGovernmentDetails', () => {
+      it('should update government details successfully', async () => {
+        const govDetailsUpdate = {
+          accountId: mockEmployee.id,
+          sssNumber: '12-345678-9',
+          philhealthNumber: 'PH12345678901',
+          tinNumber: '123-456-789-000',
+          pagibigNumber: '1234567890',
+        };
+
+        // Mock government details update
+        prismaService.employeeGovernmentDetails.upsert.mockResolvedValue({
+          id: 'gov-details-id',
+          accountId: mockEmployee.id,
+          ...govDetailsUpdate,
+        });
+
+        const result = await employeeService.updateGovernmentDetails(govDetailsUpdate);
+
+        expect(result.sssNumber).toBe(govDetailsUpdate.sssNumber);
+        expect(result.tinNumber).toBe(govDetailsUpdate.tinNumber);
+
+        expect(prismaService.employeeGovernmentDetails.upsert).toHaveBeenCalledWith({
+          where: { accountId: mockEmployee.id },
+          create: expect.objectContaining(govDetailsUpdate),
+          update: expect.objectContaining(govDetailsUpdate),
+        });
+      });
+
+      it('should validate government ID formats', async () => {
+        const invalidGovUpdate = {
+          accountId: mockEmployee.id,
+          sssNumber: 'invalid-format',
+          tinNumber: '123',
+        };
+
+        await expect(
+          employeeService.updateGovernmentDetails(invalidGovUpdate)
+        ).rejects.toThrow();
+      });
+    });
+
+    describe('Contract Management', () => {
+      describe('addContract', () => {
+        it('should add employee contract successfully', async () => {
+          const contractData = {
+            contractType: 'REGULAR',
+            startDate: new Date('2024-01-15'),
+            endDate: new Date('2025-01-14'),
+            salaryAmount: 60000,
+            workingHours: 40,
+            probationPeriod: 6,
+          };
+
+          // Mock contract creation
+          prismaService.employeeContract.create.mockResolvedValue({
+            id: 'contract-id-1',
+            accountId: mockEmployee.id,
+            ...contractData,
+            isActive: true,
+            createdAt: new Date(),
+          });
+
+          const result = await employeeService.addContract(mockEmployee.id, contractData);
+
+          expect(result.contractType).toBe(contractData.contractType);
+          expect(result.salaryAmount).toBe(contractData.salaryAmount);
+
+          expect(prismaService.employeeContract.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({
+              accountId: mockEmployee.id,
+              ...contractData,
+            }),
+          });
+        });
+
+        it('should validate contract dates', async () => {
+          const invalidContract = {
+            contractType: 'REGULAR',
+            startDate: new Date('2024-12-31'),
+            endDate: new Date('2024-01-01'), // End date before start date
+            salaryAmount: 50000,
+          };
+
+          await expect(
+            employeeService.addContract(mockEmployee.id, invalidContract)
+          ).rejects.toThrow('end date must be after start date');
+        });
+      });
+
+      describe('getContractsByAccountId', () => {
+        it('should retrieve employee contracts', async () => {
+          const mockContracts = [
+            {
+              id: 'contract-1',
+              contractType: 'REGULAR',
+              startDate: new Date('2024-01-15'),
+              endDate: new Date('2025-01-14'),
+              salaryAmount: 60000,
+              isActive: true,
+            },
+            {
+              id: 'contract-2',
+              contractType: 'PROBATIONARY',
+              startDate: new Date('2023-01-15'),
+              endDate: new Date('2023-07-14'),
+              salaryAmount: 45000,
+              isActive: false,
+            },
+          ];
+
+          // Mock contracts lookup
+          prismaService.employeeContract.findMany.mockResolvedValue(mockContracts);
+
+          const result = await employeeService.getContractsByAccountId(mockEmployee.id);
+
+          expect(result).toHaveLength(2);
+          expect(result[0].contractType).toBe('REGULAR');
+          expect(result[1].contractType).toBe('PROBATIONARY');
+
+          expect(prismaService.employeeContract.findMany).toHaveBeenCalledWith({
+            where: { accountId: mockEmployee.id },
+            orderBy: { createdAt: 'desc' },
+          });
+        });
+      });
+    });
+
+    describe('Reference Data', () => {
+      describe('getEmploymentStatusReference', () => {
+        it('should retrieve employment status reference data', async () => {
+          const employmentStatuses = [
+            { id: 1, name: 'REGULAR', label: 'Regular Employee' },
+            { id: 2, name: 'PROBATIONARY', label: 'Probationary Employee' },
+            { id: 3, name: 'CONTRACTUAL', label: 'Contractual Employee' },
+          ];
+
+          // Mock reference data
+          jest.spyOn(employeeService, 'getEmploymentStatusReference').mockResolvedValue(employmentStatuses);
+
+          const result = await employeeService.getEmploymentStatusReference();
+
+          expect(result).toHaveLength(3);
+          expect(result[0].name).toBe('REGULAR');
+          expect(result[1].name).toBe('PROBATIONARY');
+        });
+      });
+
+      describe('getShiftsForScheduling', () => {
+        it('should retrieve available shifts for scheduling', async () => {
+          const availableShifts = [
+            { id: 'shift-1', name: 'Day Shift', startTime: '08:00', endTime: '17:00' },
+            { id: 'shift-2', name: 'Night Shift', startTime: '20:00', endTime: '05:00' },
+          ];
+
+          jest.spyOn(employeeService, 'getShiftsForScheduling').mockResolvedValue(availableShifts);
+
+          const result = await employeeService.getShiftsForScheduling();
+
+          expect(result).toHaveLength(2);
+          expect(result[0].name).toBe('Day Shift');
+          expect(result[1].name).toBe('Night Shift');
+        });
+      });
+    });
+  });
+
+  describe('EmployeeListController', () => {
+    describe('POST /hris/employee/add', () => {
+      it('should handle employee creation request successfully', async () => {
+        const mockResponse = createMockResponse();
+
+        // Mock successful employee creation
+        jest.spyOn(employeeService, 'add').mockResolvedValue(mockEmployee);
+
+        await employeeController.addEmployee(testEmployee, mockResponse as any);
+
+        expect(employeeService.add).toHaveBeenCalledWith(testEmployee);
+        expect(utilityService.responseHandler).toHaveBeenCalled();
+      });
+    });
+
+    describe('GET /hris/employee/info', () => {
+      it('should handle employee info request successfully', async () => {
+        const mockResponse = createMockResponse();
+
+        // Mock successful employee lookup
+        jest.spyOn(employeeService, 'info').mockResolvedValue({
+          ...mockEmployee,
+          employeeProfile: {
+            employeeId: testEmployee.employeeId,
+            department: testEmployee.department,
+            position: testEmployee.position,
+          },
+        } as any);
+
+        await employeeController.employeeInfo(
+          { accountId: mockEmployee.id },
+          mockResponse as any
+        );
+
+        expect(employeeService.info).toHaveBeenCalledWith(mockEmployee.id);
+        expect(utilityService.responseHandler).toHaveBeenCalled();
+      });
+    });
+
+    describe('PATCH /hris/employee/update', () => {
+      it('should handle employee update request successfully', async () => {
+        const mockResponse = createMockResponse();
+        const updateData = {
+          accountId: mockEmployee.id,
+          firstName: 'John Updated',
+          lastName: 'Doe Updated',
+        };
+
+        // Mock successful employee update
+        jest.spyOn(employeeService, 'edit').mockResolvedValue({
+          ...mockEmployee,
+          ...updateData,
+        } as any);
+
+        await employeeController.updateEmployee(updateData, mockResponse as any);
+
+        expect(employeeService.edit).toHaveBeenCalledWith(updateData);
+        expect(utilityService.responseHandler).toHaveBeenCalled();
+      });
+    });
+
+    describe('DELETE /hris/employee/delete', () => {
+      it('should handle employee deletion request successfully', async () => {
+        const mockResponse = createMockResponse();
+
+        // Mock successful employee deletion
+        jest.spyOn(employeeService, 'delete').mockResolvedValue({
+          message: 'Employee deleted successfully',
+        } as any);
+
+        await employeeController.deleteEmployee(
+          { accountId: mockEmployee.id },
+          mockResponse as any
+        );
+
+        expect(employeeService.delete).toHaveBeenCalledWith({ accountId: mockEmployee.id });
+        expect(utilityService.responseHandler).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Error Handling and Edge Cases', () => {
+    it('should handle database connection errors gracefully', async () => {
+      // Mock database error
+      prismaService.account.findMany.mockRejectedValue(new Error('Database connection failed'));
+
+      await expect(
+        employeeService.info(mockEmployee.id)
+      ).rejects.toThrow('Database connection failed');
+    });
+
+    it('should handle concurrent employee creation requests', async () => {
+      // Mock race condition scenario
+      prismaService.account.create
+        .mockResolvedValueOnce(mockEmployee)
+        .mockRejectedValueOnce({
+          code: 'P2002',
+          meta: { target: ['username'] },
+        });
+
+      utilityService.companyId = 'test-company-id';
+
+      // First request should succeed
+      const result1 = await employeeService.add(testEmployee);
+      expect(result1.id).toBe(mockEmployee.id);
+
+      // Second request with same data should fail
+      await expect(
+        employeeService.add(testEmployee)
+      ).rejects.toThrow('username already exists');
+    });
+
+    it('should validate input data properly', async () => {
+      const invalidEmployee = {
+        ...testEmployee,
+        firstName: '',
+        email: 'invalid-email',
+        salaryAmount: -1000,
+      };
+
+      await expect(
+        employeeService.add(invalidEmployee)
+      ).rejects.toThrow();
+    });
+
+    it('should handle employee not found scenarios', async () => {
+      // Mock employee not found for various operations
+      prismaService.account.findUnique.mockResolvedValue(null);
+
+      await expect(
+        employeeService.info('non-existent-id')
+      ).rejects.toThrow('Employee not found');
+
+      await expect(
+        employeeService.delete({ accountId: 'non-existent-id' })
+      ).rejects.toThrow('Employee not found');
+
+      await expect(
+        employeeService.restore({ accountId: 'non-existent-id' })
+      ).rejects.toThrow('Employee not found');
+    });
+  });
+});

@@ -1,0 +1,107 @@
+[
+  {
+    "name": "New Year's Day",
+    "date": "2021-01-01",
+    "type": "REGULAR"
+  },
+  {
+    "name": "Chinese New Year",
+    "date": "2021-02-12",
+    "type": "SPECIAL"
+  },
+  {
+    "name": "EDSA People Power Revolution Anniversary",
+    "date": "2021-02-25",
+    "type": "SPECIAL"
+  },
+  {
+    "name": "Maundy Thursday",
+    "date": "2021-04-01",
+    "type": "REGULAR"
+  },
+  {
+    "name": "Good Friday",
+    "date": "2021-04-02",
+    "type": "REGULAR"
+  },
+  {
+    "name": "Black Saturday",
+    "date": "2021-04-03",
+    "type": "SPECIAL"
+  },
+  {
+    "name": "Araw ng Kagitingan",
+    "date": "2021-04-09",
+    "type": "REGULAR"
+  },
+  {
+    "name": "Labor Day",
+    "date": "2021-05-01",
+    "type": "REGULAR"
+  },
+  {
+    "name": "Independence Day",
+    "date": "2021-06-12",
+    "type": "REGULAR"
+  },
+  {
+    "name": "Eid'l Fitr",
+    "date": "2021-05-13",
+    "type": "REGULAR"
+  },
+  {
+    "name": "Eid'l Adha",
+    "date": "2021-07-20",
+    "type": "REGULAR"
+  },
+  {
+    "name": "Ninoy Aquino Day",
+    "date": "2021-08-21",
+    "type": "SPECIAL"
+  },
+  {
+    "name": "National Heroes Day",
+    "date": "2021-08-30",
+    "type": "REGULAR"
+  },
+  {
+    "name": "All Saints' Day",
+    "date": "2021-11-01",
+    "type": "SPECIAL"
+  },
+  {
+    "name": "All Souls' Day",
+    "date": "2021-11-02",
+    "type": "SPECIAL"
+  },
+  {
+    "name": "Bonifacio Day",
+    "date": "2021-11-30",
+    "type": "REGULAR"
+  },
+  {
+    "name": "Feast of the Immaculate Conception",
+    "date": "2021-12-08",
+    "type": "SPECIAL"
+  },
+  {
+    "name": "Christmas Eve",
+    "date": "2021-12-24",
+    "type": "SPECIAL"
+  },
+  {
+    "name": "Christmas Day",
+    "date": "2021-12-25",
+    "type": "REGULAR"
+  },
+  {
+    "name": "Rizal Day",
+    "date": "2021-12-30",
+    "type": "REGULAR"
+  },
+  {
+    "name": "New Year's Eve",
+    "date": "2021-12-31",
+    "type": "SPECIAL"
+  }
+]

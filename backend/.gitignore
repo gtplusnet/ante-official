@@ -1,0 +1,112 @@
+# Dependency directories
+node_modules/
+.yarn/
+
+# Build outputs
+dist/
+build/
+.build-number
+deployment-hash.json
+deployment-info.json
+version.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.staging
+!.env.example
+
+# Prisma
+prisma/migrations/dev/
+
+# Editor directories and files
+.vscode/
+.idea/
+.cursor/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Testing
+coverage/
+.nyc_output/
+test-reports/
+*.har
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+.tmp/
+.temp/
+tmp/
+temp/
+
+# Cache directories
+.cache/
+
+# Local development
+*.local
+.history/
+
+# Debug
+debug/
+*.pid
+*.seed
+*.pid.lock
+
+# Package manager files
+package-lock.json
+pnpm-lock.yaml
+bun.lockb
+# yarn.lock is tracked for deterministic builds
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+postgres-data/
+mongo-data/
+
+# Uploads (should be stored elsewhere in production)
+uploads/
+public/uploads/
+static/uploads/
+
+# AWS and cloud credentials
+*.pem
+*.key
+*.crt
+*.cer
+credentials.json
+service-account.json
+
+# Secrets
+secrets/
+.secrets/

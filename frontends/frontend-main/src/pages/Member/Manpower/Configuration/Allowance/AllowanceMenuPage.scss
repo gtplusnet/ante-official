@@ -1,0 +1,92 @@
+.allowance-content {
+  .allowance-item {
+    border-bottom: 1px solid #ddd;
+
+    &:hover {
+      background-color: #f6f8fb;
+    }
+  }
+
+  .clickable-label {
+    font-weight: 600;
+    color: #027be3;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &.no-underline-hover:hover {
+      text-decoration: none;
+    }
+  }
+
+  .clickable-sub-label {
+    color: #027be3;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .transition-rotate {
+    transition: transform 0.3s ease;
+  }
+
+  .rotated {
+    transform: rotate(180deg);
+  }
+}
+
+.create-allowance-card {
+  min-width: calc(100% - 80px);
+}
+
+.input-selection {
+  min-width: 230px;
+}
+
+.allowance-table-container {
+  overflow-x: auto;
+  height: calc(100vh - 210px);
+  position: relative;
+}
+
+.allowance-table-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.allowance-table-container::-webkit-scrollbar-thumb {
+  background-color: #d9d9d9;
+  border-radius: 50px;
+}
+
+.allowance-table-container::-webkit-scrollbar-track {
+  background-color: #f4f4f4;
+  border-radius: 50px;
+}
+
+.allowance-tabs {
+  display: flex;
+  overflow: hidden;
+  background-color: #e2e2e2;
+  border: 1px solid #eee;
+  border-radius: 5px;
+
+  .tab {
+    padding: 5px 20px;
+    background-color: #fff;
+
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &:hover {
+      background-color: #ddd;
+    }
+    &.active {
+      border-bottom: 3px solid #2a41cc;
+    }
+  }
+}

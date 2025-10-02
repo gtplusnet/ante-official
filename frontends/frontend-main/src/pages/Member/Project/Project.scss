@@ -1,0 +1,285 @@
+// Common styles for all project views
+.no-projects-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: calc(100vh - 500px); // Ensures it spans the full viewport height
+}
+
+.no-projects-text {
+  font-size: 1rem;
+  color: var(--text-color);
+  margin-bottom: 1rem;
+}
+
+// Grid View styles - MD3 Dense
+.grid-view {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 16px; // MD3 comfortable spacing
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.grid-box {
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px; // MD3 large corner radius
+  background: var(--md-sys-color-surface);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+
+  // Flat design with subtle hover
+  &:hover {
+    border-color: var(--md-sys-color-primary);
+    background: var(--md-sys-color-surface-container-low);
+
+    .grid-box-actions {
+      opacity: 1;
+    }
+  }
+
+  &:active {
+    transform: scale(0.99);
+  }
+}
+
+.grid-box-content {
+  padding: 16px !important; // MD3 comfortable padding
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.grid-box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.grid-box-title-section {
+  flex: 1;
+  min-width: 0; // Allow text truncation
+}
+
+.grid-box-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+  line-height: 1.3;
+  // Truncate long titles
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.grid-box-subtitle {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.grid-box-actions {
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+// Badges section
+.grid-box-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.board-stage-chip {
+  border: 1px solid !important;
+  font-size: 12px !important;
+  height: 28px !important;
+
+  .q-chip__content {
+    padding: 0 8px !important;
+  }
+}
+
+.progress-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+// Description
+.grid-box-body {
+  min-height: 0;
+}
+
+.grid-box-description {
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.5;
+  font-size: 14px;
+  margin: 0;
+  // Limit to 2 lines
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Metrics section
+.grid-box-metrics {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.metric-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  .metric-label {
+    font-size: 13px;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .metric-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface);
+  }
+}
+
+// Timeline section
+.grid-box-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto; // Push to bottom
+}
+
+.timeline-dates {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  .timeline-start,
+  .timeline-end {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    .q-icon {
+      color: var(--md-sys-color-on-surface-variant);
+    }
+
+    span {
+      font-size: 12px;
+      color: var(--md-sys-color-on-surface-variant);
+    }
+  }
+
+  .timeline-end span {
+    color: var(--md-sys-color-on-surface);
+  }
+}
+
+// View selector styles
+.page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.views {
+  display: flex;
+  align-items: center;
+}
+
+.button-group {
+  display: flex;
+  gap: 4px;
+  background: var(--md-sys-color-surface-variant-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.button {
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: var(--md-sys-color-surface-variant);
+  }
+
+  &.active {
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+  }
+}
+
+// Board stage legend
+.board-stage-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  background: var(--md-sys-color-surface-variant-low);
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.legend-items {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+}
+
+.legend-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  border-width: 1px;
+  border-style: solid;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+// Ensure Material Design 3 flat design
+* {
+  box-shadow: none !important; // No shadows
+  text-shadow: none !important;
+}

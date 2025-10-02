@@ -1,0 +1,589 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { HttpStatus } from '@nestjs/common';
+import { AuthController } from '@modules/auth/auth/auth.controller';
+import { AuthService } from '@modules/auth/auth/auth.service';
+import { PrismaService } from '@common/prisma.service';
+import { EncryptionService } from '@common/encryption.service';
+import { UtilityService } from '@common/utility.service';
+import { RoleService } from '@modules/role/role/role.service';
+import { AccountService } from '@modules/account/account/account.service';
+import { CompanyService } from '@modules/company/company/company.service';
+import { EmailVerificationService } from '@modules/auth/auth/email-verification.service';
+import { GoogleAuthService } from '@modules/auth/auth/google-auth.service';
+import { FacebookAuthService } from '@modules/auth/auth/facebook-auth.service';
+import {
+  createMockPrismaService,
+  createMockEncryptionService,
+  createMockUtilityService,
+  createMockAccount,
+  cleanupMocks,
+  createMockResponse,
+} from './setup';
+
+describe('Authentication Unit Tests', () => {
+  let authController: AuthController;
+  let authService: AuthService;
+  let prismaService: any;
+  let encryptionService: any;
+  let utilityService: any;
+
+  // Test credentials
+  const testUser = {
+    username: 'guillermotabligan',
+    password: 'water123',
+    email: 'guillermotabligan00@gmail.com',
+    firstName: 'Guillermo',
+    lastName: 'Tabligan',
+  };
+
+  const mockUser = createMockAccount({
+    username: testUser.username,
+    email: testUser.email,
+    firstName: testUser.firstName,
+    lastName: testUser.lastName,
+    password: 'hashed-water123',
+    key: 'mock-key',
+  });
+
+  const mockToken = '1234567890123456789012345678901234567890';
+
+  beforeAll(async () => {
+    // Create mock services
+    const mockPrismaService = createMockPrismaService();
+    const mockEncryptionServiceImpl = createMockEncryptionService();
+    const mockUtilityServiceImpl = createMockUtilityService();
+
+    // Create additional mocks for AuthService dependencies
+    const mockRoleService = {
+      findById: jest.fn(),
+      create: jest.fn(),
+      findByName: jest.fn(),
+    };
+
+    const mockScopeService = {
+      findAll: jest.fn(() => Promise.resolve([])),
+      create: jest.fn(),
+    };
+
+    const mockAccountService = {
+      create: jest.fn(),
+      findById: jest.fn(),
+      update: jest.fn(),
+    };
+
+    const mockCompanyService = {
+      create: jest.fn(),
+      findByName: jest.fn(),
+      findById: jest.fn(),
+    };
+
+    const mockEmailVerificationService = {
+      sendVerificationEmail: jest.fn(),
+      verifyEmail: jest.fn(),
+    };
+
+    const mockGoogleAuthService = {
+      authenticate: jest.fn(),
+    };
+
+    const mockFacebookAuthService = {
+      authenticate: jest.fn(),
+    };
+
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      controllers: [AuthController],
+      providers: [
+        AuthService,
+        {
+          provide: PrismaService,
+          useValue: mockPrismaService,
+        },
+        {
+          provide: EncryptionService,
+          useValue: mockEncryptionServiceImpl,
+        },
+        {
+          provide: UtilityService,
+          useValue: mockUtilityServiceImpl,
+        },
+        {
+          provide: RoleService,
+          useValue: mockRoleService,
+        },
+        {
+          provide: 'ScopeService',
+          useValue: mockScopeService,
+        },
+        {
+          provide: AccountService,
+          useValue: mockAccountService,
+        },
+        {
+          provide: CompanyService,
+          useValue: mockCompanyService,
+        },
+        {
+          provide: EmailVerificationService,
+          useValue: mockEmailVerificationService,
+        },
+        {
+          provide: GoogleAuthService,
+          useValue: mockGoogleAuthService,
+        },
+        {
+          provide: FacebookAuthService,
+          useValue: mockFacebookAuthService,
+        },
+      ],
+    }).compile();
+
+    authController = moduleFixture.get<AuthController>(AuthController);
+    authService = moduleFixture.get<AuthService>(AuthService);
+    prismaService = moduleFixture.get<PrismaService>(PrismaService);
+    encryptionService = moduleFixture.get<EncryptionService>(EncryptionService);
+    utilityService = moduleFixture.get<UtilityService>(UtilityService);
+  });
+
+  beforeEach(() => {
+    cleanupMocks();
+  });
+
+  describe('AuthService', () => {
+    describe('login', () => {
+      it('should login successfully with valid credentials', async () => {
+        // Mock user lookup
+        prismaService.account.findFirst.mockResolvedValue({
+          ...mockUser,
+          company: {
+            id: 'test-company-id',
+            companyName: 'Test Company',
+            isActive: true,
+          },
+        });
+
+        // Mock password comparison
+        encryptionService.comparePassword.mockReturnValue(true);
+
+        // Mock token generation
+        utilityService.randomString.mockReturnValue(mockToken);
+        
+        // Mock token creation
+        prismaService.accountToken.create.mockResolvedValue({
+          id: 'token-id',
+          token: mockToken,
+          accountId: mockUser.id,
+          createdAt: new Date(),
+        });
+
+        const result = await authService.login(
+          { username: testUser.username, password: testUser.password },
+          {},
+          '127.0.0.1'
+        );
+
+        expect(result).toMatchObject({
+          account: expect.objectContaining({
+            id: mockUser.id,
+            username: testUser.username,
+            email: testUser.email,
+          }),
+          token: mockToken,
+        });
+
+        // Verify password was checked
+        expect(encryptionService.comparePassword).toHaveBeenCalledWith(
+          testUser.password,
+          mockUser.password,
+        );
+
+        // Verify token was created
+        expect(prismaService.accountToken.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            token: mockToken,
+            accountId: mockUser.id,
+          }),
+        });
+      });
+
+      it('should throw error for invalid username', async () => {
+        // Mock user not found
+        prismaService.account.findFirst.mockResolvedValue(null);
+
+        await expect(
+          authService.login(
+            { username: 'nonexistentuser', password: 'password123' },
+            {},
+            '127.0.0.1'
+          )
+        ).rejects.toThrow('Invalid credentials');
+      });
+
+      it('should throw error for incorrect password', async () => {
+        // Mock user lookup
+        prismaService.account.findFirst.mockResolvedValue({
+          ...mockUser,
+          company: {
+            id: 'test-company-id',
+            companyName: 'Test Company',
+            isActive: true,
+          },
+        });
+
+        // Mock password comparison failure
+        encryptionService.comparePassword.mockReturnValue(false);
+
+        await expect(
+          authService.login(
+            { username: testUser.username, password: 'wrongpassword' },
+            {},
+            '127.0.0.1'
+          )
+        ).rejects.toThrow('Invalid credentials');
+      });
+
+      it('should throw error for inactive company', async () => {
+        // Mock user with inactive company
+        prismaService.account.findFirst.mockResolvedValue({
+          ...mockUser,
+          company: {
+            id: 'test-company-id',
+            companyName: 'Test Company',
+            isActive: false,
+          },
+        });
+
+        encryptionService.comparePassword.mockReturnValue(true);
+
+        await expect(
+          authService.login(
+            { username: testUser.username, password: testUser.password },
+            {},
+            '127.0.0.1'
+          )
+        ).rejects.toThrow('account is inactive');
+      });
+    });
+
+    describe('signup', () => {
+      it('should create a new user account successfully', async () => {
+        // Mock company creation
+        prismaService.company.create.mockResolvedValue({
+          id: 'test-company-id',
+          companyName: 'Test Company',
+        });
+
+        // Mock user creation
+        prismaService.account.create.mockResolvedValue(mockUser);
+        
+        // Mock token generation and creation
+        utilityService.randomString.mockReturnValue(mockToken);
+        prismaService.accountToken.create.mockResolvedValue({
+          id: 'token-id',
+          token: mockToken,
+          accountId: mockUser.id,
+          createdAt: new Date(),
+        });
+
+        const signupData = {
+          username: testUser.username,
+          email: testUser.email,
+          password: testUser.password,
+          firstName: testUser.firstName,
+          lastName: testUser.lastName,
+          companyName: 'Test Company',
+          businessType: 'CONSTRUCTION' as any,
+          industry: 'TECHNOLOGY' as any,
+        };
+
+        const result = await authService.signUp(signupData, {}, '127.0.0.1');
+
+        expect(result).toMatchObject({
+          account: expect.objectContaining({
+            id: mockUser.id,
+            username: testUser.username,
+            email: testUser.email,
+          }),
+          token: mockToken,
+        });
+
+        // Verify user creation
+        expect(prismaService.account.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            username: testUser.username,
+            email: testUser.email,
+            firstName: testUser.firstName,
+            lastName: testUser.lastName,
+          }),
+        });
+      });
+
+      it('should handle duplicate username error', async () => {
+        // Mock company creation
+        prismaService.company.create.mockResolvedValue({
+          id: 'test-company-id',
+          companyName: 'Test Company',
+        });
+
+        // Mock user creation failure due to duplicate
+        prismaService.account.create.mockRejectedValue({
+          code: 'P2002',
+          meta: { target: ['username'] },
+        });
+
+        const signupData = {
+          username: testUser.username,
+          email: 'different@example.com',
+          password: testUser.password,
+          firstName: testUser.firstName,
+          lastName: testUser.lastName,
+          companyName: 'Test Company',
+          businessType: 'CONSTRUCTION' as any,
+          industry: 'TECHNOLOGY' as any,
+        };
+
+        await expect(
+          authService.signUp(signupData, {}, '127.0.0.1')
+        ).rejects.toThrow('username already exists');
+      });
+    });
+
+    describe('token validation', () => {
+      it('should validate token successfully', async () => {
+        // Mock token lookup
+        prismaService.accountToken.findFirst.mockResolvedValue({
+          id: 'token-id',
+          token: mockToken,
+          accountId: mockUser.id,
+          createdAt: new Date(),
+          account: {
+            ...mockUser,
+            company: {
+              id: 'test-company-id',
+              companyName: 'Test Company',
+              isActive: true,
+            },
+          },
+        });
+
+        const result = await authService.validateToken(mockToken);
+
+        expect(result).toMatchObject({
+          id: mockUser.id,
+          username: testUser.username,
+          email: testUser.email,
+        });
+      });
+
+      it('should reject invalid token', async () => {
+        // Mock token not found
+        prismaService.accountToken.findFirst.mockResolvedValue(null);
+
+        await expect(
+          authService.validateToken('invalid-token')
+        ).rejects.toThrow('Invalid or expired token');
+      });
+
+      it('should reject token for inactive account', async () => {
+        // Mock token with inactive account
+        prismaService.accountToken.findFirst.mockResolvedValue({
+          id: 'token-id',
+          token: mockToken,
+          accountId: mockUser.id,
+          createdAt: new Date(),
+          account: {
+            ...mockUser,
+            isActive: false,
+            company: {
+              id: 'test-company-id',
+              companyName: 'Test Company',
+              isActive: true,
+            },
+          },
+        });
+
+        await expect(
+          authService.validateToken(mockToken)
+        ).rejects.toThrow('account is inactive');
+      });
+    });
+  });
+
+  describe('AuthController', () => {
+    describe('POST /auth/login', () => {
+      it('should handle login request successfully', async () => {
+        const mockResponse = createMockResponse();
+        
+        // Mock successful login
+        jest.spyOn(authService, 'login').mockResolvedValue({
+          account: mockUser,
+          token: mockToken,
+        } as any);
+
+        // Mock utility response handler
+        utilityService.responseHandler.mockImplementation((promise, response) => {
+          return promise.then((data) => {
+            const result = {
+              success: true,
+              message: 'Login successful',
+              data,
+            };
+            response.status(200).json(result);
+            return result;
+          });
+        });
+
+        await authController.login(
+          {
+            username: testUser.username,
+            password: testUser.password,
+          },
+          {},
+          '127.0.0.1',
+          mockResponse as any
+        );
+
+        expect(authService.login).toHaveBeenCalledWith(
+          {
+            username: testUser.username,
+            password: testUser.password,
+          },
+          {},
+          '127.0.0.1'
+        );
+
+        expect(utilityService.responseHandler).toHaveBeenCalled();
+      });
+    });
+
+    describe('POST /auth/signup', () => {
+      it('should handle signup request successfully', async () => {
+        const mockResponse = createMockResponse();
+        
+        const signupData = {
+          username: testUser.username,
+          email: testUser.email,
+          password: testUser.password,
+          firstName: testUser.firstName,
+          lastName: testUser.lastName,
+          companyName: 'Test Company',
+          businessType: 'CONSTRUCTION' as any,
+          industry: 'TECHNOLOGY' as any,
+        };
+
+        // Mock successful signup
+        jest.spyOn(authService, 'signUp').mockResolvedValue({
+          account: mockUser,
+          token: mockToken,
+        } as any);
+
+        // Mock utility response handler
+        utilityService.responseHandler.mockImplementation((promise, response) => {
+          return promise.then((data) => {
+            const result = {
+              success: true,
+              message: 'Account created successfully',
+              data,
+            };
+            response.status(201).json(result);
+            return result;
+          });
+        });
+
+        await authController.signUp(
+          signupData,
+          {},
+          '127.0.0.1',
+          mockResponse as any
+        );
+
+        expect(authService.signUp).toHaveBeenCalledWith(
+          signupData,
+          {},
+          '127.0.0.1'
+        );
+
+        expect(utilityService.responseHandler).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle database connection errors gracefully', async () => {
+      // Mock database error
+      prismaService.account.findFirst.mockRejectedValue(new Error('Database connection failed'));
+
+      await expect(
+        authService.login(
+          { username: testUser.username, password: testUser.password },
+          {},
+          '127.0.0.1'
+        )
+      ).rejects.toThrow('Database connection failed');
+    });
+
+    it('should handle concurrent signup requests', async () => {
+      // Mock race condition scenario
+      prismaService.company.create.mockResolvedValue({
+        id: 'test-company-id',
+        companyName: 'Test Company',
+      });
+
+      prismaService.account.create
+        .mockResolvedValueOnce(mockUser)
+        .mockRejectedValueOnce({
+          code: 'P2002',
+          meta: { target: ['email'] },
+        });
+
+      const signupData = {
+        username: testUser.username,
+        email: testUser.email,
+        password: testUser.password,
+        firstName: testUser.firstName,
+        lastName: testUser.lastName,
+        companyName: 'Test Company',
+        businessType: 'CONSTRUCTION' as any,
+        industry: 'TECHNOLOGY' as any,
+      };
+
+      // First request should succeed
+      utilityService.randomString.mockReturnValue(mockToken);
+      prismaService.accountToken.create.mockResolvedValue({
+        id: 'token-id',
+        token: mockToken,
+        accountId: mockUser.id,
+        createdAt: new Date(),
+      });
+
+      const result1 = await authService.signUp(signupData, {}, '127.0.0.1');
+      expect(result1.account.id).toBe(mockUser.id);
+
+      // Second request with same data should fail
+      await expect(
+        authService.signUp(signupData, {}, '127.0.0.1')
+      ).rejects.toThrow('email already exists');
+    });
+
+    it('should validate input data properly', async () => {
+      // Test with missing required fields
+      const invalidSignupData = {
+        username: '',
+        email: 'invalid-email',
+        password: '123', // Too short
+        firstName: '',
+        lastName: '',
+        companyName: '',
+        businessType: 'CONSTRUCTION' as any,
+        industry: 'TECHNOLOGY' as any,
+      };
+
+      // This would typically be caught by validation pipes in a real NestJS app
+      // For unit tests, we can test the service's behavior when given invalid data
+      prismaService.account.create.mockRejectedValue(new Error('Validation failed'));
+
+      await expect(
+        authService.signUp(invalidSignupData, {}, '127.0.0.1')
+      ).rejects.toThrow('Validation failed');
+    });
+  });
+});

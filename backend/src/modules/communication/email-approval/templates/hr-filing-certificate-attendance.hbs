@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate of Attendance Filing - Approval Required</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; background-color: #f8f9fa;">
+
+    <!-- Header -->
+    {{> header}}
+
+    <!-- Main Content -->
+    <div style="max-width: 600px; margin: 0 auto; background-color: white;">
+        
+        <!-- Greeting -->
+        <div style="padding: 30px 30px 20px 30px;">
+            <h2 style="margin: 0 0 10px 0; color: #333; font-size: 24px;">Hello {{approverName}},</h2>
+            <p style="margin: 0; color: #6c757d; font-size: 16px;">{{requestorName}} has submitted a <strong>Certificate of Attendance</strong> request for your approval.</p>
+        </div>
+
+        <!-- Filing Details -->
+        <div style="padding: 0 30px 20px 30px;">
+            <div style="background-color: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 4px solid #28a745;">
+                <h3 style="margin: 0 0 20px 0; color: #333; font-size: 18px;">📜 Certificate of Attendance Details</h3>
+                
+                <!-- Employee Information -->
+                <div style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Employee Information</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Full Name</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{requestorName}}</p>
+                        </div>
+                        {{#if employeeId}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Employee ID</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{employeeId}}</p>
+                        </div>
+                        {{/if}}
+                        {{#if department}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Department</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{department}}</p>
+                        </div>
+                        {{/if}}
+                        {{#if position}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Position</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{position}}</p>
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
+
+                <!-- Event/Training Information -->
+                <div style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Event/Training Information</h4>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
+                        {{#if eventName}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Event/Training Title</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{eventName}}</p>
+                        </div>
+                        {{/if}}
+                        {{#if eventType}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Type</p>
+                            <p style="margin: 0; color: #333; font-size: 15px;">{{eventType}}</p>
+                        </div>
+                        {{/if}}
+                        {{#if venue}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Venue/Location</p>
+                            <p style="margin: 0; color: #333; font-size: 15px;">{{venue}}</p>
+                        </div>
+                        {{/if}}
+                        {{#if organizer}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Organizer</p>
+                            <p style="margin: 0; color: #333; font-size: 15px;">{{organizer}}</p>
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
+
+                <!-- Attendance Schedule -->
+                <div style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Attendance Schedule</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Date</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{date}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Day of Week</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{dayOfWeek}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Time In</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{timeIn}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Time Out</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{timeOut}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Total Hours</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{hours}} hours</p>
+                        </div>
+                        {{#if regularSchedule}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Regular Work Schedule</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{regularSchedule}}</p>
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
+
+                <!-- Purpose/Remarks -->
+                {{#if remarks}}
+                <div style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Purpose/Benefits</h4>
+                    <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.6;">{{remarks}}</p>
+                </div>
+                {{/if}}
+
+                <!-- Certificate Requirements -->
+                <div style="background-color: #fff3cd; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #ffeaa7;">
+                    <h4 style="margin: 0 0 10px 0; color: #856404; font-size: 14px;">📋 Certificate Requirements</h4>
+                    <p style="margin: 0 0 5px 0; color: #856404; font-size: 13px;">Upon approval, employee must submit:</p>
+                    <ul style="margin: 5px 0 0 0; padding-left: 20px; color: #856404; font-size: 13px;">
+                        <li>Actual Certificate of Attendance from the event</li>
+                        <li>Any relevant training materials or completion certificates</li>
+                        <li>Brief report on key learnings (if applicable)</li>
+                    </ul>
+                </div>
+
+                <!-- Attachments -->
+                {{#if hasAttachment}}
+                <div style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Attachments</h4>
+                    <p style="margin: 0; color: #333; font-size: 14px;">
+                        <span style="color: #28a745;">✓</span> Event invitation/details attached
+                    </p>
+                </div>
+                {{/if}}
+
+                <!-- Status -->
+                <div style="margin-top: 20px; text-align: center;">
+                    <span style="display: inline-block; padding: 8px 20px; background-color: #ffc107; color: #000; border-radius: 20px; font-size: 14px; font-weight: 600;">
+                        ⏳ PENDING APPROVAL
+                    </span>
+                </div>
+
+                <!-- Request Details -->
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef; font-size: 12px; color: #6c757d;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Request ID: #{{filingId}}</span>
+                        <span>Submitted: {{submittedDate}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        {{> action-buttons}}
+
+        <!-- Approval Guidelines -->
+        <div style="padding: 0 30px 30px 30px;">
+            <div style="background-color: #d1ecf1; padding: 20px; border-radius: 8px; border: 1px solid #bee5eb;">
+                <h4 style="margin: 0 0 10px 0; color: #0c5460; font-size: 16px;">📌 Certificate of Attendance Approval Guidelines</h4>
+                <ul style="margin: 0; padding-left: 20px; color: #0c5460; font-size: 14px;">
+                    <li>Verify event relevance to employee's role and development</li>
+                    <li>Confirm event is legitimate and recognized</li>
+                    <li>Check if attendance aligns with company training policies</li>
+                    <li>Ensure minimal disruption to work responsibilities</li>
+                    <li>Consider budget implications if company-sponsored</li>
+                    <li>Verify employee will submit certificate post-event</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    {{> footer}}
+
+</body>
+</html>

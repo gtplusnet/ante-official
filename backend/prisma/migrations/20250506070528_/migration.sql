@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "EmployeeSalaryComputation" ADD COLUMN     "grossTaxableIncome" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "nonTaxableAllowance" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "taxableAllowance" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "totalBasicSalary" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "totalNonTaxableGovernmentContribution" DOUBLE PRECISION NOT NULL DEFAULT 0;

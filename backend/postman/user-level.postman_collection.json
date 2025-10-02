@@ -1,0 +1,153 @@
+{
+  "info": {
+    "_postman_id": "user-level-api-collection",
+    "name": "UserLevel API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Add UserLevel",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"label\": \"Manager\",\n  \"systemModule\": \"MANPOWER\",\n  \"scope\": [\"MANPOWER_ACCESS\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/user-level",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user-level"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Edit UserLevel",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"label\": \"Updated Manager\",\n  \"systemModule\": \"MANPOWER\",\n  \"scope\": [\"MANPOWER_ACCESS\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/user-level/:id",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user-level",
+            ":id"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete UserLevel",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user-level/:id",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user-level",
+            ":id"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get UserLevel Info",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user-level/info?id=1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user-level",
+            "info"
+          ],
+          "query": [
+            {
+              "key": "id",
+              "value": "1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "UserLevel Table",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"filters\": [],\n  \"settings\": {\n    \"sort\": \"createdAt\",\n    \"order\": \"desc\",\n    \"filters\": [],\n    \"params\": {\"page\": 1, \"perPage\": 10},\n    \"perPage\": 10,\n    \"defaultOrderBy\": \"createdAt\",\n    \"defaultOrderType\": \"desc\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/user-level/table?page=1&perPage=10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user-level",
+            "table"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "perPage",
+              "value": "10"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "UserLevel Tree",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user-level/tree",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user-level",
+            "tree"
+          ]
+        }
+      }
+    }
+  ]
+}

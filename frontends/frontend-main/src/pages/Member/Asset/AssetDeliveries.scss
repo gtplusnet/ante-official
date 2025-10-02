@@ -1,0 +1,43 @@
+.page-content-actions {
+  .item-tab {
+    display: flex;
+    gap: 8px;
+    
+    .tab {
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      &:hover {
+        background-color: #f5f5f5;
+      }
+      
+      &.active {
+        background-color: var(--q-primary);
+        color: white;
+        
+        .icon {
+          color: white;
+        }
+      }
+      
+      .icon {
+        color: var(--q-grey-icon);
+      }
+    }
+  }
+}
+
+.clickable-code {
+  color: var(--q-primary);
+  cursor: pointer;
+  text-decoration: underline;
+  
+  &:hover {
+    opacity: 0.8;
+  }
+}

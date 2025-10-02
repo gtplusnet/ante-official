@@ -1,0 +1,88 @@
+.top-tabs {
+  .item {
+    .tab {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: #999;
+      text-align: center;
+      padding: 10px 1.6rem;
+      background-color: #fff;
+      cursor: pointer;
+      transition: background-color 0.3s;
+
+      &:hover {
+        background-color: #f6f8fb;
+      }
+
+      &.active {
+        font-weight: bold;
+        border-bottom: 3px solid #2a41cc;
+        color: black;
+        .tab-icon {
+          color: #2a41cc;
+        }
+      }
+      .tab-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background-color: red;
+        color: white;
+        font-size: 12px;
+        font-weight: 500;
+        border-radius: 50%;
+        padding: 2px 6px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 22px;
+        height: 22px;
+        line-height: 1;
+      }
+    }
+  }
+}
+
+.timeSheet-raw-content {
+  height: 100vh;
+  overflow-y: auto;
+  .timeSheetTable {
+    border-collapse: collapse;
+    thead {
+      tr {
+        th {
+          border: 1px solid #ddd;
+          padding: 2px 18px;
+        }
+      }
+    }
+  }
+}
+
+// PAYROLL CENTER CARD
+.card-items {
+  padding: 5px;
+  height: calc(100vh - 275px);
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  .process-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background-color: #f6f8fb;
+    border-radius: 8px;
+    transition: transform 0.2s ease-in-out;
+
+    &:hover {
+      transform: translateX(5px);
+      box-shadow: -2px 3px 3px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+// SUMMARY

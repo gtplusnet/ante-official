@@ -1,0 +1,63 @@
+.developer-scripts {
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+
+    thead {
+      tr {
+        th {
+          padding: 10px;
+          border-bottom: 1px solid #ddd;
+          font-weight: bold;
+          color: #333 !important;
+        }
+      }
+    }
+    tbody {
+      &.loading {
+        opacity: 0.5;
+      }
+      tr {
+        cursor: pointer;
+        transition: all 0.3s;
+
+        td {
+          padding: 10px;
+          border-bottom: 1px solid #ddd;
+        }
+
+        &.clickable {
+          cursor: pointer;
+          transition: all 0.3s;
+          &:hover {
+            background-color: #f9f9f9;
+          }
+        }
+
+        &:hover {
+          background-color: #f9f9f9;
+        }
+      }
+    }
+  }
+
+  .pagination {
+    .page {
+      padding: 8px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      &.active {
+        background-color: #007bff;
+        color: #fff;
+      }
+    }
+    .not-page {
+      display: inline-block;
+      padding: 0 5px;
+    }
+  }
+}

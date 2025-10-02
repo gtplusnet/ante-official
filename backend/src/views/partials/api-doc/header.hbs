@@ -1,0 +1,22 @@
+<header>
+    <div class="container" style="position: relative;">
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
+            <div class="theme-toggle-slider">
+                <span class="theme-toggle-icon moon-icon">🌙</span>
+                <span class="theme-toggle-icon sun-icon">☀️</span>
+            </div>
+        </button>
+        <h1>{{title}}</h1>
+        <p>{{description}}</p>
+        {{#if baseUrl}}
+        <div class="header-meta">
+            <strong>Base URL:</strong> <code style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 4px;">{{baseUrl}}</code>
+        </div>
+        {{/if}}
+        {{#if version}}
+        <div class="header-meta">
+            <strong>Version:</strong> {{version}}
+        </div>
+        {{/if}}
+    </div>
+</header>

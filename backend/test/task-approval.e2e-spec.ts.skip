@@ -1,0 +1,78 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import * as request from 'supertest';
+import { AppModule } from '../src/app.module';
+
+describe('Task API - Approval Task Response (e2e)', () => {
+  let app: INestApplication;
+  let authToken: string;
+
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    await app.init();
+
+    // Login to get auth token
+    const loginResponse = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({
+        username: 'guillermotabligan',
+        password: 'water123',
+      });
+
+    authToken = loginResponse.body.token;
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('should return task with correct structure including taskType and approvalMetadata', async () => {
+    // First, we need to find an approval task
+    // Let's get tasks and find one with APPROVAL type
+    const tasksResponse = await request(app.getHttpServer())
+      .get('/task/own-task')
+      .set('token', authToken)
+      .query({ taskStatus: 'active' });
+
+    console.log('Tasks response:', JSON.stringify(tasksResponse.body, null, 2));
+
+    // Find an approval task if exists
+    const approvalTask = tasksResponse.body.items?.find(
+      (task) => task.taskType === 'APPROVAL',
+    );
+
+    if (approvalTask) {
+      // Get specific task details
+      const taskResponse = await request(app.getHttpServer())
+        .get('/task')
+        .set('token', authToken)
+        .query({ id: approvalTask.id });
+
+      console.log('Specific task response structure:', {
+        statusCode: taskResponse.status,
+        bodyKeys: Object.keys(taskResponse.body),
+        hasTaskInformation: 'taskInformation' in taskResponse.body,
+        directTaskType: taskResponse.body.taskType,
+        nestedTaskType: taskResponse.body.taskInformation?.taskType,
+        body: JSON.stringify(taskResponse.body, null, 2),
+      });
+
+      // Check the response structure
+      expect(taskResponse.status).toBe(200);
+
+      // The actual structure will be revealed by the console.log above
+      // This will help us understand if it's wrapped or not
+    } else {
+      console.log('No approval tasks found in the system');
+    }
+  });
+
+  it('should test formatData behavior with mock approval task', async () => {
+    // This test will help us understand how formatData processes the response
+    console.log('Testing formatData behavior - check backend logs');
+  });
+});

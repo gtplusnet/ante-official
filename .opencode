@@ -1,0 +1,33 @@
+{
+  "project": "GEER-ANTE ERP",
+  "description": "Enterprise Resource Planning System",
+  "defaultProvider": "anthropic",
+  "model": "claude-3-5-sonnet-20241022",
+  "contextFiles": [
+    "CLAUDE.md",
+    "backend/CLAUDE.md",
+    "frontends/frontend-main/CLAUDE.md",
+    "documentation/README.md"
+  ],
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    "build",
+    ".git",
+    "coverage",
+    "*.log",
+    ".env.local",
+    ".env.production"
+  ],
+  "commands": {
+    "dev": "yarn dev",
+    "test": "yarn test",
+    "build": "yarn build",
+    "lint": "yarn lint"
+  },
+  "workingDirectories": {
+    "backend": "/backend",
+    "frontend": "/frontends/frontend-main",
+    "docs": "/documentation"
+  }
+}

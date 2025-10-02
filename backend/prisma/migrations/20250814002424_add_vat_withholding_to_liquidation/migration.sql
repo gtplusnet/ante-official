@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "PettyCashLiquidation" ADD COLUMN     "vatAmount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "vatAmountConfidence" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "withholdingTaxAmount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "withholdingTaxConfidence" INTEGER NOT NULL DEFAULT 0;

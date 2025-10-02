@@ -1,0 +1,171 @@
+/*Now the CSS*/
+
+.zoomable-container {
+  height: calc(100vh - 65px);
+}
+
+.tree-content {
+  width: 10000px;
+  text-align: center;
+  padding-top: 50px;
+}
+.tree {
+  text-align: center;
+  margin: 0 auto;
+  display: inline-block;
+
+  * {
+    margin: 0;
+    padding: 0;
+  }
+
+  .loader {
+    margin-top: 100px;
+  }
+
+  ul {
+    padding-top: 20px;
+    position: relative;
+    transition: all 0.5s;
+    -webkit-transition: all 0.5s;
+    -moz-transition: all 0.5s;
+  }
+
+  li {
+    float: left;
+    text-align: center;
+    list-style-type: none;
+    position: relative;
+    padding: 20px 5px 0 5px;
+    transition: all 0.5s;
+    -webkit-transition: all 0.5s;
+    -moz-transition: all 0.5s;
+
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 50%;
+      border-top: 1px solid #ccc;
+      width: 50%;
+      height: 20px;
+    }
+
+    &::after {
+      right: auto;
+      left: 50%;
+      border-left: 1px solid #ccc;
+    }
+
+    &:only-child::after,
+    &:only-child::before {
+      display: none;
+    }
+
+    &:only-child {
+      padding-top: 0;
+    }
+
+    &:first-child::before,
+    &:last-child::after {
+      border: 0 none;
+    }
+
+    &:last-child::before {
+      border-right: 1px solid #ccc;
+      border-radius: 0 5px 0 0;
+      -webkit-border-radius: 0 5px 0 0;
+      -moz-border-radius: 0 5px 0 0;
+    }
+
+    &:first-child::after {
+      border-radius: 5px 0 0 0;
+      -webkit-border-radius: 5px 0 0 0;
+      -moz-border-radius: 5px 0 0 0;
+    }
+
+    a {
+      border: 1px solid #ccc;
+      padding: 5px 10px;
+      text-decoration: none;
+      color: #666;
+      font-family: arial, verdana, tahoma;
+      font-size: 11px;
+      display: inline-block;
+      border-radius: 5px;
+      -webkit-border-radius: 5px;
+      -moz-border-radius: 5px;
+      transition: all 0.5s;
+      -webkit-transition: all 0.5s;
+      -moz-transition: all 0.5s;
+      background-color: #fff;
+
+      .tree-data {
+        .name {
+          font-weight: bold;
+          font-size: 14px;
+        }
+        .department {
+          font-size: 12px;
+        }
+      }
+
+      // Drag and drop styles
+      &.user-node {
+        &[draggable="true"] {
+          cursor: grab;
+          
+          &:active {
+            cursor: grabbing;
+          }
+        }
+        
+        &.dragging {
+          opacity: 0.5;
+          cursor: grabbing;
+          transform: rotate(2deg);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        
+        &.drag-over {
+          background-color: #e3f2fd !important;
+          border: 2px solid #2196f3 !important;
+          box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2) !important;
+          transform: scale(1.02);
+        }
+        
+        &.cannot-drop {
+          background-color: #ffebee !important;
+          border: 2px dashed #f44336 !important;
+          box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.2) !important;
+          cursor: not-allowed;
+          
+          &::before {
+            content: "⚠";
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            color: #f44336;
+            font-weight: bold;
+            font-size: 16px;
+            z-index: 10;
+          }
+        }
+      }
+    }
+  }
+
+  ul ul::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    border-left: 1px solid #ccc;
+    width: 0;
+    height: 20px;
+  }
+}
+
+/*Thats all. I hope you enjoyed it.
+Thanks :)*/

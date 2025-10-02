@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Supplier" ADD COLUMN     "balance" DOUBLE PRECISION NOT NULL DEFAULT 0;

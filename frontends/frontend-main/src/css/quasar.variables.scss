@@ -1,0 +1,131 @@
+// Quasar SCSS (& Sass) Variables
+// --------------------------------------------------
+// To customize the look and feel of this app, you can override
+// the Sass/SCSS variables found in Quasar's source Sass/SCSS files.
+
+// Check documentation for full list of Quasar variables
+
+// Your own variables (that are declared here) and Quasar's own
+// ones will be available out of the box in your .vue/.scss/.sass files
+
+// It's highly recommended to change the default colors
+// to match your app's branding.
+// Tip: Use the "Theme Builder" on Quasar's documentation website.
+
+$primary: #2f40c4;
+$secondary: #615FF6;
+$accent: #080d29;
+$test: red;
+
+$dark: #1d1d1d;
+$dark-page: #121212;
+
+$positive: #21ba45;
+$negative: #c10015;
+$info: #00ACC1;
+$warning: #f2c037;
+
+:root {
+  /* Brand Colors */
+  --q-primary: #2f40c4;
+  --q-secondary: #615FF6;
+  --q-hero: #014781;
+  --q-accent: #63D7E6;
+
+  /* Neutral Colors */
+  --q-black: #121212;
+  --q-dark: #110848;
+
+  --q-gray: #747786;
+  --q-gray-light: #97999F;
+
+  --q-light: #DDE1F0;
+  --q-extra-light: #F5F5F5;
+  --q-extra-lighter: #F8F9FC;
+  --q-white: #FFFFFF;
+
+  /* Semantics Colors */
+  --q-success: #388E3C;
+  --q-error: #D32F2F;
+  --q-info: #1976D2;
+  --q-warning: #FBC02D;
+  --q-success-tinted: #E8F5E9;
+  --q-error-tinted: #FFEBEE;
+  --q-info-tinted: #E3F2FD;
+  --q-warning-tinted: #FFF8E1;
+  --q-neutral-secondary: #9E9E9E;
+
+  /* Other Colors */
+  --q-grey: #eeeeee;
+  //--q-dark: #181D36;
+  --q-text-light-grey: #747786;
+  //--q-info: #00ACC1;
+  --q-emerald-green: #4CAF50;
+  --q-grey-icon: #97999F;
+  //scroll color
+  --q-scroll-background: #f7f2fa;
+  --q-scroll-background-track: #cac4d0;
+}
+
+.bg-light-grey {
+  background-color: var(--q-grey) !important;
+}
+
+.bg-accent {
+  background-color: var(--q-accent) !important;
+}
+
+.bg-grey-icon {
+  background-color: var(--q-grey-icon) !important;
+}
+
+// .text-grey {
+//   color: var(--q-text-light-grey) !important;
+// }
+
+// .text-dark {
+//   color: var(--q-dark) !important;
+// }
+
+.bg-custom-purple {
+  background: #4c2dff !important;
+}
+
+/* Set default text color for the entire application */
+body {
+  color: var(--q-dark);
+}
+
+// ============================================
+// Text Color Utilities with Namespace
+// ============================================
+
+// Text color utilities are prefixed with 'text-' to avoid conflicts
+// All color utilities use !important to ensure they take precedence
+
+// Brand Colors
+.text-primary { color: var(--q-primary) !important; }
+.text-secondary { color: var(--q-secondary) !important; }
+.text-accent { color: var(--q-accent) !important; }
+.text-hero { color: var(--q-hero) !important; }
+
+// Neutral Colors
+.text-black { color: var(--q-black) !important; }
+.text-dark { color: var(--q-dark) !important; }
+.text-grey { color: var(--q-gray) !important; }
+.text-grey-light { color: var(--q-gray-light) !important; }
+.text-light { color: var(--q-light) !important; }
+.text-extra-light { color: var(--q-extra-light) !important; }
+.text-white { color: var(--q-white) !important; }
+
+// Semantic Colors
+.text-success { color: var(--q-success) !important; }
+.text-error { color: var(--q-error) !important; }
+.text-info { color: var(--q-info) !important; }
+.text-warning { color: var(--q-warning) !important; }
+
+// Tinted Backgrounds (for text on colored backgrounds)
+.text-success-tinted { color: var(--q-success-tinted) !important; }
+.text-error-tinted { color: var(--q-error-tinted) !important; }
+.text-info-tinted { color: var(--q-info-tinted) !important; }
+.text-warning-tinted { color: var(--q-warning-tinted) !important; }

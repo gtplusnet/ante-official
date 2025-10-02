@@ -1,0 +1,63 @@
+.petty-cash-container {
+  padding-bottom: 16px;
+  min-height: 60px;
+
+  .cash-icon {
+    color: var(--q-info);
+    background: #e8e7ff;
+    border-radius: 50px;
+    padding: 2px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .q-skeleton {
+    animation: skeleton-loading 1.5s infinite;
+  }
+
+  @keyframes skeleton-loading {
+    0% { opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
+  }
+
+  .col-2 {
+    @media (max-width: 768px) {
+      width: 10%;
+    }
+
+    @media (max-width: 599px) {
+      width: 20%;
+    }
+  }
+
+  .col-10 {
+    @media (max-width: 768px) {
+      width: 90%;
+    }
+
+    @media (max-width: 599px) {
+      width: 80%;
+    }
+  }
+}
+
+.action-icon {
+  cursor: pointer;
+  display: block;
+
+  @media (max-width: 599px) {
+    display: none;
+  }
+}
+
+.more-action-icon {
+  cursor: pointer;
+  
+  &:hover {
+    opacity: 0.7;
+  }
+}

@@ -1,0 +1,52 @@
+.schedule-widget-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.schedule-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .schedule-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 360px;
+
+    @media (max-width: 566px) {
+      min-height: 342px;
+    }
+  }
+}
+
+.schedule-widget-filter {
+  :deep(.q-field__control) {
+    min-height: 36px !important;
+    height: 36px !important;
+    font-size: 12px !important;
+  }
+
+  :deep(.q-field__native),
+  :deep(.q-field__input) {
+    min-height: 36px !important;
+  }
+
+  :deep(.q-field__marginal) {
+    height: 36px !important;
+  }
+}
+
+// Mobile responsiveness
+@media (max-width: 566px) {
+  .schedule-widget-actions {
+    .q-btn {
+      display: none; // Hide desktop add button on mobile
+    }
+
+    .schedule-widget-filter {
+      display: none;
+    }
+  }
+}

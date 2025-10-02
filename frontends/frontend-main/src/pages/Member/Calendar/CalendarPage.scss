@@ -1,0 +1,62 @@
+.mini-calendar-container {
+  background-color: #f4f6fc;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.checklist {
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.checklist-title {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #2d2d2d;
+}
+
+.q-checkbox__label {
+  color: #7d8691;
+}
+
+.checklist-items {
+  display: flex;
+  flex-direction: column;
+}
+
+.event-heading {
+  font-size: 10pt;
+  font-weight: 600;
+}
+
+.calendar-widget {
+  display: none;
+}
+
+.my-schedules-widget {
+  display: none;
+}
+
+
+@media (max-width: 768px) {
+  .calendar-card {
+    display: none;
+  }
+
+  .calendar-mobile-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 26px;
+  }
+
+  .calendar-widget {
+    display: block;
+  }
+
+  .my-schedules-widget {
+    display: block;
+  }
+}

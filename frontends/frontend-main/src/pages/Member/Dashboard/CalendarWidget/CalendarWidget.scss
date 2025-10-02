@@ -1,0 +1,18 @@
+.calendar-content {
+  padding: 0;
+}
+
+.calendar-menu {
+  width: 150px;
+}
+
+// Additional responsive adjustments if needed
+@media (max-width: 599px) {
+  .calendar-content {
+    padding: 0;
+  }
+
+  .more-actions-wrapper {
+    display: none;
+  }
+}

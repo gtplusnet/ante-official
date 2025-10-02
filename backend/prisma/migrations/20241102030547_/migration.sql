@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "PurchaseRequest" ADD COLUMN     "deliveryDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;

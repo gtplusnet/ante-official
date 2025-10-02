@@ -1,0 +1,73 @@
+.cms-submenu {
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+
+  .cms-item {
+    margin: 6px 0;
+    padding: 8px 20px;
+    border-radius: 50px;
+
+    &:hover {
+      background-color: #dde1f053;
+    }
+
+    &.active {
+      background-color: #dde1f0;
+    }
+
+    .menu-icon {
+      color: var(--q-text-light-grey);
+    }
+  }
+
+  .cms-item-dropdown {
+    margin-left: 15px;
+    margin-bottom: 8px;
+    padding: 4px 15px;
+    border-radius: 50px;
+
+    &:hover {
+      background-color: #dde1f053;
+    }
+
+    &.active {
+      background-color: #dde1f0;
+    }
+
+    .menu-icon {
+      color: var(--q-text-light-grey);
+    }
+  }
+
+  .rotated {
+    transform: rotate(180deg);
+  }
+}
+
+// Mobile responsive styles
+@media (max-width: 768px) {
+  .cms-submenu {
+    .cms-item {
+      padding: 12px 16px;
+      margin: 4px 0;
+      
+      &:active {
+        background-color: rgba(0, 0, 0, 0.1);
+      }
+
+      .text-label-large {
+        font-size: 14px;
+      }
+    }
+
+    .cms-item-dropdown {
+      margin-left: 20px;
+      padding: 10px 12px;
+      
+      .text-label-medium {
+        font-size: 13px;
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+[
+  {
+      "key": "2021-01-01",
+      "dateStart": "2021-01-01",
+      "label": "Start of January 2021",
+      "computationType": "default"
+  },
+  {
+      "key": "2024-01-01",
+      "dateStart": "2024-01-01",
+      "label": "Start of January 2024",
+      "computationType": "default"
+  }
+]

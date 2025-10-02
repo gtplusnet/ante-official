@@ -1,0 +1,286 @@
+.view-lead-card {
+  min-width: 900px;
+  border-radius: 20px;
+
+  .q-badge {
+    height: 2em;
+    font-size: 14px;
+    padding: 0 10px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    &.StageBadge {
+      background-color: var(--q-secondary);
+    }
+
+    &.ProposalBadge {
+      background-color: var(--q-info);
+    }
+
+    &.BiddingBadge {
+      background-color: var(--q-emerald-green);
+    }
+  }
+
+  .edit-btn {
+    background: #fff;
+    transition: 0.3s;
+
+    &:hover {
+      background: #f6f8fb;
+      transform: translateY(-2px);
+    }
+  }
+
+  .close-btn {
+    background-color: #fff;
+    transition: 0.3s;
+
+    &:hover {
+      background-color: #f6f8fb;
+      transform: translateY(-2px);
+    }
+  }
+}
+
+.subtitle {
+  font-size: var(--font-body-small);
+  color: var(--q-text-light-grey);
+}
+
+.more-actions {
+  gap: 16px;
+}
+
+.menu {
+  min-width: 248px;
+
+  .menu-item {
+    padding: 6px 10px;
+
+    &:hover {
+      background-color: #f6f8fb;
+    }
+  }
+}
+
+.quick-actions {
+  gap: 16px;
+}
+
+.notes {
+  background-color: #f6f8fb;
+  border-radius: 8px;
+  gap: 10px;
+
+  .note-field {
+    :deep(.q-field__native) {
+      padding: 10px;
+      color: var(--q-text-dark);
+      font-weight: 500;
+    }
+  }
+}
+
+.details-container {
+  height: calc(70vh - 30px);
+  overflow: auto;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #d9d9d9;
+    border-radius: 50px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: #f4f4f4;
+    border-radius: 50px;
+  }
+
+  .detail-three-card {
+    height: 125px;
+    width: 180px;
+    background-color: #f6f8fb;
+    border-radius: 20px;
+
+    .icon-div {
+      background-color: #e4e3ff;
+      border-radius: 10px;
+    }
+
+    .title {
+      margin-top: 8px;
+      font-size: var(--font-label-large);
+      font-weight: var(--weight-label-large);
+      color: var(--q-text-dark);
+    }
+  }
+
+  .details-title {
+    font-size: var(--font-title-small);
+    font-weight: var(--weight-title-small);
+    color: var(--q-text-light-grey);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .details-card {
+    width: 100%;
+    height: fit-content;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background-color: #fff;
+    border: 1px solid #eaeaea;
+    border-radius: 8px;
+
+    .details-value {
+      font-size: var(--font-label-large);
+      font-weight: var(--weight-label-large);
+      color: var(--q-text-dark);
+    }
+  }
+}
+
+.lead-card {
+  width: 100%;
+  max-height: 460px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #d9d9d9;
+    border-radius: 50px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: #f4f4f4;
+    border-radius: 50px;
+  }
+
+  .task-card-item {
+    .details-value {
+      font-size: var(--font-label-large);
+      font-weight: var(--weight-label-large);
+      color: var(--q-text-dark);
+    }
+
+    .priorityBadge {
+      padding: 0 8px;
+      height: 20px;
+      border-radius: 50px;
+      background-color: #80cbc4;
+      font-size: var(--font-label-medium);
+      font-weight: var(--weight-label-medium);
+      color: var(--q-text-dark);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .levelBadge {
+      padding: 0 8px;
+      height: 20px;
+      border-radius: 50px;
+      background-color: #d0f2ff;
+      font-size: var(--font-label-medium);
+      font-weight: var(--weight-label-medium);
+      color: var(--q-text-dark);
+      display: flex;
+      align-items: center;
+    }
+
+    .statusBadge {
+      padding: 0 8px;
+      height: 20px;
+      border-radius: 50px;
+      background-color: #fff59d;
+      font-size: var(--font-label-medium);
+      font-weight: var(--weight-label-medium);
+      color: var(--q-text-dark);
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  .events-card-item {
+    .details-value {
+      font-size: var(--font-label-large);
+      font-weight: var(--weight-label-large);
+      color: var(--q-text-dark);
+    }
+  }
+
+  .notes-card-item {
+    background-color: #fff9c4;
+    border-left: 3px solid #fdd835;
+    border-radius: 8px 14px 14px 8px;
+
+    .details-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--q-text-dark);
+    }
+
+    .q-badge {
+      &.noteBadge {
+        width: fit-content;
+        background-color: #fdd835;
+      }
+    }
+
+    .menu-time {
+      min-height: 100%;
+    }
+  }
+
+  .attachments-card-item {
+    background-color: #f6f8fb;
+    border-radius: 8px;
+    width: fit-content;
+    padding: 5px 15px;
+
+    .details-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--q-text-dark);
+    }
+  }
+}
+
+.activities-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background-color: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+
+  .activities-card-item {
+    border-left: 3px solid var(--q-secondary);
+    padding-left: 15px;
+
+    .details-value {
+      font-size: var(--font-label-large);
+      font-weight: var(--weight-label-large);
+      color: var(--q-text-dark);
+    }
+  }
+}

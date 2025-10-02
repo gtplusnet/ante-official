@@ -1,0 +1,27 @@
+# Build outputs
+dist/
+build/
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+
+# IDE
+.idea/
+.vscode/
+
+# Environment
+.env
+.env.*
+
+# Test coverage
+coverage/
+
+# Temporary files
+*.tmp
+tmp/
+
+# Generated files
+*.generated.*

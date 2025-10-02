@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "RequestForPaymentStatus" AS ENUM ('PAYMENT_APPROVAL', 'PREPARATION', 'RELEASE_APPROVAL', 'FOR_RELEASING', 'PAYMNENT_RELEASED', 'REJECTED');
+
+-- AlterTable
+ALTER TABLE "RequestForPayment" ADD COLUMN     "status" "RequestForPaymentStatus" NOT NULL DEFAULT 'PAYMENT_APPROVAL';

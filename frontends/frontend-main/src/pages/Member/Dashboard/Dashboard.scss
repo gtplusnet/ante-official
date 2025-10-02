@@ -1,0 +1,195 @@
+.main-dashboard-container {
+  margin: 24px 24px 24px 20px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 25px;
+  position: relative;
+
+  @media (max-width: 768px) {
+    margin: 0 !important; // Remove margin since container now has padding
+    gap: 16px;
+    flex-direction: column;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0 !important; // Let container handle padding
+  }
+
+  @media (max-width: 599px) {
+    margin: 0 !important; // Remove margin since container now has padding
+    gap: 16px;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0 !important; // Let container handle padding
+  }
+}
+
+.left-side {
+  width: calc(100% - 420px);
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+
+  // Hide mobile petty cash widget on desktop
+  .petty-cash-widget-mobile {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    gap: 16px;
+
+    // Show mobile petty cash widget on tablet/mobile
+    .petty-cash-widget-mobile {
+      display: block;
+    }
+  }
+
+  .widget-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+
+    .my-employment-information-widget {
+      grid-column: 1 / -1;
+    }
+
+    @media (max-width: 768px) {
+      padding-bottom: 26px;
+      grid-template-columns: 1fr;
+      gap: 18px;
+
+      .updates-widget {
+        display: none;
+      }
+
+      .announcements-widget {
+        display: none;
+      }
+
+      .my-employment-information-widget {
+        display: none;
+      }
+    }
+
+    @media (max-width: 599px) {
+      gap: 16px;
+    }
+  }
+}
+
+/* Dashboard Transition Overlay */
+.dashboard-transition-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.dashboard-transition-overlay .transition-message {
+  margin-top: 24px;
+  font-size: 18px;
+  font-weight: 500;
+  color: #424242;
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.dashboard-transition-overlay .transition-submessage {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #757575;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.right-side {
+  padding: 84px 2px 0 2px;
+  position: fixed;
+  right: 24px;
+  top: 0;
+  min-width: calc(410px - 15px);
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  padding-bottom: 25px;
+  max-height: calc(100vh);
+  overflow: auto;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+}
+
+.tab-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: red;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 50%;
+  padding: 2px 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 18px;
+  min-height: 18px;
+  line-height: 1;
+}
+
+.good-morning {
+  font-size: 20px;
+  font-family: 'Fredoka', sans-serif;
+}
+.full-height-row {
+  display: flex;
+  height: 100%;
+  align-items: stretch;
+}
+
+.full-height {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}

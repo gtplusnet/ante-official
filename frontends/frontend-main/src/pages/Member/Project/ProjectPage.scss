@@ -1,0 +1,142 @@
+.project-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  .project-header {
+    padding: 12px 12px 0 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 16px;
+
+      @media (max-width: 1200px) {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .header-title {
+        flex: 1;
+        min-width: 0;
+
+        .text-title-large {
+          font-size: 24px;
+          font-weight: 500;
+          color: var(--q-dark);
+          margin-bottom: 4px;
+
+          @media (max-width: 768px) {
+            font-size: 20px;
+          }
+        }
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+
+        // MD3 Rounded Button Styles
+        .action-btn {
+          &.md3-button-primary-rounded {
+            background-color: var(--q-primary);
+            color: white !important;
+            border-radius: 999em; // Pill shape
+            padding: 0 20px;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+
+            :deep(.q-btn__content) {
+              color: white;
+            }
+
+            &:hover {
+              filter: brightness(0.9);
+              transform: translateY(-1px);
+            }
+          }
+
+          &.md3-button-outlined-rounded {
+            border: 1px solid var(--q-primary);
+            background-color: transparent;
+            color: var(--q-primary);
+            border-radius: 999em; // Pill shape
+            padding: 0 20px;
+            font-weight: 500;
+            transition: all 0.2s;
+
+            &:hover {
+              background-color: rgba(25, 118, 210, 0.08);
+              transform: translateY(-1px);
+            }
+          }
+        }
+
+        @media (max-width: 768px) {
+          width: 100%;
+
+          .action-btn {
+            flex: 1;
+            min-width: 120px;
+          }
+        }
+      }
+    }
+
+    .breadcrumbs {
+      :deep(.q-breadcrumbs) {
+        font-size: 14px;
+
+        .q-breadcrumbs__el {
+          color: var(--q-dark);
+
+          &:not(:last-child) {
+            color: var(--q-primary);
+          }
+        }
+      }
+    }
+  }
+
+  .project-content {
+    padding: 0 12px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    // The widgets will be displayed here
+    // ProjectOverview handles its own layout
+  }
+
+  .loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 400px;
+    width: 100%;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .project-container {
+    gap: 16px;
+
+    .project-header {
+      padding: 16px;
+    }
+
+    .project-content {
+      padding: 0 16px 16px 16px;
+    }
+  }
+}

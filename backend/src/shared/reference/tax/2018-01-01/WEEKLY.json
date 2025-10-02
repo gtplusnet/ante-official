@@ -1,0 +1,36 @@
+[{
+  "min": 0,
+  "max": 4808,
+  "tax": 0,
+  "percentage": 0
+},
+{
+  "min": 4808,
+  "max": 7691,
+  "tax": 0,
+  "percentage": 20
+},
+{
+  "min": 7692,
+  "max": 15384,
+  "tax": 576.92,
+  "percentage": 25
+},
+{
+  "min": 15385,
+  "max": 38461,
+  "tax": 2500,
+  "percentage": 30
+},
+{
+  "min": 38462,
+  "max": 153845,
+  "tax": 9423.08,
+  "percentage": 32
+},
+{
+  "min": 153846,
+  "max": 0,
+  "tax": 46346.15,
+  "percentage": 35
+}]

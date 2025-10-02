@@ -1,0 +1,583 @@
+<div class="container">
+    <section id="overview">
+        <h2>Overview</h2>
+        <p>
+            The School Guardian API provides a comprehensive solution for guardians to track their children's
+            attendance, receive notifications, and manage their profiles. This API is designed for mobile
+            applications and web portals, offering real-time updates through Socket.io connections.
+        </p>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Key Features</h4>
+            <ul class="feature-list">
+                <li>Secure guardian authentication with permanent tokens</li>
+                <li>Real-time attendance tracking for linked students</li>
+                <li>Push notification support</li>
+                <li>Student management (add/remove students)</li>
+                <li>Profile management</li>
+                <li>Historical attendance logs</li>
+                <li>Socket.io support for real-time updates</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="authentication">
+        <h2>Authentication</h2>
+        <p>
+            The Guardian API uses token-based authentication. After successful login, guardians receive a
+            permanent token that doesn't expire. The token must be included in all authenticated requests.
+        </p>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Authentication Header</h4>
+            <pre><code>Authorization: Bearer your_token_here</code></pre>
+        </div>
+
+        <p>Tokens remain valid until explicitly invalidated through the logout endpoint.</p>
+
+        <h3>Login Flow</h3>
+        <ol>
+            <li>Guardian submits email and password to <code>/auth/login</code></li>
+            <li>System validates credentials and generates permanent token</li>
+            <li>Token is returned along with guardian and student information</li>
+            <li>Token is used for all subsequent API calls</li>
+        </ol>
+    </section>
+
+    <section id="endpoints">
+        <h2>API Endpoints</h2>
+
+        <h3>Authentication</h3>
+
+        {{> api-doc/endpoint-card
+            method="POST"
+            path="/auth/login"
+            description="Authenticate guardian and receive permanent access token"
+            requestBody='{
+                "email": "guardian@example.com",
+                "password": "securePassword123",
+                "deviceId": "device-uuid-123",
+                "deviceToken": "fcm-token-for-push",
+                "platform": "ios"
+            }'
+            responseExample='{
+                "success": true,
+                "data": {
+                    "token": "abc123xyz789...",
+                    "guardian": {
+                        "id": "guardian-id",
+                        "firstName": "John",
+                        "lastName": "Doe",
+                        "email": "guardian@example.com"
+                    },
+                    "students": [
+                        {
+                            "id": "student-id",
+                            "firstName": "Jane",
+                            "lastName": "Doe",
+                            "studentCode": "STU001",
+                            "gradeLevel": "Grade 6",
+                            "section": "A"
+                        }
+                    ]
+                },
+                "message": "Login successful",
+                "timestamp": "2024-03-14T10:30:00Z"
+            }'
+        }}
+
+        {{> api-doc/endpoint-card
+            method="POST"
+            path="/auth/logout"
+            description="Logout and invalidate the current token"
+            requestBody='{
+                "deviceId": "device-uuid-123",
+                "reason": "user_initiated"
+            }'
+            responseExample='{
+                "success": true,
+                "message": "Logout successful",
+                "timestamp": "2024-03-14T10:30:00Z"
+            }'
+        }}
+
+        <h3>Student Management</h3>
+
+        {{> api-doc/endpoint-card
+            method="GET"
+            path="/students"
+            description="Get list of students linked to guardian account"
+            requestBody=''
+            responseExample='{
+                "success": true,
+                "data": [
+                    {
+                        "id": "student-id",
+                        "firstName": "Jane",
+                        "lastName": "Doe",
+                        "studentCode": "STU001",
+                        "gradeLevel": "Grade 6",
+                        "section": "A",
+                        "photo": "https://...",
+                        "relationship": "Father",
+                        "addedAt": "2024-01-15T08:00:00Z"
+                    }
+                ],
+                "message": "Students retrieved successfully",
+                "timestamp": "2024-03-14T10:30:00Z"
+            }'
+        }}
+
+        {{> api-doc/endpoint-card
+            method="POST"
+            path="/students/add"
+            description="Add a new student to guardian account using student ID or code"
+            requestBody='{
+                "studentCode": "STU001",
+                "relationship": "Mother"
+            }'
+            responseExample='{
+                "success": true,
+                "data": {
+                    "id": "student-id",
+                    "firstName": "Jane",
+                    "lastName": "Doe",
+                    "studentCode": "STU001",
+                    "gradeLevel": "Grade 6",
+                    "section": "A",
+                    "linkedAt": "2024-03-14T10:30:00Z"
+                },
+                "message": "Student added successfully",
+                "timestamp": "2024-03-14T10:30:00Z"
+            }'
+        }}
+
+        {{> api-doc/endpoint-card
+            method="DELETE"
+            path="/students/:studentId"
+            description="Remove a student from guardian account"
+            requestBody=''
+            responseExample='{
+                "success": true,
+                "message": "Student removed successfully",
+                "timestamp": "2024-03-14T10:30:00Z"
+            }'
+        }}
+
+        <h3>Attendance Tracking</h3>
+
+        {{> api-doc/endpoint-card
+            method="GET"
+            path="/attendance/status"
+            description="Get current attendance status for all linked students"
+            requestBody=''
+            responseExample='{
+                "success": true,
+                "data": [
+                    {
+                        "studentId": "student-id",
+                        "studentName": "Jane Doe",
+                        "studentCode": "STU001",
+                        "status": "in-school",
+                        "lastCheckIn": {
+                            "timestamp": "2024-03-14T07:45:00Z",
+                            "gate": "Main Gate",
+                            "photo": "https://..."
+                        },
+                        "todayAttendance": {
+                            "checkIns": 1,
+                            "checkOuts": 0,
+                            "totalTime": "2h 45m"
+                        }
+                    }
+                ],
+                "message": "Attendance status retrieved successfully",
+                "timestamp": "2024-03-14T10:30:00Z"
+            }'
+        }}
+
+        {{> api-doc/endpoint-card
+            method="GET"
+            path="/attendance/logs"
+            description="Get historical attendance logs with filtering options"
+            requestBody=''
+            responseExample='{
+                "success": true,
+                "data": {
+                    "logs": [
+                        {
+                            "id": "log-id",
+                            "studentId": "student-id",
+                            "studentName": "Jane Doe",
+                            "type": "check-in",
+                            "timestamp": "2024-03-14T07:45:00Z",
+                            "gate": {
+                                "id": "gate-id",
+                                "name": "Main Gate"
+                            },
+                            "photo": "https://...",
+                            "temperature": 36.5
+                        }
+                    ],
+                    "total": 150
+                },
+                "message": "Attendance logs retrieved successfully",
+                "timestamp": "2024-03-14T10:30:00Z"
+            }'
+        }}
+
+        <h3>Notifications</h3>
+
+        {{> api-doc/endpoint-card
+            method="GET"
+            path="/notifications"
+            description="Get notifications for the guardian"
+            requestBody=''
+            responseExample='{
+                "success": true,
+                "data": {
+                    "notifications": [
+                        {
+                            "id": "notif-id",
+                            "type": "attendance",
+                            "title": "Check-in Alert",
+                            "message": "Jane Doe has checked in at Main Gate",
+                            "timestamp": "2024-03-14T07:45:00Z",
+                            "isRead": false,
+                            "priority": "medium",
+                            "studentId": "student-id",
+                            "studentName": "Jane Doe"
+                        }
+                    ],
+                    "total": 25,
+                    "unreadCount": 5
+                },
+                "message": "Notifications retrieved successfully",
+                "timestamp": "2024-03-14T10:30:00Z"
+            }'
+        }}
+
+        {{> api-doc/endpoint-card
+            method="POST"
+            path="/notifications/read"
+            description="Mark notifications as read"
+            requestBody='{
+                "notificationIds": ["notif-id-1", "notif-id-2"]
+            }'
+            responseExample='{
+                "success": true,
+                "message": "Notifications marked as read",
+                "timestamp": "2024-03-14T10:30:00Z"
+            }'
+        }}
+
+        <h3>Profile Management</h3>
+
+        {{> api-doc/endpoint-card
+            method="GET"
+            path="/profile"
+            description="Get guardian profile information"
+            requestBody=''
+            responseExample='{
+                "success": true,
+                "data": {
+                    "id": "guardian-id",
+                    "firstName": "John",
+                    "lastName": "Doe",
+                    "email": "guardian@example.com",
+                    "phoneNumber": "+1234567890",
+                    "address": "123 Main St",
+                    "students": [
+                        {
+                            "id": "student-id",
+                            "firstName": "Jane",
+                            "lastName": "Doe",
+                            "studentCode": "STU001",
+                            "gradeLevel": "Grade 6",
+                            "section": "A",
+                            "relationship": "Father"
+                        }
+                    ],
+                    "notificationSettings": {
+                        "checkIn": true,
+                        "checkOut": true,
+                        "announcements": true,
+                        "emergencies": true,
+                        "pushEnabled": true,
+                        "emailEnabled": false,
+                        "smsEnabled": false
+                    }
+                },
+                "message": "Profile retrieved successfully",
+                "timestamp": "2024-03-14T10:30:00Z"
+            }'
+        }}
+
+        {{> api-doc/endpoint-card
+            method="PUT"
+            path="/profile"
+            description="Update guardian profile information"
+            requestBody='{
+                "firstName": "John",
+                "lastName": "Doe",
+                "phoneNumber": "+1234567890",
+                "address": "123 Main St, City",
+                "emergencyContact": "+0987654321"
+            }'
+            responseExample='{
+                "success": true,
+                "data": {
+                    "id": "guardian-id",
+                    "firstName": "John",
+                    "lastName": "Doe",
+                    "email": "guardian@example.com",
+                    "phoneNumber": "+1234567890",
+                    "address": "123 Main St, City",
+                    "emergencyContact": "+0987654321"
+                },
+                "message": "Profile updated successfully",
+                "timestamp": "2024-03-14T10:30:00Z"
+            }'
+        }}
+    </section>
+
+    <section id="websocket">
+        <h2>Real-time Connection (Socket.io)</h2>
+        <p>
+            Connect to the Socket.io server for real-time updates on attendance and notifications.
+        </p>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Socket.io URL</h4>
+            <pre><code>{{wsUrl}}</code></pre>
+            <h4 class="info-box-title">Namespace</h4>
+            <pre><code>/guardian</code></pre>
+        </div>
+
+        <h3>Connection Example</h3>
+        <pre><code>const io = require('socket.io-client');
+const socket = io('{{wsUrl}}/guardian');
+
+socket.on('connect', () => {
+    console.log('Connected to Guardian Socket.io');
+    console.log('Socket ID:', socket.id);
+
+    // Authenticate with token
+    socket.emit('auth', {
+        type: 'guardian',
+        token: 'your_token_here',
+        guardianId: 'your_guardian_id',
+        deviceId: 'device_uuid'
+    });
+
+    // Or use guardian-specific auth event
+    socket.emit('guardian:auth', {
+        token: 'your_token_here',
+        guardianId: 'your_guardian_id'
+    });
+});
+
+// Listen for authentication response
+socket.on('auth:success', (data) => {
+    console.log('Authentication successful:', data);
+
+    // Subscribe to student updates
+    socket.emit('guardian:subscribe', {
+        studentIds: ['student_id_1', 'student_id_2']
+    });
+});
+
+socket.on('auth:failed', (error) => {
+    console.log('Authentication failed:', error);
+});
+
+// Real-time event listeners
+socket.on('attendance:update', (data) => {
+    console.log('Attendance update:', data);
+    // data contains: studentId, action, timestamp, gate
+});
+
+socket.on('notification:new', (data) => {
+    console.log('New notification:', data);
+    // data contains: type, title, message, priority
+});
+
+socket.on('announcement', (data) => {
+    console.log('School announcement:', data);
+});
+
+socket.on('emergency', (data) => {
+    console.log('Emergency alert:', data);
+    // Highest priority notification
+});
+
+socket.on('guardian:status', (data) => {
+    console.log('Guardian status:', data);
+    // Current status of all linked students
+});
+
+socket.on('disconnect', (reason) => {
+    console.log('Disconnected:', reason);
+    // Handle reconnection logic if needed
+});</code></pre>
+
+        <h3>Socket.io Events</h3>
+
+        <h4>Emitted Events (Client to Server)</h4>
+        <ul>
+            <li><strong>auth</strong> - Authenticate guardian connection</li>
+            <li><strong>guardian:auth</strong> - Guardian-specific authentication</li>
+            <li><strong>guardian:subscribe</strong> - Subscribe to student updates</li>
+            <li><strong>guardian:getStatus</strong> - Request current status of all students</li>
+            <li><strong>guardian:getNotifications</strong> - Request recent notifications</li>
+            <li><strong>attendance:getLive</strong> - Get live attendance status</li>
+        </ul>
+
+        <h4>Received Events (Server to Client)</h4>
+        <ul>
+            <li><strong>auth:success</strong> - Authentication successful</li>
+            <li><strong>auth:failed</strong> - Authentication failed</li>
+            <li><strong>attendance:update</strong> - Real-time check-in/check-out updates</li>
+            <li><strong>notification:new</strong> - New notifications</li>
+            <li><strong>announcement</strong> - School announcements</li>
+            <li><strong>emergency</strong> - Emergency alerts (highest priority)</li>
+            <li><strong>guardian:status</strong> - Status update for linked students</li>
+        </ul>
+    </section>
+
+    <section id="quickstart">
+        <h2>Quick Start Guide</h2>
+
+        <div class="info-box success">
+            <h4>Step 1: Register/Login</h4>
+            <p>Guardian accounts are created by the school administration. Use your registered email and password to login.</p>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 2: Add Students</h4>
+            <p>Add your children to your account using their student code provided by the school:</p>
+            <pre><code>POST {{baseUrl}}/students/add
+{
+    "studentCode": "STU001",
+    "relationship": "Father"
+}</code></pre>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 3: Track Attendance</h4>
+            <p>Monitor real-time attendance status and receive notifications for check-ins/check-outs.</p>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 4: Connect Socket.io</h4>
+            <p>Establish Socket.io connection for real-time updates and push notifications.</p>
+        </div>
+    </section>
+
+    <section id="errors">
+        <h2>Error Handling</h2>
+        <p>
+            The API uses standard HTTP status codes to indicate success or failure:
+        </p>
+
+        <h3>Common Status Codes</h3>
+        <div class="error-codes-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>200 OK</td><td>Request successful</td></tr>
+                    <tr><td>400 Bad Request</td><td>Invalid request parameters</td></tr>
+                    <tr><td>401 Unauthorized</td><td>Invalid or missing token</td></tr>
+                    <tr><td>404 Not Found</td><td>Resource not found</td></tr>
+                    <tr><td>409 Conflict</td><td>Resource already exists</td></tr>
+                    <tr><td>500 Internal Server Error</td><td>Server error</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3 style="color: var(--error-color); margin-top: 2rem;">⚠️ Common Error Codes</h3>
+
+        <div class="error-codes-grid">
+            <div class="error-code-card">
+                <div class="error-code-header">
+                    <span class="error-code">INVALID_CREDENTIALS</span>
+                    <span class="error-status" data-status="401">401</span>
+                </div>
+                <div class="error-code-description">Email or password is incorrect</div>
+                <div class="error-code-solution">
+                    <strong>Solution:</strong> Verify email and password, contact school admin if forgotten
+                </div>
+            </div>
+
+            <div class="error-code-card">
+                <div class="error-code-header">
+                    <span class="error-code">TOKEN_INVALID</span>
+                    <span class="error-status" data-status="401">401</span>
+                </div>
+                <div class="error-code-description">Authentication token is invalid or has been revoked</div>
+                <div class="error-code-solution">
+                    <strong>Solution:</strong> Login again to get a new token
+                </div>
+            </div>
+
+            <div class="error-code-card">
+                <div class="error-code-header">
+                    <span class="error-code">STUDENT_NOT_FOUND</span>
+                    <span class="error-status" data-status="404">404</span>
+                </div>
+                <div class="error-code-description">Student code does not exist or belongs to different school</div>
+                <div class="error-code-solution">
+                    <strong>Solution:</strong> Verify student code with school administration
+                </div>
+            </div>
+
+            <div class="error-code-card">
+                <div class="error-code-header">
+                    <span class="error-code">STUDENT_ALREADY_LINKED</span>
+                    <span class="error-status" data-status="409">409</span>
+                </div>
+                <div class="error-code-description">Student is already linked to your guardian account</div>
+                <div class="error-code-solution">
+                    <strong>Solution:</strong> Check your student list, student may already be added
+                </div>
+            </div>
+
+            <div class="error-code-card">
+                <div class="error-code-header">
+                    <span class="error-code">ACCOUNT_DISABLED</span>
+                    <span class="error-status" data-status="403">403</span>
+                </div>
+                <div class="error-code-description">Guardian account has been disabled by administration</div>
+                <div class="error-code-solution">
+                    <strong>Solution:</strong> Contact school administration to reactivate account
+                </div>
+            </div>
+
+            <div class="error-code-card">
+                <div class="error-code-header">
+                    <span class="error-code">RATE_LIMIT_EXCEEDED</span>
+                    <span class="error-status" data-status="429">429</span>
+                </div>
+                <div class="error-code-description">Too many requests in a short time period</div>
+                <div class="error-code-solution">
+                    <strong>Solution:</strong> Wait a few minutes before trying again
+                </div>
+            </div>
+        </div>
+
+        <h4 style="margin-top: 2rem;">Error Response Format</h4>
+        <div class="json-block" data-json='{
+            "success": false,
+            "error": {
+                "code": "INVALID_CREDENTIALS",
+                "message": "Email or password is incorrect",
+                "timestamp": "2024-03-14T10:30:00Z"
+            }
+        }'></div>
+    </section>
+</div>

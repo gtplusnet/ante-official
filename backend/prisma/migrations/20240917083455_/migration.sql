@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "PurchaseOrder" ADD COLUMN     "isVoided" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "totalPayableAmount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "totalSettledAmount" DOUBLE PRECISION NOT NULL DEFAULT 0;

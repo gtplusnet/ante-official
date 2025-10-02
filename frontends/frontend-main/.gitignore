@@ -1,0 +1,114 @@
+# Dependency directories
+node_modules/
+.yarn/
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+.quasar/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.staging
+!.env.example
+
+# Configuration files with sensitive data
+connections.json
+connections.local.json
+connections.development.json
+connections.production.json
+connections.staging.json
+!connections.example.json
+
+# Editor directories and files
+.vscode/
+.idea/
+.cursor/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+
+# Deployment files
+deployment-info.json
+deployment-hash.json
+version.json
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Testing
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+test-artifacts/
+*.har
+*.webm
+screenshots/
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+tmp/
+temp/
+
+# Development utilities
+src/boot/token-interceptor.ts
+src/services/logout.service.ts
+src/utils/tokenValidator.ts
+
+# Cache directories
+.cache/
+.parcel-cache/
+.vite/
+
+# Local development
+*.local
+.history/
+
+# Debug
+debug/
+*.pid
+*.seed
+*.pid.lock
+debug-*.png
+*-debug.png
+*-debug.spec.js
+*-test.spec.js
+
+# Package manager files
+package-lock.json
+pnpm-lock.yaml
+bun.lockb
+# yarn.lock is tracked for deterministic builds
+
+# Production files that shouldn't be in repo
+deployment-hash.json
+version.json

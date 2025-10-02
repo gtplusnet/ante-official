@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "WarehouseType" ADD VALUE 'TEMPORARY_WAREHOUSE';

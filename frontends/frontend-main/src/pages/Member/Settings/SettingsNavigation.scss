@@ -1,0 +1,48 @@
+.settings {
+  display: flex;
+  height: calc(100vh - 56px);
+  
+  .navigation {
+    width: 250px;
+    background: #fff;
+    border-right: 1px solid #e0e0e0;
+    
+    .title {
+      padding: 16px;
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .nav-item {
+      padding: 8px 16px !important;
+      
+      &.active {
+        background: #007bff;
+        color: #fff;
+      }
+    }
+
+    .nav-list {
+      padding: 0 !important;
+      
+      .sub-nav {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        
+        .nav-icon {
+          font-size: 20px;
+          color: #666;
+        }
+      }
+    }
+  }
+
+  .content {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+  }
+}

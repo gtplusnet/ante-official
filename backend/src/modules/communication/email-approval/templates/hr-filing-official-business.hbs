@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Business Filing - Approval Required</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; background-color: #f8f9fa;">
+
+    <!-- Header -->
+    {{> header}}
+
+    <!-- Main Content -->
+    <div style="max-width: 600px; margin: 0 auto; background-color: white;">
+        
+        <!-- Greeting -->
+        <div style="padding: 30px 30px 20px 30px;">
+            <h2 style="margin: 0 0 10px 0; color: #333; font-size: 24px;">Hello {{approverName}},</h2>
+            <p style="margin: 0; color: #6c757d; font-size: 16px;">{{requestorName}} has submitted an <strong>Official Business</strong> request for your approval.</p>
+        </div>
+
+        <!-- Filing Details -->
+        <div style="padding: 0 30px 20px 30px;">
+            <div style="background-color: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 4px solid #17a2b8;">
+                <h3 style="margin: 0 0 20px 0; color: #333; font-size: 18px;">📋 Official Business Details</h3>
+                
+                <!-- Employee Information -->
+                <div style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Employee Information</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Full Name</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{requestorName}}</p>
+                        </div>
+                        {{#if employeeId}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Employee ID</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{employeeId}}</p>
+                        </div>
+                        {{/if}}
+                        {{#if department}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Department</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{department}}</p>
+                        </div>
+                        {{/if}}
+                        {{#if position}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Position</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{position}}</p>
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
+
+                <!-- Schedule Information -->
+                <div style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Schedule Information</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Date</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{date}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Day of Week</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{dayOfWeek}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Time Out</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{timeIn}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Time In (Expected)</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{timeOut}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Total Hours</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{hours}} hours</p>
+                        </div>
+                        {{#if regularSchedule}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Regular Schedule</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{regularSchedule}}</p>
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
+
+                <!-- Purpose/Reason -->
+                {{#if remarks}}
+                <div style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Purpose of Official Business</h4>
+                    <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.6;">{{remarks}}</p>
+                </div>
+                {{/if}}
+
+                <!-- Additional Details -->
+                {{#if destination}}
+                <div style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Additional Details</h4>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Destination/Location</p>
+                            <p style="margin: 0; color: #333; font-size: 15px;">{{destination}}</p>
+                        </div>
+                        {{#if clientName}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Client/Company to Visit</p>
+                            <p style="margin: 0; color: #333; font-size: 15px;">{{clientName}}</p>
+                        </div>
+                        {{/if}}
+                        {{#if contactPerson}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Contact Person</p>
+                            <p style="margin: 0; color: #333; font-size: 15px;">{{contactPerson}}</p>
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
+                {{/if}}
+
+                <!-- Attachments -->
+                {{#if hasAttachment}}
+                <div style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Attachments</h4>
+                    <p style="margin: 0; color: #333; font-size: 14px;">
+                        <span style="color: #28a745;">✓</span> Supporting documents attached
+                    </p>
+                </div>
+                {{/if}}
+
+                <!-- Status -->
+                <div style="margin-top: 20px; text-align: center;">
+                    <span style="display: inline-block; padding: 8px 20px; background-color: #ffc107; color: #000; border-radius: 20px; font-size: 14px; font-weight: 600;">
+                        ⏳ PENDING APPROVAL
+                    </span>
+                </div>
+
+                <!-- Request Details -->
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef; font-size: 12px; color: #6c757d;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Request ID: #{{filingId}}</span>
+                        <span>Submitted: {{submittedDate}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        {{> action-buttons}}
+
+        <!-- Approval Guidelines -->
+        <div style="padding: 0 30px 30px 30px;">
+            <div style="background-color: #d1ecf1; padding: 20px; border-radius: 8px; border: 1px solid #bee5eb;">
+                <h4 style="margin: 0 0 10px 0; color: #0c5460; font-size: 16px;">📌 Official Business Approval Guidelines</h4>
+                <ul style="margin: 0; padding-left: 20px; color: #0c5460; font-size: 14px;">
+                    <li>Verify the business purpose and necessity</li>
+                    <li>Ensure proper client/destination information</li>
+                    <li>Check if the timing aligns with business requirements</li>
+                    <li>Confirm employee has completed any prerequisite tasks</li>
+                    <li>Consider impact on ongoing projects and team schedule</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    {{> footer}}
+
+</body>
+</html>

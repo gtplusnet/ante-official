@@ -1,0 +1,60 @@
+.treasury-submenu {
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+
+  .treasury-item {
+    margin: 6px 0;
+    padding: 8px 20px;
+    border-radius: 50px;
+    white-space: nowrap;
+    overflow: hidden;
+
+    &:hover {
+      background-color: #dde1f053;
+    }
+
+    &.active {
+      background-color: #dde1f0;
+    }
+
+    .menu-icon {
+      color: var(--q-text-light-grey);
+    }
+
+    .text-label-large, .text-label-medium {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .treasury-item-dropdown {
+    margin-left: 15px;
+    margin-bottom: 8px;
+    padding: 4px 15px;
+    border-radius: 50px;
+    white-space: nowrap;
+    overflow: hidden;
+
+    &:hover {
+      background-color: #dde1f053;
+    }
+
+    &.active {
+      background-color: #dde1f0;
+    }
+
+    .menu-icon {
+      color: var(--q-text-light-grey);
+    }
+
+    .text-label-medium {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .rotated {
+    transform: rotate(180deg);
+  }
+}

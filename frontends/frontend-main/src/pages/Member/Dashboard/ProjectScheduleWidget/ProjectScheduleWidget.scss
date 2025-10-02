@@ -1,0 +1,81 @@
+.project-dashboard {
+  height: 280px !important;
+}
+
+.dashboard {
+  height: 500px !important;
+}
+
+.schedule-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .task-empty {
+    text-align: center;
+    padding: 80px 0;
+    color: #666;
+  }
+}
+
+.task-content {
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  .task-empty {
+    text-align: center;
+    padding: 120px 0;
+  }
+
+  .task-list {
+    &-item {
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      grid-gap: 10px;
+      align-items: center;
+      cursor: pointer;
+      transition: 0.3s ease;
+      border-bottom: 1px solid #fff;
+
+      &:hover {
+        margin-left: 10px;
+        background-color: #f5f8fb;
+        border-bottom: 1px solid #eee;
+      }
+
+      .markings {
+        font-weight: bold;
+        padding: 5px;
+
+        .new {
+          display: inline-block;
+          background-color: red;
+          border-radius: 100%;
+          height: 10px;
+          width: 10px;
+
+          &.is-read {
+            background-color: #c8c8c8;
+          }
+        }
+      }
+      .content {
+        .title {
+          font-weight: 600;
+          font-size: 14px;
+        }
+        .time-ago {
+          font-size: 11px;
+          color: #666;
+        }
+        .assigned-by {
+          color: #666;
+          font-size: 12px;
+        }
+      }
+    }
+  }
+}

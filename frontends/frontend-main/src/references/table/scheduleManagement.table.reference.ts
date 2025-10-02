@@ -1,0 +1,76 @@
+export default {
+  defaultOrderBy: 'createdAt',
+  defaultOrderType: 'desc',
+  filter: [{ key: 'id', label: 'Schedule ID', column: 'id' }],
+  search: [
+    {
+      key: 'scheduleCode',
+      label: 'Search by Schedule Code',
+      column: 'scheduleCode',
+    },
+  ],
+  columns: [
+    {
+      key: 'scheduleCode',
+      label: 'Schedule Code',
+      sortable: true,
+      class: 'text-center',
+    },
+    {
+      key: 'dayScheduleDetails',
+      label: 'Monday',
+      sortable: true,
+      class: 'text-center',
+      slot: 'monday',
+    },
+    {
+      key: 'dayScheduleDetails',
+      label: 'Tuesday',
+      sortable: true,
+      class: 'text-center',
+      slot: 'tuesday',
+    },
+    {
+      key: 'dayScheduleDetails',
+      label: 'Wednesday',
+      sortable: true,
+      class: 'text-center',
+      slot: 'wednesday',
+    },
+    {
+      key: 'dayScheduleDetails',
+      label: 'Thursday',
+      sortable: true,
+      class: 'text-center',
+      slot: 'thursday',
+    },
+    {
+      key: 'dayScheduleDetails',
+      label: 'Friday',
+      sortable: true,
+      class: 'text-center',
+      slot: 'friday',
+    },
+    {
+      key: 'dayScheduleDetails',
+      label: 'Saturday',
+      sortable: true,
+      class: 'text-center',
+      slot: 'saturday',
+    },
+    {
+      key: 'dayScheduleDetails',
+      label: 'Sunday',
+      sortable: true,
+      class: 'text-center',
+      slot: 'sunday',
+    },
+    {
+      key: 'totalWorkingHours.formatted',
+      label: 'Total Work Hours',
+      sortable: true,
+      class: 'text-center',
+    },
+  ],
+  sort: [],
+};

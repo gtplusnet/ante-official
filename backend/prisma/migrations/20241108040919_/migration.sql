@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "FundTransactionCode" ADD VALUE 'PURCHASE_ORDER_PAYMENT';

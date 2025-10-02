@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "deleteOutDir": false,
+    "assets": [
+      {
+        "include": "shared/reference/**/*",
+        "outDir": "dist/src"
+      },
+      {
+        "include": "modules/communication/email-approval/templates/**/*",
+        "outDir": "dist/src"
+      },
+      {
+        "include": "views/**/*",
+        "outDir": "dist/src"
+      }
+    ]
+  }
+}

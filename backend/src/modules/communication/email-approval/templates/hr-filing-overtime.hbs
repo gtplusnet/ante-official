@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overtime Filing - Approval Required</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; background-color: #f8f9fa;">
+
+    <!-- Header -->
+    {{> header}}
+
+    <!-- Main Content -->
+    <div style="max-width: 600px; margin: 0 auto; background-color: white;">
+        
+        <!-- Greeting -->
+        <div style="padding: 30px 30px 20px 30px;">
+            <h2 style="margin: 0 0 10px 0; color: #333; font-size: 24px;">Hello {{approverName}},</h2>
+            <p style="margin: 0; color: #6c757d; font-size: 16px;">{{requestorName}} has submitted an <strong>Overtime</strong> request for your approval.</p>
+        </div>
+
+        <!-- Filing Details -->
+        <div style="padding: 0 30px 20px 30px;">
+            <div style="background-color: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 4px solid #dc3545;">
+                <h3 style="margin: 0 0 20px 0; color: #333; font-size: 18px;">⏰ Overtime Request Details</h3>
+                
+                <!-- Employee Information -->
+                <div style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Employee Information</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Full Name</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{requestorName}}</p>
+                        </div>
+                        {{#if employeeId}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Employee ID</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{employeeId}}</p>
+                        </div>
+                        {{/if}}
+                        {{#if department}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Department</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{department}}</p>
+                        </div>
+                        {{/if}}
+                        {{#if position}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Position</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{position}}</p>
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
+
+                <!-- Overtime Schedule -->
+                <div style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Overtime Schedule</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Date</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{date}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Day of Week</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{dayOfWeek}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Regular Shift End</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{regularEndTime}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Overtime Start</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{timeIn}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Overtime End</p>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 500;">{{timeOut}}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Total OT Hours</p>
+                            <p style="margin: 0; color: #dc3545; font-size: 16px; font-weight: 600;">{{hours}} hours</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Overtime Calculation -->
+                <div style="background-color: #f8d7da; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #f5c6cb;">
+                    <h4 style="margin: 0 0 10px 0; color: #721c24; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Overtime Breakdown</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #721c24; font-size: 12px;">Regular OT Hours</p>
+                            <p style="margin: 0; color: #721c24; font-size: 15px; font-weight: 500;">{{regularOTHours}} hrs</p>
+                        </div>
+                        {{#if nightDifferentialHours}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #721c24; font-size: 12px;">Night Differential Hours</p>
+                            <p style="margin: 0; color: #721c24; font-size: 15px; font-weight: 500;">{{nightDifferentialHours}} hrs</p>
+                        </div>
+                        {{/if}}
+                        {{#if isRestDay}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #721c24; font-size: 12px;">Rest Day OT</p>
+                            <p style="margin: 0; color: #721c24; font-size: 15px; font-weight: 500;">Yes</p>
+                        </div>
+                        {{/if}}
+                        {{#if isHoliday}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #721c24; font-size: 12px;">Holiday OT</p>
+                            <p style="margin: 0; color: #721c24; font-size: 15px; font-weight: 500;">{{holidayType}}</p>
+                        </div>
+                        {{/if}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #721c24; font-size: 12px;">OT Rate Multiplier</p>
+                            <p style="margin: 0; color: #721c24; font-size: 15px; font-weight: 500;">{{otMultiplier}}x</p>
+                        </div>
+                        {{#if estimatedAmount}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #721c24; font-size: 12px;">Estimated Amount</p>
+                            <p style="margin: 0; color: #721c24; font-size: 15px; font-weight: 500;">₱{{estimatedAmount}}</p>
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
+
+                <!-- Reason for Overtime -->
+                {{#if remarks}}
+                <div style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Reason for Overtime</h4>
+                    <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.6;">{{remarks}}</p>
+                </div>
+                {{/if}}
+
+                <!-- Tasks/Deliverables -->
+                {{#if tasks}}
+                <div style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Tasks/Deliverables</h4>
+                    <ul style="margin: 0; padding-left: 20px; color: #333; font-size: 14px;">
+                        {{#each tasks}}
+                        <li>{{this}}</li>
+                        {{/each}}
+                    </ul>
+                </div>
+                {{/if}}
+
+                <!-- Budget Impact -->
+                {{#if budgetCode}}
+                <div style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Budget Information</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Budget Code</p>
+                            <p style="margin: 0; color: #333; font-size: 15px;">{{budgetCode}}</p>
+                        </div>
+                        {{#if projectCode}}
+                        <div>
+                            <p style="margin: 0 0 2px 0; color: #6c757d; font-size: 12px;">Project Code</p>
+                            <p style="margin: 0; color: #333; font-size: 15px;">{{projectCode}}</p>
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
+                {{/if}}
+
+                <!-- Previous OT This Month -->
+                {{#if monthlyOTSummary}}
+                <div style="background-color: #e2e3e5; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #383d41; font-size: 14px;">Monthly OT Summary</h4>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 13px;">
+                        <div>
+                            <p style="margin: 0; color: #6c757d;">This Month</p>
+                            <p style="margin: 0; color: #383d41; font-weight: 500;">{{monthlyOTHours}} hrs</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0; color: #6c757d;">OT Instances</p>
+                            <p style="margin: 0; color: #383d41; font-weight: 500;">{{otInstances}}x</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0; color: #6c757d;">Avg per Instance</p>
+                            <p style="margin: 0; color: #383d41; font-weight: 500;">{{avgOTHours}} hrs</p>
+                        </div>
+                    </div>
+                </div>
+                {{/if}}
+
+                <!-- Status -->
+                <div style="margin-top: 20px; text-align: center;">
+                    <span style="display: inline-block; padding: 8px 20px; background-color: #ffc107; color: #000; border-radius: 20px; font-size: 14px; font-weight: 600;">
+                        ⏳ PENDING APPROVAL
+                    </span>
+                </div>
+
+                <!-- Request Details -->
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef; font-size: 12px; color: #6c757d;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Request ID: #{{filingId}}</span>
+                        <span>Submitted: {{submittedDate}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        {{> action-buttons}}
+
+        <!-- Approval Guidelines -->
+        <div style="padding: 0 30px 30px 30px;">
+            <div style="background-color: #d1ecf1; padding: 20px; border-radius: 8px; border: 1px solid #bee5eb;">
+                <h4 style="margin: 0 0 10px 0; color: #0c5460; font-size: 16px;">📌 Overtime Approval Guidelines</h4>
+                <ul style="margin: 0; padding-left: 20px; color: #0c5460; font-size: 14px;">
+                    <li>Verify the necessity and urgency of overtime work</li>
+                    <li>Check if tasks cannot be completed during regular hours</li>
+                    <li>Review employee's monthly overtime frequency</li>
+                    <li>Ensure compliance with labor laws (max OT limits)</li>
+                    <li>Confirm budget availability for overtime pay</li>
+                    <li>Consider alternative solutions (task redistribution, deadline adjustment)</li>
+                    <li>Verify deliverables justify the overtime hours requested</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    {{> footer}}
+
+</body>
+</html>

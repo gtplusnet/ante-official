@@ -1,0 +1,836 @@
+<div class="container">
+    <section id="overview">
+        <h2>Overview</h2>
+        <p>
+            The Manpower Time Tracking API provides a complete solution for integrating time tracking devices
+            with your workforce management system. Track employee attendance with support for multiple time-in/out
+            sessions per day, automatic background computation of work hours with overtime and night differential,
+            and manage your workforce through a simple REST API.
+        </p>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Key Features</h4>
+            <ul class="feature-list">
+                <li>Real-time time tracking with employee ID</li>
+                <li>Multiple time-in/out sessions per day support</li>
+                <li>Employee list with profile information and photos</li>
+                <li>Profile photo URLs for facial recognition integration</li>
+                <li>Filter employees by photo availability</li>
+                <li>Background queue processing for computations</li>
+                <li>Automatic overtime calculation (8+ hours)</li>
+                <li>Night differential tracking (10pm-6am)</li>
+                <li>Grace period application from payroll groups</li>
+                <li>Multi-location support</li>
+                <li>Offline sync capability</li>
+                <li>Failed computation tracking and retry mechanism</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="authentication">
+        <h2>Authentication</h2>
+        <p>
+            All API requests require an API key to be included in the request headers.
+            Generate API keys through the Device Management interface.
+        </p>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Required Header</h4>
+            <pre><code>x-api-key: your_api_key_here</code></pre>
+        </div>
+
+        <p>API keys are tied to specific devices and locations. Each key has permissions based on the device configuration.</p>
+    </section>
+
+    <section id="endpoints">
+        <h2>API Endpoints</h2>
+
+        <h3>Health Check</h3>
+        {{> api-doc/endpoint-card
+            method="GET"
+            path="/health"
+            description="Verify device authentication and API connectivity. Updates device's last activity timestamp for monitoring."
+            responseExample='{"status":"ok","device":{"id":"DEV-123","name":"Device Name","location":"Main Office","lastActivity":"2024-03-14T08:00:00Z"},"timestamp":"2024-03-14T08:00:00Z"}'
+        }}
+
+        <div class="info-box">
+            <h4 class="info-box-title">Health Check Scenarios</h4>
+            <ul class="feature-list">
+                <li><strong>Success:</strong> Valid API key returns device info and updates last activity</li>
+                <li><strong>Invalid Key:</strong> Returns 400 with "Invalid or inactive device" error</li>
+                <li><strong>Missing Key:</strong> Returns 400 with "API key is required" error</li>
+                <li><strong>Inactive Device:</strong> Even with valid key, inactive devices return error</li>
+                <li><strong>Use Case:</strong> Call periodically (e.g., every 5 minutes) to monitor connectivity</li>
+            </ul>
+        </div>
+
+        <h3>Employee Management</h3>
+        {{> api-doc/endpoint-card
+            method="GET"
+            path="/employees"
+            description="Retrieve all employees for the device's company with pagination support and optional photo filtering. Only returns employees from the same company as the device. Includes profile photo URLs for facial recognition integration."
+            parameters='[{"name":"page","required":false,"description":"Page number (default: 1)"},{"name":"limit","required":false,"description":"Items per page (default: 50, max: 500)"},{"name":"withPhotos","required":false,"description":"Filter to only return employees with profile photos (true/false, default: false)"}]'
+            responseExample='{"employees":[{"id":"6c9c112b-ae6d-4a5c-846a-09e5bacac46f","firstName":"John","lastName":"Doe","fullName":"John Doe","employeeCode":"johndoe123","department":"Main Branch","position":"Regular Employee","profilePhotoURL":"http://localhost:8080/images/person01.webp","hasProfilePhoto":false,"isActive":true},{"id":"590a4b22-c4ec-4ccc-b9f1-b371cf908257","firstName":"Jane","lastName":"Smith","fullName":"Jane Smith","employeeCode":"janesmith456","department":"Branch 2","position":"Manager","profilePhotoURL":"https://ante.sgp1.digitaloceanspaces.com/f0b8c2b4-4fff-4a0f-8dc7-57573226beed-1723265979564.jpeg","hasProfilePhoto":true,"isActive":true}],"total":251,"page":1,"limit":50,"totalPages":6}'
+        }}
+
+        <div class="info-box">
+            <h4 class="info-box-title">Employee List Scenarios</h4>
+            <ul class="feature-list">
+                <li><strong>Department Mapping:</strong> Returns branch name as department, defaults to "Main Branch" if not assigned</li>
+                <li><strong>Position Mapping:</strong> Returns payroll group name as position, defaults to "Employee" if not set</li>
+                <li><strong>Profile Photos:</strong> Returns profilePhotoURL field with employee's profile image URL for facial recognition</li>
+                <li><strong>Photo Filtering:</strong> Use withPhotos=true to get only employees with profile photos available</li>
+                <li><strong>Company Isolation:</strong> Device can only access employees from its assigned company</li>
+                <li><strong>Pagination:</strong> Large employee lists are split into pages for efficient loading</li>
+                <li><strong>Sorting:</strong> Employees are sorted alphabetically by first name, then last name</li>
+                <li><strong>Active Status:</strong> Includes both active and inactive employees with status flag</li>
+                <li><strong>Caching Recommendation:</strong> Cache locally and refresh periodically (e.g., every hour)</li>
+                <li><strong>Facial Recognition:</strong> Use profilePhotoURL to validate employee identity via facial recognition systems</li>
+            </ul>
+        </div>
+
+        <h3>Time Tracking</h3>
+        {{> api-doc/endpoint-card
+            method="POST"
+            path="/time-in"
+            description="Record employee time-in. Supports multiple time-in sessions per day. Validates employee belongs to device's company."
+            requestBody='{"employeeId":"uuid-123-456","timestamp":"2024-03-14T08:00:00Z"}'
+            responseExample='{"timeRecordId":123,"employeeId":"uuid-123-456","employeeName":"John Doe","timeIn":"2024-03-14T08:00:00Z","device":"Test Device","message":"Time-in recorded successfully"}'
+        }}
+
+        <div class="info-box">
+            <h4 class="info-box-title">Time-In Scenarios</h4>
+            <ul class="feature-list">
+                <li><strong>First Time-In:</strong> Creates new record with timeIn and timeOut set to same time initially</li>
+                <li><strong>Multiple Sessions:</strong> Employees can clock in multiple times per day (e.g., morning and afternoon shifts)</li>
+                <li><strong>Previous Day Not Closed:</strong> Allows new time-in for new day even if previous day wasn't closed</li>
+                <li><strong>Employee Not Found:</strong> Returns 404 if employee ID doesn't exist in company</li>
+                <li><strong>Cross-Company Prevention:</strong> Employee from different company returns 404</li>
+                <li><strong>Timestamp Handling:</strong> If omitted, uses current server time automatically</li>
+                <li><strong>Device Tracking:</strong> Records device ID and name with the time record</li>
+                <li><strong>Source Marking:</strong> All records marked as source "DEVICE" for audit trail</li>
+                <li><strong>Early Morning Shift:</strong> 12am-6am time-ins work normally, counted for current day</li>
+            </ul>
+        </div>
+
+        {{> api-doc/endpoint-card
+            method="POST"
+            path="/time-out"
+            description="Record employee time-out. Enforces minimum 1-minute session duration. Computations are queued and processed in the background for performance."
+            requestBody='{"timeRecordId":123,"timestamp":"2024-03-14T17:00:00Z"}'
+            responseExample='{"message":"Time-out recorded successfully. Computation queued.","currentSession":{"timeRecordId":770,"employeeId":"uuid-123-456","employeeName":"John Doe","timeIn":"2024-03-14T08:00:00Z","timeOut":"2024-03-14T17:00:00Z","duration":"9.00 hours"},"dailyRecords":[{"id":770,"timeIn":"08:00 AM","timeOut":"05:00 PM","timeSpan":9.00}],"totalHoursToday":"9.00","computationStatus":"queued","queuePosition":0,"queueJobId":"uuid-job-123"}'
+        }}
+
+        <div class="info-box">
+            <h4 class="info-box-title">Time-Out Scenarios</h4>
+            <ul class="feature-list">
+                <li><strong>Normal Time-Out:</strong> Updates existing record, queues computation job</li>
+                <li><strong>Minimum Session Duration:</strong> Requires at least 1 minute between time-in and time-out</li>
+                <li><strong>Already Clocked Out:</strong> Overwrites previous time-out with new time (allows corrections)</li>
+                <li><strong>Invalid Record ID:</strong> Returns 404 if timeRecordId doesn't exist</li>
+                <li><strong>Wrong Device:</strong> Returns 404 if record wasn't created by this device</li>
+                <li><strong>Response Fields:</strong>
+                    <ul>
+                        <li>currentSession: Current time record with duration</li>
+                        <li>dailyRecords: All sessions for the day with formatted times</li>
+                        <li>totalHoursToday: Sum of all sessions for the employee</li>
+                        <li>computationStatus: "queued" for background processing</li>
+                        <li>queueJobId: Unique identifier for tracking computation</li>
+                    </ul>
+                </li>
+                <li><strong>Background Processing:</strong> Overtime, night diff, and grace periods computed asynchronously</li>
+                <li><strong>Queue Features:</strong>
+                    <ul>
+                        <li>Automatic retry on failure (max 3 attempts)</li>
+                        <li>Failed jobs retained for manual review</li>
+                        <li>Processing status available via queue monitoring</li>
+                        <li>24-hour retention for completed jobs</li>
+                    </ul>
+                </li>
+                <li><strong>Daily Records:</strong> Returns all time-in/out pairs for the day in response</li>
+                <li><strong>Multiple Sessions:</strong> Supports multiple time-in/out sessions per employee per day</li>
+            </ul>
+        </div>
+
+        <h3>Data Retrieval</h3>
+        {{> api-doc/endpoint-card
+            method="GET"
+            path="/daily-logs"
+            description="Retrieve all time records created by this device for a specific date. Only shows records from the requesting device."
+            parameters='[{"name":"date","required":true,"description":"Date in YYYY-MM-DD format (e.g., 2024-03-14)"}]'
+            responseExample='{"date":"2024-03-14","totalRecords":15,"records":[{"timeRecordId":123,"employeeId":"uuid-123-456","employeeCode":"EMP001","employeeName":"John Doe","timeIn":"2024-03-14T08:00:00Z","timeOut":"2024-03-14T17:00:00Z","hoursWorked":9}]}'
+        }}
+
+        <div class="info-box">
+            <h4 class="info-box-title">Daily Logs Scenarios</h4>
+            <ul class="feature-list">
+                <li><strong>Device Isolation:</strong> Only returns records created by the requesting device</li>
+                <li><strong>Date Range:</strong> Returns all records with time-in on specified date (12am-11:59pm)</li>
+                <li><strong>Invalid Date Format:</strong> Returns 400 error if date isn't YYYY-MM-DD format</li>
+                <li><strong>Future Dates:</strong> Returns empty array for future dates</li>
+                <li><strong>Missing Date:</strong> Returns 400 "Date parameter is required" error</li>
+                <li><strong>Sorting:</strong> Records sorted by time-in ascending (earliest first)</li>
+                <li><strong>Incomplete Records:</strong> Shows records even if employee hasn't clocked out yet</li>
+                <li><strong>Data Sync:</strong> Use for syncing device local storage with server data</li>
+                <li><strong>Timezone Note:</strong> All timestamps in UTC, convert to local timezone for display</li>
+            </ul>
+        </div>
+
+        {{> api-doc/endpoint-card
+            method="GET"
+            path="/employee-status"
+            description="Check if an employee is currently clocked in or out. Returns the most recent OPEN time record (timeIn = timeOut) for today regardless of device."
+            parameters='[{"name":"employeeId","required":true,"description":"Employee UUID from employee list"}]'
+            responseExample='{"employeeId":"uuid-123-456","employeeName":"John Doe","status":"clocked_in","since":"2024-03-14T08:00:00Z","timeRecordId":123}'
+        }}
+
+        <div class="info-box">
+            <h4 class="info-box-title">Employee Status Scenarios</h4>
+            <ul class="feature-list">
+                <li><strong>Currently Clocked In:</strong>
+                    <ul>
+                        <li>status: "clocked_in"</li>
+                        <li>since: time-in timestamp</li>
+                        <li>timeRecordId: current active record ID</li>
+                    </ul>
+                </li>
+                <li><strong>Currently Clocked Out:</strong>
+                    <ul>
+                        <li>status: "clocked_out"</li>
+                        <li>since: time-out timestamp (if clocked out today)</li>
+                        <li>timeRecordId: null</li>
+                    </ul>
+                </li>
+                <li><strong>Never Clocked In Today:</strong>
+                    <ul>
+                        <li>status: "clocked_out"</li>
+                        <li>since: null</li>
+                        <li>timeRecordId: null</li>
+                    </ul>
+                </li>
+                <li><strong>Employee Not Found:</strong> Returns 404 error</li>
+                <li><strong>Cross-Company Check:</strong> Can't check status of employees from other companies</li>
+                <li><strong>Multi-Device Support:</strong> Shows status from ANY device (not just requesting device)</li>
+                <li><strong>Multiple Sessions:</strong> Only returns open sessions (where timeIn = timeOut)</li>
+                <li><strong>Use Cases:</strong>
+                    <ul>
+                        <li>Display current status on device screen</li>
+                        <li>Show "Clock In" or "Clock Out" button appropriately</li>
+                        <li>Support multiple daily sessions per employee</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+
+    <section id="facial-recognition">
+        <h2>Facial Recognition Integration</h2>
+        <p>
+            The API now supports facial recognition integration through profile photo URLs. Each employee can have a profile photo that can be used for identity verification during time tracking.
+        </p>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Profile Photo Features</h4>
+            <ul class="feature-list">
+                <li><strong>Profile Photo URL:</strong> Each employee record includes a <code>profilePhotoURL</code> field with the employee's profile image</li>
+                <li><strong>Filtering Support:</strong> Use <code>withPhotos=true</code> parameter to retrieve only employees with profile photos</li>
+                <li><strong>Facial Recognition:</strong> Use the profile photo URL to validate employee identity before recording time-in/out</li>
+                <li><strong>Default Images:</strong> Employees without custom photos will have a default placeholder image</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Example: Get Employees with Photos</h4>
+            <pre><code>GET /api/public/manpower/employees?withPhotos=true&limit=10
+x-api-key: your_api_key_here
+
+Response:
+{
+  "employees": [
+    {
+      "id": "590a4b22-c4ec-4ccc-b9f1-b371cf908257",
+      "firstName": "Jane",
+      "lastName": "Smith",
+      "fullName": "Jane Smith",
+      "employeeCode": "janesmith456",
+      "department": "Branch 2",
+      "position": "Manager",
+      "profilePhotoURL": "https://ante.sgp1.digitaloceanspaces.com/f0b8c2b4-4fff-4a0f-8dc7-57573226beed-1723265979564.jpeg",
+      "hasProfilePhoto": true,
+      "isActive": true
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 10,
+  "totalPages": 1
+}</code></pre>
+        </div>
+    </section>
+
+    <section id="quickstart">
+        <h2>Quick Start Guide</h2>
+
+        <div class="info-box success">
+            <h4>Step 1: Create a Device</h4>
+            <p>Register your time tracking device in the Device Management interface to obtain an API key.</p>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 2: Test Connection</h4>
+            <p>Verify your API key and device setup:</p>
+            <pre><code>GET {{baseUrl}}/health
+Headers: x-api-key: your_api_key_here</code></pre>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 3: Fetch Employee List</h4>
+            <p>Get all employees to cache on your device:</p>
+            <pre><code>GET {{baseUrl}}/employees
+Headers: x-api-key: your_api_key_here</code></pre>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 4: Start Time Tracking</h4>
+            <p>Record time-in using employee ID:</p>
+            <pre><code>POST {{baseUrl}}/time-in
+{
+  "employeeId": "uuid-from-employee-list"
+}</code></pre>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 5: Complete Time Tracking</h4>
+            <p>Record time-out to calculate hours worked:</p>
+            <pre><code>POST {{baseUrl}}/time-out
+{
+  "timeRecordId": 123
+}</code></pre>
+        </div>
+    </section>
+
+    <section id="errors">
+        <h2>Error Handling</h2>
+
+        <p>The API uses standard HTTP status codes to indicate success or failure:</p>
+
+        <div class="endpoint">
+            <h4>Common Status Codes</h4>
+            <div class="param">
+                <span class="param-name">200 OK</span>
+                <span class="param-description">Request successful</span>
+            </div>
+            <div class="param">
+                <span class="param-name">400 Bad Request</span>
+                <span class="param-description">Invalid request parameters or data format</span>
+            </div>
+            <div class="param">
+                <span class="param-name">401 Unauthorized</span>
+                <span class="param-description">Invalid or missing API key</span>
+            </div>
+            <div class="param">
+                <span class="param-name">404 Not Found</span>
+                <span class="param-description">Employee, time record, or resource not found</span>
+            </div>
+            <div class="param">
+                <span class="param-name">409 Conflict</span>
+                <span class="param-description">Duplicate time entry (already clocked in)</span>
+            </div>
+            <div class="param">
+                <span class="param-name">500 Internal Server Error</span>
+                <span class="param-description">Server error, please try again</span>
+            </div>
+        </div>
+
+        <h4>Error Response Format</h4>
+        <pre><code>{
+    "message": "Employee not found",
+    "error": "Not Found",
+    "statusCode": 404
+}</code></pre>
+
+        <h3>Common Error Scenarios</h3>
+
+        <div class="info-box error">
+            <h4>Invalid API Key</h4>
+            <p><strong>Error:</strong> "Invalid or inactive device" (400)</p>
+            <p><strong>Causes:</strong></p>
+            <ul>
+                <li>API key is incorrect or has been regenerated</li>
+                <li>Device has been deactivated in the system</li>
+                <li>API key belongs to a different environment (staging vs production)</li>
+            </ul>
+            <p><strong>Solution:</strong> Verify API key in Device Management, check device status, ensure correct environment.</p>
+        </div>
+
+        <div class="info-box success">
+            <h4>Multiple Sessions Per Day</h4>
+            <p><strong>Update:</strong> Employees can now have multiple time-in/time-out sessions per day</p>
+            <p><strong>Scenarios:</strong></p>
+            <ul>
+                <li>Employee forgot to clock out yesterday and tries to clock in today - <em>This works! New day allows new time-in</em></li>
+                <li>Employee clocks in and out multiple times on same day - <em>This now works! All sessions are tracked</em></li>
+                <li>Employee clocked in on Device A, clocks in on Device B - <em>This works, both sessions tracked</em></li>
+            </ul>
+            <p><strong>Solution:</strong> Use employee-status endpoint first, show appropriate Clock In/Out button.</p>
+        </div>
+
+        <div class="info-box error">
+            <h4>Time Record Not Found</h4>
+            <p><strong>Error:</strong> "Time record not found or not associated with this device" (404)</p>
+            <p><strong>Causes:</strong></p>
+            <ul>
+                <li>Invalid timeRecordId provided</li>
+                <li>Record was created by different device</li>
+                <li>Record was deleted from database</li>
+            </ul>
+            <p><strong>Solution:</strong> Store timeRecordId from time-in response, only clock out records created by same device.</p>
+        </div>
+
+        <div class="info-box error">
+            <h4>Employee Not Found</h4>
+            <p><strong>Error:</strong> "Employee not found" (404)</p>
+            <p><strong>Causes:</strong></p>
+            <ul>
+                <li>Invalid employee UUID</li>
+                <li>Employee belongs to different company</li>
+                <li>Employee was deleted from system</li>
+                <li>Using employee code instead of UUID</li>
+            </ul>
+            <p><strong>Solution:</strong> Use employee ID from /employees endpoint, refresh employee list periodically.</p>
+        </div>
+
+        <div class="info-box error">
+            <h4>Minimum Session Duration</h4>
+            <p><strong>Error:</strong> "Minimum session duration is 1 minute" (400)</p>
+            <p><strong>Causes:</strong></p>
+            <ul>
+                <li>Time-out attempted less than 1 minute after time-in</li>
+                <li>Rapid testing without waiting for minimum duration</li>
+            </ul>
+            <p><strong>Solution:</strong> Wait at least 60 seconds between time-in and time-out operations.</p>
+        </div>
+
+        <div class="info-box error">
+            <h4>Missing Required Headers</h4>
+            <p><strong>Error:</strong> "API key is required in x-api-key header" (400)</p>
+            <p><strong>Common Mistakes:</strong></p>
+            <ul>
+                <li>Header name typo (X-Api-Key vs x-api-key)</li>
+                <li>Sending in request body instead of header</li>
+                <li>Using Authorization header instead</li>
+            </ul>
+            <p><strong>Solution:</strong> Always include: <code>x-api-key: your_api_key_here</code></p>
+        </div>
+    </section>
+
+    <section id="best-practices">
+        <h2>Best Practices & Implementation Tips</h2>
+
+        <div class="info-box success">
+            <h4 class="info-box-title">Handling Edge Cases</h4>
+            <ul class="feature-list">
+                <li><strong>Network Failures:</strong> Store time records locally and sync when connection restored</li>
+                <li><strong>Clock Drift:</strong> Use server timestamps from responses, not device time</li>
+                <li><strong>Overnight Shifts:</strong> System handles midnight crossover automatically</li>
+                <li><strong>Forgotten Clock Outs:</strong>
+                    <ul>
+                        <li>Previous day's unclosed records don't block new time-ins</li>
+                        <li>Admin can manually close records through main system</li>
+                        <li>Consider auto-timeout after 24 hours (implement device-side)</li>
+                    </ul>
+                </li>
+                <li><strong>Multiple Attempts:</strong> Implement retry with exponential backoff for network errors</li>
+                <li><strong>Corrections:</strong> Time-out can be called multiple times to correct mistakes</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Device Implementation Checklist</h4>
+            <ul class="feature-list">
+                <li>✓ Cache employee list locally, refresh every hour</li>
+                <li>✓ Show employee photo placeholder if not available</li>
+                <li>✓ Check employee status before showing Clock In/Out button</li>
+                <li>✓ Store timeRecordId from time-in for later time-out</li>
+                <li>✓ Implement offline mode with local storage queue</li>
+                <li>✓ Display clear error messages to users</li>
+                <li>✓ Add confirmation dialog for clock in/out actions</li>
+                <li>✓ Show current time and last action timestamp</li>
+                <li>✓ Convert UTC timestamps to local timezone for display</li>
+                <li>✓ Implement search/filter for employee list</li>
+            </ul>
+        </div>
+
+        <div class="info-box warning">
+            <h4 class="info-box-title">Common Integration Pitfalls</h4>
+            <ul class="feature-list">
+                <li><strong>Wrong ID Type:</strong> Use employee UUID, not employee code for time-in</li>
+                <li><strong>Timezone Confusion:</strong> All API timestamps are UTC, convert for display</li>
+                <li><strong>Status Check Logic:</strong> Employee status is global (all devices), not per-device</li>
+                <li><strong>Grace Period Assumption:</strong> Don't calculate locally, server handles grace periods</li>
+                <li><strong>Daily Boundary:</strong> "Today" resets at midnight server time (UTC)</li>
+                <li><strong>Device Isolation:</strong> Can't clock out records from other devices</li>
+                <li><strong>Pagination Limits:</strong> Don't request more than 500 employees per page</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Recommended Sync Strategy</h4>
+            <pre><code>// Startup Sequence
+1. GET /health - Verify connectivity and API key
+2. GET /employees?limit=500 - Cache all employees
+3. GET /daily-logs?date=today - Get today's records
+
+// Regular Operations (every minute)
+1. Check offline queue, retry failed requests
+2. Process new clock in/out requests
+
+// Periodic Sync (every 5 minutes)
+1. GET /health - Update device status
+2. GET /daily-logs?date=today - Sync today's records
+
+// Hourly Refresh
+1. GET /employees - Update employee list
+2. Clear old cached data</code></pre>
+        </div>
+    </section>
+
+    <section id="calculations">
+        <h2>Time Calculations</h2>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Automatic Calculations</h4>
+            <p>When recording time-out, the API automatically calculates:</p>
+            <ul class="feature-list">
+                <li><strong>Regular Hours:</strong> First 8 hours of work</li>
+                <li><strong>Overtime Hours:</strong> Hours beyond 8 (minus grace period)</li>
+                <li><strong>Night Differential:</strong> Minutes worked between 10pm-6am</li>
+                <li><strong>Grace Periods:</strong> Applied from employee's payroll group settings</li>
+                <li><strong>Total Minutes:</strong> Exact minutes worked for precision</li>
+            </ul>
+        </div>
+
+        <h3>Calculation Examples & Scenarios</h3>
+        <pre><code>// Example 1: Regular Day Shift
+Time In:  08:00 AM
+Time Out: 05:00 PM
+Result:
+  - Total Hours: 9.00
+  - Regular Hours: 8.00
+  - Overtime: 1.00
+  - Night Differential: 0 minutes
+
+// Example 2: Full Night Shift
+Time In:  10:00 PM
+Time Out: 07:00 AM (next day)
+Result:
+  - Total Hours: 9.00
+  - Regular Hours: 8.00
+  - Overtime: 1.00
+  - Night Differential: 480 minutes (10pm-6am = 8 hours)
+
+// Example 3: With 30-min Grace Period
+Time In:  08:00 AM
+Time Out: 05:15 PM (15 minutes overtime)
+Grace Period: 30 minutes
+Result:
+  - Total Hours: 9.25
+  - Regular Hours: 8.00
+  - Overtime: 0.00 (15 min < 30 min grace)
+  - Night Differential: 0 minutes
+
+// Example 4: Split Shift with Night Diff
+Time In:  04:00 PM
+Time Out: 01:00 AM (next day)
+Result:
+  - Total Hours: 9.00
+  - Regular Hours: 8.00
+  - Overtime: 1.00
+  - Night Differential: 180 minutes (10pm-1am = 3 hours)
+
+// Example 5: Early Morning Start
+Time In:  04:00 AM
+Time Out: 01:00 PM
+Result:
+  - Total Hours: 9.00
+  - Regular Hours: 8.00
+  - Overtime: 1.00
+  - Night Differential: 120 minutes (4am-6am = 2 hours)
+
+// Example 6: Exact 8 Hours
+Time In:  09:00 AM
+Time Out: 05:00 PM
+Result:
+  - Total Hours: 8.00
+  - Regular Hours: 8.00
+  - Overtime: 0.00
+  - Night Differential: 0 minutes
+
+// Example 7: Very Short Shift
+Time In:  08:00 AM
+Time Out: 08:30 AM
+Result:
+  - Total Hours: 0.50
+  - Regular Hours: 0.50
+  - Overtime: 0.00
+  - Night Differential: 0 minutes
+
+// Example 8: 24-Hour Shift (Edge Case)
+Time In:  08:00 AM Monday
+Time Out: 08:00 AM Tuesday
+Result:
+  - Total Hours: 24.00
+  - Regular Hours: 8.00
+  - Overtime: 16.00
+  - Night Differential: 480 minutes (full 10pm-6am)</code></pre>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Special Calculation Rules</h4>
+            <ul class="feature-list">
+                <li><strong>Night Differential Window:</strong> Strictly 10:00 PM to 6:00 AM only</li>
+                <li><strong>Overtime Threshold:</strong> Any time beyond 8 hours is overtime</li>
+                <li><strong>Grace Period Application:</strong> Only applies to overtime, not regular hours</li>
+                <li><strong>Minute Precision:</strong> All calculations use exact minutes, then convert to hours</li>
+                <li><strong>Rounding:</strong> Hours displayed to 2 decimal places (e.g., 8.75 hours)</li>
+                <li><strong>Multiple Time-Outs:</strong> Last time-out overwrites previous calculations</li>
+                <li><strong>Payroll Group Settings:</strong> Grace periods pulled from employee's payroll group</li>
+                <li><strong>No Break Deduction:</strong> API doesn't auto-deduct lunch/break time</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="workflow-scenarios">
+        <h2>Real-World Workflow Scenarios</h2>
+
+        <div class="endpoint">
+            <h4>Scenario 1: Normal Day - Employee Clocks In and Out</h4>
+            <div class="info-box">
+                <pre><code>// 8:00 AM - Employee arrives
+1. Employee enters ID on device
+2. Device calls GET /employee-status?employeeId=uuid-123
+   Response: {"status": "clocked_out", "since": null}
+3. Device shows "Clock In" button
+4. Employee taps Clock In
+5. Device calls POST /time-in {"employeeId": "uuid-123"}
+   Response: {"timeRecordId": 456, "message": "Time-in recorded"}
+6. Device stores timeRecordId locally
+
+// 5:00 PM - Employee leaves
+1. Employee enters ID on device
+2. Device calls GET /employee-status?employeeId=uuid-123
+   Response: {"status": "clocked_in", "since": "08:00", "timeRecordId": 456}
+3. Device shows "Clock Out" button
+4. Employee taps Clock Out
+5. Device calls POST /time-out {"timeRecordId": 456}
+   Response: {
+     "message": "Time-out recorded successfully. Computation queued.",
+     "currentSession": {
+       "duration": "9.00 hours"
+     },
+     "totalHoursToday": "9.00",
+     "computationStatus": "queued"
+   }
+6. Device shows summary to employee</code></pre>
+            </div>
+        </div>
+
+        <div class="endpoint">
+            <h4>Scenario 2: Multiple Sessions Per Day</h4>
+            <div class="info-box">
+                <pre><code>// 8:00 AM - Morning shift clock in
+1. POST /time-in {"employeeId": "uuid-123"}
+   Response: Success - {"timeRecordId": 456}
+
+// 12:00 PM - Morning shift clock out (lunch break)
+1. POST /time-out {"timeRecordId": 456}
+   Response: Success - Returns daily records showing morning session
+
+// 1:00 PM - Afternoon shift clock in
+1. POST /time-in {"employeeId": "uuid-123"}
+   Response: Success - {"timeRecordId": 457} // New session
+
+// 5:00 PM - Afternoon shift clock out
+1. POST /time-out {"timeRecordId": 457}
+   Response: Success - Returns all daily records (both sessions)
+
+// Note: Background queue processes both sessions for total computation</code></pre>
+            </div>
+        </div>
+
+        <div class="endpoint">
+            <h4>Scenario 3: Overnight Shift Worker</h4>
+            <div class="info-box">
+                <pre><code>// Monday 10:00 PM - Clock in for night shift
+1. POST /time-in {"employeeId": "uuid-789"}
+   Response: {"timeRecordId": 789, "timeIn": "2024-03-14T22:00:00Z"}
+
+// Tuesday 7:00 AM - Clock out
+1. POST /time-out {"timeRecordId": 789}
+   Response: {
+     "message": "Time-out recorded successfully. Computation queued.",
+     "currentSession": {
+       "duration": "9.00 hours"
+     },
+     "totalHoursToday": "9.00",
+     "computationStatus": "queued"
+     // Note: Night differential computed in background
+   }
+
+// Tuesday 10:00 PM - Can clock in again (new day)
+1. POST /time-in {"employeeId": "uuid-789"}
+   Response: Success - New timeRecordId for Tuesday</code></pre>
+            </div>
+        </div>
+
+        <div class="endpoint">
+            <h4>Scenario 4: Employee Forgets to Clock Out</h4>
+            <div class="info-box">
+                <pre><code>// Day 1: Monday 8:00 AM - Clock in
+1. POST /time-in {"employeeId": "uuid-456"}
+   Response: {"timeRecordId": 123}
+
+// Day 1: Employee leaves without clocking out
+
+// Day 2: Tuesday 8:00 AM - New day clock in
+1. GET /employee-status?employeeId=uuid-456
+   Response: {"status": "clocked_in", "timeRecordId": 123}  // Yesterday's record
+2. POST /time-in {"employeeId": "uuid-456"}
+   Response: Success - {"timeRecordId": 456}  // New record for Tuesday
+   Note: System allows new time-in for new day even if previous day not closed
+
+// Admin Action: HR manually closes Monday's record in main system</code></pre>
+            </div>
+        </div>
+
+        <div class="endpoint">
+            <h4>Scenario 5: Device Offline Recovery</h4>
+            <div class="info-box">
+                <pre><code>// Device loses connection
+1. Store time-in requests locally with timestamp:
+   Queue: [{"employeeId": "uuid-111", "timestamp": "2024-03-14T08:00:00Z"}]
+
+// Connection restored 30 minutes later
+1. GET /health - Verify API connection
+2. Process queued requests:
+   POST /time-in {"employeeId": "uuid-111", "timestamp": "2024-03-14T08:00:00Z"}
+   Note: Include original timestamp, not current time
+3. Continue normal operations
+
+// For time-out while offline
+1. Store timeRecordId and timestamp locally
+2. When online, send with original timestamp
+3. If timeRecordId invalid (expired/deleted), show error to admin</code></pre>
+            </div>
+        </div>
+
+        <div class="endpoint">
+            <h4>Scenario 6: Multi-Device Environment</h4>
+            <div class="info-box">
+                <pre><code>// Device A (Main Gate) - 8:00 AM
+1. POST /time-in {"employeeId": "uuid-999"}
+   Response: {"timeRecordId": 555, "device": "Main Gate"}
+
+// Device B (Building 2) - 8:30 AM
+1. GET /employee-status?employeeId=uuid-999
+   Response: {"status": "clocked_in", "since": "08:00"}
+2. Device B shows "Already clocked in via Main Gate at 8:00 AM"
+
+// Device B (Building 2) - 5:00 PM
+1. Attempting POST /time-out {"timeRecordId": 555}
+   Response: Error 404 - "Time record not found or not associated with this device"
+   Note: Can't clock out records from different device
+
+// Device A (Main Gate) - 5:00 PM
+1. POST /time-out {"timeRecordId": 555}
+   Response: Success - Hours calculated properly</code></pre>
+            </div>
+        </div>
+
+        <div class="endpoint">
+            <h4>Scenario 7: Correction Workflow</h4>
+            <div class="info-box">
+                <pre><code>// Employee clocks out too early by mistake
+1. POST /time-out {"timeRecordId": 789} at 3:00 PM
+   Response: {"totalHoursToday": "7.00", "computationStatus": "queued"}
+
+// Employee realizes mistake, wants to correct
+2. Employee continues working
+3. POST /time-out {"timeRecordId": 789} at 5:00 PM
+   Response: {"totalHoursToday": "9.00", "computationStatus": "queued"}
+   Note: New time-out overwrites the previous one
+
+// Important: Multiple time-outs allowed for corrections
+// Last time-out is always the final record
+// With new system: Multiple time-in/out sessions per day are allowed</code></pre>
+            </div>
+        </div>
+
+        <div class="endpoint">
+            <h4>Scenario 8: Grace Period Application</h4>
+            <div class="info-box">
+                <pre><code>// Employee's Payroll Group Settings:
+// - Overtime Grace: 30 minutes
+// - Late Grace: 15 minutes (not used by API)
+
+// Scenario A: Within grace period
+Time In: 08:00 AM
+Time Out: 05:20 PM (20 minutes past 8 hours)
+Result:
+  - Total: 9.33 hours
+  - Overtime: 0.00 hours (20 min < 30 min grace)
+
+// Scenario B: Exceeds grace period
+Time In: 08:00 AM
+Time Out: 05:45 PM (45 minutes past 8 hours)
+Result:
+  - Total: 9.75 hours
+  - Overtime: 0.25 hours (45 min - 30 min grace = 15 min = 0.25 hrs)
+
+// Note: Grace period only reduces overtime, doesn't eliminate it entirely</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <section id="queue-system">
+        <h2>Background Queue System</h2>
+        <p>
+            Time computations are processed asynchronously through a Redis-based queue system for improved performance
+            and reliability. This ensures the device API remains responsive even during high-volume periods.
+        </p>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Queue Features</h4>
+            <ul class="feature-list">
+                <li><strong>Automatic Processing:</strong> Jobs are processed immediately after time-out</li>
+                <li><strong>Retry Mechanism:</strong> Failed jobs automatically retry up to 3 times</li>
+                <li><strong>Error Tracking:</strong> Full error details and stack traces retained for debugging</li>
+                <li><strong>24-Hour Retention:</strong> Completed jobs kept for 24 hours for monitoring</li>
+                <li><strong>Failed Job Management:</strong> Failed jobs never auto-delete, require manual intervention</li>
+                <li><strong>Queue Monitoring:</strong> Real-time dashboard available in Developer Tools</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Processing Workflow</h4>
+            <ol>
+                <li>Employee clocks out → Time record updated immediately</li>
+                <li>Computation job queued with employee and date details</li>
+                <li>Background processor picks up job from queue</li>
+                <li>Calls existing timekeeping computation service</li>
+                <li>Updates database with computed values</li>
+                <li>Job marked as completed or failed with details</li>
+            </ol>
+        </div>
+
+        <div class="info-box warning">
+            <h4 class="info-box-title">Important Notes</h4>
+            <ul class="feature-list">
+                <li>Time-out API returns immediately without computation results</li>
+                <li>Computed values available in main system after processing (typically within seconds)</li>
+                <li>Multiple sessions per day are fully supported and computed together</li>
+                <li>Failed computations can be manually retried from the queue monitor</li>
+            </ul>
+        </div>
+    </section>
+</div>

@@ -1,0 +1,250 @@
+:root {
+  --md3-outline-variant: #cac4d0;
+  --md3-surface-variant: #f7f2fa;
+}
+
+.student-id-content {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+  max-height: calc(100vh - 200px);
+  overflow: auto;
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: var(--q-outline-variant) var(--q-surface-variant); /* Firefox */
+}
+
+.student-id-card {
+  display: flex;
+  gap: 20px;
+}
+
+.id-front {
+  position: relative;
+
+  .profile-container {
+    position: absolute;
+    top: 110px;
+    left: 96px;
+    width: 130px;
+    height: 130px;
+    background-color: #fff;
+    border-left: solid 4px #fabe11;
+    border-bottom: solid 4px #fabe11;
+    border-top: solid 4px #861a1d;
+    border-right: solid 4px #861a1d;
+    transform: rotate(45deg);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    // Add inner element for image
+    .profile-image {
+      transform: rotate(-45deg); // Counter-rotate to straighten image
+      width: 170px;
+      height: 170px;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+  }
+
+  .student-name {
+    position: absolute;
+    text-transform: uppercase;
+    width: 90%;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -60%) scaleY(2.2);
+    font-size: 12px;
+    font-weight: bold;
+    color: #541d23;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+
+  .student-lrn {
+    position: absolute;
+    text-transform: uppercase;
+    bottom: 136px;
+    left: 63px;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1;
+    color: #fff;
+  }
+
+  .student-grade {
+    position: absolute;
+    text-transform: uppercase;
+    bottom: 115px;
+    left: 31px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #fff;
+  }
+
+  .student-section {
+    position: absolute;
+    width: 40%;
+    text-transform: uppercase;
+    bottom: 81px;
+    left: 31px;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1.2;
+    color: #fff;
+    min-height: 34px; // Minimum height for consistent positioning
+    display: flex;
+  }
+
+  .student-qr-code {
+    position: absolute;
+    bottom: 45px;
+    right: 38px;
+  }
+}
+
+.id-back {
+  position: relative;
+
+  .elem-signatorist {
+    position: absolute;
+    bottom: 17%;
+    left: 50%;
+    transform: translate(-50%, -17%);
+    width: 130px;
+    height: 130px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .hs-signatorist {
+    position: absolute;
+    bottom: 17%;
+    left: 50%;
+    transform: translate(-50%, -17%);
+    width: 130px;
+    height: 130px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .college-signatorist {
+    position: absolute;
+    bottom: 8%;
+    left: 50%;
+    transform: translate(-50%, -8%);
+    width: 220px;
+    height: 220px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .person-emergency {
+    height: 64px;
+    position: absolute;
+    top: 80px;
+    left: 43px;
+    line-height: 1.3;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    .label {
+      width: 60px;
+      color: #fec609;
+      font-weight: bold;
+      font-size: 11px;
+      text-align: right;
+    }
+
+    .value {
+      width: 175px;
+      font-weight: bold;
+      font-size: 11px;
+      color: #fff;
+      margin-left: 5px;
+    }
+  }
+}
+
+.id-front img,
+.id-back img {
+  width: 324px; // 3.375 inches at 96 DPI (standard ID card width)
+  height: 484px; // Maintains aspect ratio for 756x1129 images
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+// Print styles for proper ID card sizing
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  html,
+  body {
+    height: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .q-dialog,
+  .q-dialog__inner,
+  .q-dialog__backdrop {
+    position: static !important;
+    transform: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+
+  .student-id-content {
+    max-height: none !important;
+    overflow: visible !important;
+    gap: 15mm;
+    padding: 0;
+  }
+
+  .id-front img,
+  .id-back img {
+    width: 86mm !important; // Standard ID card width
+    height: 128mm !important; // Proportional height maintaining aspect ratio
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+
+  // Student info print styles
+  .student-info {
+    .student-name {
+      font-family: "Cambria", "Georgia", serif !important;
+      font-size: 14pt !important; // Use points for print
+      font-weight: bold !important;
+    }
+
+    .student-number {
+      font-family: "Cambria", "Georgia", serif !important;
+      font-size: 10pt !important; // Use points for print
+      font-weight: normal !important;
+    }
+  }
+
+  // Hide dialog buttons and UI elements during print
+  .q-card__actions,
+  .q-dialog__title,
+  button {
+    display: none !important;
+  }
+}

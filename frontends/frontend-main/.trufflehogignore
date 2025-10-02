@@ -1,0 +1,7 @@
+# TruffleHog Ignore File
+# This file tells TruffleHog to ignore specific known secrets that have been rotated/revoked
+
+# Telegram Bot Token - Exposed in git history but has been revoked
+# This token was accidentally committed in commit 5ae7899 and subsequent commits
+# Token has been rotated and is no longer valid
+7384340051:AAGSodoluqPV--UmpAtTb7IIPrgqROSZKg0

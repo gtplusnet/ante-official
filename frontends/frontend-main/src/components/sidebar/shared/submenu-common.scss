@@ -1,0 +1,122 @@
+// Shared styles for all submenu components
+// Single source of truth for submenu design
+
+.nav-submenu {
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+
+  // Main navigation items
+  .nav-item {
+    margin: 6px 0;
+    padding: 8px 20px;
+    border-radius: 50px;
+    white-space: nowrap;
+    overflow: hidden;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: #dde1f053;
+    }
+
+    &.active {
+      background-color: #dde1f0;
+
+      .text-grey {
+        color: var(--q-primary) !important;
+        font-weight: 500;
+      }
+
+      .menu-icon {
+        color: var(--q-primary);
+      }
+    }
+
+    .menu-icon {
+      color: var(--q-text-light-grey);
+      transition: color 0.2s ease;
+    }
+  }
+
+  // Dropdown child items
+  .nav-item-dropdown {
+    margin-left: 15px;
+    margin-bottom: 8px;
+    padding: 4px 15px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: #dde1f053;
+    }
+
+    &.active {
+      background-color: #dde1f0;
+
+      .text-grey {
+        color: var(--q-primary) !important;
+        font-weight: 500;
+      }
+
+      .menu-icon {
+        color: var(--q-primary);
+      }
+    }
+
+    .menu-icon {
+      color: var(--q-text-light-grey);
+    }
+  }
+
+  // Rotation animation for dropdown arrows
+  .transition-rotate {
+    transition: transform 0.2s ease;
+
+    &.rotated {
+      transform: rotate(180deg);
+    }
+  }
+
+  // Search box styles (if needed)
+  .search-box {
+    margin: 8px 0 12px 0;
+
+    :deep(.q-field__control) {
+      height: 36px;
+      background: #f5f5f5;
+
+      &:hover {
+        background: #eeeeee;
+      }
+    }
+  }
+}
+
+// Mobile responsive styles
+@media (max-width: 768px) {
+  .nav-submenu {
+    .nav-item {
+      padding: 12px 16px;
+      margin: 4px 0;
+
+      &:active {
+        background-color: rgba(0, 0, 0, 0.1);
+      }
+
+      .text-label-large {
+        font-size: 14px;
+      }
+    }
+
+    .nav-item-dropdown {
+      margin-left: 20px;
+      padding: 10px 12px;
+
+      .text-label-medium {
+        font-size: 13px;
+      }
+    }
+  }
+}

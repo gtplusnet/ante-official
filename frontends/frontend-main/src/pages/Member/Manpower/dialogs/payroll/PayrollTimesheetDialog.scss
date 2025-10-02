@@ -1,0 +1,531 @@
+/* Import base dialog styles */
+@import './ManpowerPayrollSummaryDialog.scss';
+
+/* Branch tree filter custom styles */
+.branch-tree-filter {
+  max-width: 100%;
+  width: 100%;
+}
+
+/* Override table styles for timesheet */
+.payroll-timesheet-table {
+  min-width: 1900px;
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: none;
+  table-layout: fixed;
+  position: relative;
+
+  thead {
+    background-color: #fafbfd;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    
+    tr {
+      th {
+        position: sticky;
+        top: 0;
+        padding: 8px 12px;
+        white-space: nowrap;
+        font-weight: 500;
+        font-size: 12px;
+        color: #5f6368;
+        z-index: 1;
+        background-color: #fafbfd;
+        border-bottom: 1px solid #e3e3e3;
+        text-align: center;
+        
+        &:first-child {
+          background-color: #f5f5f7;
+          color: #1f1f1f;
+          font-weight: 600;
+          position: sticky;
+          left: 0;
+          z-index: 11;
+          padding-left: 20px;
+          text-align: left;
+          
+          &:hover {
+            background-color: #e8e8ea !important;
+          }
+        }
+
+        &:last-child {
+          background-color: #f5f5f7;
+          color: #1f1f1f;
+          font-weight: 600;
+          position: sticky;
+          right: 0;
+          z-index: 11;
+          text-align: right;
+          padding-right: 20px;
+          
+          &:hover {
+            background-color: #e8e8ea !important;
+          }
+        }
+      }
+    }
+  }
+
+  tbody {
+    &.loading {
+      .skeleton-row {
+        td {
+          padding: 12px 8px;
+          border-bottom: 1px solid #e2e8f0;
+          background-color: #ffffff;
+          text-align: center;
+          
+          &:first-child {
+            position: sticky;
+            left: 0;
+            background-color: #f5f5f7;
+            padding-left: 20px;
+          }
+          
+          &:last-child {
+            background-color: #f5f5f7;
+            position: sticky;
+            right: 0;
+            text-align: right;
+            padding-right: 20px;
+          }
+          
+          .q-skeleton {
+            max-width: 100%;
+            margin: 0 auto;
+            animation: q-skeleton-fade 1.5s ease-in-out infinite;
+            border-radius: 4px;
+            height: 20px;
+          }
+        }
+      }
+    }
+
+    tr {
+      background-color: #ffffff;
+      transition: all 0.15s ease-in-out;
+      
+      &.clickable-row {
+        cursor: pointer;
+        background-color: #ffffff;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: fadeIn 0.3s ease-in-out;
+      }
+      
+      &.no-data-row {
+        opacity: 0.7;
+        
+        &:hover {
+          background-color: #fef3c7;
+          box-shadow: -2px 0 0 0 #f59e0b;
+        }
+      }
+
+      td {
+        padding: 8px 12px;
+        border-bottom: 1px solid #e3e3e3;
+        background-color: #ffffff;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 12px;
+        color: #1f1f1f;
+        text-align: center;
+        vertical-align: middle;
+
+        &:first-child {
+          position: sticky;
+          left: 0;
+          background-color: #f5f5f7;
+          color: #1f1f1f;
+          font-weight: 500;
+          padding-left: 20px;
+          text-align: left;
+          
+          &.employee-name {
+            text-transform: capitalize;
+            cursor: pointer;
+            
+            &:hover {
+              text-decoration: underline;
+            }
+          }
+        }
+        
+        &:nth-child(2) {
+          font-family: 'Roboto Mono', monospace;
+          font-weight: 500;
+          color: #475569;
+        }
+        
+        &:nth-child(3) {
+          font-weight: 500;
+          color: #64748b;
+        }
+
+        // Attendance cell styling
+        .attendance {
+          font-weight: 600;
+          font-size: 11px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 4px 12px;
+          border-radius: 12px;
+          gap: 4px;
+          
+          &.absent {
+            background-color: #fee2e2;
+            color: #dc2626;
+          }
+          
+          &.present {
+            background-color: #d1fae5;
+            color: #065f46;
+          }
+          
+          &.partial {
+            background-color: #fed7aa;
+            color: #c2410c;
+          }
+        }
+
+        // Leave info styling
+        .leave-info {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          color: #2563eb;
+          font-weight: 500;
+          
+          .q-icon {
+            font-size: 18px !important;
+          }
+        }
+
+        &:last-child {
+          background-color: #f5f5f7;
+          position: sticky;
+          right: 0;
+          text-align: right;
+          padding-right: 20px;
+          font-weight: 600;
+          color: #1a237e;
+        }
+      }
+
+      &:hover {
+        td {
+          background-color: #f8f9fa;
+
+          &:first-child {
+            background-color: #e8e8ea;
+          }
+
+          &:last-child {
+            background-color: #e8e8ea;
+          }
+        }
+      }
+    }
+  }
+
+  // Footer for totals - matching ManpowerPayrollSummaryDialog style
+  tfoot {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    background-color: #f5f5f7;
+    border-top: 2px solid #e3e3e3;
+    
+    tr {
+      td {
+        position: relative;
+        padding: 12px;
+        white-space: nowrap;
+        font-weight: 600;
+        font-size: 12px;
+        color: #1f1f1f;
+        background-color: #f5f5f7;
+        border-bottom: none;
+        text-align: center;
+        vertical-align: middle;
+        
+        &:first-child {
+          position: sticky;
+          left: 0;
+          z-index: 11;
+          text-align: left;
+          padding-left: 20px;
+          background-color: #f5f5f7;
+        }
+        
+        &:last-child {
+          position: sticky;
+          right: 0;
+          z-index: 11;
+          text-align: right;
+          padding-right: 20px;
+          background-color: #f5f5f7;
+        }
+        
+        // Primary text color for totals
+        &.text-primary {
+          color: #1a237e !important;
+          font-weight: 700 !important;
+        }
+        
+        // Attendance in footer
+        .attendance {
+          font-weight: 600;
+          font-size: 11px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 4px 12px;
+          border-radius: 12px;
+          gap: 4px;
+          background-color: #e3f2fd;
+          color: #1565c0;
+        }
+        
+        // Leave info styling
+        .leave-info {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          color: #2563eb;
+          font-weight: 500;
+        }
+        
+        // Time views in footer
+        :deep(.time-view) {
+          font-weight: 700 !important;
+          
+          &:not(.zero-time):not(.negative-time):not(.positive-time) {
+            color: #1a237e !important;
+          }
+          
+          &.zero-time {
+            color: #94a3b8 !important;
+            opacity: 0.5;
+          }
+          
+          &.negative-time {
+            color: #dc2626 !important;
+          }
+          
+          &.positive-time {
+            color: #16a34a !important;
+          }
+        }
+        
+        // Skeleton styling
+        .q-skeleton {
+          height: 20px;
+          border-radius: 4px;
+        }
+      }
+    }
+  }
+}
+
+// Time display component styling
+:deep(.time-view) {
+  display: inline-flex;
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+  
+  &.zero-time {
+    color: #94a3b8;
+    opacity: 0.5;
+  }
+  
+  &.negative-time {
+    color: #dc2626;
+  }
+  
+  &.positive-time {
+    color: #16a34a;
+  }
+}
+
+// Empty state styling to maintain table height
+.payroll-timesheet-table tbody {
+  position: relative;
+  
+  // Only apply min-height when there's no data (empty state with colspan)
+  &:not(.loading) {
+    tr:only-child {
+      // Only apply special styling to the empty state row (has colspan)
+      td[colspan] {
+        height: calc(100vh - 300px);
+        vertical-align: middle;
+        position: relative;
+        text-align: center;
+        
+        .empty-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          width: 100%;
+          padding: 40px 20px;
+          
+          .q-icon {
+            font-size: 48px;
+            color: #e0e7ff;
+            margin-bottom: 16px;
+          }
+          
+          .empty-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #1f1f1f;
+            margin-bottom: 8px;
+          }
+          
+          .empty-subtitle {
+            font-size: 14px;
+            color: #71757a;
+            line-height: 1.4;
+            max-width: 400px;
+            margin: 0 auto;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Ensure the scrollable wrapper maintains full height and has proper scrollbars
+.scrollable-table-wrapper {
+  min-height: 100%;
+  
+  &::-webkit-scrollbar {
+    height: 10px;
+    width: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
+    
+    &:hover {
+      background-color: #94a3b8;
+    }
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: #f1f5f9;
+    border-radius: 10px;
+  }
+  
+  // Hide scrollbars when showing empty state
+  &.no-scroll {
+    overflow: hidden;
+  }
+}
+
+// Loading overlay enhancement
+.table-container {
+  &.loading-overlay {
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.9);
+      z-index: 100;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    &::before {
+      content: 'Loading timesheet data...';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 101;
+      font-size: 14px;
+      color: #64748b;
+      font-weight: 500;
+    }
+  }
+}
+
+// Empty state outside table styling
+.empty-state-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 300px);
+  
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    
+    .q-icon {
+      font-size: 48px;
+      color: #e0e7ff;
+      margin-bottom: 16px;
+    }
+    
+    .empty-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: #1f1f1f;
+      margin-bottom: 8px;
+    }
+    
+    .empty-subtitle {
+      font-size: 14px;
+      color: #71757a;
+      line-height: 1.4;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+  }
+}
+
+// Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Mobile responsive adjustments
+@media (max-width: 768px) {
+  .payroll-timesheet-table {
+    font-size: 11px;
+    
+    thead tr th {
+      padding: 8px 4px;
+      font-size: 10px;
+    }
+    
+    tbody tr td {
+      padding: 8px 4px;
+      font-size: 11px;
+    }
+  }
+}

@@ -1,0 +1,25 @@
+.employment-info-container {
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .info-column {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+:deep(.global-widget-card) {
+  min-height: auto;
+
+  .content-section {
+    padding-bottom: 12px !important;
+  }
+}

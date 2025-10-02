@@ -1,0 +1,62 @@
+.item-table-select {
+  table {
+    background-color: #f3f3f3 !important;
+    table-layout: fixed;
+    width: 100%;
+    background-color: #fff;
+    border: 1px solid #eee;
+    border-collapse: collapse;
+
+    td {
+      border: 1px solid #eee;
+      text-align: center;
+    }
+
+    thead {
+      text-transform: uppercase;
+
+      tr {
+        th {
+          padding: 5px;
+          border: 1px solid #eee;
+        }
+      }
+    }
+
+    tbody {
+      background-color: #fafafa;
+
+      tr {
+        td {
+          .select-item {
+            padding: 0 10px;
+          }
+          .input {
+            padding: 0 10px;
+            text-align: center;
+          }
+          .amount {
+            font-size: 14px;
+            font-weight: 500;
+          }
+          .stock {
+            font-size: 14px;
+            color: grey;
+          }
+          &.delete {
+            cursor: pointer;
+            opacity: 0.5;
+
+            &:hover {
+              opacity: 1;
+            }
+          }
+        }
+
+        &.inactive {
+          opacity: 0.5;
+        }
+      }
+    }
+  }
+}

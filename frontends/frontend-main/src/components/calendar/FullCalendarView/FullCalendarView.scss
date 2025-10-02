@@ -1,0 +1,20 @@
+.full-calendar-wrapper {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.fc .fc-daygrid-day {
+  border: none;
+}
+
+.fc-daygrid-day.fc-day-today {
+  background-color: #e0f0ff;
+}
+
+.fc .fc-daygrid-event {
+  background-color: #2d9cdb;
+  color: #fff;
+  border-radius: 4px;
+  padding: 0 4px;
+  font-size: 0.9rem;
+}

@@ -1,0 +1,10 @@
+<!-- Email Header Component -->
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; color: white;">
+    <div style="max-width: 600px; margin: 0 auto;">
+        {{#if company.logo}}
+        <img src="{{company.logo}}" alt="{{company.name}}" style="max-height: 60px; margin-bottom: 20px;">
+        {{/if}}
+        <h1 style="margin: 0; font-size: 28px; font-weight: 300;">{{company.name}}</h1>
+        <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">{{approval.title}}</p>
+    </div>
+</div>

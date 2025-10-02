@@ -1,0 +1,49 @@
+.boq-history {
+
+  .version-btn{
+    cursor:pointer;
+    color:blue;
+  }
+
+  max-width: 900px;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  
+    thead {
+      background-color: #f5f5f5;
+      font-size: 12px;
+  
+      tr {
+        th {
+          border: 1px solid #ddd;
+          padding: 1px 10px;
+          text-align: center;
+          font-weight: 500;
+          font-size: 14px;
+        }
+      }
+    }
+    tbody {
+      tr {
+        td {
+          border: 1px solid #ddd;
+          padding: 1px 10px;
+  
+          font-size: 14px;
+          background-color: rgba(0, 0, 0, 0);
+          transition: all 0.2s;
+          color: #333;
+  
+          .spacing {
+            display: inline-block;
+            width: 20px;
+          }
+  
+        }
+      }
+    }
+  }
+}

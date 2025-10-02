@@ -1,0 +1,12 @@
+[
+  {
+    "NAME": "Staging",
+    "API_URL": "http://157.230.246.107:3000",
+    "SOCKET_URL": "ws://157.230.246.107:4000"
+  },
+  {
+    "NAME": "Local",
+    "API_URL": "http://localhost:3000",
+    "SOCKET_URL": "ws://localhost:4000"
+  }
+]

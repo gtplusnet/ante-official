@@ -1,0 +1,213 @@
+// Global mobile responsive container styles
+
+// Mobile breakpoints
+$mobile-breakpoint: 768px;
+$small-mobile-breakpoint: 599px;
+$extra-small-mobile-breakpoint: 400px;
+
+// Common page container mobile styles
+@mixin mobile-page-container {
+  @media (max-width: $mobile-breakpoint) {
+    margin: 12px !important;
+    padding: 0 !important;
+    
+    // Remove any fixed widths
+    width: 100% !important;
+    max-width: 100% !important;
+    
+    // Adjust gaps
+    gap: 16px;
+  }
+  
+  @media (max-width: $small-mobile-breakpoint) {
+    margin: 8px !important;
+    gap: 12px;
+  }
+}
+
+// Common card/widget mobile styles
+@mixin mobile-card {
+  @media (max-width: $mobile-breakpoint) {
+    margin: 0;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+}
+
+// Common grid mobile styles
+@mixin mobile-grid {
+  @media (max-width: $mobile-breakpoint) {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+  
+  @media (max-width: $small-mobile-breakpoint) {
+    gap: 12px;
+  }
+}
+
+// Apply to common page containers
+.page-container,
+.main-container,
+.content-container,
+.main-dashboard-container {
+  @include mobile-page-container;
+}
+
+// Ensure q-page-container children respect padding
+@media (max-width: $mobile-breakpoint) {
+  .q-page-container {
+    & > * {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+  }
+  
+  // Fix for any absolutely positioned elements
+  .main-dashboard-container,
+  .main-container {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+  
+  // Ensure all child elements respect container width
+  .main-dashboard-container *,
+  .main-container * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  // Fix for dashboard specific elements
+  .left-side,
+  .right-side {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+// Apply to common card elements
+.q-card,
+.widget,
+.panel {
+  @include mobile-card;
+}
+
+// Apply to common grid layouts
+.grid-container,
+.widget-container {
+  @include mobile-grid;
+}
+
+// Fix for floating action buttons on mobile
+@media (max-width: $mobile-breakpoint) {
+  .q-page-sticky {
+    // Adjust FAB positions for mobile
+    &[data-position*="bottom-right"] {
+      bottom: 16px !important;
+      right: 16px !important;
+    }
+  }
+  
+  // Stack FAB actions vertically on small screens
+  .q-fab__actions {
+    max-width: calc(100vw - 100px);
+    
+    .q-fab__label {
+      font-size: 12px;
+    }
+  }
+}
+
+// Fix for email verification banner on mobile
+@media (max-width: $mobile-breakpoint) {
+  .email-verification-container {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    transform: none;
+    padding: 8px !important;
+    margin-top: 56px; // Below mobile header
+    margin-bottom: 0;
+    
+    .email-verification-banner {
+      margin: 0 8px;
+      border-radius: 8px;
+    }
+  }
+}
+
+// Ensure content doesn't overlap with fixed header and has proper padding
+@media (max-width: $mobile-breakpoint) {
+  .q-page {
+    padding-top: 56px; // Height of mobile header
+    
+    // Add horizontal padding for content
+    &:not(.no-padding) {
+      padding-left: 20px;
+      padding-right: 20px;
+      padding-bottom: 20px;
+    }
+  }
+  
+}
+
+@media (max-width: $small-mobile-breakpoint) {
+  .q-page {
+    &:not(.no-padding) {
+      padding-left: 16px;
+      padding-right: 16px;
+      padding-bottom: 16px;
+    }
+  }
+}
+
+// Responsive text sizes
+@media (max-width: $mobile-breakpoint) {
+  .text-h4 {
+    font-size: 1.5rem !important;
+  }
+  
+  .text-h5 {
+    font-size: 1.25rem !important;
+  }
+  
+  .text-h6 {
+    font-size: 1.1rem !important;
+  }
+  
+  .text-title-large {
+    font-size: 1.25rem !important;
+  }
+  
+  .text-title-medium {
+    font-size: 1.1rem !important;
+  }
+}
+
+// Responsive spacing utilities
+@media (max-width: $mobile-breakpoint) {
+  .q-pa-xl {
+    padding: 16px !important;
+  }
+  
+  .q-pa-lg {
+    padding: 12px !important;
+  }
+  
+  .q-ma-xl {
+    margin: 16px !important;
+  }
+  
+  .q-ma-lg {
+    margin: 12px !important;
+  }
+  
+  // Reset negative margins on main containers
+  .main-dashboard-container > * {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}

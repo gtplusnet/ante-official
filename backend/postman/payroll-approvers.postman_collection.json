@@ -1,0 +1,81 @@
+{
+  "info": {
+    "_postman_id": "payroll-approvers-collection-001",
+    "name": "payroll-approvers",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "table (list payroll approvers)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"page\": 1,\n  \"perPage\": 10,\n  \"filters\": [],\n  \"searchKeyword\": \"\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/hr-configuration/payroll-approvers/table",
+          "host": ["{{base_url}}"],
+          "path": ["hr-configuration", "payroll-approvers", "table"]
+        }
+      }
+    },
+    {
+      "name": "add (add payroll approver)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"accountId\": \"{{$randomUUID}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/hr-configuration/payroll-approvers/add",
+          "host": ["{{base_url}}"],
+          "path": ["hr-configuration", "payroll-approvers", "add"]
+        }
+      }
+    },
+    {
+      "name": "bulk-add (bulk add payroll approvers)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"accountIds\": [\n    \"{{$randomUUID}}\",\n    \"{{$randomUUID}}\"\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/hr-configuration/payroll-approvers/bulk-add",
+          "host": ["{{base_url}}"],
+          "path": ["hr-configuration", "payroll-approvers", "bulk-add"]
+        }
+      }
+    },
+    {
+      "name": "delete (delete payroll approver)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"accountId\": \"{{$randomUUID}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/hr-configuration/payroll-approvers/delete",
+          "host": ["{{base_url}}"],
+          "path": ["hr-configuration", "payroll-approvers", "delete"]
+        }
+      }
+    }
+  ]
+} 

@@ -1,0 +1,156 @@
+.logo-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-right: 1px solid #eee;
+  height: 60px;
+
+  .logo {
+    max-width: 105px;
+    height: 60px;
+    background-image: url('assets/ante-logo-new.jpg');
+    background-size: 38px;
+    background-repeat: no-repeat;
+    background-position: center;
+    transition: ease-in-out 0.4s;
+    z-index: 5;
+    flex: 1;
+  }
+
+  .mobile-close-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+  }
+}
+
+.geer {
+  .logo-container {
+    .logo {
+      max-width: 105px;
+      height: 60px;
+      background-image: url('../../assets/geer-erp-logo-s.png');
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+  }
+}
+
+.sub-menu {
+  width: 100%;
+  background-color: #fff;
+  border-right: 1px solid #eee;
+
+  .page-title {
+    padding: 29px 10px 6px 10px;
+    display: flex;
+    align-items: center;
+
+    &.crm-page-title {
+      padding: 21px 10px 0 10px;
+      line-height: 1.2;
+    }
+
+    .mobile-back-btn {
+      color: #666;
+    }
+  }
+
+  .sub-nav-wrapper {
+    background-color: #fff;
+    height: calc(100% - 60px);
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    &::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: #d9d9d9;
+      border-radius: 50px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background-color: #f4f4f4;
+      border-radius: 50px;
+    }
+  }
+}
+
+// Mobile responsive styles
+@media (max-width: 768px) {
+  .main-navigation {
+    // Hide desktop logo container on mobile
+    .logo-container {
+      display: none;
+    }
+
+    .main-nav-list {
+      min-height: calc(100vh - 80px);
+      max-height: calc(100vh - 80px);
+      padding: 16px 12px;
+      gap: 4px;
+      overflow-y: auto;
+
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background-color: #d9d9d9;
+        border-radius: 50px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background-color: #f4f4f4;
+        border-radius: 50px;
+      }
+    }
+  }
+
+  .mobile-main-nav,
+  .mobile-sub-menu {
+    width: 100%;
+
+    .page-title {
+      padding: 20px 16px 10px 16px;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #eee;
+
+      .mobile-back-btn {
+        margin-right: 12px;
+      }
+    }
+  }
+
+  .mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+
+    .ante-mobile-logo {
+      width: 110px;
+      height: 40px;
+      background-image: url('/ante-mobile-logo-1.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: left;
+    }
+
+    .mobile-close-btn {
+      position: absolute;
+      right: 16px;
+      top: 16px;
+      color: var(--q-grey-icon);
+    }
+  }
+}
+
