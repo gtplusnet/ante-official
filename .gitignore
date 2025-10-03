@@ -102,3 +102,4 @@ dist.tar.gz
 
 # Submodule content protection
 frontends/user-manual/
+.vercel

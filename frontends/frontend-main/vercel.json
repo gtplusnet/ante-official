@@ -1,0 +1,5 @@
+{
+  "buildCommand": "yarn build",
+  "outputDirectory": "dist/spa",
+  "installCommand": "yarn install"
+}
