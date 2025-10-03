@@ -174,4 +174,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
     CMD curl -f http://127.0.0.1:3000/health || exit 1
 
 # Optimized startup with New Relic
-CMD ["node", "-r", "newrelic", "dist/src/main.js"]
+# Note: SWC builds to dist/main.js (not dist/src/main.js)
+CMD ["node", "-r", "newrelic", "dist/main.js"]
