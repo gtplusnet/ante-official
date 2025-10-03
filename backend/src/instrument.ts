@@ -1,15 +1,19 @@
 import * as Sentry from '@sentry/nestjs';
 import { config } from 'dotenv';
 
-// Load environment variables first
+// Load environment variables first (only if .env file exists - for local development)
 const ENV = process.env.NODE_ENV;
 const fs = require('fs');
 
 // Try to load environment-specific file first, then fallback to .env
+// In Docker/production, environment variables are already set, so this is optional
 const envFile = ENV && fs.existsSync(`.env.${ENV}`) ? `.env.${ENV}` : '.env';
-config({ path: envFile });
-
-console.log(`[SENTRY DEBUG] Loading environment from: ${envFile}`);
+if (fs.existsSync(envFile)) {
+  config({ path: envFile });
+  console.log(`[SENTRY DEBUG] Loaded environment from: ${envFile}`);
+} else {
+  console.log(`[SENTRY DEBUG] No .env file found (using container environment variables)`);
+}
 
 // Initialize Sentry in development, staging and production environments
 const environment = process.env.NODE_ENV || 'development';
