@@ -8,7 +8,15 @@
     "deleteOutDir": false,
     "assets": [
       {
-        "include": "shared/reference/**/*",
+        "include": "shared/**/*",
+        "outDir": "dist"
+      },
+      {
+        "include": "dto/**/*",
+        "outDir": "dist"
+      },
+      {
+        "include": "reference/**/*",
         "outDir": "dist"
       },
       {
