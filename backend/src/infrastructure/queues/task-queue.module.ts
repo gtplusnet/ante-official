@@ -22,6 +22,7 @@ import { SocketModule } from '@modules/communication/socket/socket/socket.module
         connection: {
           host: configService.get('REDIS_HOST', 'localhost'),
           port: configService.get('REDIS_PORT', 6379),
+          password: configService.get('REDIS_PASSWORD'),
         },
         defaultJobOptions: {
           attempts: 3,
