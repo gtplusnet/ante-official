@@ -3,7 +3,16 @@
   "version": "1.0.0",
   "description": "Ante ERP System - Main Orchestrator",
   "private": true,
+  "workspaces": [
+    "frontends/*",
+    "backend"
+  ],
   "scripts": {
+    "build:frontend-main": "cd frontends/frontend-main && yarn build",
+    "build:gate-app": "cd frontends/frontend-gate-app && yarn build",
+    "build:guardian-app": "cd frontends/frontend-guardian-app && yarn build",
+    "build:user-manual": "cd frontends/user-manual && yarn build",
+    "build:backend": "cd backend && yarn build",
     "dev": "./start-dev.sh",
     "dev:full": "pm2 delete all 2>/dev/null || true && pm2 start ecosystem.config.js",
     "dev:school": "pm2 start ecosystem.config.js --only ante-gate-app",

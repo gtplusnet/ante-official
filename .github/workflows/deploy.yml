@@ -1,0 +1,121 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontends/frontend-main/**'
+      - 'frontends/frontend-gate-app/**'
+      - 'frontends/frontend-guardian-app/**'
+      - 'package.json'
+      - 'yarn.lock'
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend-main-changed: ${{ steps.changes.outputs.frontend-main }}
+      gate-app-changed: ${{ steps.changes.outputs.gate-app }}
+      guardian-app-changed: ${{ steps.changes.outputs.guardian-app }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            frontend-main:
+              - 'frontends/frontend-main/**'
+              - 'package.json'
+              - 'yarn.lock'
+            gate-app:
+              - 'frontends/frontend-gate-app/**'
+              - 'package.json'
+              - 'yarn.lock'
+            guardian-app:
+              - 'frontends/frontend-guardian-app/**'
+              - 'package.json'
+              - 'yarn.lock'
+
+  deploy-frontend-main:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend-main-changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build Frontend Main
+        run: yarn build:frontend-main
+
+      - name: Deploy Frontend Main to Vercel
+        run: |
+          cd frontends/frontend-main
+          npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --confirm
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND_MAIN }}
+
+  deploy-gate-app:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.gate-app-changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build Gate App
+        run: yarn build:gate-app
+
+      - name: Deploy Gate App to Vercel
+        run: |
+          cd frontends/frontend-gate-app
+          npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --confirm
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_GATE_APP }}
+
+  deploy-guardian-app:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.guardian-app-changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build Guardian App
+        run: yarn build:guardian-app
+
+      - name: Deploy Guardian App to Vercel
+        run: |
+          cd frontends/frontend-guardian-app
+          npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --confirm
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_GUARDIAN_APP }}
