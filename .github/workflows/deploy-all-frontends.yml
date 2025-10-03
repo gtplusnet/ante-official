@@ -4,14 +4,27 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy-frontend-main:
-    uses: ./.github/workflows/deploy-frontend-main.yml
-    secrets: inherit
+  trigger-deployments:
+    name: Trigger All Frontend Deployments
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Frontend Main
+        run: |
+          echo "Triggering Frontend Main deployment via workflow_dispatch"
+          gh workflow run "Deploy Frontend Main to Vercel Staging" --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ github.token }}
 
-  deploy-gate-app:
-    uses: ./.github/workflows/deploy-gate-app.yml
-    secrets: inherit
+      - name: Trigger Gate App
+        run: |
+          echo "Triggering Gate App deployment via workflow_dispatch"
+          gh workflow run "Deploy Gate App to Vercel Staging" --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ github.token }}
 
-  deploy-guardian-app:
-    uses: ./.github/workflows/deploy-guardian-app.yml
-    secrets: inherit
+      - name: Trigger Guardian App
+        run: |
+          echo "Triggering Guardian App deployment via workflow_dispatch"
+          gh workflow run "Deploy Guardian App to Vercel Staging" --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ github.token }}
