@@ -2,3 +2,4 @@
 This file is used to test the GitHub Actions deployment workflow.
 Test #2: Testing with .vercel/project.json creation in workflow
 Test #3: Testing with correct team_hE83a0eD8pugwGrZxfMrs7uP org ID
+Test #4: Testing with vercel pull using env vars
