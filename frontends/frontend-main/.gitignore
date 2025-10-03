@@ -112,3 +112,4 @@ bun.lockb
 # Production files that shouldn't be in repo
 deployment-hash.json
 version.json
+.vercel

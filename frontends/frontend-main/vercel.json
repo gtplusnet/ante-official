@@ -1,0 +1,11 @@
+{
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/"
+    }
+  ],
+  "buildCommand": "yarn build",
+  "outputDirectory": "dist/spa",
+  "installCommand": "cd ../.. && yarn install"
+}

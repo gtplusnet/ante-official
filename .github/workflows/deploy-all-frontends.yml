@@ -1,0 +1,17 @@
+name: Deploy All Frontends (Manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-frontend-main:
+    uses: ./.github/workflows/deploy-frontend-main.yml
+    secrets: inherit
+
+  deploy-gate-app:
+    uses: ./.github/workflows/deploy-gate-app.yml
+    secrets: inherit
+
+  deploy-guardian-app:
+    uses: ./.github/workflows/deploy-guardian-app.yml
+    secrets: inherit
