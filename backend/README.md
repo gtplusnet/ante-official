@@ -468,4 +468,13 @@ Proprietary - GEER-ANTE ERP
 
 ---
 
-Built with NestJS, TypeScript, and modern web technologies for enterprise-grade performance and reliability.
+Built with NestJS, TypeScript, and modern web technologies for enterprise-grade performance and reliability.# Backend Deployment via GitHub Actions
+
+This backend is now deployed using GitHub Actions + GHCR + DigitalOcean.
+
+## Deployment Process
+1. GitHub Actions builds Docker image (7GB memory available)
+2. Image pushed to GitHub Container Registry
+3. DigitalOcean pulls pre-built image and deploys
+
+No more memory issues during build!
