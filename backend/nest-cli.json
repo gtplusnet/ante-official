@@ -18,6 +18,10 @@
       {
         "include": "views/**/*",
         "outDir": "dist"
+      },
+      {
+        "include": "types/**/*",
+        "outDir": "dist"
       }
     ]
   }
