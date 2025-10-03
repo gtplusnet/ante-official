@@ -82,7 +82,8 @@ COPY . .
 RUN npx prisma generate
 
 # Build the application with increased memory limit for build environments
-RUN NODE_OPTIONS="--max-old-space-size=2048" yarn build
+# TypeScript compiler needs more memory than SWC (up to 4GB for large projects)
+RUN NODE_OPTIONS="--max-old-space-size=4096" yarn build
 
 # Remove devDependencies and clean cache to reduce image size
 RUN yarn install --frozen-lockfile --production && \
