@@ -29,7 +29,7 @@ GEER-ANTE ERP is a comprehensive Enterprise Resource Planning system built with 
 - **Email**: SMTP integration with template engine (Handlebars)
 - **AI Integration**: OpenAI and Google Gemini APIs
 - **Containerization**: Docker with multi-stage builds
-- **Process Management**: PM2 for production
+- **Process Management**: PM2 for development and production
 
 ## Quick Start
 
@@ -226,7 +226,7 @@ yarn test:api             # Run API tests
 
 # Database
 yarn migrate:dev          # Run migrations in development
-yarn migrate:production   # Deploy migrations to production
+yarn migrate:deploy      # Deploy migrations to server
 yarn seed                 # Seed database with initial data
 
 # Code Quality
@@ -348,50 +348,36 @@ For detailed testing guidelines, see [Testing Documentation](./test/README.md).
 
 ## Deployment
 
-### Staging Deployment
-
-```bash
-# Using deployment script
-./deploy-staging.sh
-
-# Or manual deployment
-ssh jdev@157.230.246.107
-cd /home/jdev/ante/backend
-git pull
-yarn install
-yarn build
-pm2 restart backend
-```
-
-### Production Deployment
-
-```bash
-# Using deployment script
-./deploy-production.sh
-
-# Or manual deployment
-ssh jdev@178.128.49.38
-cd /home/jdev/ante/backend
-git pull
-yarn install --production
-yarn build
-pm2 restart backend
-```
-
 ### Docker Production Build
 
 ```bash
 # Build production image
-docker build --target production -t ante-backend:latest .
+docker build --target production-alpine -t ante-backend:latest .
 
 # Run production container
 docker run -d \
   --name ante-backend \
   -p 3000:3000 \
   -p 4000:4000 \
-  --env-file .env.production \
+  --env-file .env \
   ante-backend:latest
 ```
+
+**Note**: Deployment workflows and CI/CD pipelines are configured separately. Consult deployment documentation for environment-specific deployment procedures.
+
+## 📚 Documentation
+
+All backend documentation has been consolidated to `/documentation/backend/`:
+
+- **[Backend Documentation Index](/documentation/backend/README.md)** - Complete backend documentation
+- **[API Documentation](/documentation/backend/api/)** - API endpoints and workflows
+- **[Database](/documentation/backend/database/)** - Schema and migrations
+- **[Deployment](/documentation/backend/deployment/)** - Deployment procedures
+- **[Development](/documentation/backend/development/)** - Development workflow
+- **[Docker](/documentation/backend/docker/)** - Docker configuration
+- **[Troubleshooting](/documentation/backend/troubleshooting.md)** - Common issues
+
+For general documentation, see `/documentation/README.md`
 
 ## Environment Variables
 

@@ -10,12 +10,16 @@ This directory contains comprehensive documentation for the GEER-ANTE ERP system
 ├── README.md                          # This file
 ├── DOCUMENTATION-REVIEW-REPORT.md     # Comprehensive review findings
 ├── architecture/                      # System architecture guides
+├── backend/                           # Backend-specific documentation (CONSOLIDATED)
+├── frontend/                          # Frontend-specific documentation (CONSOLIDATED)
 ├── standards/                         # Coding standards and patterns
-├── authentication/                    # Authentication and security guides (NEW)
-├── navigation/                        # UI navigation guides (NEW)
-├── workflows/                         # Development workflows (NEW)
-├── infrastructure/                    # Infrastructure and Docker guides (NEW)
-└── frontend/                          # Frontend applications documentation (NEW)
+├── authentication/                    # Authentication and security guides
+├── navigation/                        # UI navigation guides
+├── workflows/                         # Development workflows
+├── infrastructure/                    # Infrastructure and Docker guides
+├── testing/                           # Testing guidelines
+├── troubleshooting/                   # Common issues and solutions
+└── security/                          # Security documentation
 ```
 
 ### 🏗️ Architecture Guides (`/architecture/`)
@@ -90,16 +94,37 @@ Infrastructure setup, Docker configuration, and database management guides.
 | [supabase-migration-guide.md](infrastructure/supabase-migration-guide.md) | Supabase setup, CLI usage, and environment configuration | ✅ Updated |
 | [DOCKER_SERVICES.md](/DOCKER_SERVICES.md) | Quick Docker commands reference | ✅ Created |
 
-### 🎨 Frontend Applications (`/frontend/`)
-Documentation for all frontend applications in the system.
+### 🖥️ Backend Documentation (`/backend/`)
+Comprehensive backend documentation consolidated from `/backend/documentation/` and `/backend/docs/`.
 
-| File | Description | Status |
-|------|-------------|--------|
-| [frontend-apps-overview.md](frontend/frontend-apps-overview.md) | Overview of all 4 frontend applications | ✅ Created |
-| Frontend Main | Vue/Quasar ERP system (Port 9000) | ✅ Active |
-| User Manual | VitePress documentation (Port 9001) | ✅ Active |
-| Gate App | Next.js school gate system (Port 9002) | ✅ Active |
-| Guardian App | Next.js parent portal (Port 9003) | ✅ Active |
+| File/Directory | Description | Status |
+|----------------|-------------|--------|
+| [README.md](backend/README.md) | Backend documentation overview | ✅ Consolidated |
+| [api/](backend/api/) | API endpoints and workflow documentation | ✅ Active |
+| [architecture/](backend/architecture/) | Backend architecture and design patterns | ✅ Active |
+| [database/](backend/database/) | Database schema and migration guides | ✅ Active |
+| [deployment/](backend/deployment/) | Backend deployment procedures | ✅ Active |
+| [development/](backend/development/) | Development workflow and setup | ✅ Active |
+| [docker/](backend/docker/) | Docker configuration and containerization | ✅ Active |
+| [troubleshooting.md](backend/troubleshooting.md) | Backend troubleshooting guide | ✅ Active |
+| [supabase-webhook-setup.md](backend/supabase-webhook-setup.md) | Supabase webhook configuration | ✅ Active |
+
+### 🎨 Frontend Documentation (`/frontend/`)
+Frontend-specific documentation consolidated from `/frontends/frontend-main/docs/`.
+
+| File/Directory | Description | Status |
+|----------------|-------------|--------|
+| [frontend-apps-overview.md](frontend/frontend-apps-overview.md) | Overview of all 4 frontend applications | ✅ Active |
+| [supabase-integration.md](frontend/supabase-integration.md) | Main Supabase integration guide | ✅ Consolidated |
+| [supabase/](frontend/supabase/) | Detailed Supabase implementation guides | ✅ Consolidated |
+| └─ [01-getting-started.md](frontend/supabase/01-getting-started.md) | Setup and basics | ✅ Active |
+| └─ [02-table-composables.md](frontend/supabase/02-table-composables.md) | Data fetching patterns | ✅ Active |
+| └─ [03-realtime-integration.md](frontend/supabase/03-realtime-integration.md) | Live updates | ✅ Active |
+| └─ [04-component-patterns.md](frontend/supabase/04-component-patterns.md) | Vue integration | ✅ Active |
+| └─ [05-crud-operations.md](frontend/supabase/05-crud-operations.md) | Read/write patterns | ✅ Active |
+| └─ [06-advanced-queries.md](frontend/supabase/06-advanced-queries.md) | Complex fetching | ✅ Active |
+| └─ [07-security-best-practices.md](frontend/supabase/07-security-best-practices.md) | RLS and tokens | ✅ Active |
+| └─ [08-troubleshooting-guide.md](frontend/supabase/08-troubleshooting-guide.md) | Common issues | ✅ Active |
 
 ### 🚀 Migration Guides
 **Status:** ❌ Not yet created - Migration guides are planned for future documentation.

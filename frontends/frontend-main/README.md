@@ -57,3 +57,15 @@ quasar build
 
 ### Customize the configuration
 See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-js).
+
+## 📚 Documentation
+
+All frontend documentation has been consolidated to `/documentation/frontend/`:
+
+- **[Supabase Integration Guide](/documentation/frontend/supabase-integration.md)** - Main integration guide
+- **[Supabase Guides](/documentation/frontend/supabase/)** - Detailed implementation guides
+  - Getting Started, Table Composables, Realtime Integration
+  - Component Patterns, CRUD Operations, Advanced Queries
+  - Security Best Practices, Troubleshooting
+
+For general documentation, see `/documentation/README.md`

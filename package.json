@@ -42,10 +42,7 @@
     "db:generate": "cd backend && npx prisma generate",
     "update": "git submodule update --remote --merge",
     "install:all": "git submodule foreach yarn install",
-    "build:all": "git submodule foreach yarn build",
-    "deploy:local": "./deploy.sh all",
-    "deploy:staging": "./deploy-staging.sh",
-    "deploy:production": "./deploy-production.sh"
+    "build:all": "git submodule foreach yarn build"
   },
   "devDependencies": {
     "@agentdeskai/browser-tools-mcp": "^1.2.1",
