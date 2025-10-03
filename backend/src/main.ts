@@ -1,5 +1,6 @@
 // Import Sentry instrumentation FIRST - must be before any other imports
-import './instrument';
+// TEMPORARILY DISABLED FOR DEBUGGING
+// import './instrument';
 
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
