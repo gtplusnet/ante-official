@@ -106,14 +106,11 @@ ENV NODE_OPTIONS="--max-old-space-size=512"
 # Copy package.json for dependency information
 COPY --chown=nonroot:nonroot package.json ./
 
-# Copy built application from builder
+# Copy built application from builder (includes all assets from nest-cli.json)
 COPY --from=builder --chown=nonroot:nonroot /app/dist ./dist
 COPY --from=builder --chown=nonroot:nonroot /app/node_modules ./node_modules
 COPY --from=builder --chown=nonroot:nonroot /app/prisma ./prisma
 COPY --from=builder --chown=nonroot:nonroot /app/newrelic.js ./newrelic.js
-
-# Copy reference files that are needed at runtime
-COPY --from=builder --chown=nonroot:nonroot /app/src/shared/reference ./src/shared/reference
 
 # Alternative production stage using Alpine for debugging capabilities
 FROM node:20-alpine AS production-alpine
@@ -151,14 +148,11 @@ ENV NODE_OPTIONS="--max-old-space-size=512"
 # Copy package.json for dependency information  
 COPY --chown=nodejs:nodejs package.json ./
 
-# Copy built application from builder
+# Copy built application from builder (includes all assets from nest-cli.json)
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nodejs:nodejs /app/newrelic.js ./newrelic.js
-
-# Copy reference files that are needed at runtime
-COPY --from=builder --chown=nodejs:nodejs /app/src/shared/reference ./src/shared/reference
 
 # Create logs directory with proper ownership
 RUN mkdir -p /app/logs && chown -R nodejs:nodejs /app/logs
