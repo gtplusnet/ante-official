@@ -3,33 +3,31 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "builder": "swc",
-    "typeCheck": false,
     "deleteOutDir": false,
     "assets": [
       {
         "include": "shared/**/*",
-        "outDir": "dist"
+        "outDir": "dist/src"
       },
       {
         "include": "dto/**/*",
-        "outDir": "dist"
+        "outDir": "dist/src"
       },
       {
         "include": "reference/**/*",
-        "outDir": "dist"
+        "outDir": "dist/src"
       },
       {
         "include": "modules/communication/email-approval/templates/**/*",
-        "outDir": "dist"
+        "outDir": "dist/src"
       },
       {
         "include": "views/**/*",
-        "outDir": "dist"
+        "outDir": "dist/src"
       },
       {
         "include": "types/**/*",
-        "outDir": "dist"
+        "outDir": "dist/src"
       }
     ]
   }
