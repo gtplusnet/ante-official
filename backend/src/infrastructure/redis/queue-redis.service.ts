@@ -32,6 +32,7 @@ export class QueueRedisService implements OnModuleInit, OnModuleDestroy {
         },
       },
       password: process.env.REDIS_PASSWORD,
+      database: parseInt(process.env.REDIS_DB || '0'), // Database selection for multi-environment isolation
       // Note: commandTimeout is not available in node-redis v5
       // Blocking operations will use their own timeout parameter
     });
