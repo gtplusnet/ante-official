@@ -7,6 +7,7 @@ on:
       - 'frontends/frontend-main/**'
       - 'frontends/frontend-gate-app/**'
       - 'frontends/frontend-guardian-app/**'
+      - 'backend/**'
       - 'package.json'
       - 'yarn.lock'
 
@@ -17,6 +18,7 @@ jobs:
       frontend-main-changed: ${{ steps.changes.outputs.frontend-main }}
       gate-app-changed: ${{ steps.changes.outputs.gate-app }}
       guardian-app-changed: ${{ steps.changes.outputs.guardian-app }}
+      backend-changed: ${{ steps.changes.outputs.backend }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,6 +38,10 @@ jobs:
               - 'yarn.lock'
             guardian-app:
               - 'frontends/frontend-guardian-app/**'
+              - 'package.json'
+              - 'yarn.lock'
+            backend:
+              - 'backend/**'
               - 'package.json'
               - 'yarn.lock'
 
@@ -98,3 +104,68 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_GUARDIAN_APP }}
+
+  build-and-deploy-backend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend-changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/ante-backend-staging
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          target: production-alpine
+
+      - name: Trigger DigitalOcean deployment
+        run: |
+          echo "Triggering deployment for app ${{ secrets.DO_APP_ID_STAGING }}..."
+
+          RESPONSE=$(curl -s -X POST \
+            "https://api.digitalocean.com/v2/apps/${{ secrets.DO_APP_ID_STAGING }}/deployments" \
+            -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"force_build": false}')
+
+          DEPLOYMENT_ID=$(echo "$RESPONSE" | jq -r '.deployment.id // empty')
+
+          if [ -z "$DEPLOYMENT_ID" ]; then
+            echo "Error: Failed to trigger deployment"
+            echo "$RESPONSE" | jq '.'
+            exit 1
+          fi
+
+          echo "Deployment triggered successfully!"
+          echo "Deployment ID: $DEPLOYMENT_ID"
+          echo "View deployment: https://cloud.digitalocean.com/apps/${{ secrets.DO_APP_ID_STAGING }}/deployments/$DEPLOYMENT_ID"
