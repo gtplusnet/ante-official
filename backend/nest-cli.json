@@ -9,15 +9,15 @@
     "assets": [
       {
         "include": "shared/reference/**/*",
-        "outDir": "dist/src"
+        "outDir": "dist"
       },
       {
         "include": "modules/communication/email-approval/templates/**/*",
-        "outDir": "dist/src"
+        "outDir": "dist"
       },
       {
         "include": "views/**/*",
-        "outDir": "dist/src"
+        "outDir": "dist"
       }
     ]
   }
