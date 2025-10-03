@@ -81,8 +81,8 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
-# Build the application
-RUN yarn build
+# Build the application with increased memory limit for build environments
+RUN NODE_OPTIONS="--max-old-space-size=2048" yarn build
 
 # Remove devDependencies and clean cache to reduce image size
 RUN yarn install --frozen-lockfile --production && \
