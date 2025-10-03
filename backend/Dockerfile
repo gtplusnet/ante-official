@@ -154,6 +154,8 @@ COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nodejs:nodejs /app/newrelic.js ./newrelic.js
+# Copy reference data files needed at runtime
+COPY --from=builder --chown=nodejs:nodejs /app/src/shared ./src/shared
 
 # Create logs directory with proper ownership
 RUN mkdir -p /app/logs && chown -R nodejs:nodejs /app/logs
