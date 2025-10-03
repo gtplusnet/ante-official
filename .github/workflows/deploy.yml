@@ -50,10 +50,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'yarn'
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
 
       - name: Build Frontend Main
         run: yarn build:frontend-main
@@ -77,10 +73,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'yarn'
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
 
       - name: Build Gate App
         run: yarn build:gate-app
@@ -104,10 +96,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'yarn'
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
 
       - name: Build Guardian App
         run: yarn build:guardian-app
