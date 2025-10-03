@@ -115,10 +115,6 @@ COPY --from=builder --chown=nonroot:nonroot /app/newrelic.js ./newrelic.js
 # Copy reference files that are needed at runtime
 COPY --from=builder --chown=nonroot:nonroot /app/src/shared/reference ./src/shared/reference
 
-# Copy deployment tracking files from builder if they exist
-COPY --from=builder --chown=nonroot:nonroot /app/deployment-hash.json ./deployment-hash.json
-COPY --from=builder --chown=nonroot:nonroot /app/version.json ./version.json
-
 # Alternative production stage using Alpine for debugging capabilities
 FROM node:20-alpine AS production-alpine
 
@@ -163,10 +159,6 @@ COPY --from=builder --chown=nodejs:nodejs /app/newrelic.js ./newrelic.js
 
 # Copy reference files that are needed at runtime
 COPY --from=builder --chown=nodejs:nodejs /app/src/shared/reference ./src/shared/reference
-
-# Copy deployment tracking files from builder if they exist
-COPY --from=builder --chown=nodejs:nodejs /app/deployment-hash.json ./deployment-hash.json
-COPY --from=builder --chown=nodejs:nodejs /app/version.json ./version.json
 
 # Create logs directory with proper ownership
 RUN mkdir -p /app/logs && chown -R nodejs:nodejs /app/logs
