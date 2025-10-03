@@ -1,2 +1,3 @@
 # Test file to trigger Vercel deployment workflow
 This file is used to test the GitHub Actions deployment workflow.
+Test #2: Testing with .vercel/project.json creation in workflow
