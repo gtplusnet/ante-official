@@ -102,6 +102,7 @@ ANALYZE=true yarn build  # Build with bundle analyzer
 - ❌ Commit `.env` files or secrets
 - ❌ Use `--headed` or `--ui` flags with Playwright
 - ❌ Use box-shadow or elevation (Material Design 3 - flat only)
+- ❌ Create dialogs with synchronous imports (ALWAYS use lazy loading)
 
 ### ALWAYS DO
 - ✅ Use yarn (not npm)
@@ -111,6 +112,7 @@ ANALYZE=true yarn build  # Build with bundle analyzer
 - ✅ Use specialized AI agents for development/testing
 - ✅ Test before committing
 - ✅ Update documentation when changing patterns
+- ✅ **ALWAYS lazy load dialog components** using `defineAsyncComponent` (mandatory for bundle optimization)
 
 ## 🔑 Development Patterns
 
@@ -119,6 +121,45 @@ ANALYZE=true yarn build  # Build with bundle analyzer
 - Use `localhost` for connections (not Docker service names)
 - Databases run in Docker: Redis (6379), MongoDB (27017)
 - PostgreSQL hosted on Supabase
+
+### Dialog Lazy Loading Pattern (MANDATORY)
+**CRITICAL**: ALL dialog components MUST be lazy-loaded to prevent bundle bloat.
+
+**Composition API Pattern** (Preferred):
+```typescript
+import { defineAsyncComponent } from 'vue';
+
+// ✅ CORRECT: Lazy-loaded dialog (TASK-008: Bundle optimization)
+const MyDialog = defineAsyncComponent(() =>
+  import('./dialogs/MyDialog.vue')
+);
+```
+
+**Options API Pattern**:
+```typescript
+import { defineAsyncComponent } from 'vue';
+
+export default {
+  components: {
+    // ✅ CORRECT: Lazy-loaded dialog (TASK-008: Bundle optimization)
+    MyDialog: defineAsyncComponent(() =>
+      import('./dialogs/MyDialog.vue')
+    )
+  }
+}
+```
+
+**❌ NEVER DO THIS**:
+```typescript
+// ❌ WRONG: Synchronous import adds dialog to initial bundle
+import MyDialog from './dialogs/MyDialog.vue';
+```
+
+**Why Mandatory**:
+- Reduces initial bundle size by ~40KB per dialog on average
+- TASK-008 achieved 363KB reduction by converting just 9 dialogs
+- Dialogs load on-demand when users actually open them
+- No performance impact (dialogs cache after first load)
 
 ### API Response Patterns
 **Standard (95% of endpoints)** - `responseHandler()`:
