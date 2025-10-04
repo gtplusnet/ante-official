@@ -48,11 +48,20 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../components/shared/display/GTable.vue";
 import { api } from 'src/boot/axios';
-import ItemCreateEditDialog from "../../components/dialog/ItemCreateEditDialog/ItemCreateEditDialog.vue";
-import ItemInformationDialog from "../../components/dialog/ItemInformationDialog/ItemInformationDialog.vue";
-import ItemAdvanceListDialog from "../../components/dialog/ItemAdvanceListDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ItemCreateEditDialog = defineAsyncComponent(() =>
+  import("../../components/dialog/ItemCreateEditDialog/ItemCreateEditDialog.vue")
+);
+const ItemInformationDialog = defineAsyncComponent(() =>
+  import("../../components/dialog/ItemInformationDialog/ItemInformationDialog.vue")
+);
+const ItemAdvanceListDialog = defineAsyncComponent(() =>
+  import("../../components/dialog/ItemAdvanceListDialog.vue")
+);
 
 export default {
   name: 'SimpleItemTable',

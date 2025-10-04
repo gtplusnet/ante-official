@@ -66,10 +66,19 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../components/shared/display/GTable.vue";
-import PurchaseOrderDialog from "../../components/dialog/ItemTransactionsDialog/PurchaseOrderDialog.vue";
-import ItemReceipt from "../../components/dialog/ItemReceipt/ItemReceipt.vue";
-import PurchaseOrderPaymentDialog from "../../pages/Member/Treasury/dialogs/TreasuryPurchaseOrderPaymentDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const PurchaseOrderDialog = defineAsyncComponent(() =>
+  import("../../components/dialog/ItemTransactionsDialog/PurchaseOrderDialog.vue")
+);
+const ItemReceipt = defineAsyncComponent(() =>
+  import("../../components/dialog/ItemReceipt/ItemReceipt.vue")
+);
+const PurchaseOrderPaymentDialog = defineAsyncComponent(() =>
+  import("../../pages/Member/Treasury/dialogs/TreasuryPurchaseOrderPaymentDialog.vue")
+);
 
 export default {
   name: 'PurchaseOrderTable',

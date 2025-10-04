@@ -191,20 +191,32 @@ import bus from 'src/bus';
 import { defineAsyncComponent } from 'vue';
 
 import HeaderAccount from '../components/header/HeaderAccount.vue';
-import TaskCreateDialog from '../components/dialog/TaskCreateDialog/TaskCreateDialog.vue';
-import ProjectCreateDialog from '../components/dialog/ProjectCreateDialog.vue';
 import NavLeft from '../components/sidebar/NavLeft.vue';
 import Notification from '../components/sidebar/Notification.vue';
 import AnnouncementPanel from '../components/sidebar/AnnouncementPanel.vue';
-import GlobalLayoutDialog from '../layouts/GlobalLayoutDialog.vue';
-import AiChatDialog from '../components/dialog/AiChatDialog.vue';
 import { whitelabel } from 'src/boot/axios';
-import QuestDialog from '../components/dialog/QuestDialog.vue';
 import EmailVerificationBanner from '../components/shared/EmailVerificationBanner.vue';
 import BottomNavigation from './BottomNavigation.vue';
-import RequestFilingDialog from '../components/dialog/RequestFilingDialog.vue';
 
-// Lazy-loaded heavy dialogs (TASK-008: Reduce initial bundle size)
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TaskCreateDialog = defineAsyncComponent(() =>
+  import('../components/dialog/TaskCreateDialog/TaskCreateDialog.vue')
+);
+const ProjectCreateDialog = defineAsyncComponent(() =>
+  import('../components/dialog/ProjectCreateDialog.vue')
+);
+const GlobalLayoutDialog = defineAsyncComponent(() =>
+  import('../layouts/GlobalLayoutDialog.vue')
+);
+const AiChatDialog = defineAsyncComponent(() =>
+  import('../components/dialog/AiChatDialog.vue')
+);
+const QuestDialog = defineAsyncComponent(() =>
+  import('../components/dialog/QuestDialog.vue')
+);
+const RequestFilingDialog = defineAsyncComponent(() =>
+  import('../components/dialog/RequestFilingDialog.vue')
+);
 const LiquidationFormDialog = defineAsyncComponent(() =>
   import('../pages/Member/Treasury/dialogs/TreasuryLiquidationFormDialog.vue')
 );

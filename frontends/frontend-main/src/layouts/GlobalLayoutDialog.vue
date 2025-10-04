@@ -44,12 +44,18 @@
 
 <script>
 import { defineAsyncComponent } from 'vue';
-import ChooseItemDialog from "../components/dialog/ChooseItemDialog.vue";
-import ItemInformationDialog from "../components/dialog/ItemInformationDialog/ItemInformationDialog.vue";
-import TaskInformationDialog from '../components/dialog/TaskInformationDialog/TaskInformationDialog.vue';
 import bus from 'src/bus';
 
-// Lazy-loaded heavy dialogs (TASK-008: Reduce initial bundle size)
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ChooseItemDialog = defineAsyncComponent(() =>
+  import("../components/dialog/ChooseItemDialog.vue")
+);
+const ItemInformationDialog = defineAsyncComponent(() =>
+  import("../components/dialog/ItemInformationDialog/ItemInformationDialog.vue")
+);
+const TaskInformationDialog = defineAsyncComponent(() =>
+  import('../components/dialog/TaskInformationDialog/TaskInformationDialog.vue')
+);
 const PayrollSummaryDialog = defineAsyncComponent(() =>
   import("../pages/Member/Manpower/dialogs/payroll/ManpowerPayrollSummaryDialog.vue")
 );

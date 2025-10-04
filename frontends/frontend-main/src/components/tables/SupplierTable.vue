@@ -60,10 +60,17 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
-import AddEditSupplierDialog from "../../pages/Member/Asset/dialogs/AssetAddEditSupplierDialog.vue";
-import SupplierInformationDialog from "../../pages/Member/Asset/dialogs/AssetSupplierInformationDialog/SupplierInformationDialog.vue";
 import GTable from "../../components/shared/display/GTable.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditSupplierDialog = defineAsyncComponent(() =>
+  import("../../pages/Member/Asset/dialogs/AssetAddEditSupplierDialog.vue")
+);
+const SupplierInformationDialog = defineAsyncComponent(() =>
+  import("../../pages/Member/Asset/dialogs/AssetSupplierInformationDialog/SupplierInformationDialog.vue")
+);
 
 export default {
   name: 'SupplierTable',
