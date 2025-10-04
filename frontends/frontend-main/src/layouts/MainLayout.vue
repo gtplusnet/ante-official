@@ -188,6 +188,7 @@ import { APIRequests } from '../utility/api.handler';
 import { useSocketStore } from '../stores/socketStore';
 import { useAuthStore } from '../stores/auth';
 import bus from 'src/bus';
+import { defineAsyncComponent } from 'vue';
 
 import HeaderAccount from '../components/header/HeaderAccount.vue';
 import TaskCreateDialog from '../components/dialog/TaskCreateDialog/TaskCreateDialog.vue';
@@ -196,17 +197,29 @@ import NavLeft from '../components/sidebar/NavLeft.vue';
 import Notification from '../components/sidebar/Notification.vue';
 import AnnouncementPanel from '../components/sidebar/AnnouncementPanel.vue';
 import GlobalLayoutDialog from '../layouts/GlobalLayoutDialog.vue';
-import LiquidationFormDialog from '../pages/Member/Treasury/dialogs/TreasuryLiquidationFormDialog.vue';
 import AiChatDialog from '../components/dialog/AiChatDialog.vue';
 import { whitelabel } from 'src/boot/axios';
 import QuestDialog from '../components/dialog/QuestDialog.vue';
 import EmailVerificationBanner from '../components/shared/EmailVerificationBanner.vue';
 import BottomNavigation from './BottomNavigation.vue';
 import RequestFilingDialog from '../components/dialog/RequestFilingDialog.vue';
-import AddViewLeaveFormDialog from '../pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewLeaveFormDialog.vue';
-import AddViewOvertimeApplicationFormDialog from '../pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewOvertimeApplicationFormDialog.vue';
-import AddViewOfficialBusinessAndCertificateOfAttendanceDialog from '../pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewOfficialBusinessAndCertificateOfAttendanceDialog.vue';
-import AddViewScheduleAdjustmentDialog from '../pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewScheduleAdjustmentDialog.vue';
+
+// Lazy-loaded heavy dialogs (TASK-008: Reduce initial bundle size)
+const LiquidationFormDialog = defineAsyncComponent(() =>
+  import('../pages/Member/Treasury/dialogs/TreasuryLiquidationFormDialog.vue')
+);
+const AddViewLeaveFormDialog = defineAsyncComponent(() =>
+  import('../pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewLeaveFormDialog.vue')
+);
+const AddViewOvertimeApplicationFormDialog = defineAsyncComponent(() =>
+  import('../pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewOvertimeApplicationFormDialog.vue')
+);
+const AddViewOfficialBusinessAndCertificateOfAttendanceDialog = defineAsyncComponent(() =>
+  import('../pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewOfficialBusinessAndCertificateOfAttendanceDialog.vue')
+);
+const AddViewScheduleAdjustmentDialog = defineAsyncComponent(() =>
+  import('../pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewScheduleAdjustmentDialog.vue')
+);
 
 export default {
   components: {

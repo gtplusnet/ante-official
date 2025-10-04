@@ -36,7 +36,7 @@
 7. [x] **TASK-007**: Optimize images to WebP format → [Details](.tasks/completed/TASK-007.md)
 
 ### P2 (Nice to Have - If Time Permits)
-8. [ ] **TASK-008**: Implement lazy loading for heavy dialogs
+8. [-] **TASK-008**: Implement lazy loading for heavy dialogs → [Details](.tasks/active/TASK-008.md)
 9. [ ] **TASK-009**: Remove duplicate icon sets
 10. [ ] **TASK-010**: Enable tree-shaking for Quasar components
 
