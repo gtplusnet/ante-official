@@ -225,7 +225,7 @@ jobs:
           # Frontend Main deployment status
           if [ "${{ needs.deploy-frontend-main.result }}" == "success" ]; then
             MESSAGE="${MESSAGE}✅ *Frontend Main (ERP):* Successfully deployed%0A"
-            MESSAGE="${MESSAGE}   🔗 https://frontend-main-dhn72mpfz-ante-73eb5469.vercel.app%0A%0A"
+            MESSAGE="${MESSAGE}   🔗 https://frontend-main-eight-tau.vercel.app%0A%0A"
           elif [ "${{ needs.deploy-frontend-main.result }}" == "failure" ]; then
             MESSAGE="${MESSAGE}❌ *Frontend Main (ERP):* Deployment failed%0A%0A"
           elif [ "${{ needs.deploy-frontend-main.result }}" == "skipped" ] && [ "${{ needs.detect-changes.outputs.frontend-main-changed }}" == "true" ]; then

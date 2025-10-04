@@ -176,13 +176,15 @@ git commit -m "Update frontend submodule"
 - Backend API: http://localhost:3000
 - WebSocket: ws://localhost:4000
 
-### Staging
-- Frontend: https://staging.ante.ph
-- Backend API: https://api-staging.ante.ph
+### Staging (Vercel + DigitalOcean)
+- Frontend Main (ERP): https://frontend-main-eight-tau.vercel.app
+- Gate App: https://frontend-gate-b1aw6l0f8-ante-73eb5469.vercel.app
+- Guardian App: https://frontend-guardian-lyx0af55s-ante-73eb5469.vercel.app
+- Backend API: https://ante-backend-staging-q6udd.ondigitalocean.app
 
-### Production
+### Production (Old Server - To Be Migrated)
 - Frontend: https://ante.ph
-- Backend API: https://api.ante.ph
+- Backend API: https://backend.ante.ph
 
 ## 🛠️ Useful Commands
 
