@@ -201,8 +201,9 @@ module.exports = configure(function (/* ctx */) {
                       return 'vendor-qrcode';
                     }
 
-                    // Everything else
-                    return 'vendor-other';
+                    // CRITICAL: DO NOT use catch-all vendor-other!
+                    // Return undefined to keep everything else (including Vue dependencies) in main bundle
+                    return undefined;
                   }
 
                   // Module-based chunking for pages
