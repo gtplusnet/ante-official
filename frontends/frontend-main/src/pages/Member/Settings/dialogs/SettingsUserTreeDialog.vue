@@ -52,12 +52,17 @@
 <style src="./SettingsTreeDialog.scss" scoped lang="scss"></style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import VueZoomable from 'vue-zoomable';
 import 'vue-zoomable/dist/style.css';
 import UserTreeDialogChild from './SettingsUserTreeDialogChild.vue';
 import { api } from 'src/boot/axios';
 import GlobalLoader from "../../../../components/shared/common/GlobalLoader.vue";
-import SettingsUserCreateEditDialog from './SettingsUserCreateEditDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const SettingsUserCreateEditDialog = defineAsyncComponent(() =>
+  import('./SettingsUserCreateEditDialog.vue')
+);
 
 export default {
   name: 'UserTreeDialog',

@@ -45,11 +45,20 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../../components/shared/display/GTable.vue";
-import CreateEditRoleDialog from './dialogs/SettingsCreateEditRoleDialog.vue';
-import RoleTreeDialog from './dialogs/SettingsRoleTreeDialog.vue';
-import RoleEmployeeListDialog from './dialogs/SettingsRoleEmployeeListDialog.vue';
 import { api } from 'src/boot/axios';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const CreateEditRoleDialog = defineAsyncComponent(() =>
+  import('./dialogs/SettingsCreateEditRoleDialog.vue')
+);
+const RoleTreeDialog = defineAsyncComponent(() =>
+  import('./dialogs/SettingsRoleTreeDialog.vue')
+);
+const RoleEmployeeListDialog = defineAsyncComponent(() =>
+  import('./dialogs/SettingsRoleEmployeeListDialog.vue')
+);
 
 export default {
   name: 'SettingsRoles',

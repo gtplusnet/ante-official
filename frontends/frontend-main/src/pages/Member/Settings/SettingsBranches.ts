@@ -1,12 +1,18 @@
-import { ref, Ref, onMounted } from 'vue';
+import { ref, Ref, onMounted, defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
-import AddEditBrachDialog from "../../../pages/Member/Manpower/dialogs/configuration/ManpowerAddEditBranchDialog.vue";
-import ViewBranchDialog from "../../../pages/Member/Manpower/dialogs/configuration/ManpowerViewBranchDialog.vue";
 import BranchNode from "../../../components/BranchNode.vue";
 import GTable from "../../../components/shared/display/GTable.vue";
 import { useQuasar } from 'quasar';
 import { BranchDataResponse } from '@shared/response/branch.response';
 import { handleAxiosError } from "../../../utility/axios.error.handler";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditBrachDialog = defineAsyncComponent(() =>
+  import("../../../pages/Member/Manpower/dialogs/configuration/ManpowerAddEditBranchDialog.vue")
+);
+const ViewBranchDialog = defineAsyncComponent(() =>
+  import("../../../pages/Member/Manpower/dialogs/configuration/ManpowerViewBranchDialog.vue")
+);
 
 
 export default {
