@@ -284,9 +284,11 @@ module.exports = configure(function (/* ctx */) {
                     if (id.includes('MediaLibraryCore')) {
                       return 'component-media-library';
                     }
-                    if (id.includes('/dialog/') || id.includes('Dialog.vue')) {
-                      return 'component-dialogs';
-                    }
+                    // CRITICAL: Do NOT split dialogs - they use Vue heavily
+                    // Splitting causes TDZ errors with Vue reactivity
+                    // if (id.includes('/dialog/') || id.includes('Dialog.vue')) {
+                    //   return 'component-dialogs';
+                    // }
                     if (id.includes('/workflow/')) {
                       return 'component-workflow';
                     }
@@ -294,6 +296,7 @@ module.exports = configure(function (/* ctx */) {
         };
 
         // Optimize dependency pre-bundling
+        // CRITICAL: Exclude Vue from optimization to prevent code splitting
         viteConf.optimizeDeps = viteConf.optimizeDeps || {};
         viteConf.optimizeDeps.exclude = isLowMemory ? [
           '@fullcalendar/core',
@@ -304,13 +307,18 @@ module.exports = configure(function (/* ctx */) {
           'xlsx',
           'xlsx-js-style',
         ] : [];
+        // DO NOT include Vue in optimizeDeps - causes code splitting
         viteConf.optimizeDeps.include = [
-          'vue',
-          'vue-router',
-          'pinia',
           'axios',
-          'quasar',
         ];
+
+        // Force inline Vue and Quasar in the main bundle
+        viteConf.build = viteConf.build || {};
+        viteConf.build.commonjsOptions = viteConf.build.commonjsOptions || {};
+        viteConf.build.commonjsOptions.include = [];
+
+        // Disable CSS code splitting to prevent issues
+        viteConf.build.cssCodeSplit = false;
 
         // Server configuration
         viteConf.server = viteConf.server || {};
