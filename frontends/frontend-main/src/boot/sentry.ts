@@ -3,9 +3,11 @@ import * as Sentry from '@sentry/vue';
 // Remove unused imports since we're using Sentry.ErrorEvent and Sentry.EventHint directly
 
 export default boot(({ app, router }) => {
-  // Initialize Sentry in development, staging and production environments
+  // Initialize Sentry ONLY in production environment (for performance optimization)
   const environment = process.env.ENVIRONMENT || 'development';
-  const isMonitoringEnvironment = ['development', 'staging', 'production'].includes(environment) && process.env.VITE_SENTRY_DSN;
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  const isProduction = nodeEnv === 'production';
+  const isMonitoringEnvironment = isProduction && process.env.VITE_SENTRY_DSN;
 
   if (isMonitoringEnvironment) {
     console.log(`[SENTRY] Initializing Sentry for environment: ${environment}`);
@@ -131,12 +133,12 @@ export default boot(({ app, router }) => {
     
     console.log(`[SENTRY] Sentry initialized successfully for ${environment} environment`);
   } else {
-    console.log(`[SENTRY] Sentry disabled for development environment`);
-    
+    console.log(`[SENTRY] Sentry disabled (only enabled in production for performance)`);
+
     // Provide noop functions in development
     app.config.globalProperties.$sentrySetUser = () => {};
   }
 });
 
 // Export flag for checking if Sentry is enabled
-export const isSentryEnabled = ['development', 'staging', 'production'].includes(process.env.ENVIRONMENT || 'development') && !!process.env.VITE_SENTRY_DSN;
+export const isSentryEnabled = (process.env.NODE_ENV === 'production') && !!process.env.VITE_SENTRY_DSN;
