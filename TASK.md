@@ -59,10 +59,11 @@
 ## 🔥 Recent Activity
 
 ### Last 7 Days
-- ✅ **TASK-008**: Implemented lazy loading for 7 heavy dialogs - **~307KB removed** from initial bundle! 🚀 (2025-10-04)
-  - ManpowerPayrollSummaryDialog (173KB), TreasuryLiquidationFormDialog (31KB), FilingApprovalDialog (22KB)
+- ✅ **TASK-008**: Implemented lazy loading for 9 heavy dialogs - **~363KB removed** from initial bundle! 🚀 (2025-10-04)
+  - Initial: 7 dialogs (~307KB) - ManpowerPayrollSummaryDialog (173KB), TreasuryLiquidationFormDialog (31KB), FilingApprovalDialog (22KB)
+  - Extended: 2 dialogs (~56KB) - PayrollTimesheetDialog (43KB), CMSAPIResponseDialog (13KB)
   - Dialogs now load on-demand when first opened by users
-  - Completed in 1.5 hours (vs 4h estimate) - efficient implementation!
+  - Completed in 2 hours total (vs 4h estimate) - efficient implementation!
 - ✅ **TASK-007**: Optimized images to WebP - **93.3% reduction** (5.56MB → 0.37MB) - Deployed to Vercel! 🎉 (2025-10-04)
   - PR #6 merged and deployed: https://frontend-main-eight-tau.vercel.app
   - Fixed Node 22 compatibility by removing dev-only dependencies
