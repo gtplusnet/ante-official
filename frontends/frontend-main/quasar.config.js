@@ -135,12 +135,16 @@ module.exports = configure(function (/* ctx */) {
         viteConf.build.rollupOptions.output.manualChunks = function(id) {
                   // Vendor library chunking
                   if (id.includes('node_modules')) {
-                    // Core frameworks - IMPORTANT: Group Vue + Quasar together
-                    // Quasar depends on Vue and uses internal functions like 'pt'
-                    // They MUST be in same chunk to prevent 'pt is not a function' errors
+                    // CRITICAL: Do NOT split Vue or Quasar - must stay in main bundle
+                    // Splitting causes async loading → 'pt is not a function' errors
+                    // By not returning a chunk name, they'll be included in index.js
+
+                    // Skip Vue and Quasar - let them bundle with main entry point
                     if (id.includes('vue/') || id.includes('vue\\') || id.includes('quasar')) {
-                      return 'vendor-vue-quasar'; // Vue + Quasar together
+                      return undefined; // Stay in main bundle
                     }
+
+                    // Secondary dependencies - safe to split
                     if (id.includes('pinia')) {
                       return 'vendor-vue-state';
                     }
