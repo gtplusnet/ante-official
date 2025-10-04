@@ -135,9 +135,15 @@ module.exports = configure(function (/* ctx */) {
         viteConf.build.rollupOptions.output.manualChunks = function(id) {
                   // Vendor library chunking
                   if (id.includes('node_modules')) {
-                    // Core frameworks
-                    if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router')) {
-                      return 'vendor-vue';
+                    // Core frameworks - IMPORTANT: Vue must be separate to avoid TDZ errors
+                    if (id.includes('vue/') || id.includes('vue\\')) {
+                      return 'vendor-vue-core';
+                    }
+                    if (id.includes('pinia')) {
+                      return 'vendor-vue-state';
+                    }
+                    if (id.includes('vue-router')) {
+                      return 'vendor-vue-router';
                     }
                     if (id.includes('quasar')) {
                       return 'vendor-quasar';
