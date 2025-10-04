@@ -97,6 +97,18 @@ module.exports = configure(function (/* ctx */) {
             chunkSizeWarningLimit: 750,
             // Disable sourcemaps in low memory modes to save memory
             sourcemap: isLowMemory ? false : true,
+            // TASK-005: Enable production optimizations
+            minify: 'terser', // Use terser for better minification
+            terserOptions: {
+              compress: {
+                drop_console: true, // Remove console.logs (also addresses TASK-006)
+                drop_debugger: true, // Remove debugger statements
+                pure_funcs: ['console.log', 'console.info', 'console.debug'], // Remove specific console methods
+              },
+              format: {
+                comments: false, // Remove all comments
+              },
+            },
             // More aggressive code splitting in low memory mode
             rollupOptions: isLowMemory ? {
               output: {
