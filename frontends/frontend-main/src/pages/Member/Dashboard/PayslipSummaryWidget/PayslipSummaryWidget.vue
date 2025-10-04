@@ -87,14 +87,19 @@
 import { defineComponent, ref, computed, onMounted, getCurrentInstance, watch } from 'vue';
 import { api } from 'src/boot/axios';
 import { useAuthStore } from 'src/stores/auth';
+import { defineAsyncComponent } from 'vue';
 import GlobalWidgetCard from '../../../../components/shared/global/GlobalWidgetCard.vue';
 import GlobalWidgetCardBox from '../../../../components/shared/global/GlobalWidgetCardBox.vue';
 import GlobalWidgetCardBoxTitle from '../../../../components/shared/global/GlobalWidgetCardBoxTitle.vue';
 import GlobalWidgetCardBoxSubtitle from '../../../../components/shared/global/GlobalWidgetCardBoxSubtitle.vue';
 import GlobalWidgetDatePicker from '../../../../components/shared/global/GlobalWidgetDatePicker.vue';
 import GlobalWidgetPagination from '../../../../components/shared/global/GlobalWidgetPagination.vue';
-import PayslipPreviewDialog from '../../Manpower/dialogs/payroll/PayslipPreviewDialog.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded heavy dialog (TASK-008: Extended - Reduce initial bundle)
+const PayslipPreviewDialog = defineAsyncComponent(() =>
+  import('../../Manpower/dialogs/payroll/PayslipPreviewDialog.vue')
+);
 
 export default defineComponent({
   name: 'PayslipSummaryWidget',

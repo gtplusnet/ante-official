@@ -113,12 +113,17 @@ import { useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
 import GlobalWidgetCard from 'src/components/shared/global/GlobalWidgetCard.vue';
 import GlobalWidgetPagination from 'src/components/shared/global/GlobalWidgetPagination.vue';
+import { defineAsyncComponent } from 'vue';
 import GlobalWidgetFiltering from 'src/components/shared/global/GlobalWidgetFiltering.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
 import actionCenterService from 'src/services/action-center.service';
 import type { ActionCenterItem } from 'src/services/action-center.service';
 import EditCreateEmployee from 'src/pages/Member/Manpower/HRIS/Tab/dialog/EditCreateEmployee.vue';
-import ManpowerAddEditHRISEmployeeDialog from 'src/pages/Member/Manpower/dialogs/hris/ManpowerAddEditHRISEmployeeDialog.vue';
+
+// Lazy-loaded heavy dialog (TASK-008: Extended - Reduce initial bundle)
+const ManpowerAddEditHRISEmployeeDialog = defineAsyncComponent(() =>
+  import('src/pages/Member/Manpower/dialogs/hris/ManpowerAddEditHRISEmployeeDialog.vue')
+);
 
 export default {
   name: 'ManpowerActionCenter',

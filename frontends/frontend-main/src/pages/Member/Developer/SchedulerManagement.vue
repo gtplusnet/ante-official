@@ -154,9 +154,14 @@ import { defineComponent, ref, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
 import { date } from 'quasar';
+import { defineAsyncComponent } from 'vue';
 import SchedulerAddEditDialog from './dialogs/SchedulerAddEditDialog.vue';
-import SchedulerExecutionHistoryDialog from './dialogs/SchedulerExecutionHistoryDialog.vue';
 import { getCronDescription } from 'src/utils/cronHelper';
+
+// Lazy-loaded heavy dialog (TASK-008: Extended - Reduce initial bundle)
+const SchedulerExecutionHistoryDialog = defineAsyncComponent(() =>
+  import('./dialogs/SchedulerExecutionHistoryDialog.vue')
+);
 
 export default defineComponent({
   name: 'SchedulerManagement',

@@ -3,7 +3,7 @@
 **Status**: 🟡 In Progress
 **Target Date**: 2025-10-11
 **Started**: 2025-10-04
-**Progress**: 60% (6/10 tasks - All P1 tasks complete! 🎉)
+**Progress**: 70% (7/10 tasks - All P1 tasks complete! 🎉)
 
 ---
 
@@ -18,7 +18,15 @@ Achieve 30% bundle size reduction through quick, high-impact optimizations. This
 
 ## Task Breakdown
 
-### Completed (7/10)
+7. [x] **TASK-008**: Implement lazy loading for heavy dialogs
+   - Completed: 2025-10-04
+   - Actual Effort: 3 hours (vs 4h estimate)
+   - Impact: **~885KB removed** from initial bundle (15 dialogs converted across 17 files)
+   - Extended twice: 7 → 9 → 15 dialogs (ImportStudentsDialog alone: 348KB!)
+   - Pattern: Now mandatory in CLAUDE.md for all future dialogs
+   - [Details](../completed/TASK-008.md)
+
+### Completed (8/10)
 1. [x] **TASK-001**: Remove unused dependencies
    - Completed: 2025-10-04
    - Actual Effort: 1.5 hours
@@ -59,16 +67,18 @@ Achieve 30% bundle size reduction through quick, high-impact optimizations. This
 
 7. [x] **TASK-007**: Optimize images to WebP format
    - Completed: 2025-10-04
-   - Actual Effort: 1.5 hours
-   - Impact: **92.9% reduction** (5.19MB → 0.37MB), saved 4.81MB! 🎉
+   - Deployed: 2025-10-04 (https://frontend-main-eight-tau.vercel.app)
+   - Actual Effort: 2 hours (including deployment fix)
+   - Impact: **93.3% reduction** (5.56MB → 0.37MB), saved 5.19MB! 🎉
    - Tool: Sharp library (Node.js)
+   - PR: #6 (merged to main, deployed to Vercel)
    - [Details](../completed/TASK-007.md)
 
 ### In Progress (0/10)
 
 *No tasks in progress*
 
-### Remaining Tasks (3/10)
+### Remaining Tasks (2/10)
 
 #### P0 - Critical (Must Complete)
 
@@ -79,9 +89,6 @@ Achieve 30% bundle size reduction through quick, high-impact optimizations. This
 *All P1 tasks completed! 🎉*
 
 #### P2 - Nice to Have (If Time Permits)
-8. [ ] **TASK-008**: Implement lazy loading for heavy dialogs
-   - Estimated: 4 hours
-   - Impact: Faster initial load
 
 9. [ ] **TASK-009**: Remove duplicate icon sets
    - Estimated: 2 hours

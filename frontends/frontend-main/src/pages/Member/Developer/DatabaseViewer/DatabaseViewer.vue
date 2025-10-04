@@ -330,8 +330,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, nextTick, getCurrentInstance } from 'vue';
-import TableDataDialog from './TableDataDialog.vue';
+import { defineComponent, defineAsyncComponent, ref, computed, onMounted, nextTick, getCurrentInstance } from 'vue';
+
+// Lazy-loaded heavy dialog (TASK-008: Extended - Reduce initial bundle)
+const TableDataDialog = defineAsyncComponent(() =>
+  import('./TableDataDialog.vue')
+);
 
 interface Field {
   name: string;

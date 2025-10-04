@@ -89,11 +89,16 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import SupabaseGTable from "../../../../../components/shared/display/SupabaseGTable.vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
 import EditCreateEmployee from './dialog/EditCreateEmployee.vue';
 import ViewCreateEmployee from './dialog/ViewCreateEmployee.vue';
-import ManpowerAddEditHRISEmployeeDialog from '../../dialogs/hris/ManpowerAddEditHRISEmployeeDialog.vue';
+
+// Lazy-loaded heavy dialog (TASK-008: Extended - Reduce initial bundle)
+const ManpowerAddEditHRISEmployeeDialog = defineAsyncComponent(() =>
+  import('../../dialogs/hris/ManpowerAddEditHRISEmployeeDialog.vue')
+);
 
 export default {
   name: 'HRISNotYetSetTabPage',

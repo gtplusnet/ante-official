@@ -43,13 +43,22 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import ChooseItemDialog from "../components/dialog/ChooseItemDialog.vue";
 import ItemInformationDialog from "../components/dialog/ItemInformationDialog/ItemInformationDialog.vue";
-import PayrollSummaryDialog from "../pages/Member/Manpower/dialogs/payroll/ManpowerPayrollSummaryDialog.vue";
 import TaskInformationDialog from '../components/dialog/TaskInformationDialog/TaskInformationDialog.vue';
-import DiscussionDialog from '../components/shared/discussion/DiscussionDialog.vue';
-import FilingApprovalDialog from '../components/dialog/FilingApprovalDialog/FilingApprovalDialog.vue';
 import bus from 'src/bus';
+
+// Lazy-loaded heavy dialogs (TASK-008: Reduce initial bundle size)
+const PayrollSummaryDialog = defineAsyncComponent(() =>
+  import("../pages/Member/Manpower/dialogs/payroll/ManpowerPayrollSummaryDialog.vue")
+);
+const DiscussionDialog = defineAsyncComponent(() =>
+  import('../components/shared/discussion/DiscussionDialog.vue')
+);
+const FilingApprovalDialog = defineAsyncComponent(() =>
+  import('../components/dialog/FilingApprovalDialog/FilingApprovalDialog.vue')
+);
 
 export default {
   name: 'GlobaLayoutDialog',

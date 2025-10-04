@@ -42,12 +42,16 @@
 </template>
 
 <script lang="ts">
-import PayrollSummaryDialog from '../../../dialogs/payroll/ManpowerPayrollSummaryDialog.vue';
-import { onMounted, onUnmounted, ref, Ref } from 'vue';
+import { defineAsyncComponent, onMounted, onUnmounted, ref, Ref } from 'vue';
 import { CutoffDateRangeResponse } from "@shared/response";
 import { api } from 'src/boot/axios';
 import QueueStatusBadge from "../../../../../../components/dialog/QueueDialog/QueueStatusBadge.vue";
 import bus from 'src/bus';
+
+// Lazy-loaded heavy dialog (TASK-008: Reduce initial bundle size)
+const PayrollSummaryDialog = defineAsyncComponent(() =>
+  import('../../../dialogs/payroll/ManpowerPayrollSummaryDialog.vue')
+);
 
 export default {
   name: 'PayrollPending',
