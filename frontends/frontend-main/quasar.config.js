@@ -35,7 +35,7 @@ module.exports = configure(function (/* ctx */) {
     extras: [
       // 'ionicons-v4',
       // 'mdi-v7',
-      'fontawesome-v6',
+      // 'fontawesome-v6', // Removed - replaced with SVG icons
       // 'eva-icons',
       // 'themify',
       // 'line-awesome',
