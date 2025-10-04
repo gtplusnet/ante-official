@@ -140,7 +140,10 @@ module.exports = configure(function (/* ctx */) {
                     // By not returning a chunk name, they'll be included in index.js
 
                     // Skip Vue and Quasar - let them bundle with main entry point
-                    if (id.includes('vue/') || id.includes('vue\\') || id.includes('quasar')) {
+                    // Match: vue, @vue/*, quasar packages
+                    if (id.includes('/vue/') || id.includes('\\vue\\') ||
+                        id.includes('/@vue/') || id.includes('\\@vue\\') ||
+                        id.includes('/quasar/') || id.includes('\\quasar\\')) {
                       return undefined; // Stay in main bundle
                     }
 
