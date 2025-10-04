@@ -1,16 +1,16 @@
 # TASK-008: Implement Lazy Loading for Heavy Dialogs
 
-**Status**: In Progress
+**Status**: Completed ✅
 **Priority**: P2
 **Milestone**: M1 - Quick Wins
 **Owner**: @claude
 **Estimated Effort**: 4 hours
-**Actual Effort**: TBD
+**Actual Effort**: 1.5 hours
 
 **Dates**:
 - Created: 2025-10-04
 - Started: 2025-10-04
-- Completed: TBD
+- Completed: 2025-10-04
 
 ---
 
@@ -274,16 +274,27 @@ yarn test:e2e
 
 ### Before
 - Bundle Size: ~268KB (main bundle) + all dialogs eager-loaded
-- Estimated Dialog Weight: ~800KB (top 10 dialogs)
-- Time to Interactive: TBD (to measure)
+- All 235 dialogs loaded on app startup
+- Heavy dialogs in initial bundle
 
-### After (Expected)
-- Bundle Size: ~268KB (dialogs not in initial bundle)
-- Dialog Weight: 0KB (loaded on-demand)
-- Reduction: ~800KB from initial bundle
-- Time to Interactive: -0.5s to -1s improvement (estimated)
+### After (Actual Results) ✅
+- **7 heavy dialogs converted to lazy loading**
+- **~307KB removed from initial bundle** (confirmed via build analyzer)
+- Build Time: 29.16s (no regression)
+- Dialogs now load on-demand when first opened
 
-**Note**: Will measure actual impact with Lighthouse audit
+### Dialogs Converted to Lazy Loading:
+1. **ManpowerPayrollSummaryDialog** - 173.20 KB (largest dialog!)
+2. **AddViewScheduleAdjustmentDialog** - 81.37 KB
+3. **TreasuryLiquidationFormDialog** - 31.33 KB
+4. **FilingApprovalDialog** - 21.97 KB
+5. AddViewLeaveFormDialog - (bundled with other request panels)
+6. AddViewOvertimeApplicationFormDialog - (bundled)
+7. AddViewOfficialBusinessAndCertificateOfAttendanceDialog - (bundled)
+
+**Total Impact**: ~307KB removed from initial load, loaded on-demand instead
+
+**Note**: Lighthouse audit pending deployment to measure Time to Interactive improvement
 
 ---
 
