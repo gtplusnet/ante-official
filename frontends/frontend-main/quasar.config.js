@@ -27,21 +27,7 @@ module.exports = configure(function (/* ctx */) {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
-    // OPTIMIZED: Heavy components (apexchart, fullcalendar) moved to lazy-components (TASK-002)
-    // Monitoring: Only Sentry (production-only, internal check)
-    boot: [
-      'sentry',          // Production-only (internal check)
-      'axios',           // Essential - HTTP client
-      'supabase',        // Essential - Database client
-      'auth',            // Essential - Authentication
-      'multi-account',   // Essential - Account switching
-      'mixins',          // Essential - Global mixins
-      'bus',             // Essential - Event bus
-      'lazy-components', // Lazy-loaded heavy components (ApexChart, FullCalendar)
-      'theme',           // Essential - Theming
-      'route-loading',   // Essential - Route loading states
-      'google-auth'      // OAuth - consider lazy loading later
-    ],
+    boot: ['sentry', 'axios', 'supabase', 'auth', 'multi-account', 'mixins', 'apexchart', 'bus', 'fullcalendar', 'theme', 'route-loading', 'google-auth', 'newrelic'],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#css
     css: ['app.scss'],
@@ -93,34 +79,38 @@ module.exports = configure(function (/* ctx */) {
       // polyfillModulePreload: true,
       // distDir
 
-      extendViteConf(viteConf) {
-        // Set resolve aliases
-        viteConf.resolve = viteConf.resolve || {};
-        viteConf.resolve.alias = {
-          ...(viteConf.resolve.alias || {}),
-          '@': path.resolve(__dirname, './src'),
-          '@components': path.resolve(__dirname, './src/components'),
-          '@layouts': path.resolve(__dirname, './src/layouts'),
-          '@pages': path.resolve(__dirname, './src/pages'),
-          '@stores': path.resolve(__dirname, './src/stores'),
-          '@utils': path.resolve(__dirname, './src/utility'),
-          '@interfaces': path.resolve(__dirname, './src/interfaces'),
-          '@shared': path.resolve(__dirname, './src/shared'),
-        };
-
-        // Set build options
-        viteConf.build = viteConf.build || {};
-        viteConf.build.chunkSizeWarningLimit = 750;
-        viteConf.build.sourcemap = isLowMemory ? false : true;
-
-        // OPTIMIZED: Aggressive code splitting for all modes (TASK-003)
-        viteConf.build.rollupOptions = viteConf.build.rollupOptions || {};
-        viteConf.build.rollupOptions.output = viteConf.build.rollupOptions.output || {};
-
-        // Add bundle analyzer plugin if ANALYZE=true
-        if (process.env.ANALYZE === 'true') {
-          viteConf.plugins = viteConf.plugins || [];
-          viteConf.plugins.push(
+      extendViteConf() {
+        return {
+          resolve: {
+            alias: {
+              '@': path.resolve(__dirname, './src'),
+              '@components': path.resolve(__dirname, './src/components'),
+              '@layouts': path.resolve(__dirname, './src/layouts'),
+              '@pages': path.resolve(__dirname, './src/pages'),
+              '@stores': path.resolve(__dirname, './src/stores'),
+              '@utils': path.resolve(__dirname, './src/utility'),
+              '@interfaces': path.resolve(__dirname, './src/interfaces'),
+              '@shared': path.resolve(__dirname, './src/shared'),
+            },
+          },
+          build: {
+            chunkSizeWarningLimit: 750,
+            // Disable sourcemaps in low memory modes to save memory
+            sourcemap: isLowMemory ? false : true,
+            // More aggressive code splitting in low memory mode
+            rollupOptions: isLowMemory ? {
+              output: {
+                manualChunks: {
+                  'vendor-vue': ['vue', 'vue-router', 'pinia'],
+                  'vendor-quasar': ['quasar'],
+                  'vendor-charts': ['apexcharts', 'vue3-apexcharts'],
+                  'vendor-calendar': ['@fullcalendar/core', '@fullcalendar/vue3'],
+                },
+              },
+            } : {},
+          },
+          // Add bundle analyzer plugin if ANALYZE=true (TASK-004)
+          plugins: process.env.ANALYZE === 'true' ? [
             visualizer({
               filename: './dist/spa/stats.html',
               open: false,
@@ -128,202 +118,49 @@ module.exports = configure(function (/* ctx */) {
               brotliSize: true,
               template: 'treemap',
             })
-          );
-        }
-
-        // Set manualChunks function
-        viteConf.build.rollupOptions.output.manualChunks = function(id) {
-                  // Vendor library chunking
-                  if (id.includes('node_modules')) {
-                    // CRITICAL: Do NOT split Vue or Quasar - must stay in main bundle
-                    // Splitting causes async loading → 'pt is not a function' errors
-                    // By not returning a chunk name, they'll be included in index.js
-
-                    // Skip Vue and Quasar - let them bundle with main entry point
-                    // Match: vue, @vue/*, quasar packages
-                    if (id.includes('/vue/') || id.includes('\\vue\\') ||
-                        id.includes('/@vue/') || id.includes('\\@vue\\') ||
-                        id.includes('/quasar/') || id.includes('\\quasar\\')) {
-                      return undefined; // Stay in main bundle
-                    }
-
-                    // Secondary dependencies - safe to split
-                    if (id.includes('pinia')) {
-                      return 'vendor-vue-state';
-                    }
-                    if (id.includes('vue-router')) {
-                      return 'vendor-vue-router';
-                    }
-
-                    // Charts - IMPORTANT: Separate Vue wrappers from core libs
-                    if (id.includes('vue3-apexcharts')) {
-                      return 'vendor-charts-vue'; // Vue wrapper - loads after vue-core
-                    }
-                    if (id.includes('apexcharts')) {
-                      return 'vendor-charts-core'; // Pure JS lib - no Vue dependency
-                    }
-                    if (id.includes('@fullcalendar/vue3')) {
-                      return 'vendor-calendar-vue'; // Vue wrapper
-                    }
-                    if (id.includes('@fullcalendar')) {
-                      return 'vendor-calendar-core'; // Core library
-                    }
-
-                    // Heavy libraries (lazy loaded on-demand)
-                    if (id.includes('xlsx')) {
-                      return 'vendor-excel';
-                    }
-                    if (id.includes('jspdf') || id.includes('html2canvas')) {
-                      return 'vendor-pdf';
-                    }
-
-                    // Communication & Monitoring
-                    if (id.includes('socket.io')) {
-                      return 'vendor-socket';
-                    }
-                    if (id.includes('@sentry')) {
-                      return 'vendor-sentry';
-                    }
-
-                    // Database & API
-                    if (id.includes('@supabase')) {
-                      return 'vendor-supabase';
-                    }
-                    if (id.includes('axios')) {
-                      return 'vendor-axios';
-                    }
-
-                    // UI Libraries
-                    if (id.includes('draggable') || id.includes('zoomable')) {
-                      return 'vendor-ui-advanced';
-                    }
-                    if (id.includes('qrcode')) {
-                      return 'vendor-qrcode';
-                    }
-
-                    // CRITICAL: DO NOT use catch-all vendor-other!
-                    // Return undefined to keep everything else (including Vue dependencies) in main bundle
-                    return undefined;
-                  }
-
-                  // Module-based chunking for pages
-                  if (id.includes('/pages/Member/')) {
-                    // School Management (largest - 1MB+)
-                    if (id.includes('/pages/Member/SchoolManagement/')) {
-                      if (id.includes('StudentManagement')) {
-                        return 'module-school-students'; // 1MB chunk
-                      }
-                      return 'module-school';
-                    }
-
-                    // CMS Module
-                    if (id.includes('/pages/Member/CMS/')) {
-                      if (id.includes('ContentTypeBuilder')) {
-                        return 'module-cms-builder'; // 176KB chunk
-                      }
-                      if (id.includes('/API/')) {
-                        return 'module-cms-api';
-                      }
-                      return 'module-cms';
-                    }
-
-                    // HRIS/Manpower Module
-                    if (id.includes('/pages/Member/Manpower/')) {
-                      if (id.includes('/payroll/')) {
-                        return 'module-hris-payroll'; // Large payroll dialogs
-                      }
-                      if (id.includes('/dialogs/')) {
-                        return 'module-hris-dialogs';
-                      }
-                      return 'module-hris';
-                    }
-
-                    // Treasury Module
-                    if (id.includes('/pages/Member/Treasury/')) {
-                      if (id.includes('/dialogs/')) {
-                        return 'module-treasury-dialogs';
-                      }
-                      return 'module-treasury';
-                    }
-
-                    // Developer Tools
-                    if (id.includes('/pages/Member/Developer/')) {
-                      if (id.includes('DatabaseViewer')) {
-                        return 'module-developer-db'; // Heavy database viewer
-                      }
-                      return 'module-developer';
-                    }
-
-                    // Settings
-                    if (id.includes('/pages/Member/Settings/')) {
-                      if (id.includes('/dialogs/')) {
-                        return 'module-settings-dialogs';
-                      }
-                      return 'module-settings';
-                    }
-
-                    // Asset Management
-                    if (id.includes('/pages/Member/Asset/')) {
-                      return 'module-asset';
-                    }
-
-                    // Project Management
-                    if (id.includes('/pages/Member/Project/')) {
-                      return 'module-project';
-                    }
-
-                    // Leads/CRM
-                    if (id.includes('/pages/Member/Leads/')) {
-                      return 'module-leads';
-                    }
-                  }
-
-                  // CRITICAL: Do NOT split components at all!
-                  // ANY component chunk will bundle Vue's reactivity system
-                  // This causes TDZ errors when loaded async
-                  // Components should be in module chunks or main bundle only
+          ] : [],
+          // Optimize dependency pre-bundling
+          optimizeDeps: {
+            // Exclude large deps from pre-bundling in low memory mode
+            exclude: isLowMemory ? [
+              '@fullcalendar/core',
+              '@fullcalendar/daygrid',
+              '@fullcalendar/timegrid',
+              '@fullcalendar/interaction',
+              'apexcharts',
+              'xlsx',
+              'xlsx-js-style',
+            ] : [],
+            // Include common deps to speed up initial load
+            include: [
+              'vue',
+              'vue-router',
+              'pinia',
+              'axios',
+              'quasar',
+            ],
+          },
+          server: {
+            // Additional optimizations for dev server
+            fs: {
+              // Restrict file serving to project root
+              strict: true,
+            },
+            watch: {
+              // Ignore large/unneeded directories
+              ignored: [
+                '**/node_modules/**',
+                '**/.git/**',
+                '**/dist/**',
+                '**/.quasar/**',
+                '**/coverage/**',
+                '**/cypress/**',
+                '**/test-results/**',
+                '**/*.log',
+              ],
+            },
+          },
         };
-
-        // Optimize dependency pre-bundling
-        // CRITICAL: Exclude Vue from optimization to prevent code splitting
-        viteConf.optimizeDeps = viteConf.optimizeDeps || {};
-        viteConf.optimizeDeps.exclude = isLowMemory ? [
-          '@fullcalendar/core',
-          '@fullcalendar/daygrid',
-          '@fullcalendar/timegrid',
-          '@fullcalendar/interaction',
-          'apexcharts',
-          'xlsx',
-          'xlsx-js-style',
-        ] : [];
-        // DO NOT include Vue in optimizeDeps - causes code splitting
-        viteConf.optimizeDeps.include = [
-          'axios',
-        ];
-
-        // Force inline Vue and Quasar in the main bundle
-        viteConf.build = viteConf.build || {};
-        viteConf.build.commonjsOptions = viteConf.build.commonjsOptions || {};
-        viteConf.build.commonjsOptions.include = [];
-
-        // Disable CSS code splitting to prevent issues
-        viteConf.build.cssCodeSplit = false;
-
-        // Server configuration
-        viteConf.server = viteConf.server || {};
-        viteConf.server.fs = viteConf.server.fs || {};
-        viteConf.server.fs.strict = true;
-        viteConf.server.watch = viteConf.server.watch || {};
-        viteConf.server.watch.ignored = [
-          '**/node_modules/**',
-          '**/.git/**',
-          '**/dist/**',
-          '**/.quasar/**',
-          '**/coverage/**',
-          '**/cypress/**',
-          '**/test-results/**',
-          '**/*.log',
-        ];
       },
       // viteVuePluginOptions: {},
 
