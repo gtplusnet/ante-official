@@ -7,6 +7,7 @@ dist/
 dist-ssr/
 build/
 .quasar/
+# stats.html (bundle analyzer output) is already ignored via dist/ above
 
 # Logs
 logs/

@@ -51,6 +51,28 @@ yarn build            # Build for production
 yarn build:all        # Build all submodules
 ```
 
+### Bundle Analysis
+```bash
+cd frontends/frontend-main
+ANALYZE=true yarn build  # Build with bundle analyzer
+# Opens dist/spa/stats.html with interactive visualization
+```
+
+**Bundle Analyzer Features**:
+- 🌳 **Treemap visualization**: See bundle composition at a glance
+- 📊 **Size metrics**: Parsed, Gzipped, and Brotli sizes
+- 🔍 **Module search**: Find specific dependencies
+- 📈 **Track progress**: Compare before/after optimizations
+
+**Use Cases**:
+- Identify large dependencies before optimization
+- Verify code splitting effectiveness
+- Find optimization opportunities
+- Track bundle size over time
+- Prevent regressions
+
+**Location**: `dist/spa/stats.html` (auto-generated, already gitignored)
+
 ## 📋 Code Style
 
 ### Naming Conventions
