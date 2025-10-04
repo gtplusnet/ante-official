@@ -278,12 +278,14 @@ yarn test:e2e
 - Heavy dialogs in initial bundle
 
 ### After (Actual Results) ✅
+
+#### Initial Implementation (7 dialogs):
 - **7 heavy dialogs converted to lazy loading**
 - **~307KB removed from initial bundle** (confirmed via build analyzer)
 - Build Time: 29.16s (no regression)
 - Dialogs now load on-demand when first opened
 
-### Dialogs Converted to Lazy Loading:
+**Dialogs Converted**:
 1. **ManpowerPayrollSummaryDialog** - 173.20 KB (largest dialog!)
 2. **AddViewScheduleAdjustmentDialog** - 81.37 KB
 3. **TreasuryLiquidationFormDialog** - 31.33 KB
@@ -292,7 +294,21 @@ yarn test:e2e
 6. AddViewOvertimeApplicationFormDialog - (bundled)
 7. AddViewOfficialBusinessAndCertificateOfAttendanceDialog - (bundled)
 
-**Total Impact**: ~307KB removed from initial load, loaded on-demand instead
+#### Extended Implementation (2 additional dialogs):
+- **2 additional dialogs converted**
+- **~56KB additional reduction** (12.52KB + 43.37KB from build output)
+- Build Time: 27.87s (slight improvement!)
+- Main bundle remains at 1.1MB (dialogs successfully extracted)
+
+**Additional Dialogs Converted**:
+8. **PayrollTimesheetDialog** - 43.37 KB (1,081 lines)
+9. **CMSAPIResponseDialog** - 12.52 KB (1,030 lines, 2nd heaviest by line count)
+
+#### Cumulative Impact ✅
+- **Total Dialogs Converted**: 9 dialogs
+- **Total Bundle Reduction**: ~363KB removed from initial bundle
+- **Extraction Success**: All dialogs now load on-demand when first opened
+- **Build Performance**: No regression, slight improvement (29.16s → 27.87s)
 
 **Note**: Lighthouse audit pending deployment to measure Time to Interactive improvement
 
