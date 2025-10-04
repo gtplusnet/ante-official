@@ -163,9 +163,13 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, getCurrentInstance, watch } from 'vue';
+import { ref, onMounted, getCurrentInstance, watch, defineAsyncComponent } from 'vue';
 import { useQuasar, date } from 'quasar';
-import AddEditPointOfContactDialog from './dialogs/AddEditPointOfContactDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditPointOfContactDialog = defineAsyncComponent(() =>
+  import('./dialogs/AddEditPointOfContactDialog.vue')
+);
 
 defineOptions({
   name: 'PointOfContact',

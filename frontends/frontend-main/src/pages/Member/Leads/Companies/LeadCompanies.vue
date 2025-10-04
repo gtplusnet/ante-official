@@ -123,9 +123,13 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, getCurrentInstance, watch } from 'vue';
+import { ref, computed, onMounted, getCurrentInstance, watch, defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
-import LeadCompanyDialog from './LeadCompanyDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const LeadCompanyDialog = defineAsyncComponent(() =>
+  import('./LeadCompanyDialog.vue')
+);
 
 defineOptions({
   name: 'LeadCompanies',

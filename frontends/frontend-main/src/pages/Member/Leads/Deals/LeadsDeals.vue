@@ -113,17 +113,20 @@
 </style>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, ComponentPublicInstance, getCurrentInstance } from "vue";
+import { ref, computed, onMounted, ComponentPublicInstance, getCurrentInstance, defineAsyncComponent } from "vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
-import AddEditDealTypeDialog from "src/components/dialog/AddEditDealTypeDialog.vue";
+import LeadsBoardView from "./LeadsBoardView.vue";
+import LeadsGridView from "./LeadsGridView.vue";
+import LeadsListView from "./LeadsListView.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditDealTypeDialog = defineAsyncComponent(() =>
+  import("src/components/dialog/AddEditDealTypeDialog.vue")
+);
 
 defineOptions({
   name: "LeadsDashboard",
 });
-
-import LeadsBoardView from "./LeadsBoardView.vue";
-import LeadsGridView from "./LeadsGridView.vue";
-import LeadsListView from "./LeadsListView.vue";
 
 interface ViewItem {
   icon: string;

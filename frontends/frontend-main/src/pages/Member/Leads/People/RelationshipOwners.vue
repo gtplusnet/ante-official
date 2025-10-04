@@ -173,9 +173,13 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, getCurrentInstance, watch } from 'vue';
+import { ref, onMounted, getCurrentInstance, watch, defineAsyncComponent } from 'vue';
 import { useQuasar, date } from 'quasar';
-import ManpowerSelectMultipleEmployeeDialog from 'src/pages/Member/Manpower/dialogs/configuration/ManpowerSelectMultipleEmployeeDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ManpowerSelectMultipleEmployeeDialog = defineAsyncComponent(() =>
+  import('src/pages/Member/Manpower/dialogs/configuration/ManpowerSelectMultipleEmployeeDialog.vue')
+);
 
 defineOptions({
   name: 'RelationshipOwners',

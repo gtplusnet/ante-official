@@ -94,14 +94,20 @@
 <style scoped src="../Leads.scss"></style>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, ref, onMounted, defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import { APIRequests } from 'src/utility/api.handler';
-import LeadCreateDialog from 'src/components/dialog/LeadDialog/LeadCreateDialog.vue';
-import ViewLeadDialog from 'src/components/dialog/LeadDialog/ViewLeadDialog.vue';
 import { LeadDataResponse } from '@shared/response';
 import { formatWord } from 'src/utility/formatter';
 import { dragscroll } from 'vue-dragscroll';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const LeadCreateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/LeadDialog/LeadCreateDialog.vue')
+);
+const ViewLeadDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/LeadDialog/ViewLeadDialog.vue')
+);
 
 interface Lead {
   id: number;
