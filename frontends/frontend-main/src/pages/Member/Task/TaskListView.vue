@@ -1,4 +1,13 @@
 <template>
+  <!-- Edit Phase Dialog -->
+  <AddEditTaskPhaseDialog
+    v-if="showEditPhaseDialog"
+    v-model="showEditPhaseDialog"
+    :projectId="projectId"
+    :phase="editingPhase"
+    @saved="handlePhaseSaved"
+  />
+
   <div class="task-list-view" :class="{ 'compact-mode': compactMode }" @click="closeAllDropdowns">
     <!-- Grouping Tabs -->
     <div class="grouping-tabs">
@@ -29,8 +38,27 @@
     </div>
 
     <!-- Dynamic Task Sections -->
-    <div v-for="section in taskSections" :key="section.key" class="task-section">
+    <div
+      v-for="(section, sectionIndex) in taskSections"
+      :key="section.key"
+      class="task-section"
+      :class="{ 'dragging-phase': draggingSectionIndex === sectionIndex }"
+      @dragover="currentGroupingMode === 'taskPhase' && handleSectionDragOver($event, sectionIndex)"
+      @drop="currentGroupingMode === 'taskPhase' && handleSectionDrop($event, sectionIndex)"
+    >
       <div class="section-header" @click="toggleSection(section.key)">
+        <!-- Drag handle for task phases -->
+        <div
+          v-if="currentGroupingMode === 'taskPhase' && section.metadata?.phaseId"
+          class="phase-drag-handle"
+          draggable="true"
+          @dragstart="handleSectionDragStart($event, sectionIndex)"
+          @dragend="handleSectionDragEnd()"
+          @click.stop
+          title="Drag to reorder"
+        >
+          <q-icon name="drag_indicator" size="18px" />
+        </div>
         <span
           class="section-toggle material-icons"
           :class="{ collapsed: collapsedSections[section.key] }"
@@ -40,6 +68,15 @@
         <span v-if="section.icon" class="section-icon material-icons" :style="{ color: section.color }">{{ section.icon }}</span>
         <span class="section-title">{{ section.title }}</span>
         <span class="section-count">({{ section.tasks.length }})</span>
+        <!-- Edit button for task phases -->
+        <button
+          v-if="currentGroupingMode === 'taskPhase' && section.metadata?.phaseId"
+          class="section-edit-btn"
+          @click.stop="openEditPhaseDialog(section)"
+          title="Edit phase"
+        >
+          <span class="material-icons">edit</span>
+        </button>
       </div>
       <div class="section-content" :class="{ collapsed: collapsedSections[section.key] }">
         <!-- Drop placeholder for top of section (disabled to reduce flickering) -->
@@ -354,10 +391,13 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, watch } from 'vue';
 import { onMounted } from 'vue';
+import { Notify } from 'quasar';
 import { useTaskSearchStore, type TaskGroupingMode } from '../../../stores/taskSearch';
 import { useTaskPhaseStore } from '../../../stores/taskPhase';
 import { useAssigneeList } from 'src/composables/useAssigneeList';
 import { useProjectList } from 'src/composables/useProjectList';
+import AddEditTaskPhaseDialog from 'src/components/dialog/TaskPhase/AddEditTaskPhaseDialog.vue';
+import draggable from 'vuedraggable';
 
 interface Task {
   id: string;
@@ -416,6 +456,7 @@ const groupingTabs = computed(() => {
     { mode: 'stages' as TaskGroupingMode, label: 'Status', icon: 'category' },
     { mode: 'assignee' as TaskGroupingMode, label: 'Assignee', icon: 'person' },
     { mode: 'project' as TaskGroupingMode, label: 'Project', icon: 'folder' },
+    { mode: 'taskPhase' as TaskGroupingMode, label: 'Task Phases', icon: 'timeline' },
   ];
 
   // Remove "Group by Assignee" tab when viewing "My Task" since all tasks are already assigned to the same person
@@ -428,6 +469,11 @@ const groupingTabs = computed(() => {
   // Remove "Group by Project" tab when viewing tasks within a specific project
   if (props.hideProjectGrouping || props.projectId) {
     filteredTabs = filteredTabs.filter(tab => tab.mode !== 'project');
+  }
+
+  // Only show "Task Phases" tab when viewing tasks within a specific project
+  if (!props.projectId) {
+    filteredTabs = filteredTabs.filter(tab => tab.mode !== 'taskPhase');
   }
 
   return filteredTabs;
@@ -494,6 +540,13 @@ const newTag = ref('');
 const editingTagTaskId = ref<string | null>(null);
 const activeDropdown = ref<string | null>(null);
 const assigneeSearchQuery = ref('');
+
+// Edit phase dialog state
+const showEditPhaseDialog = ref(false);
+const editingPhase = ref<any>(null);
+
+// Phase drag-and-drop state
+const isDraggingPhase = ref(false);
 
 // Simplified drag and drop state
 const draggedTask = ref<Task | null>(null);
@@ -882,6 +935,109 @@ const handleRestoreTask = (task: Task) => {
 
 const handleSetAsDone = (task: Task) => {
   emit('update-status', task, 'done');
+};
+
+// Edit Phase Dialog functions
+const openEditPhaseDialog = (section: TaskSection) => {
+  if (!section.metadata?.phaseId) return;
+
+  const projectIdNum = typeof props.projectId === 'string'
+    ? parseInt(props.projectId)
+    : props.projectId;
+
+  if (!projectIdNum) return;
+
+  const phases = taskPhaseStore.getPhasesForProject(projectIdNum);
+  const phase = phases.find(p => p.id === section.metadata.phaseId);
+
+  if (phase) {
+    editingPhase.value = phase;
+    showEditPhaseDialog.value = true;
+  }
+};
+
+const handlePhaseSaved = () => {
+  showEditPhaseDialog.value = false;
+  editingPhase.value = null;
+};
+
+// Phase drag-and-drop handlers
+const draggingSectionIndex = ref<number | null>(null);
+const dropTargetSectionIndex = ref<number | null>(null);
+
+const handleSectionDragStart = (event: DragEvent, index: number) => {
+  isDraggingPhase.value = true;
+  draggingSectionIndex.value = index;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', index.toString());
+  }
+};
+
+const handleSectionDragOver = (event: DragEvent, index: number) => {
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move';
+  }
+  dropTargetSectionIndex.value = index;
+};
+
+const handleSectionDrop = async (event: DragEvent, dropIndex: number) => {
+  event.preventDefault();
+  event.stopPropagation();
+
+  if (draggingSectionIndex.value === null || draggingSectionIndex.value === dropIndex) {
+    return;
+  }
+
+  try {
+    // Create a copy of the sections array to reorder
+    const sections = [...taskSections.value];
+    const draggedSection = sections[draggingSectionIndex.value];
+
+    // Remove from original position
+    sections.splice(draggingSectionIndex.value, 1);
+    // Insert at new position
+    sections.splice(dropIndex, 0, draggedSection);
+
+    // Calculate new order values for all phases
+    const reorderedPhases = sections.map((section, index) => ({
+      id: section.metadata.phaseId,
+      order: (index + 1) * 1000
+    }));
+
+    // Get project ID
+    const projectIdNum = typeof props.projectId === 'string'
+      ? parseInt(props.projectId)
+      : props.projectId;
+
+    if (!projectIdNum) {
+      throw new Error('Project ID is required');
+    }
+
+    // Save to database
+    await taskPhaseStore.reorderPhases(projectIdNum, reorderedPhases);
+
+    Notify.create({
+      type: 'positive',
+      message: 'Phase order updated successfully',
+      position: 'top'
+    });
+  } catch (error) {
+    console.error('Failed to reorder phases:', error);
+
+    Notify.create({
+      type: 'negative',
+      message: 'Failed to update phase order',
+      position: 'top'
+    });
+  }
+};
+
+const handleSectionDragEnd = () => {
+  isDraggingPhase.value = false;
+  draggingSectionIndex.value = null;
+  dropTargetSectionIndex.value = null;
 };
 
 // Removed as checkbox functionality has been disabled
