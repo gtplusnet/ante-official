@@ -3,7 +3,7 @@
 **Status**: 🟡 In Progress
 **Target Date**: 2025-10-11
 **Started**: 2025-10-04
-**Progress**: 30% (3/10 tasks - TASK-003 reverted)
+**Progress**: 60% (6/10 tasks - All P1 tasks complete! 🎉)
 
 ---
 
@@ -18,7 +18,7 @@ Achieve 30% bundle size reduction through quick, high-impact optimizations. This
 
 ## Task Breakdown
 
-### Completed (4/10)
+### Completed (7/10)
 1. [x] **TASK-001**: Remove unused dependencies
    - Completed: 2025-10-04
    - Actual Effort: 1.5 hours
@@ -45,28 +45,38 @@ Achieve 30% bundle size reduction through quick, high-impact optimizations. This
    - Impact: Visual bundle composition analysis tool
    - [Details](../completed/TASK-004.md)
 
+5. [x] **TASK-005**: Enable Vite compression and minification
+   - Completed: 2025-10-04
+   - Actual Effort: 30 minutes (terser already configured, only updated ES target)
+   - Impact: 36% faster builds (47s → 30s), ES2020 target reduces polyfills
+   - [Details](../completed/TASK-005.md)
+
+6. [x] **TASK-006**: Remove console.logs in production build
+   - Completed: 2025-10-04 (via TASK-005)
+   - Actual Effort: 0 hours (already implemented in terser config)
+   - Impact: Console logs removed in production (via existing terser configuration)
+   - [Details](../completed/TASK-006.md)
+
+7. [x] **TASK-007**: Optimize images to WebP format
+   - Completed: 2025-10-04
+   - Actual Effort: 1.5 hours
+   - Impact: **92.9% reduction** (5.19MB → 0.37MB), saved 4.81MB! 🎉
+   - Tool: Sharp library (Node.js)
+   - [Details](../completed/TASK-007.md)
+
 ### In Progress (0/10)
 
 *No tasks in progress*
 
-### Remaining Tasks (6/10)
+### Remaining Tasks (3/10)
 
 #### P0 - Critical (Must Complete)
 
 *All P0 tasks completed! 🎉*
 
 #### P1 - High Priority (Should Complete)
-5. [ ] **TASK-005**: Enable Vite compression and minification
-   - Estimated: 2 hours
-   - Impact: 20-30% smaller bundles
 
-6. [ ] **TASK-006**: Remove console.logs in production build
-   - Estimated: 1 hour
-   - Impact: Cleaner production code, slight size reduction
-
-7. [ ] **TASK-007**: Optimize images to WebP format
-   - Estimated: 3 hours
-   - Impact: 30-50% smaller images
+*All P1 tasks completed! 🎉*
 
 #### P2 - Nice to Have (If Time Permits)
 8. [ ] **TASK-008**: Implement lazy loading for heavy dialogs

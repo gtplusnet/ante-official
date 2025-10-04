@@ -190,7 +190,7 @@ export default defineComponent({
 
 // The leaves-card style if not already in GlobalWidgetCounter
 .leaves-card {
-  background-image: url('../../../../../assets/img/card1.png');
+  background-image: url('../../../../../assets/img/card1.webp');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

@@ -296,9 +296,9 @@ export default defineComponent({
 
     const preloadImages = async () => {
       const imagesToPreload = [
-        '/FRONT_BG with BLEED.png',
-        '/BACK_BG with BLEED.png',
-        '/sample-picture.png',
+        '/FRONT_BG with BLEED.webp',
+        '/BACK_BG with BLEED.webp',
+        '/sample-picture.webp',
         '/elem-signatorist.png',
         '/hs-signatorist.png',
         '/college-employee-signatorist.png'
@@ -330,7 +330,7 @@ export default defineComponent({
           try {
             // Use image proxy to convert external URLs to safe data URLs
             const { getSafeImageUrl } = await import('src/utils/imageProxy');
-            const safeUrl = await getSafeImageUrl(student.profilePhoto.url, '/sample-picture.png');
+            const safeUrl = await getSafeImageUrl(student.profilePhoto.url, '/sample-picture.webp');
 
             return new Promise<void>((resolve) => {
               const img = new Image();

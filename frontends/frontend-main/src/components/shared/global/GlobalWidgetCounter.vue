@@ -85,17 +85,17 @@ const handleClick = () => {
   }
 
   &.dashboard-card-1 {
-    background-image: url('../../../assets/img/card1.png');
+    background-image: url('../../../assets/img/card1.webp');
     background-color: #e0ecf8;
   }
 
   &.dashboard-card-2 {
-    background-image: url('../../../assets/img/card2.png');
+    background-image: url('../../../assets/img/card2.webp');
     background-color: #e8e3f9;
   }
 
   &.dashboard-card-3 {
-    background-image: url('../../../assets/img/card3.png');
+    background-image: url('../../../assets/img/card3.webp');
     background-color: #ceefeb;
   }
 

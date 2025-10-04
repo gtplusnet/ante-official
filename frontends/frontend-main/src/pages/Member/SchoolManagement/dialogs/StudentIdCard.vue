@@ -1,7 +1,7 @@
 <template>
   <div class="student-id-card" :class="{ 'preview-mode': preview }">
     <div ref="idFrontRef" class="id-front">
-      <img src="/FRONT_BG with BLEED.png" alt="" />
+      <img src="/FRONT_BG with BLEED.webp" alt="" />
       <div class="profile-container">
         <div class="profile-image">
           <img
@@ -39,7 +39,7 @@
     </div>
 
     <div ref="idBackRef" class="id-back">
-      <img src="/BACK_BG with BLEED.png" alt="" />
+      <img src="/BACK_BG with BLEED.webp" alt="" />
       <div
         v-if="studentData.section.gradeLevel.educationLevel === 'COLLEGE'"
         class="college-signatorist"

@@ -50,7 +50,7 @@
         </q-inner-loading>
         <global-widget-card-empty-content
           v-if="filings.length === 0"
-          image="/images/empty-content-requst-panel.png"
+          image="/images/empty-content-requst-panel.webp"
         >
           <template #title>No Pending Requests.</template>
           <template #description>Start one when needed.</template>
