@@ -21,7 +21,7 @@
 
           <!-- ApexCharts Line Chart -->
           <div class="md3-chart-container">
-            <apexchart
+            <ApexChart
               v-if="chartSeries && chartSeries.length > 0"
               type="area"
               height="120"
