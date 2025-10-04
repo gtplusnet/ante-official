@@ -29,7 +29,7 @@
       <template #content>
         <div class="announcement-wrapper">
         <!-- Empty Content -->
-        <global-widget-card-empty-content v-if="!isLoading && announcements.length === 0" image="/images/empty-content-announcement.png">
+        <global-widget-card-empty-content v-if="!isLoading && announcements.length === 0" image="/images/empty-content-announcement.webp">
           <template #title>No Announcements Yet.</template>
           <template #description>Stay tuned! Important updates and announcements will appear here once published.</template>
         </global-widget-card-empty-content>

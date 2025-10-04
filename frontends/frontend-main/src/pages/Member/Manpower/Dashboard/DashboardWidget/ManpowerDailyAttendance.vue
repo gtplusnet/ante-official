@@ -291,7 +291,7 @@ export default {
 }
 
 .total-employees-card {
-  background-image: url('assets/img/card1.png');
+  background-image: url('assets/img/card1.webp');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
