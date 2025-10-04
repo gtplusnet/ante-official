@@ -2,11 +2,11 @@
   <GlobalWidgetCard>
     <template #title>API Usage</template>
     <template #actions>
-      <q-btn 
-        flat 
-        dense 
-        label="View Details" 
-        color="primary" 
+      <q-btn
+        flat
+        dense
+        label="View Details"
+        color="primary"
         size="sm"
         class="md3-button"
       />
@@ -18,13 +18,15 @@
           <div class="md3-chart-header">
             <h3 class="md3-title-medium">REST API Usage - Last 7 Days</h3>
           </div>
-          
-          <!-- Chart.js Line Chart -->
+
+          <!-- ApexCharts Line Chart -->
           <div class="md3-chart-container">
-            <LineChart
-              v-if="chartData && chartData.datasets.length > 0"
-              :data="chartData"
+            <apexchart
+              v-if="chartSeries && chartSeries.length > 0"
+              type="area"
+              height="120"
               :options="chartOptions"
+              :series="chartSeries"
               class="md3-chart-canvas"
             />
             <div v-else class="md3-chart-loading">
@@ -68,10 +70,10 @@
             </div>
             <div v-else class="md3-endpoint-row" v-for="endpoint in topEndpoints" :key="endpoint.path">
               <div class="md3-endpoint-content">
-                <q-badge 
-                  :label="endpoint.method" 
-                  :color="getMethodColor(endpoint.method)" 
-                  text-color="white" 
+                <q-badge
+                  :label="endpoint.method"
+                  :color="getMethodColor(endpoint.method)"
+                  text-color="white"
                   class="md3-method-badge"
                 />
                 <span class="md3-body-small md3-on-surface md3-endpoint-path">{{ endpoint.path }}</span>
@@ -88,43 +90,18 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed } from 'vue';
 import { Notify } from 'quasar';
-import { Line as LineChart } from 'vue-chartjs';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js';
 import GlobalWidgetCard from '../../../../../components/shared/global/GlobalWidgetCard.vue';
-import { 
+import {
   CMSAnalyticsService,
   WeeklyApiUsage,
   ApiStatistics,
   TopEndpoint
 } from 'src/services/cms-analytics.service';
 
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
-
 export default defineComponent({
   name: 'CMSAPIUsage',
   components: {
     GlobalWidgetCard,
-    LineChart,
   },
   setup() {
     const loading = ref(false);
@@ -134,28 +111,28 @@ export default defineComponent({
 
     const loadApiUsageData = async () => {
       if (loading.value) return;
-      
+
       loading.value = true;
-      
+
       try {
         const [weeklyData, statistics, endpoints] = await Promise.all([
           CMSAnalyticsService.getWeeklyApiUsage(),
-          CMSAnalyticsService.getApiStatistics(), 
+          CMSAnalyticsService.getApiStatistics(),
           CMSAnalyticsService.getTopEndpoints(),
         ]);
-        
+
         weekData.value = weeklyData;
         apiStatistics.value = statistics;
         topEndpoints.value = endpoints.slice(0, 4); // Limit to 4 for display
       } catch (error) {
         console.error('Failed to load API usage data:', error);
-        
+
         Notify.create({
           type: 'negative',
           message: 'Unable to load API usage data. Using default values.',
           timeout: 3000,
         });
-        
+
         // Set fallback data
         weekData.value = [
           { name: 'Mon', rest: 0, restCount: 0 },
@@ -166,14 +143,14 @@ export default defineComponent({
           { name: 'Sat', rest: 0, restCount: 0 },
           { name: 'Sun', rest: 0, restCount: 0 },
         ];
-        
+
         apiStatistics.value = {
           totalRequests: 0,
           avgResponseTime: 0,
           successRate: 100,
           activeTokens: 0,
         };
-        
+
         topEndpoints.value = [];
       } finally {
         loading.value = false;
@@ -199,84 +176,119 @@ export default defineComponent({
       return num.toString();
     };
 
-    // Chart.js configuration
-    const chartData = computed(() => {
-      if (!weekData.value || weekData.value.length === 0) return null;
-      
-      return {
-        labels: weekData.value.map(day => day.name),
-        datasets: [
-          {
-            label: 'REST API Calls',
-            data: weekData.value.map(day => day.restCount),
-            borderColor: '#6750a4',
-            backgroundColor: 'rgba(103, 80, 164, 0.1)',
-            borderWidth: 2,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            pointBackgroundColor: '#6750a4',
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 2,
-            fill: true,
-            tension: 0.3,
-          }
-        ]
-      };
+    // ApexCharts configuration
+    const chartSeries = computed(() => {
+      if (!weekData.value || weekData.value.length === 0) return [];
+
+      return [
+        {
+          name: 'REST API Calls',
+          data: weekData.value.map(day => day.restCount),
+        }
+      ];
     });
 
     const chartOptions = computed(() => ({
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false
+      chart: {
+        type: 'area',
+        height: 120,
+        toolbar: {
+          show: false,
         },
-        tooltip: {
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          titleColor: '#ffffff',
-          bodyColor: '#ffffff',
-          cornerRadius: 8,
-          displayColors: false,
-          callbacks: {
-            title: (context: any) => {
-              return `${context[0].label}`;
-            },
-            label: (context: any) => {
-              return `${context.parsed.y} API calls`;
-            }
-          }
-        }
+        zoom: {
+          enabled: false,
+        },
+        animations: {
+          enabled: true,
+          easing: 'easeinout',
+          speed: 800,
+        },
       },
-      scales: {
-        x: {
-          display: true,
-          grid: {
-            display: false
-          },
-          ticks: {
-            color: '#49454f',
-            font: {
-              size: 10
-            }
-          }
+      dataLabels: {
+        enabled: false,
+      },
+      stroke: {
+        curve: 'smooth',
+        width: 2,
+        colors: ['#6750a4'],
+      },
+      fill: {
+        type: 'gradient',
+        gradient: {
+          shadeIntensity: 1,
+          opacityFrom: 0.3,
+          opacityTo: 0.1,
+          stops: [0, 90, 100],
         },
-        y: {
-          display: true,
-          beginAtZero: true,
-          grid: {
-            color: 'rgba(230, 224, 233, 0.3)',
-            borderDash: [2, 2]
+        colors: ['#6750a4'],
+      },
+      markers: {
+        size: 4,
+        colors: ['#6750a4'],
+        strokeColors: '#ffffff',
+        strokeWidth: 2,
+        hover: {
+          size: 6,
+        },
+      },
+      xaxis: {
+        categories: weekData.value.map(day => day.name),
+        labels: {
+          style: {
+            colors: '#49454f',
+            fontSize: '10px',
           },
-          ticks: {
-            color: '#49454f',
-            font: {
-              size: 10
-            },
-            maxTicksLimit: 5
-          }
-        }
-      }
-    } as any));
+        },
+        axisBorder: {
+          show: false,
+        },
+        axisTicks: {
+          show: false,
+        },
+      },
+      yaxis: {
+        labels: {
+          style: {
+            colors: '#49454f',
+            fontSize: '10px',
+          },
+          formatter: (value: number) => Math.round(value).toString(),
+        },
+        min: 0,
+      },
+      grid: {
+        borderColor: 'rgba(230, 224, 233, 0.3)',
+        strokeDashArray: 2,
+        xaxis: {
+          lines: {
+            show: false,
+          },
+        },
+        yaxis: {
+          lines: {
+            show: true,
+          },
+        },
+        padding: {
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+        },
+      },
+      tooltip: {
+        theme: 'dark',
+        y: {
+          formatter: (value: number) => `${value} API calls`,
+        },
+        style: {
+          fontSize: '12px',
+        },
+      },
+      legend: {
+        show: false,
+      },
+    }));
 
     // Load data when component mounts
     onMounted(() => {
@@ -290,7 +302,7 @@ export default defineComponent({
       topEndpoints,
       getMethodColor,
       formatNumber,
-      chartData,
+      chartSeries,
       chartOptions,
       loadApiUsageData,
     };
@@ -345,7 +357,7 @@ export default defineComponent({
   gap: 20px;
 }
 
-// Chart Section - Chart.js Design
+// Chart Section - ApexCharts Design
 .md3-chart-section {
   .md3-chart-header {
     margin-bottom: 16px;
@@ -354,12 +366,12 @@ export default defineComponent({
   .md3-chart-container {
     height: 120px;
     position: relative;
-    
+
     .md3-chart-canvas {
       width: 100%;
       height: 100%;
     }
-    
+
     .md3-chart-loading {
       display: flex;
       flex-direction: column;
@@ -493,7 +505,7 @@ export default defineComponent({
       flex-direction: row;
       justify-content: space-between;
       align-items: center;
-      
+
       .md3-title-large {
         font-size: 1.125rem;
       }
@@ -519,7 +531,7 @@ export default defineComponent({
 @media (min-width: 769px) and (max-width: 1024px) {
   .md3-stats-row {
     flex-wrap: wrap;
-    
+
     .md3-stat-item {
       min-width: calc(50% - 6px);
     }
