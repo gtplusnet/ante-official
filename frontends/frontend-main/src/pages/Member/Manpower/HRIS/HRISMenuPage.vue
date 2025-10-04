@@ -56,16 +56,24 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import HRISActiveTabPage from './Tab/HRISActiveTabPage.vue';
 import HRISSeparatedTabPage from './Tab/HRISSeparatedTabPage.vue';
 import HRISNotYetSetupTabPage from './Tab/HRISNotYetSetupTabPage.vue';
 import HRISInactiveTabPage from './Tab/HRISInactiveTabPage.vue';
-import AddEditHRISEmployeeDialog from '../dialogs/hris/ManpowerAddEditHRISEmployeeDialog.vue';
-import ImportEmployeeDialog from '../dialogs/hris/ManpowerImportEmployeeDialog.vue';
 import ExpandedNavPageContainer from '../../../../components/shared/ExpandedNavPageContainer.vue';
 import { api } from 'src/boot/axios';
 import { handleAxiosError } from 'src/utility/axios.error.handler';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded heavy dialogs (TASK-008: Extended - Reduce initial bundle)
+const AddEditHRISEmployeeDialog = defineAsyncComponent(() =>
+  import('../dialogs/hris/ManpowerAddEditHRISEmployeeDialog.vue')
+);
+const ImportEmployeeDialog = defineAsyncComponent(() =>
+  import('../dialogs/hris/ManpowerImportEmployeeDialog.vue')
+);
+
 export default {
   name: 'HRISMenuPage',
   components: {

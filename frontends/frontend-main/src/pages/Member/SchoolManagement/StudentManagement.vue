@@ -200,12 +200,12 @@
 <script lang="ts">
 import { defineComponent, ref } from "vue";
 import GTable from "src/components/shared/display/GTable.vue";
+import { defineAsyncComponent } from 'vue';
 import GCard from "src/components/shared/display/GCard.vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
 import ViewStudentIdDialog from "./dialogs/ViewStudentIdDialog.vue";
 import ViewStudentDialog from "./dialogs/ViewStudentDialog.vue";
 import AddEditStudentDialog from "./dialogs/AddEditStudentDialog.vue";
-import ImportStudentsDialog from "./dialogs/ImportStudentsDialog.vue";
 import AssignGuardianDialog from "./dialogs/AssignGuardianDialog.vue";
 import { api } from "src/boot/axios";
 import { useQuasar } from "quasar";
@@ -214,6 +214,11 @@ import type { StudentResponse } from "@shared/response";
 import ExpandedNavPageContainer from "../../../components/shared/ExpandedNavPageContainer.vue";
 import defaultStudentImage from "src/assets/default-student.svg";
 import ViewExportStudentIdDilaog from "./dialogs/ViewExportStudentIdDilaog.vue";
+
+// Lazy-loaded heavy dialog (TASK-008: Extended - Reduce initial bundle)
+const ImportStudentsDialog = defineAsyncComponent(() =>
+  import("./dialogs/ImportStudentsDialog.vue")
+);
 
 interface GTableInstance {
   refetch: () => void;
