@@ -59,9 +59,11 @@ Achieve 30% bundle size reduction through quick, high-impact optimizations. This
 
 7. [x] **TASK-007**: Optimize images to WebP format
    - Completed: 2025-10-04
-   - Actual Effort: 1.5 hours
-   - Impact: **92.9% reduction** (5.19MB → 0.37MB), saved 4.81MB! 🎉
+   - Deployed: 2025-10-04 (https://frontend-main-eight-tau.vercel.app)
+   - Actual Effort: 2 hours (including deployment fix)
+   - Impact: **93.3% reduction** (5.56MB → 0.37MB), saved 5.19MB! 🎉
    - Tool: Sharp library (Node.js)
+   - PR: #6 (merged to main, deployed to Vercel)
    - [Details](../completed/TASK-007.md)
 
 ### In Progress (0/10)
