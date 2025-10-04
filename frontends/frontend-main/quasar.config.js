@@ -278,21 +278,10 @@ module.exports = configure(function (/* ctx */) {
                     }
                   }
 
-                  // Component-based chunking
-                  if (id.includes('/components/')) {
-                    // Heavy shared components
-                    if (id.includes('MediaLibraryCore')) {
-                      return 'component-media-library';
-                    }
-                    // CRITICAL: Do NOT split dialogs - they use Vue heavily
-                    // Splitting causes TDZ errors with Vue reactivity
-                    // if (id.includes('/dialog/') || id.includes('Dialog.vue')) {
-                    //   return 'component-dialogs';
-                    // }
-                    if (id.includes('/workflow/')) {
-                      return 'component-workflow';
-                    }
-                  }
+                  // CRITICAL: Do NOT split components at all!
+                  // ANY component chunk will bundle Vue's reactivity system
+                  // This causes TDZ errors when loaded async
+                  // Components should be in module chunks or main bundle only
         };
 
         // Optimize dependency pre-bundling
