@@ -99,13 +99,17 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, Ref } from 'vue';
+import { defineAsyncComponent, defineComponent, ref, computed, onMounted, Ref } from 'vue';
 import ExpandedNavPageContainer from '../../../../components/shared/ExpandedNavPageContainer.vue';
 import { useTimekeepingStore } from '../../../../stores/timekeeping.store';
 import { CutoffDateRangeResponse } from '@shared/response';
 import { QTableColumn } from 'quasar';
-import PayrollTimesheetDialog from '../dialogs/payroll/PayrollTimesheetDialog.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded heavy dialog (TASK-008: Extended - Reduce initial bundle)
+const PayrollTimesheetDialog = defineAsyncComponent(() =>
+  import('../dialogs/payroll/PayrollTimesheetDialog.vue')
+);
 
 export default defineComponent({
   name: 'PayrollTimeKeepingMenuPageV2',

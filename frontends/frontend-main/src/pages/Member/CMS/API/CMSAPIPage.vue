@@ -862,15 +862,19 @@ print(data)</code></pre>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted } from 'vue';
+import { defineAsyncComponent, defineComponent, ref, computed, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
 import ExpandedNavPageContainer from '../../../../components/shared/ExpandedNavPageContainer.vue';
-import CMSAPIResponseDialog from './CMSAPIResponseDialog.vue';
 import { CMSContentTypesService } from '../../../../services/cms-content-types.service';
 import { CMSAPITokensService, type APIToken } from '../../../../services/cms-api-tokens.service';
 import { useConnectionStore } from '../../../../stores/connectionStore';
 import type { ContentType } from '@components/shared/cms/types/content-type';
+
+// Lazy-loaded heavy dialog (TASK-008: Extended - Reduce initial bundle)
+const CMSAPIResponseDialog = defineAsyncComponent(() =>
+  import('./CMSAPIResponseDialog.vue')
+);
 
 export default defineComponent({
   name: 'CMSAPIPage',
