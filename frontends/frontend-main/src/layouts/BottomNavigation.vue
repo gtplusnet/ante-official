@@ -89,14 +89,24 @@
 <style scoped src="./BottomNavigation.scss"></style>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import GlobalMoreActionMobileDialog, { type ActionItem } from 'src/components/shared/global/GlobalMoreActionMobileDialog.vue';
-import AddViewOvertimeApplicationFormDialog from 'src/pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewOvertimeApplicationFormDialog.vue';
-import AddViewOfficialBusinessAndCertificateOfAttendanceDialog from 'src/pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewOfficialBusinessAndCertificateOfAttendanceDialog.vue';
-import AddViewLeaveFormDialog from 'src/pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewLeaveFormDialog.vue';
-import AddViewScheduleAdjustmentDialog from 'src/pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewScheduleAdjustmentDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddViewOvertimeApplicationFormDialog = defineAsyncComponent(() =>
+  import('src/pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewOvertimeApplicationFormDialog.vue')
+);
+const AddViewOfficialBusinessAndCertificateOfAttendanceDialog = defineAsyncComponent(() =>
+  import('src/pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewOfficialBusinessAndCertificateOfAttendanceDialog.vue')
+);
+const AddViewLeaveFormDialog = defineAsyncComponent(() =>
+  import('src/pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewLeaveFormDialog.vue')
+);
+const AddViewScheduleAdjustmentDialog = defineAsyncComponent(() =>
+  import('src/pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewScheduleAdjustmentDialog.vue')
+);
 
 // Props
 interface Props {
