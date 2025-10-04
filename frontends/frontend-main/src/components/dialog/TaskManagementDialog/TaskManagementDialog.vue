@@ -97,11 +97,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, watch, onMounted } from 'vue';
+import { defineComponent, ref, computed, watch, onMounted, defineAsyncComponent } from 'vue';
 import TaskList from '../../../pages/Member/Task/TaskList.vue';
 import { useTaskSearchStore, type TaskGroupingMode } from '../../../stores/taskSearch';
 import { useTaskPhaseStore } from '../../../stores/taskPhase';
-import AddEditTaskPhaseDialog from '../TaskPhase/AddEditTaskPhaseDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditTaskPhaseDialog = defineAsyncComponent(() =>
+  import('../TaskPhase/AddEditTaskPhaseDialog.vue')
+);
 
 export default defineComponent({
   name: 'TaskManagementDialog',

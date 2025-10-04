@@ -39,13 +39,16 @@
 <style lang="scss" src="./QueueDialog.scss"></style>
 <script lang="ts">
 import { api } from 'src/boot/axios';
-import { ref, Ref } from 'vue';
+import { ref, Ref, defineAsyncComponent } from 'vue';
 import { QueueLogResponse, QueueResponse } from "@shared/response";
 import QueueStatusBadge from './QueueStatusBadge.vue';
 import QueueStatusLogBadge from './QueueStatusLogBadge.vue';
-import QueueLogInfoDialog from './QueueLogInfoDialog.vue';
 import { useQuasar } from 'quasar';
 
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const QueueLogInfoDialog = defineAsyncComponent(() =>
+  import('./QueueLogInfoDialog.vue')
+);
 
 export default {
   name: 'QueueDialog',

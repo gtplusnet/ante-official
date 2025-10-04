@@ -115,16 +115,33 @@
 <style scoped src="./BillOfQuantityDialog.scss"></style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import BillOfQuantityDialogItems from './BillOfQuantityDialogItems.vue';
-import BillOfQuantityDialogUpdate from './BillOfQuantityDialogUpdate.vue';
-import BillOfQuantityDialogInsert from './BillOfQuantityDialogInsert.vue';
-import BillOfQuantityDialogQtyTakeOff from './BillOfQuantityDialogQtyTakeOff.vue';
-import BillOfQuantityDialogVersionHistory from './BillOfQuantityDialogVersionHistory.vue';
-import BillOfQuantityDialogVersionHistorySubmit from './BillOfQuantityDialogVersionHistorySubmit.vue';
-import BillOfQuantityExportation from './BillOfQuantityExportationDialog.vue';
-import PurchaseRequestDialog from '../ItemTransactionsDialog/PurchaseRequestDialog.vue';
 import { api } from 'src/boot/axios';
 import { useUtilityStore } from '../../../stores/utility';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const BillOfQuantityDialogUpdate = defineAsyncComponent(() =>
+  import('./BillOfQuantityDialogUpdate.vue')
+);
+const BillOfQuantityDialogInsert = defineAsyncComponent(() =>
+  import('./BillOfQuantityDialogInsert.vue')
+);
+const BillOfQuantityDialogQtyTakeOff = defineAsyncComponent(() =>
+  import('./BillOfQuantityDialogQtyTakeOff.vue')
+);
+const BillOfQuantityDialogVersionHistory = defineAsyncComponent(() =>
+  import('./BillOfQuantityDialogVersionHistory.vue')
+);
+const BillOfQuantityDialogVersionHistorySubmit = defineAsyncComponent(() =>
+  import('./BillOfQuantityDialogVersionHistorySubmit.vue')
+);
+const BillOfQuantityExportation = defineAsyncComponent(() =>
+  import('./BillOfQuantityExportationDialog.vue')
+);
+const PurchaseRequestDialog = defineAsyncComponent(() =>
+  import('../ItemTransactionsDialog/PurchaseRequestDialog.vue')
+);
 
 export default {
   name: 'BillOfQuantityDialog',

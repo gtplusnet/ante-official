@@ -176,12 +176,21 @@
 </style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
 import GCard from "../../../components/shared/display/GCard.vue";
 import GTable from "../../../components/shared/display/GTable.vue";
-import SupplierPriceUpdateHistoryDialog from '../SupplierPriceUpdateHistoryDialog.vue';
-import ItemReceipt from '../ItemReceipt/ItemReceipt.vue';
-import ItemCreateEditDialog from '../ItemCreateEditDialog/ItemCreateEditDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const SupplierPriceUpdateHistoryDialog = defineAsyncComponent(() =>
+  import('../SupplierPriceUpdateHistoryDialog.vue')
+);
+const ItemReceipt = defineAsyncComponent(() =>
+  import('../ItemReceipt/ItemReceipt.vue')
+);
+const ItemCreateEditDialog = defineAsyncComponent(() =>
+  import('../ItemCreateEditDialog/ItemCreateEditDialog.vue')
+);
 
 export default {
   name: 'ItemInformationDialog',

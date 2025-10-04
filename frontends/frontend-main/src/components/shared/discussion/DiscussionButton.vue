@@ -17,12 +17,16 @@
 </template>
 
 <script lang="ts">
-import { PropType, ref, computed, onMounted, onUnmounted } from 'vue';
-import DiscussionDialog from './DiscussionDialog.vue';
+import { PropType, ref, computed, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
 import { DiscussionProps, DiscussionModule } from './DiscussionProps';
 import { useDiscussionStore } from 'src/stores/discussionStore';
 import { useSocketStore } from 'src/stores/socketStore';
 import bus from 'src/bus';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const DiscussionDialog = defineAsyncComponent(() =>
+  import('./DiscussionDialog.vue')
+);
 
 export default {
   name: 'DiscussionButton',
