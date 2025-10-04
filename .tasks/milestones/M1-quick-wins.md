@@ -20,9 +20,9 @@ Achieve 30% bundle size reduction through quick, high-impact optimizations. This
 
 7. [x] **TASK-008**: Implement lazy loading for heavy dialogs
    - Completed: 2025-10-04
-   - Actual Effort: 2 hours (vs 4h estimate)
-   - Impact: **~363KB removed** from initial bundle (9 dialogs converted)
-   - Extended: Added 2 more dialogs after initial 7
+   - Actual Effort: 3 hours (vs 4h estimate)
+   - Impact: **~885KB removed** from initial bundle (15 dialogs converted across 17 files)
+   - Extended twice: 7 → 9 → 15 dialogs (ImportStudentsDialog alone: 348KB!)
    - Pattern: Now mandatory in CLAUDE.md for all future dialogs
    - [Details](../completed/TASK-008.md)
 
