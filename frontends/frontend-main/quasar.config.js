@@ -149,12 +149,18 @@ module.exports = configure(function (/* ctx */) {
                       return 'vendor-quasar';
                     }
 
-                    // Charts (already lazy loaded in boot)
-                    if (id.includes('apexcharts') || id.includes('vue3-apexcharts')) {
-                      return 'vendor-charts';
+                    // Charts - IMPORTANT: Separate Vue wrappers from core libs
+                    if (id.includes('vue3-apexcharts')) {
+                      return 'vendor-charts-vue'; // Vue wrapper - loads after vue-core
+                    }
+                    if (id.includes('apexcharts')) {
+                      return 'vendor-charts-core'; // Pure JS lib - no Vue dependency
+                    }
+                    if (id.includes('@fullcalendar/vue3')) {
+                      return 'vendor-calendar-vue'; // Vue wrapper
                     }
                     if (id.includes('@fullcalendar')) {
-                      return 'vendor-calendar';
+                      return 'vendor-calendar-core'; // Core library
                     }
 
                     // Heavy libraries (lazy loaded on-demand)
