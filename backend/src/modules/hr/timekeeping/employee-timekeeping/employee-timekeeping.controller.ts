@@ -167,6 +167,14 @@ export class EmployeeTimekeepingController {
     );
   }
 
+  @Get('cutoff-date-range-lite')
+  async employeeTimekeepingCutoffDateRangeLite(@Res() response: Response) {
+    return this.utilityService.responseHandler(
+      this.employeeTimekeepingService.getEmployeeTimekeepingCutoffDateRangeLite(),
+      response,
+    );
+  }
+
   @Get('employee')
   async employeeTimekeepingInfo(
     @Query() params: EmployeeTimekeepingDTO,

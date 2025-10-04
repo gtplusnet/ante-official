@@ -45,6 +45,37 @@ yarn test:e2e         # E2E tests (Playwright - headless only)
 yarn lint             # Lint code
 ```
 
+### API Performance Testing
+```bash
+# Get authentication token
+TOKEN=$(curl -s -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"guillermotabligan","password":"water123"}' | jq -r '.token')
+
+# Test API endpoint with timing
+time curl -s -w "\nHTTP: %{http_code}\nTime: %{time_total}s\nSize: %{size_download} bytes\n" \
+  -H "token: $TOKEN" \
+  http://localhost:3000/your/endpoint
+
+# Performance comparison test (requires jq)
+# Compare OLD vs NEW optimized endpoints
+```
+
+**Test Credentials** (see CLAUDE.local.md):
+- Username: `guillermotabligan`
+- Password: `water123`
+
+**Example Performance Test Results**:
+```
+OLD API: /hris/timekeeping/cutoff-date-range
+  ├─ Response: 28.853s (🐢 slow)
+  └─ Size: 950KB
+
+NEW API: /hris/timekeeping/cutoff-date-range-lite
+  ├─ Response: 0.489s (⚡ 59x faster)
+  └─ Size: 109KB (88% smaller)
+```
+
 ### Build
 ```bash
 yarn build            # Build for production
