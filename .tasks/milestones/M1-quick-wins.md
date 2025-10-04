@@ -3,7 +3,7 @@
 **Status**: 🟡 In Progress
 **Target Date**: 2025-10-11
 **Started**: 2025-10-04
-**Progress**: 40% (4/10 tasks)
+**Progress**: 30% (3/10 tasks - TASK-003 reverted)
 
 ---
 
@@ -31,10 +31,12 @@ Achieve 30% bundle size reduction through quick, high-impact optimizations. This
    - Impact: 704KB+ initial bundle reduction
    - [Details](../completed/TASK-002.md)
 
-3. [x] **TASK-003**: Implement aggressive vendor code splitting
+3. [x] **TASK-003**: Implement aggressive vendor code splitting ⚠️ **REVERTED**
    - Completed: 2025-10-04
-   - Actual Effort: ~2 hours
-   - Impact: **76% bundle reduction (1.1MB → 268KB)!**
+   - Reverted: 2025-10-04 (TDZ errors in production)
+   - Actual Effort: ~2 hours + ~4 hours debugging
+   - Impact: ~~76% bundle reduction~~ Reverted to baseline (~1.1MB)
+   - Lesson: Aggressive code splitting causes Vue TDZ errors
    - [Details](../completed/TASK-003.md)
 
 4. [x] **TASK-004**: Add bundle analyzer to build process

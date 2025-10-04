@@ -485,3 +485,72 @@ No additional Vercel config needed for code splitting.
 ---
 
 **Notes**: This is the most impactful optimization in Phase 1. The 76% reduction (1.1MB → 268KB) in initial bundle dramatically improves user experience. The chunking strategy successfully split vendor libraries, application modules, and shared components. While 6 chunks are slightly over 500KB, they are acceptable for their content (UI framework, charts, PDFs). Monitor bundle analyzer output in TASK-004 to ensure chunks are well-balanced.
+
+---
+
+## ⚠️ REVERTED (2025-10-04)
+
+**Status Update**: This task was successfully implemented but subsequently reverted due to critical production issues.
+
+### Reason for Revert
+
+The aggressive code splitting caused **Temporal Dead Zone (TDZ) errors** in production:
+- "Cannot access 'fv' before initialization"
+- "Cannot access 'gt' before initialization"
+- "pt is not a function"
+- "Cannot access 'Fe' before initialization"
+- "Cannot access 'ot' before initialization"
+
+### Root Cause
+
+Vite's automatic bundling behavior was inlining Vue's reactivity system into async chunks (vendor-other, component-dialogs, component-media-library, module-asset). When these chunks loaded asynchronously, circular dependencies caused initialization order issues that couldn't be resolved through manualChunks configuration alone.
+
+### What Was Tried (All Failed)
+1. Returning `undefined` for Vue/Quasar in manualChunks
+2. Separating @vue/* packages
+3. Removing vendor-other catch-all
+4. Disabling component-dialogs splitting
+5. Disabling ALL component splitting
+6. Modifying optimizeDeps configuration
+
+### Resolution
+
+**Reverted to pre-TASK-003 configuration** (commit: 5473eed):
+- Simple vendor chunking (only in low-memory mode)
+- Main bundle: ~1.1MB (back to original size)
+- Kept `lazy-components` boot file (safe optimization from TASK-002)
+- Kept bundle analyzer (development tool from TASK-004)
+
+### Current State
+
+✅ **Application Working**: https://frontend-main-eight-tau.vercel.app
+✅ **No TDZ Errors**: Production stable
+✅ **Build Time**: 29 seconds
+📦 **Bundle Size**: ~1.1MB (original size restored)
+
+### Lessons Learned
+
+1. **Vite's automatic behavior**: Cannot easily control Vue's reactivity bundling through manualChunks alone
+2. **Trade-off**: Aggressive code splitting can introduce initialization order issues
+3. **Stability > Size**: Better to have a working 1.1MB bundle than a broken optimized bundle
+4. **Incremental approach**: Should optimize cautiously and test thoroughly before deploying
+
+### Future Optimization Strategy
+
+Consider safer alternatives:
+1. ✅ Keep lazy-loading for heavy libraries (charts, excel, pdf) - **SAFE**
+2. ✅ Keep module-based page splitting - **SAFE**
+3. ❌ Avoid aggressive vendor chunking that splits Vue dependencies - **RISKY**
+4. 🔍 Investigate Vite 5+ with better code splitting support
+5. 🔍 Consider Module Federation as alternative to manual chunking
+
+### Impact on Milestone
+
+- **M1 Quick Wins Progress**: 30% → 30% (TASK-003 reverted, no progress change)
+- **Bundle Reduction**: 76% achievement reversed, back to baseline
+- **Next Focus**: Move to safer P1 optimizations (compression, console.log removal, image optimization)
+
+---
+
+**Final Status**: ❌ **REVERTED** (Working but reverted due to production issues)
+**Recommendation**: Do not re-attempt until Vite 5+ migration or Module Federation implementation
