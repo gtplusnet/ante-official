@@ -45,6 +45,7 @@ import {
   TimekeepingDataResponse,
   EmployeeTimekeepingTotal,
   CutoffDateRangeResponse,
+  CutoffDateRangeLiteResponse,
   RawTimeInOutResponse,
   TimekeepingLogResponse,
   TimekeepingOverrideResponse,
@@ -769,6 +770,21 @@ export class EmployeeTimekeepingService {
     await this.cutoffConfigurationService.populateDateRange();
     const response: CutoffDateRangeResponse[] =
       await this.cutoffConfigurationService.getDateRangeList('TIMEKEEPING');
+    return response;
+  }
+
+  /**
+   * Lightweight version of getEmployeeTimekeepingCutoffDateRange
+   * Optimized for performance - uses single query with join
+   * SKIPS populateDateRange() to avoid slow sequential queries
+   */
+  async getEmployeeTimekeepingCutoffDateRangeLite(): Promise<
+    CutoffDateRangeLiteResponse[]
+  > {
+    // PERFORMANCE: Skip populateDateRange() - it's too slow (28s for 109 records)
+    // populateDateRange() runs on a scheduler, we just read existing data
+    const response: CutoffDateRangeLiteResponse[] =
+      await this.cutoffConfigurationService.getDateRangeListLite('TIMEKEEPING');
     return response;
   }
 

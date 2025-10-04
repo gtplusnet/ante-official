@@ -38,6 +38,7 @@ import CutoffPeriodTypeReference from '../../../../reference/cutoff-period.type-
 import {
   CurrencyFormat,
   CutoffDateRangeResponse,
+  CutoffDateRangeLiteResponse,
 } from '../../../../shared/response';
 import { QueueService } from '@infrastructure/queue/queue/queue.service';
 
@@ -81,6 +82,95 @@ export class CutoffConfigurationService {
         return await this.formateDateRangeResponse(dateRange);
       }),
     );
+  }
+
+  /**
+   * Lightweight version of getDateRangeList optimized for performance
+   * Uses single query with join and minimal formatting
+   * Returns only essential fields for list views
+   */
+  async getDateRangeListLite(
+    status: CutoffDateRangeStatus,
+  ): Promise<CutoffDateRangeLiteResponse[]> {
+    // Single query with Cutoff join to avoid N+1
+    const data = await this.prisma.cutoffDateRange.findMany({
+      where: {
+        status,
+        cutoff: {
+          companyId: this.utilityService.companyId,
+          isDeleted: false,
+        },
+      },
+      include: {
+        cutoff: true, // Join cutoff data in single query
+      },
+      orderBy: [{ processingDate: 'desc' }, { cutoffId: 'desc' }],
+    });
+
+    // Format responses - minimal formatting, no currency conversion
+    return data.map((dateRange) => this.formateDateRangeResponseLite(dateRange));
+  }
+
+  /**
+   * Lightweight formatter for cutoff date ranges
+   * Skips expensive operations like formatCurrency and queue lookups
+   */
+  private formateDateRangeResponseLite(
+    data: CutoffDateRange & { cutoff: Cutoff },
+  ): CutoffDateRangeLiteResponse {
+    const startDate = this.utilityService.formatDate(data.startDate);
+    const endDate = this.utilityService.formatDate(data.endDate);
+    const processingDate = this.utilityService.formatDate(data.processingDate);
+    const cutoffPeriodType = CutoffPeriodTypeReference.find(
+      (type) => type.key === data.cutoffPeriodType,
+    );
+    const label = `${startDate.dateFull} - ${endDate.dateFull} (${data.cutoff.cutoffCode})`;
+
+    // Calculate active status
+    const currentDate = moment();
+    const isActive =
+      currentDate.isSameOrAfter(moment(data.startDate), 'day') &&
+      currentDate.isSameOrBefore(moment(data.endDate), 'day');
+
+    // Determine date range status
+    let dateRangeStatus: 'Past Due' | 'Current' | 'On Process';
+    if (currentDate.isAfter(moment(data.processingDate), 'day')) {
+      dateRangeStatus = 'Past Due';
+    } else if (isActive) {
+      dateRangeStatus = 'Current';
+    } else {
+      dateRangeStatus = 'On Process';
+    }
+
+    const response: CutoffDateRangeLiteResponse = {
+      key: data.id,
+      label,
+      cutoffId: data.cutoff.id,
+      cutoffCode: data.cutoff.cutoffCode,
+      startDate,
+      endDate,
+      processingDate,
+      cutoffPeriodType,
+      status: data.status,
+      isActive,
+      dateRangeStatus,
+    };
+
+    // Only include non-zero totals (save bandwidth)
+    if (data.totalNetPay) response.totalNetPay = data.totalNetPay;
+    if (data.totalGrossPay) response.totalGrossPay = data.totalGrossPay;
+    if (data.totalBasicPay) response.totalBasicPay = data.totalBasicPay;
+    if (data.totalDeduction) response.totalDeduction = data.totalDeduction;
+    if (data.totalEarningOvertime)
+      response.totalEarningOvertime = data.totalEarningOvertime;
+
+    // Queue flags (no MongoDB queries, just boolean checks)
+    if (data.timekeepingProcessingQueueId)
+      response.hasTimekeepingQueue = true;
+    if (data.payrollProcessingQueueId) response.hasPayrollQueue = true;
+    if (data.payslipProcessingQueueId) response.hasPayslipQueue = true;
+
+    return response;
   }
 
   async getDateRangeListByUserPayrollGroup(
@@ -550,25 +640,32 @@ export class CutoffConfigurationService {
       dates = [...dates, ...cutoffDatesWithId];
     }
 
-    for (const cutoffDate of dates) {
-      const { dateRangeCode, fromDate, toDate, releaseDate, cutoffId } =
-        cutoffDate;
-      const cutoffData = await this.prisma.cutoffDateRange.findUnique({
-        where: { id: cutoffDate.dateRangeCode },
-      });
+    // OPTIMIZATION: Batch check existing records instead of 109 sequential queries
+    const dateRangeCodes = dates.map((d) => d.dateRangeCode);
+    const existingRecords = await this.prisma.cutoffDateRange.findMany({
+      where: { id: { in: dateRangeCodes } },
+      select: { id: true },
+    });
+    const existingIds = new Set(existingRecords.map((r) => r.id));
 
-      if (!cutoffData) {
-        await this.prisma.cutoffDateRange.create({
-          data: {
-            id: dateRangeCode,
-            cutoffId: cutoffId,
-            startDate: fromDate.raw,
-            endDate: toDate.raw,
-            processingDate: releaseDate.raw,
-            cutoffPeriodType: cutoffDate.cutoffPeriodType,
-          },
-        });
-      }
+    // Filter only missing records
+    const missingDates = dates.filter(
+      (d) => !existingIds.has(d.dateRangeCode),
+    );
+
+    // OPTIMIZATION: Batch insert missing records (if any)
+    if (missingDates.length > 0) {
+      await this.prisma.cutoffDateRange.createMany({
+        data: missingDates.map((cutoffDate) => ({
+          id: cutoffDate.dateRangeCode,
+          cutoffId: cutoffDate.cutoffId,
+          startDate: cutoffDate.fromDate.raw,
+          endDate: cutoffDate.toDate.raw,
+          processingDate: cutoffDate.releaseDate.raw,
+          cutoffPeriodType: cutoffDate.cutoffPeriodType,
+        })),
+        skipDuplicates: true,
+      });
     }
   }
   async createCutOff(data: CutoffUpdateDTO) {

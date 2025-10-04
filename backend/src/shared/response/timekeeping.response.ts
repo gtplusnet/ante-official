@@ -263,6 +263,34 @@ export interface CutoffDateRangeResponse {
   payslipQueueResponse?: QueueResponse;
 }
 
+/**
+ * Lightweight cutoff date range response for list views
+ * Optimized for performance - returns only essential fields with minimal formatting
+ */
+export interface CutoffDateRangeLiteResponse {
+  key: string;
+  label: string;
+  cutoffId: number;
+  cutoffCode: string;
+  startDate: DateFormat;
+  endDate: DateFormat;
+  processingDate: DateFormat;
+  cutoffPeriodType: CutoffPeriodTypeResponse;
+  status: CutoffDateRangeStatus;
+  isActive: boolean;
+  dateRangeStatus: 'Past Due' | 'Current' | 'On Process';
+  // Optional totals - only included if non-zero (raw numbers, not formatted)
+  totalNetPay?: number;
+  totalGrossPay?: number;
+  totalBasicPay?: number;
+  totalDeduction?: number;
+  totalEarningOvertime?: number;
+  // Queue processing flags
+  hasTimekeepingQueue?: boolean;
+  hasPayrollQueue?: boolean;
+  hasPayslipQueue?: boolean;
+}
+
 export interface CutoffPeriodTypeResponse {
   key: CutoffPeriodType;
   label: string;
