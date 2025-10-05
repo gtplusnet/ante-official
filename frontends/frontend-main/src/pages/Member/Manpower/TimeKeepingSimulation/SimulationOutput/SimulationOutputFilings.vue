@@ -125,11 +125,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted } from 'vue';
+import { defineComponent, defineAsyncComponent, ref, computed, onMounted } from 'vue';
 import { api } from 'src/boot/axios';
-import FilingDetailsDialog from './FilingDetailsDialog.vue';
 import { date } from 'quasar';
 import { FilingResponse } from 'src/types/filing.types';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const FilingDetailsDialog = defineAsyncComponent(() =>
+  import('./FilingDetailsDialog.vue')
+);
 
 export default defineComponent({
   name: 'SimulationOutputFilings',

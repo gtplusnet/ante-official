@@ -8,9 +8,13 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue';
+import { defineComponent, defineAsyncComponent, ref, computed } from 'vue';
 import { useQuasar } from 'quasar';
-import ManpowerSelectMultipleEmployeeDialog from '../../dialogs/configuration/ManpowerSelectMultipleEmployeeDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ManpowerSelectMultipleEmployeeDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerSelectMultipleEmployeeDialog.vue')
+);
 
 export default defineComponent({
   name: 'AddTeamMemberDialog',

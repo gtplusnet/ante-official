@@ -245,11 +245,20 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { date } from 'quasar';
-import TimekeepingImportErrorsDialog from './TimekeepingImportErrorsDialog.vue';
-import TimekeepingImportSuccessDialog from './TimekeepingImportSuccessDialog.vue';
-import TimekeepingImportEmployeesDialog from './TimekeepingImportEmployeesDialog.vue';
 import TemplateDialog from 'src/components/dialog/TemplateDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TimekeepingImportErrorsDialog = defineAsyncComponent(() =>
+  import('./TimekeepingImportErrorsDialog.vue')
+);
+const TimekeepingImportSuccessDialog = defineAsyncComponent(() =>
+  import('./TimekeepingImportSuccessDialog.vue')
+);
+const TimekeepingImportEmployeesDialog = defineAsyncComponent(() =>
+  import('./TimekeepingImportEmployeesDialog.vue')
+);
 
 export default {
   name: 'TimekeepingImportHistoryDialog',

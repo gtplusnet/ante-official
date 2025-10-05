@@ -85,7 +85,7 @@
 </template>
 
 <script lang="ts">
-import { ref, computed, watch, onMounted, getCurrentInstance } from 'vue';
+import { defineAsyncComponent, ref, computed, watch, onMounted, getCurrentInstance } from 'vue';
 import { useQuasar, date } from 'quasar';
 import GlobalWidgetCard from 'src/components/shared/global/GlobalWidgetCard.vue';
 import GlobalWidgetCardBox from 'src/components/shared/global/GlobalWidgetCardBox.vue';
@@ -93,7 +93,11 @@ import GlobalWidgetCardBoxTitle from 'src/components/shared/global/GlobalWidgetC
 import GlobalWidgetPagination from 'src/components/shared/global/GlobalWidgetPagination.vue';
 import GlobalWidgetTab from 'src/components/shared/global/GlobalWidgetTab.vue';
 import GlobalWidgetCardBoxSubtitle from 'src/components/shared/global/GlobalWidgetCardBoxSubtitle.vue';
-import FilingApprovalDialog from '../../../../../components/dialog/FilingApprovalDialog/FilingApprovalDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const FilingApprovalDialog = defineAsyncComponent(() =>
+  import('../../../../../components/dialog/FilingApprovalDialog/FilingApprovalDialog.vue')
+);
 
 interface Request {
   id: number;

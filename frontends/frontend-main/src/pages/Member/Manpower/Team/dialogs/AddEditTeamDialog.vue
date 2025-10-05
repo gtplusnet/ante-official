@@ -130,12 +130,16 @@
 </style>
 
 <script lang="ts">
-import { defineComponent, ref, getCurrentInstance, watch, computed } from 'vue';
+import { defineComponent, defineAsyncComponent, ref, getCurrentInstance, watch, computed } from 'vue';
 import { QDialog, useQuasar, QTableColumn } from 'quasar';
 import TemplateDialog from 'src/components/dialog/TemplateDialog.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
 import GInput from 'src/components/shared/form/GInput.vue';
-import ManpowerSelectMultipleEmployeeDialog from '../../dialogs/configuration/ManpowerSelectMultipleEmployeeDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ManpowerSelectMultipleEmployeeDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerSelectMultipleEmployeeDialog.vue')
+);
 
 export default defineComponent({
   name: 'AddEditTeamDialog',

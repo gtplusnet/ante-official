@@ -46,10 +46,16 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, onUnmounted, getCurrentInstance } from 'vue';
+import { defineComponent, defineAsyncComponent, ref, computed, onMounted, onUnmounted, getCurrentInstance } from 'vue';
 import GlobalWidgetCounter from '../../../../../components/shared/global/GlobalWidgetCounter.vue';
-import PendingApprovalsDialog from '../../dialogs/PendingApprovalsDialog.vue';
-import CutoffDatesDialog from '../../dialogs/CutoffDatesDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const PendingApprovalsDialog = defineAsyncComponent(() =>
+  import('../../dialogs/PendingApprovalsDialog.vue')
+);
+const CutoffDatesDialog = defineAsyncComponent(() =>
+  import('../../dialogs/CutoffDatesDialog.vue')
+);
 import { useManpowerDashboardStore } from '../../../../../stores/manpowerDashboard';
 import { useTimekeepingStore } from '../../../../../stores/timekeeping.store';
 import { DashboardAttendanceService } from '../../../../../services/dashboard-attendance.service';

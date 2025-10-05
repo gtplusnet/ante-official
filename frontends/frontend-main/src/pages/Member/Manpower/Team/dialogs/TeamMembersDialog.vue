@@ -100,12 +100,16 @@
 </style>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue';
+import { defineComponent, defineAsyncComponent, ref, computed } from 'vue';
 import { QDialog, useQuasar, QTableColumn } from 'quasar';
 import TemplateDialog from 'src/components/dialog/TemplateDialog.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
 import GInput from 'src/components/shared/form/GInput.vue';
-import AddTeamMemberDialog from './AddTeamMemberDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddTeamMemberDialog = defineAsyncComponent(() =>
+  import('./AddTeamMemberDialog.vue')
+);
 
 interface TeamMember {
   id: string;

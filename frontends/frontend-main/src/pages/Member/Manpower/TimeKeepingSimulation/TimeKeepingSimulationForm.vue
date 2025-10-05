@@ -71,14 +71,18 @@
 </template>
 
 <script lang="ts">
-import { ref, reactive, onMounted, Ref } from 'vue';
+import { defineAsyncComponent, ref, reactive, onMounted, Ref } from 'vue';
 import { api } from 'src/boot/axios';
-import TimeKeepingSimulationOutputDialog from './TimeKeepingSimulationOutputDialog.vue';
 import { CutoffDateRangeResponse, TimeKeepingComputeResponseData, TimekeepingLogResponse } from '@shared/response/timekeeping.response';
 import { handleAxiosError } from "../../../../utility/axios.error.handler";
 import { AxiosError } from 'axios';
 import { useQuasar } from 'quasar';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TimeKeepingSimulationOutputDialog = defineAsyncComponent(() =>
+  import('./TimeKeepingSimulationOutputDialog.vue')
+);
 
 export default {
   name: 'TimeKeepingSimulationForm',
