@@ -6,31 +6,25 @@ This directory contains custom slash commands for the ANTE ERP project.
 
 ### Trello Workflow Commands
 
-#### `/trello-todo`
-**Description**: List all tasks in Trello "To Do" list
-**Usage**: `/trello-todo`
-**Output**: Formatted table of pending tasks with priorities and due dates
+#### `/trello-task`
+**Description**: Complete Trello task workflow (list, start, create PR)
+**Usage**: `/trello-task`
+**Interactive Menu**:
+1. 📋 List tasks in "To Do"
+2. 🚀 Start working on a task
+3. 📝 Complete task and create PR
 
-#### `/trello-start`
-**Description**: Start working on a Trello task (interactive workflow)
-**Usage**: `/trello-start`
 **What it does**:
-- Ensures you're on latest main branch
-- Shows available tasks from "To Do" list
-- Creates feature branch with proper naming
-- Updates Trello card with branch info
-- Moves card to "In Progress"
+- **List**: Shows all tasks in "To Do" with priorities and due dates
+- **Start**: Syncs main, creates feature branch, moves card to "In Progress"
+- **Complete**: Pushes branch, creates PR, moves card to "QA Review"
 
-#### `/trello-pr`
-**Description**: Complete task and create pull request
-**Usage**: `/trello-pr`
-**What it does**:
-- Verifies all changes are committed
-- Pushes branch to origin
-- Creates PR with proper template
-- Updates Trello card with PR link
-- Moves card to "QA Review"
-- Adds QA checklist to card
+**Features**:
+- Interactive workflow with menu selection
+- Automatic branch naming (feat/enhancement/bug)
+- Trello card updates with development info
+- PR template generation from card details
+- QA checklist added to card
 
 #### `/trello-review`
 **Description**: Review PR in QA Review and move to Done when merged
@@ -50,28 +44,42 @@ This directory contains custom slash commands for the ANTE ERP project.
 Typical workflow for a task:
 
 ```bash
-# 1. See what tasks are available
-/trello-todo
+# 1. Start the task workflow
+/trello-task
+# → Choose option 1 to list available tasks
+# → Choose option 2 to start working on a task
+# → Branch created, card moved to "In Progress"
 
-# 2. Start working on a task
-/trello-start
-
-# 3. Do your development work...
+# 2. Do your development work...
 # (commit regularly, run tests, etc.)
 
-# 4. Create PR when done
-/trello-pr
+# 3. Complete the task
+/trello-task
+# → Choose option 3 to create PR
+# → PR created, card moved to "QA Review"
 
-# 5. Review PR in QA Review
+# 4. Review and merge
 /trello-review
 # - Reviews code against guidelines (SOLID principles, etc.)
 # - Runs tests (Playwright/unit tests)
 # - Verifies acceptance criteria
-# - Approves/merges PR
+# - Merges PR (source branch preserved)
 # - Moves card to "Done" automatically
+```
 
-# Alternative: Manual review and merge
-# Then move card to "Done" manually on Trello
+**Alternative Workflow** (individual steps):
+```bash
+# List only
+/trello-task → option 1
+
+# Start only
+/trello-task → option 2
+
+# Complete only
+/trello-task → option 3
+
+# Review
+/trello-review
 ```
 
 ## Creating New Commands
