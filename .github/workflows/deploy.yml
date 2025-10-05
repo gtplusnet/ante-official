@@ -10,6 +10,7 @@ on:
       - 'backend/**'
       - 'package.json'
       - 'yarn.lock'
+      - '.github/workflows/deploy.yml'
 
 jobs:
   detect-changes:
