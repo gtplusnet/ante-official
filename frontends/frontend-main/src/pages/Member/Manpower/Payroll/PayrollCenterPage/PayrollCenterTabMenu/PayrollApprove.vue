@@ -60,12 +60,16 @@
 </template>
 
 <script lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch, defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
 import { useQuasar } from 'quasar';
 import { handleAxiosError } from '../../../../../../utility/axios.error.handler';
 import { AxiosError } from 'axios';
-import PayrollApprovalDialog from '../../../dialogs/payroll/PayrollApprovalDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const PayrollApprovalDialog = defineAsyncComponent(() =>
+  import('../../../dialogs/payroll/PayrollApprovalDialog.vue')
+);
 
 interface PendingApproval {
   taskId: string;

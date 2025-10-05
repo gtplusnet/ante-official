@@ -179,13 +179,17 @@
 import { DeductionConfigurationDataResponse } from "@shared/response";
 import { useQuasar } from "quasar";
 import { api } from "src/boot/axios";
-import AddEditDeductionTypeDialog from "../../dialogs/configuration/ManpowerAddEditDeductionTypeDialog.vue";
 import GCard from "../../../../../components/shared/display/GCard.vue";
 import { handleAxiosError } from "../../../../../utility/axios.error.handler";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, defineAsyncComponent } from "vue";
 import ExpandedNavPageContainer from "../../../../../components/shared/ExpandedNavPageContainer.vue";
 import { useRouter } from "vue-router";
 import GButton from "src/components/shared/buttons/GButton.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditDeductionTypeDialog = defineAsyncComponent(() =>
+  import("../../dialogs/configuration/ManpowerAddEditDeductionTypeDialog.vue")
+);
 
 export default {
   name: "DeductionMenuPage",

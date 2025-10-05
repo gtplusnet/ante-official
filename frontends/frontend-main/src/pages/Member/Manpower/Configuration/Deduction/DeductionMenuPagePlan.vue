@@ -79,15 +79,21 @@ import { useQuasar } from 'quasar';
 import { useRoute } from 'vue-router';
 import GCard from "../../../../../components/shared/display/GCard.vue";
 import ExpandedNavPageContainer from '../../../../../components/shared/ExpandedNavPageContainer.vue';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, defineAsyncComponent } from 'vue';
 import { handleAxiosError } from "../../../../../utility/axios.error.handler";
 import { api } from 'src/boot/axios';
 import { DeductionConfigurationDataResponse } from '@shared/response/deduction-configuration.response';
 import DeductionActiveTable from "../../../../../pages/Member/Manpower/components/tables/ManpowerDeductionActiveTable.vue";
 import DeductionDeactivateTable from "../../../../../pages/Member/Manpower/components/tables/ManpowerDeductionDeactivateTable.vue";
-import CreateDeductionDialog from '../../dialogs/configuration/ManpowerCreateDeductionDialog.vue';
-import ManpowerImportDeductionDialog from '../../dialogs/configuration/ManpowerImportDeductionDialog.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const CreateDeductionDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerCreateDeductionDialog.vue')
+);
+const ManpowerImportDeductionDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerImportDeductionDialog.vue')
+);
 
 export default {
   name: 'DeductionMenuPagePlan',

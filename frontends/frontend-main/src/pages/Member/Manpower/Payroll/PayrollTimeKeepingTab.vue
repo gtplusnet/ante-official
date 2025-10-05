@@ -491,16 +491,24 @@
 
 <script lang="ts">
 import TimeView from '../../../../components/shared/display/TimeView.vue';
-import { computed, ref, Ref, onMounted } from 'vue';
+import { computed, ref, Ref, onMounted, defineAsyncComponent } from 'vue';
 import { CutoffDateRangeResponse, TimekeepingOutputResponse } from '@shared/response';
 import { useEmployeeTimekeepingStore } from '../../../../stores/employee-timekeeping.store';
 import { api } from 'src/boot/axios';
 import { useQuasar } from 'quasar';
 import { handleAxiosError } from '../../../../utility/axios.error.handler';
-import PayrollTimeKeepingDetailsDialog from './PayrollTimeKeepingDetailsDialog.vue';
-import PayrollTimekeepingOverrrideDialog from './PayrollTimekeepingOverrrideDialog.vue';
-import PayrollShiftAdjustmentDialog from './PayrollShiftAdjustmentDialog.vue';
 import bus from 'src/bus';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const PayrollTimeKeepingDetailsDialog = defineAsyncComponent(() =>
+  import('./PayrollTimeKeepingDetailsDialog.vue')
+);
+const PayrollTimekeepingOverrrideDialog = defineAsyncComponent(() =>
+  import('./PayrollTimekeepingOverrrideDialog.vue')
+);
+const PayrollShiftAdjustmentDialog = defineAsyncComponent(() =>
+  import('./PayrollShiftAdjustmentDialog.vue')
+);
 
 export default {
   name: 'PayrollTimeKeepingTab',

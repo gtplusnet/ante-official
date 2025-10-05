@@ -73,7 +73,7 @@
 <style scoped src="./AllowanceMenuPage.scss"></style>
 
 <script lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, defineAsyncComponent } from 'vue';
 import ExpandedNavPageContainer from '../../../../../components/shared/ExpandedNavPageContainer.vue';
 import GCard from "../../../../../components/shared/display/GCard.vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
@@ -84,8 +84,14 @@ import { useRoute } from 'vue-router';
 import { AllowanceConfigurationDataResponse } from "@shared/response";
 import AllowanceActiveTable from "../../../../../pages/Member/Manpower/components/tables/ManpowerAllowanceActiveTable.vue";
 import AllowanceDeactivateTable from "../../../../../pages/Member/Manpower/components/tables/ManpowerAllowanceDeactivateTable.vue";
-import CreateAllowancePlanDialog from '../../dialogs/configuration/ManpowerCreateAllowancePlanDialog.vue';
-import ManpowerImportAllowanceDialog from '../../dialogs/configuration/ManpowerImportAllowanceDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const CreateAllowancePlanDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerCreateAllowancePlanDialog.vue')
+);
+const ManpowerImportAllowanceDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerImportAllowanceDialog.vue')
+);
 
 export default {
   name: 'AllowanceMenuPagePlan',
