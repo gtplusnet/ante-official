@@ -231,16 +231,23 @@ Add this summary as:
 ### Step 8: Handle Review Outcome
 
 #### If Approved (all checks pass):
-1. Ask user: "Ready to approve and merge PR?"
-2. If yes:
+1. Post review summary as comment on PR:
    ```bash
-   # Approve PR
-   gh pr review [PR-number] --approve --body "[Review summary]"
+   gh pr comment [PR-number] --body "[Review summary]"
+   ```
+2. Ask user: "Ready to merge PR?"
+3. If yes:
+   ```bash
+   # Try to approve PR (will fail if reviewing your own PR)
+   gh pr review [PR-number] --approve --body "[Review summary]" 2>/dev/null || true
 
    # Merge PR (squash and merge)
+   # Note: Approval not required if repository doesn't have branch protection
    gh pr merge [PR-number] --squash --delete-branch
    ```
-3. Proceed to Step 9
+4. Proceed to Step 9
+
+**Note**: GitHub doesn't allow approving your own PR. However, you can still merge without approval if the repository settings don't require it (no branch protection rules).
 
 #### If Changes Requested:
 1. Add review comment to PR:
