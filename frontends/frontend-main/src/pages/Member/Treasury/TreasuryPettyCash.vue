@@ -29,11 +29,16 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import TreasuryHeader from './TreasuryHeader.vue';
 import GCard from "../../../components/shared/display/GCard.vue";
 import ExpandedNavPageContainer from '../../../components/shared/ExpandedNavPageContainer.vue';
 import PettyCashHoldersTable from "./components/tables/TreasuryPettyCashHoldersTable.vue";
-import PettyCashAssignmentDialog from "./dialogs/PettyCashAssignmentDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const PettyCashAssignmentDialog = defineAsyncComponent(() =>
+  import("./dialogs/PettyCashAssignmentDialog.vue")
+);
 
 export default {
   name: 'TreasuryPettyCash',

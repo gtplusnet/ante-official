@@ -50,9 +50,16 @@
 </template>
 
 <script>
-import ViewDetailsCollectionByProjectDialog from '../../dialogs/TreasuryViewDetailsCollectionByProjectDialog.vue';
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../../../../components/shared/display/GTable.vue";
-import ReceivePaymentCollectionLogsTableDialog from '../../dialogs/TreasuryReceivePaymentCollectionLogsTableDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ViewDetailsCollectionByProjectDialog = defineAsyncComponent(() =>
+  import('../../dialogs/TreasuryViewDetailsCollectionByProjectDialog.vue')
+);
+const ReceivePaymentCollectionLogsTableDialog = defineAsyncComponent(() =>
+  import('../../dialogs/TreasuryReceivePaymentCollectionLogsTableDialog.vue')
+);
 
 export default {
   name: 'CollectionLogsTable',

@@ -60,12 +60,21 @@
 <style scoped src="../AssetDeliveries.scss"></style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import ExpandedNavPageContainer from '../../../../components/shared/ExpandedNavPageContainer.vue';
 import GTable from '../../../../components/shared/display/GTable.vue';
 import GCard from '../../../../components/shared/display/GCard.vue';
-import ItemCreateEditDialog from '../../../../components/dialog/ItemCreateEditDialog/ItemCreateEditDialog.vue';
-import ItemReceipt from '../../../../components/dialog/ItemReceipt/ItemReceipt.vue';
-import ReceiveItemDialog from '../../../../components/dialog/ItemTransactionsDialog/ReceiveItemDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ItemCreateEditDialog = defineAsyncComponent(() =>
+  import('../../../../components/dialog/ItemCreateEditDialog/ItemCreateEditDialog.vue')
+);
+const ItemReceipt = defineAsyncComponent(() =>
+  import('../../../../components/dialog/ItemReceipt/ItemReceipt.vue')
+);
+const ReceiveItemDialog = defineAsyncComponent(() =>
+  import('../../../../components/dialog/ItemTransactionsDialog/ReceiveItemDialog.vue')
+);
 
 export default {
   components: {

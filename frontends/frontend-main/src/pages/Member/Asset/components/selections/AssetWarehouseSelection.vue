@@ -20,8 +20,13 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GInput from '../../../../../components/shared/form/GInput.vue';
-import AddEditWarehouseDialog from '../../dialogs/AssetAddEditWarehouseDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditWarehouseDialog = defineAsyncComponent(() =>
+  import('../../dialogs/AssetAddEditWarehouseDialog.vue')
+);
 
 export default {
   name: 'AssetWarehouseSelection',

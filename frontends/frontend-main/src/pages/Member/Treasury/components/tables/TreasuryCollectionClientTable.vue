@@ -35,8 +35,13 @@
 </template>
 
 <script>
-import ViewProjectBreakdownDialog from "../../dialogs/TreasuryViewProjectBreakdownDialog.vue";
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../../../../components/shared/display/GTable.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ViewProjectBreakdownDialog = defineAsyncComponent(() =>
+  import("../../dialogs/TreasuryViewProjectBreakdownDialog.vue")
+);
 
 export default {
   name: 'CollectionLogsTable',

@@ -66,9 +66,16 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../../../../components/shared/display/GTable.vue";
-import EquipmentPartsMaintenanceDialog from '../../dialogs/AssetEquipmentPartsMaintenanceDialog.vue';
-import NextMaintenanceDateAdjustmentDialog from "../../../../../components/dialog/NextMaintenanceDateAdjustmentDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const EquipmentPartsMaintenanceDialog = defineAsyncComponent(() =>
+  import('../../dialogs/AssetEquipmentPartsMaintenanceDialog.vue')
+);
+const NextMaintenanceDateAdjustmentDialog = defineAsyncComponent(() =>
+  import("../../../../../components/dialog/NextMaintenanceDateAdjustmentDialog.vue")
+);
 
 export default {
   name: 'EquipmentPartsTable',

@@ -160,14 +160,25 @@
 <style scoped lang="scss" src="./AssetCanvassDialog.scss"></style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import axios from 'axios';
 import { api } from 'src/boot/axios';
 import GlobalLoader from "../../../../components/shared/common/GlobalLoader.vue";
 import GInput from "../../../../components/shared/form/GInput.vue";
-import CanvassSelectSupplierDialog from './AssetCanvassSelectSupplierDialog.vue';
-import ItemInformationDialog from "../../../../components/dialog/ItemInformationDialog/ItemInformationDialog.vue";
-import SupplierInformationDialog from './AssetSupplierInformationDialog/SupplierInformationDialog.vue';
-import SupplierPriceUpdateHistoryDialog from "../../../../components/dialog/SupplierPriceUpdateHistoryDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const CanvassSelectSupplierDialog = defineAsyncComponent(() =>
+  import('./AssetCanvassSelectSupplierDialog.vue')
+);
+const ItemInformationDialog = defineAsyncComponent(() =>
+  import("../../../../components/dialog/ItemInformationDialog/ItemInformationDialog.vue")
+);
+const SupplierInformationDialog = defineAsyncComponent(() =>
+  import('./AssetSupplierInformationDialog/SupplierInformationDialog.vue')
+);
+const SupplierPriceUpdateHistoryDialog = defineAsyncComponent(() =>
+  import("../../../../components/dialog/SupplierPriceUpdateHistoryDialog.vue")
+);
 
 export default {
   name: 'CanvassDialog',

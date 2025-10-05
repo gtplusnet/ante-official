@@ -31,8 +31,13 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../../../../components/shared/display/GTable.vue";
-import AddEditEquipmentDialog from '../../dialogs/AssetAddEditEquipmentDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditEquipmentDialog = defineAsyncComponent(() =>
+  import('../../dialogs/AssetAddEditEquipmentDialog.vue')
+);
 
 export default {
   name: 'EquipmentTable',

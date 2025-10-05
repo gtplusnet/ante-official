@@ -73,10 +73,17 @@
 
 <script>
 import { api } from 'src/boot/axios';
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../../../components/shared/display/GTable.vue";
 import GlobalLoader from "../../../../components/shared/common/GlobalLoader.vue";
-import AddDeductMoneyDialog from "../../../../components/dialog/AddDeductMoneyDialog.vue";
-import TransferMoneyDialog from "../../../../pages/Member/Asset/dialogs/AssetTransferMoneyDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddDeductMoneyDialog = defineAsyncComponent(() =>
+  import("../../../../components/dialog/AddDeductMoneyDialog.vue")
+);
+const TransferMoneyDialog = defineAsyncComponent(() =>
+  import("../../../../pages/Member/Asset/dialogs/AssetTransferMoneyDialog.vue")
+);
 
 export default {
   name: 'FundAccountTransactionsDialog',

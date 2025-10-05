@@ -118,16 +118,25 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import TreasuryHeader from './TreasuryHeader.vue';
 import GCard from "../../../components/shared/display/GCard.vue";
 import ExpandedNavPageContainer from '../../../components/shared/ExpandedNavPageContainer.vue';
-import PurchaseRequestDialog from "../../../components/dialog/ItemTransactionsDialog/PurchaseRequestDialog.vue";
-import CanvassDialog from "../../../pages/Member/Asset/dialogs/AssetCanvassDialog.vue";
-import SupplierSelectionDialog from "../../../components/dialog/SupplierSelectionDialog.vue";
 import PurchaseOrderTable from "../../../components/tables/PurchaseOrderTable.vue";
 import SupplierTable from "../../../components/tables/SupplierTable.vue";
 import RequestPaymentTable from "../../../pages/Member/Treasury/components/tables/TreasuryRequestPaymentTable.vue";
 import { api } from 'src/boot/axios';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const PurchaseRequestDialog = defineAsyncComponent(() =>
+  import("../../../components/dialog/ItemTransactionsDialog/PurchaseRequestDialog.vue")
+);
+const CanvassDialog = defineAsyncComponent(() =>
+  import("../../../pages/Member/Asset/dialogs/AssetCanvassDialog.vue")
+);
+const SupplierSelectionDialog = defineAsyncComponent(() =>
+  import("../../../components/dialog/SupplierSelectionDialog.vue")
+);
 
 export default {
   name: 'MemberAssetPurchasing',

@@ -227,13 +227,17 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, PropType } from 'vue';
-import MediaLibraryDialog from '../../../../components/shared/MediaLibrary/MediaLibraryDialog.vue';
+import { defineComponent, defineAsyncComponent, ref, computed, onMounted, PropType } from 'vue';
 import AssetMediaItem from './AssetMediaItem.vue';
 import { ModuleType } from 'src/types/media.types';
 import { useMediaLibrary } from '../../../../composables/useMediaLibrary';
 import type { MediaFile } from '../../../../stores/media.store';
 import { date } from 'quasar';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const MediaLibraryDialog = defineAsyncComponent(() =>
+  import('../../../../components/shared/MediaLibrary/MediaLibraryDialog.vue')
+);
 
 export default defineComponent({
   name: 'AssetEquipmentMedia',

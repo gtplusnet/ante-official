@@ -66,12 +66,23 @@
 </style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
 import GTable from "../../../../components/shared/display/GTable.vue";
-import WarehouseInventoryTransactionsDialog from './AssetWarehouseInventoryTransactionsDialog.vue';
-import RefillWriteOffInventoryDialog from "../../../../components/dialog/ItemTransactionsDialog/RefillWriteOffInventoryDialog.vue";
-import TransferStocksDialog from "../../../../components/dialog/ItemTransactionsDialog/TransferStocksDialog.vue";
-import ItemReceipt from "../../../../components/dialog/ItemReceipt/ItemReceipt.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const WarehouseInventoryTransactionsDialog = defineAsyncComponent(() =>
+  import('./AssetWarehouseInventoryTransactionsDialog.vue')
+);
+const RefillWriteOffInventoryDialog = defineAsyncComponent(() =>
+  import("../../../../components/dialog/ItemTransactionsDialog/RefillWriteOffInventoryDialog.vue")
+);
+const TransferStocksDialog = defineAsyncComponent(() =>
+  import("../../../../components/dialog/ItemTransactionsDialog/TransferStocksDialog.vue")
+);
+const ItemReceipt = defineAsyncComponent(() =>
+  import("../../../../components/dialog/ItemReceipt/ItemReceipt.vue")
+);
 
 export default {
   name: 'WarehouseTransactionsDialog',

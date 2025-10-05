@@ -102,9 +102,14 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GInput from "../../../../components/shared/form/GInput.vue";
 import { api, environment } from 'src/boot/axios';
-import AddEditLocationDialog from "../../../../components/dialog/AddEditLocationDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditLocationDialog = defineAsyncComponent(() =>
+  import("../../../../components/dialog/AddEditLocationDialog.vue")
+);
 
 export default {
   name: 'AddEditWarehouseDialog',

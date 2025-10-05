@@ -138,12 +138,21 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import ExpandedNavPageContainer from '../../../../components/shared/ExpandedNavPageContainer.vue';
 import GTable from "../../../../components/shared/display/GTable.vue";
 import GCard from "../../../../components/shared/display/GCard.vue";
-import ItemReceipt from "../../../../components/dialog/ItemReceipt/ItemReceipt.vue";
-import SupplierSelectionDialog from "../../../../components/dialog/SupplierSelectionDialog.vue";
-import PurchaseRequestDialog from "../../../../components/dialog/ItemTransactionsDialog/PurchaseRequestDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ItemReceipt = defineAsyncComponent(() =>
+  import("../../../../components/dialog/ItemReceipt/ItemReceipt.vue")
+);
+const SupplierSelectionDialog = defineAsyncComponent(() =>
+  import("../../../../components/dialog/SupplierSelectionDialog.vue")
+);
+const PurchaseRequestDialog = defineAsyncComponent(() =>
+  import("../../../../components/dialog/ItemTransactionsDialog/PurchaseRequestDialog.vue")
+);
 
 export default {
   name: 'MemberAssetPurchaseRequest',
