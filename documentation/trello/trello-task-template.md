@@ -27,6 +27,8 @@
 - `ante-facial-recognition` - Facial recognition mobile app (Flutter)
 - `user-manual` - User documentation (VitePress)
 
+**Not sure which frontend?** Ask the project manager or team for clarification BEFORE creating the task!
+
 Copy and paste this into your Trello card description:
 
 ```markdown
@@ -48,6 +50,7 @@ So that I can [achieve some goal].
 ### Frontend
 ⚠️ **IMPORTANT:** Specify which frontend app!
 - **Frontend App:** [frontend-main | frontend-gate-app | frontend-guardian-app | ante-facial-recognition | user-manual]
+  - **Not sure?** Ask project manager/team for clarification first!
 - Files: [list files to modify/create]
 - Components: [list components]
 - UI: [any specific UI requirements]
@@ -119,6 +122,7 @@ Before saving your card, verify:
 
 ## Tips
 
+- **Specify the frontend** - We have 5 different frontends! Always specify which one. If unsure, ask for clarification first.
 - **Keep it small** - If task takes >3 days, break it down
 - **Be specific** - What exactly should work when done?
 - **Think errors** - Add acceptance criteria for error cases
