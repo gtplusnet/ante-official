@@ -2,6 +2,18 @@
 
 Automated workflow to review pull requests in QA Review and move to Done when merged.
 
+## Trello Board Configuration
+
+### Board Lists (IDs)
+- **To Do**: 68de5fcf7534f0085373f7f0
+- **In Progress**: 68de5fd2323f4388c651cdef
+- **QA Review**: 68de606c8035e07e7dcd094c
+- **Done**: 68de5fd51be89a62a492b228
+
+### Labels
+- **Rejected**: Red label for rejected PRs (create if doesn't exist)
+- **Needs Revision**: Yellow label for changes requested
+
 ## Instructions
 
 ### Step 1: Find Cards in QA Review
@@ -235,19 +247,80 @@ Add this summary as:
    ```bash
    gh pr review [PR-number] --request-changes --body "[Issues found]"
    ```
-2. Add comment to Trello card with issues
-3. Keep card in "QA Review"
-4. Exit
+2. Add detailed comment to Trello card:
+   ```markdown
+   ⚠️ **Changes Requested**
+
+   **Reviewed on**: [date]
+   **Reviewer**: @[username]
+
+   ## Issues to Address
+
+   ### Code Quality
+   - [Issue 1]
+   - [Issue 2]
+
+   ### Testing
+   - [Issue 1]
+   - [Issue 2]
+
+   ## Next Steps
+   - Address the issues above
+   - Push changes to the same branch
+   - Notify reviewer when ready for re-review
+   ```
+3. Add "Needs Revision" label to card (create if doesn't exist)
+4. Keep card in "QA Review"
+5. Exit
 
 #### If Rejected:
-1. Add review comment to PR
+1. Add review comment to PR with detailed issues:
+   ```bash
+   gh pr review [PR-number] --request-changes --body "[Detailed rejection reasons]"
+   ```
 2. Close PR:
    ```bash
    gh pr close [PR-number]
    ```
-3. Add comment to Trello card
-4. Move card back to "In Progress"
-5. Exit
+3. Add detailed rejection comment to Trello card:
+   ```markdown
+   ❌ **PR Rejected**
+
+   **Reviewed on**: [date]
+   **Reviewer**: @[username]
+   **PR**: [PR-URL]
+
+   ## Rejection Reasons
+
+   ### Code Quality Issues
+   - [List specific coding standard violations]
+   - [SOLID principle violations if any]
+   - [TypeScript/ESLint errors]
+
+   ### Testing Issues
+   - [Test failures]
+   - [Missing tests]
+   - [Manual testing issues]
+
+   ### Acceptance Criteria
+   - [Unmet criteria]
+   - [Edge cases not handled]
+   - [Missing features]
+
+   ### Required Actions
+   1. [Action item 1]
+   2. [Action item 2]
+   3. [Action item 3]
+
+   ## Next Steps
+   - Fix all issues listed above
+   - Run tests locally and verify they pass
+   - Re-submit for review when ready
+   ```
+4. Add "Rejected" label to card (create label if it doesn't exist)
+5. Move card back to "To Do" (ID: 68de5fcf7534f0085373f7f0)
+6. Remove PR link from card description
+7. Exit
 
 ### Step 9: Move Card to Done (Only if PR Merged)
 
@@ -466,6 +539,17 @@ class UserService {
 - If tests fail, document failures and request changes
 - If GitHub CLI not available, provide web URLs for manual review
 - If Trello update fails, provide manual steps
+- If label creation fails, note it in comment and continue with review
+- If card cannot be moved between lists, provide manual move instructions
+
+### Label Management
+When adding labels to Trello cards:
+1. Check if label exists on the board
+2. If not, create the label with appropriate name and color:
+   - "Rejected": Red color
+   - "Needs Revision": Yellow color
+3. Add label to the card
+4. If label operations fail, continue review and note in comment
 
 ## Notes
 
