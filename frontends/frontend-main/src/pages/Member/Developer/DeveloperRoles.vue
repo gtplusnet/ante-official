@@ -34,10 +34,17 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../../components/shared/display/GTable.vue";
-import CreateEditRoleDialog from "../../../pages/Member/Settings/dialogs/SettingsCreateEditRoleDialog.vue";
-import RoleTreeDialog from "../../../pages/Member/Settings/dialogs/SettingsRoleTreeDialog.vue";
 import { api } from 'src/boot/axios';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const CreateEditRoleDialog = defineAsyncComponent(() =>
+  import("../../../pages/Member/Settings/dialogs/SettingsCreateEditRoleDialog.vue")
+);
+const RoleTreeDialog = defineAsyncComponent(() =>
+  import("../../../pages/Member/Settings/dialogs/SettingsRoleTreeDialog.vue")
+);
 
 export default {
   name: 'DeveloperRoles',

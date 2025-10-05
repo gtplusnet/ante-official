@@ -108,16 +108,22 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { defineComponent, ref, defineAsyncComponent } from 'vue';
 import GTable from 'src/components/shared/display/GTable.vue';
 import GCard from 'src/components/shared/display/GCard.vue';
-import ViewGuardianDialog from './dialogs/ViewGuardianDialog.vue';
-import AddEditGuardianDialog from './dialogs/AddEditGuardianDialog.vue';
 import { api } from 'src/boot/axios';
 import { useQuasar } from 'quasar';
 import { AxiosError } from 'axios';
 import type { GuardianResponse } from '@shared/response';
 import ExpandedNavPageContainer from '../../../components/shared/ExpandedNavPageContainer.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ViewGuardianDialog = defineAsyncComponent(() =>
+  import('./dialogs/ViewGuardianDialog.vue')
+);
+const AddEditGuardianDialog = defineAsyncComponent(() =>
+  import('./dialogs/AddEditGuardianDialog.vue')
+);
 
 interface GTableInstance {
   refetch: () => void;

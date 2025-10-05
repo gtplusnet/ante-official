@@ -269,14 +269,18 @@
 </style>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import ProjectCreateDialog from "../../../components/dialog/ProjectCreateDialog.vue";
 import supabaseService from '../../../services/supabase';
 import { useCache } from '../../../composables/useCache';
 import { projectCache, CacheTTL } from '../../../utils/cache/implementations';
 import GlobalLoader from "../../../components/shared/common/GlobalLoader.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ProjectCreateDialog = defineAsyncComponent(() =>
+  import("../../../components/dialog/ProjectCreateDialog.vue")
+);
 
 // Component definition
 defineOptions({

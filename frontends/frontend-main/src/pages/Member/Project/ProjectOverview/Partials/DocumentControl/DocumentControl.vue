@@ -98,14 +98,18 @@
 
 <style scoped src="./DocumentControl.scss"></style>
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted } from 'vue';
+import { defineComponent, ref, computed, onMounted, defineAsyncComponent } from 'vue';
 import GlobalLoader from "src/components/shared/common/GlobalLoader.vue";
-import MediaLibraryDialog from 'src/components/shared/MediaLibrary/MediaLibraryDialog.vue';
 import ProjectDocumentItem from './Partials/ProjectDocumentItem/ProjectDocumentItem.vue';
 import { ModuleType } from 'src/types/media.types';
 import { useMediaLibrary } from 'src/composables/useMediaLibrary';
 import type { MediaFile } from 'src/stores/media.store';
 import { useRoute } from 'vue-router';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const MediaLibraryDialog = defineAsyncComponent(() =>
+  import('src/components/shared/MediaLibrary/MediaLibraryDialog.vue')
+);
 
 export default defineComponent({
   name: 'DocumentControl',

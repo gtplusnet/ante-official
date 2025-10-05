@@ -131,11 +131,15 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, watch } from 'vue';
+import { defineComponent, ref, computed, watch, defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
-import CronBuilderDialog from './CronBuilderDialog.vue';
 import { getCronDescription } from 'src/utils/cronHelper';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const CronBuilderDialog = defineAsyncComponent(() =>
+  import('./CronBuilderDialog.vue')
+);
 
 export default defineComponent({
   name: 'SchedulerAddEditDialog',

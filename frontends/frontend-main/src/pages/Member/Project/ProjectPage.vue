@@ -60,14 +60,22 @@
 </template>
 
 <script lang="ts">
-import { ref } from 'vue';
-import BillOfQuantityDialog from "../../../components/dialog/BillOfQuantity/BillOfQuantityDialog.vue";
+import { ref, defineAsyncComponent } from 'vue';
 import ProjectOverview from './ProjectOverview/ProjectOverview.vue';
-import WorkAccomplishmentDialog from "../../../components/dialog/PWA/WorkAccomplishmentDialog.vue";
-import TaskManagementDialog from "../../../components/dialog/TaskManagementDialog/TaskManagementDialog.vue";
 import ExpandedNavPageContainer from "../../../components/shared/ExpandedNavPageContainer.vue";
 import { useProjectDetails } from '../../../composables/useProjectDetails';
 import { ProjectDataResponse } from "@shared/response";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const BillOfQuantityDialog = defineAsyncComponent(() =>
+  import("../../../components/dialog/BillOfQuantity/BillOfQuantityDialog.vue")
+);
+const WorkAccomplishmentDialog = defineAsyncComponent(() =>
+  import("../../../components/dialog/PWA/WorkAccomplishmentDialog.vue")
+);
+const TaskManagementDialog = defineAsyncComponent(() =>
+  import("../../../components/dialog/TaskManagementDialog/TaskManagementDialog.vue")
+);
 
 export default {
   name: 'ProjectPage',

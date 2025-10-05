@@ -209,7 +209,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, onMounted, computed } from 'vue';
+import { defineComponent, ref, onMounted, computed, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useProjectDetails } from '../../../../composables/useProjectDetails';
 import supabaseService from '../../../../services/supabase';
@@ -227,7 +227,11 @@ import RecentTasksCard from './Widgets/RecentTasksCard.vue';
 import ProjectMetrics from './Widgets/ProjectMetrics.vue';
 import FinancialStandingPartial from './Partials/FinancialStanding/FinancialStandingPartial.vue';
 import ProjectScheduleWidget from '../../Dashboard/ProjectScheduleWidget/ProjectScheduleWidget.vue';
-import TaskManagementDialog from '../../../../components/dialog/TaskManagementDialog/TaskManagementDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TaskManagementDialog = defineAsyncComponent(() =>
+  import('../../../../components/dialog/TaskManagementDialog/TaskManagementDialog.vue')
+);
 
 export default defineComponent({
   name: 'ProjectOverview',
