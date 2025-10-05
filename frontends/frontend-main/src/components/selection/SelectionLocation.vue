@@ -11,6 +11,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GInput from "../../components/shared/form/GInput.vue";
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
