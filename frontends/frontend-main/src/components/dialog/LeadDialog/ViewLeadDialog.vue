@@ -561,11 +561,22 @@ import { APIRequests } from "src/utility/api.handler";
 import { LeadDataResponse } from "@shared/response";
 import { useQuasar } from "quasar";
 import { ref, computed } from "vue";
+import { defineAsyncComponent } from 'vue';
 import { formatWord } from "src/utility/formatter";
-import BillOfQuantityDialog from "../BillOfQuantity/BillOfQuantityDialog.vue";
-import EmailComposeDialog from "../EmailComposeDialog.vue";
-import ProposalManageVersionDialog from "./ProposalManageVersionDialog.vue";
-import AddNoteDialog from "./AddNoteDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const BillOfQuantityDialog = defineAsyncComponent(() =>
+  import('../BillOfQuantity/BillOfQuantityDialog.vue')
+);
+const EmailComposeDialog = defineAsyncComponent(() =>
+  import('../EmailComposeDialog.vue')
+);
+const ProposalManageVersionDialog = defineAsyncComponent(() =>
+  import('./ProposalManageVersionDialog.vue')
+);
+const AddNoteDialog = defineAsyncComponent(() =>
+  import('./AddNoteDialog.vue')
+);
 
 export default {
   name: "ViewLeadDialog",

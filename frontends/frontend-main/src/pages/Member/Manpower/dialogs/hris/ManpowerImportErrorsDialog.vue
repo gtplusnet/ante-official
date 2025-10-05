@@ -224,7 +224,11 @@
 
 <script>
 import { api } from 'src/boot/axios';
-import TemplateDialog from 'src/components/dialog/TemplateDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default {
   name: 'ManpowerImportErrorsDialog',

@@ -124,20 +124,43 @@
 
 <script>
 import { defineComponent, ref } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import GlobalWidgetCard from '../../../../components/shared/global/GlobalWidgetCard.vue';
 import EmploymentInfoItem from './EmploymentInfoItem.vue';
 
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const EmploymentDetailsDialog = defineAsyncComponent(() =>
+  import('./dialogs/EmploymentDetailsDialog.vue')
+);
+const JobDetailsDialog = defineAsyncComponent(() =>
+  import('./dialogs/JobDetailsDialog.vue')
+);
+const MyShiftDialog = defineAsyncComponent(() =>
+  import('./dialogs/MyShiftDialog.vue')
+);
+const AllowancesDialog = defineAsyncComponent(() =>
+  import('./dialogs/AllowancesDialog.vue')
+);
+const DocumentationDialog = defineAsyncComponent(() =>
+  import('./dialogs/DocumentationDialog.vue')
+);
+const ContractDetailsDialog = defineAsyncComponent(() =>
+  import('./dialogs/ContractDetailsDialog.vue')
+);
+const GovernmentIdsDialog = defineAsyncComponent(() =>
+  import('./dialogs/GovernmentIdsDialog.vue')
+);
+const ServiceIncentiveLeavesDialog = defineAsyncComponent(() =>
+  import('./dialogs/ServiceIncentiveLeavesDialog.vue')
+);
+const DeductionsDialog = defineAsyncComponent(() =>
+  import('./dialogs/DeductionsDialog.vue')
+);
+const TimeSheetDialog = defineAsyncComponent(() =>
+  import('./dialogs/TimeSheetDialog.vue')
+);
+
 // Import all dialogs
-import EmploymentDetailsDialog from './dialogs/EmploymentDetailsDialog.vue';
-import JobDetailsDialog from './dialogs/JobDetailsDialog.vue';
-import MyShiftDialog from './dialogs/MyShiftDialog.vue';
-import AllowancesDialog from './dialogs/AllowancesDialog.vue';
-import DocumentationDialog from './dialogs/DocumentationDialog.vue';
-import ContractDetailsDialog from './dialogs/ContractDetailsDialog.vue';
-import GovernmentIdsDialog from './dialogs/GovernmentIdsDialog.vue';
-import ServiceIncentiveLeavesDialog from './dialogs/ServiceIncentiveLeavesDialog.vue';
-import DeductionsDialog from './dialogs/DeductionsDialog.vue';
-import TimeSheetDialog from './dialogs/TimeSheetDialog.vue';
 
 export default defineComponent({
   name: 'MyEmploymentInformationWidget',

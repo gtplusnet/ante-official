@@ -290,9 +290,16 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, watch, getCurrentInstance, nextTick } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { debounce } from 'quasar';
-import AdvancedFilterDialog from './AdvancedFilterDialog.vue';
-import RowInformationDialog from './RowInformationDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AdvancedFilterDialog = defineAsyncComponent(() =>
+  import('./AdvancedFilterDialog.vue')
+);
+const RowInformationDialog = defineAsyncComponent(() =>
+  import('./RowInformationDialog.vue')
+);
 
 interface Field {
   name: string;

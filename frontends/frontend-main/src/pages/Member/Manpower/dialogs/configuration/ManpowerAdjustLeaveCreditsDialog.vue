@@ -33,12 +33,17 @@
 
 <script lang="ts">
 import { ref } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
 import { handleAxiosError } from 'src/utility/axios.error.handler';
 import { QDialog } from 'quasar';
-import TemplateDialog from 'src/components/dialog/TemplateDialog.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default {
   name: 'ManpowerAdjustLeaveCreditsDialog',

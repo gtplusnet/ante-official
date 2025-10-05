@@ -75,6 +75,7 @@
 
 <script lang="ts">
 import { defineComponent, computed, ref } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import type { Field } from '@components/shared/cms/types/content-type';
 
@@ -82,15 +83,25 @@ import type { Field } from '@components/shared/cms/types/content-type';
 import ExpandedNavPageContainer from '../../../../components/shared/ExpandedNavPageContainer.vue';
 import ContentTypeSidebar from './components/sidebar/ContentTypeSidebar.vue';
 import ContentTypeEditor from './components/editor/ContentTypeEditor.vue';
-import CreateContentTypeDialog from './components/dialogs/CreateContentTypeDialog.vue';
-import EditContentTypeDialog from './components/dialogs/EditContentTypeDialog.vue';
-import AddEditFieldDialog from './components/dialogs/AddEditFieldDialog.vue';
-import PreviewFormDialog from './components/dialogs/PreviewFormDialog.vue';
 
 // Composables
 import { useContentTypes } from './composables/useContentTypes';
 import { useFieldManagement } from './composables/useFieldManagement';
 import { useContentTypeBuilder } from './composables/useContentTypeBuilder';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const CreateContentTypeDialog = defineAsyncComponent(() =>
+  import('./components/dialogs/CreateContentTypeDialog.vue')
+);
+const EditContentTypeDialog = defineAsyncComponent(() =>
+  import('./components/dialogs/EditContentTypeDialog.vue')
+);
+const AddEditFieldDialog = defineAsyncComponent(() =>
+  import('./components/dialogs/AddEditFieldDialog.vue')
+);
+const PreviewFormDialog = defineAsyncComponent(() =>
+  import('./components/dialogs/PreviewFormDialog.vue')
+);
 
 export default defineComponent({
   name: 'ContentTypeBuilder',

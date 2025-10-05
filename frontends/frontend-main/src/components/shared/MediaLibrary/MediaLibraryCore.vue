@@ -711,17 +711,24 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, watch, PropType, onMounted } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import type { QFile } from 'quasar';
-import ImagePreviewDialog from './ImagePreviewDialog.vue';
 import type { ImageData } from './ImagePreviewDialog.vue';
-import EditMediaDialog from './EditMediaDialog.vue';
 import { useMediaLibrary } from 'src/composables/useMediaLibrary';
 import type { MediaFile, MediaFolder } from 'src/stores/media.store';
 import { useMediaStore } from 'src/stores/media.store';
 import { ModuleType, MediaModuleConfig } from 'src/types/media.types';
 import { getModuleConfig } from 'src/config/media-module.config';
 import SmartImage from 'src/components/shared/SmartImage/SmartImage.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ImagePreviewDialog = defineAsyncComponent(() =>
+  import('./ImagePreviewDialog.vue')
+);
+const EditMediaDialog = defineAsyncComponent(() =>
+  import('./EditMediaDialog.vue')
+);
 
 export interface MediaItem extends Omit<MediaFile, 'size' | 'type' | 'folder'> {
   selected?: boolean;

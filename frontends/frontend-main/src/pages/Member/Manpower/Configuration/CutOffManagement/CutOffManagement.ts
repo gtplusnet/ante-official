@@ -1,13 +1,20 @@
-import AddEditCutOffDialog from '../../dialogs/configuration/ManpowerAddEditCutOffDialog.vue'
-import ViewCutOffDialog from '../../dialogs/configuration/ManpowerViewCutOffDialog.vue'
 import GCard from "../../../../../components/shared/display/GCard.vue"
 import GButton from "src/components/shared/buttons/GButton.vue"
 import GTable from "../../../../../components/shared/display/GTable.vue"
 import { ref, Ref } from 'vue'
+import { defineAsyncComponent } from 'vue';
 import { CutoffDataResponse } from '@shared/response/cutoff.response'
 import { useQuasar } from 'quasar'
 import { api } from 'src/boot/axios'
 import ExpandedNavPageContainer from '../../../../../components/shared/ExpandedNavPageContainer.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditCutOffDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerAddEditCutOffDialog.vue')
+);
+const ViewCutOffDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerViewCutOffDialog.vue')
+);
 
 export default {
   name: 'CutOffManagement',

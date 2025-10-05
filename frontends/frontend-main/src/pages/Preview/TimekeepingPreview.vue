@@ -14,10 +14,15 @@
 <script lang="ts">
 import { useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
-import PayrollTimeKeepingDialog from '../Member/Manpower/Payroll/PayrollTimeKeepingDialog.vue';
 import { CutoffDateRangeResponse, EmployeeDataResponse } from "@shared/response";
 import { Ref, ref } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const PayrollTimeKeepingDialog = defineAsyncComponent(() =>
+  import('../Member/Manpower/Payroll/PayrollTimeKeepingDialog.vue')
+);
 
 export default {
   name: 'TimekeepingPreview',

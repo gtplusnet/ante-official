@@ -1,12 +1,19 @@
 import GTable from "../../../../../components/shared/display/GTable.vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
-import AddEditLocalHolidayDialog from '../../dialogs/configuration/ManpowerAddEditLocalHolidayDialog.vue';
 import { api } from 'src/boot/axios';
-import ViewLocalHolidayDialog from '../../dialogs/configuration/ManpowerViewLocalHolidayDialog.vue';
 import { ref, Ref } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { LocalHolidayResponse } from "@shared/response";
 import { useQuasar } from 'quasar';
 import { handleAxiosError } from "../../../../../utility/axios.error.handler";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditLocalHolidayDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerAddEditLocalHolidayDialog.vue')
+);
+const ViewLocalHolidayDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerViewLocalHolidayDialog.vue')
+);
 
 export default {
   name: 'LocalHoliday',

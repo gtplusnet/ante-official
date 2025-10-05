@@ -41,9 +41,16 @@ import { useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
 import { handleAxiosError } from "../../../../../utility/axios.error.handler";
 import { PropType, ref } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../../../../components/shared/display/GTable.vue";
-import AllowanceHistoryDialog from '../../dialogs/configuration/ManpowerAllowanceHistoryDialog.vue';
-import AddEditAllowanceDialog from '../../dialogs/configuration/ManpowerAddEditAllowanceDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AllowanceHistoryDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerAllowanceHistoryDialog.vue')
+);
+const AddEditAllowanceDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerAddEditAllowanceDialog.vue')
+);
 
 export default {
   name: 'AllowanceActiveTable',

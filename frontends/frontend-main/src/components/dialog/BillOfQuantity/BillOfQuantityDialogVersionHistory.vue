@@ -51,10 +51,14 @@
 </template>
 <style scoped src="./BillOfQuantityDialogVersionHistory.scss"></style>
 <script>
-
-import BillOfQuantityDialogVersionHistorySubmit from './BillOfQuantityDialogVersionHistorySubmit.vue';
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
 import GlobalLoader from "../../../components/shared/common/GlobalLoader.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const BillOfQuantityDialogVersionHistorySubmit = defineAsyncComponent(() =>
+  import('./BillOfQuantityDialogVersionHistorySubmit.vue')
+);
 
 export default {
   name: 'BillOfQuantityDialogVersionHistory',

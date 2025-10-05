@@ -76,11 +76,16 @@ import { api } from "src/boot/axios";
 import GInput from "src/components/shared/form/GInput.vue";
 import { handleAxiosError } from "src/utility/axios.error.handler";
 import { onMounted, ref, PropType } from "vue";
+import { defineAsyncComponent } from 'vue';
 import { DeductionPeriod } from "@shared/request";
 import { UpdateAllowancePlanRequest } from "@shared/request/allowance-plan.request";
 import { AllowancePlanDataResponse } from "@shared/response";
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 function formatDateForSubmit(date: string): string {
   const d = new Date(date);

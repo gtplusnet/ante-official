@@ -148,11 +148,7 @@
 <style scoped src="./TaskWidget.scss"></style>
 <script lang="ts">
 import { defineComponent, ref, reactive, computed, onMounted, onUnmounted, getCurrentInstance, watchEffect } from 'vue';
-import TaskInformationDialog from '../../../../components/dialog/TaskInformationDialog/TaskInformationDialog.vue';
-import TaskAccountSummaryDialog from '../../../../components/dialog/TaskAccountSummaryDialog/TaskAccountSummaryDialog.vue';
-import TaskCreateDialog from '../../../../components/dialog/TaskCreateDialog/TaskCreateDialog.vue';
-import FilingApprovalDialog from '../../../../components/dialog/FilingApprovalDialog/FilingApprovalDialog.vue';
-import PayrollApprovalDialog from '../../../../pages/Member/Manpower/dialogs/payroll/PayrollApprovalDialog.vue';
+import { defineAsyncComponent } from 'vue';
 import TaskCard from './Partial/cards/TaskCard.vue';
 import { api } from 'src/boot/axios';
 import GlobalLoader from '../../../../components/shared/common/GlobalLoader.vue';
@@ -173,7 +169,6 @@ interface ExtendedTaskCountByStatusResponseInterface {
   approvalTaskCount: number;
 }
 import GlobalWidgetTab from '../../../../components/shared/global/GlobalWidgetTab.vue';
-import GlobalMoreActionMobileDialog from '../../../../components/shared/global/GlobalMoreActionMobileDialog.vue';
 import { useAuthStore } from '../../../../stores/auth';
 // Import Supabase composable for direct database access
 import { useTaskTable } from 'src/composables/supabase/useTaskTable';
@@ -181,6 +176,26 @@ import { useTaskTable } from 'src/composables/supabase/useTaskTable';
 import taskPriorityReference from 'src/references/task-priority.reference';
 import taskDifficultyReference from 'src/references/task-difficulty.reference';
 import boardLaneReference from 'src/references/board-lane.reference';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TaskInformationDialog = defineAsyncComponent(() =>
+  import('../../../../components/dialog/TaskInformationDialog/TaskInformationDialog.vue')
+);
+const TaskAccountSummaryDialog = defineAsyncComponent(() =>
+  import('../../../../components/dialog/TaskAccountSummaryDialog/TaskAccountSummaryDialog.vue')
+);
+const TaskCreateDialog = defineAsyncComponent(() =>
+  import('../../../../components/dialog/TaskCreateDialog/TaskCreateDialog.vue')
+);
+const FilingApprovalDialog = defineAsyncComponent(() =>
+  import('../../../../components/dialog/FilingApprovalDialog/FilingApprovalDialog.vue')
+);
+const PayrollApprovalDialog = defineAsyncComponent(() =>
+  import('../../../../pages/Member/Manpower/dialogs/payroll/PayrollApprovalDialog.vue')
+);
+const GlobalMoreActionMobileDialog = defineAsyncComponent(() =>
+  import('../../../../components/shared/global/GlobalMoreActionMobileDialog.vue')
+);
 
 // Define tag interface for UI display
 interface TagInfo {

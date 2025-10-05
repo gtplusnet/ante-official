@@ -279,15 +279,23 @@
 <script>
 import GButton from "src/components/shared/buttons/GButton.vue";
 import GInput from "../../../../../components/shared/form/GInput.vue";
-import AddEditPayrollGroupDialog from "../configuration/ManpowerAddEditPayrollGroupDialog.vue";
-import AddEditScheduleDialog from "../configuration/ManpowerAddEditScheduleDialog.vue";
 import { api } from "src/boot/axios";
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue";
 import { handleAxiosError } from "src/utility/axios.error.handler";
 import { useSupabaseSchedules } from "src/composables/supabase/useSupabaseSchedules";
 import { useSupabasePayrollGroups } from "src/composables/supabase/useSupabasePayrollGroups";
 import { useSupabaseBranches } from "src/composables/supabase/useSupabaseBranches";
 import { useAuthStore } from "src/stores/auth";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditPayrollGroupDialog = defineAsyncComponent(() =>
+  import('../configuration/ManpowerAddEditPayrollGroupDialog.vue')
+);
+const AddEditScheduleDialog = defineAsyncComponent(() =>
+  import('../configuration/ManpowerAddEditScheduleDialog.vue')
+);
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default {
   name: "AddEditHRISEmployeeDialog",

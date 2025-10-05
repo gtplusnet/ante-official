@@ -146,10 +146,20 @@
 import axios from 'axios';
 import { api } from 'src/boot/axios';
 import GlobalLoader from "../../components/shared/common/GlobalLoader.vue";
-import CanvassSelectSupplierDialog from "../../pages/Member/Asset/dialogs/AssetCanvassSelectSupplierDialog.vue";
-import ItemInformationDialog from './ItemInformationDialog/ItemInformationDialog.vue';
-import SupplierInformationDialog from "../../pages/Member/Asset/dialogs/AssetSupplierInformationDialog/SupplierInformationDialog.vue";
-import SupplierPriceUpdateHistoryDialog from './SupplierPriceUpdateHistoryDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const CanvassSelectSupplierDialog = defineAsyncComponent(() =>
+  import('../../pages/Member/Asset/dialogs/AssetCanvassSelectSupplierDialog.vue')
+);
+const ItemInformationDialog = defineAsyncComponent(() =>
+  import('./ItemInformationDialog/ItemInformationDialog.vue')
+);
+const SupplierInformationDialog = defineAsyncComponent(() =>
+  import('../../pages/Member/Asset/dialogs/AssetSupplierInformationDialog/SupplierInformationDialog.vue')
+);
+const SupplierPriceUpdateHistoryDialog = defineAsyncComponent(() =>
+  import('./SupplierPriceUpdateHistoryDialog.vue')
+);
 export default {
   name: 'SupplierSelectionDialog',
   components: {

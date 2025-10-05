@@ -46,15 +46,22 @@
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import GTable from 'src/components/shared/display/GTable.vue';
 import { LeavePlanResponse } from '@shared/response/leave-plan-response.interface';
-import ManpowerViewEmployeeLeavePlanTagDialog from '../../dialogs/configuration/ManpowerViewEmployeeLeavePlanTagDialog.vue';
 import ManpowerEmployeeLeavePlanHistory from '../../dialogs/configuration/ManpowerEmployeeLeavePlanHistory.vue';
-import ManpowerEditEmployeeLeavePlanTagDialog from '../../dialogs/configuration/ManpowerEditEmployeeLeavePlanTagDialog.vue';
 import { useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
 import { handleAxiosError } from 'src/utility/axios.error.handler';
 import { formatName } from 'src/utility/formatter';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ManpowerViewEmployeeLeavePlanTagDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerViewEmployeeLeavePlanTagDialog.vue')
+);
+const ManpowerEditEmployeeLeavePlanTagDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerEditEmployeeLeavePlanTagDialog.vue')
+);
 
 export default defineComponent({
   name: 'ManpowerLeaveActiveTable',

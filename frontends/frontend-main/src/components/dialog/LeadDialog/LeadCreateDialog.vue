@@ -162,16 +162,25 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted, watch } from "vue";
+import { defineAsyncComponent } from 'vue';
 import { QDialog, useQuasar } from "quasar";
 // import { useRouter } from 'vue-router';
 import GInput from "../../shared/form/GInput.vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
-import TemplateDialog from "../TemplateDialog.vue";
-import AddEditDealSourceDialog from "../AddEditDealSourceDialog.vue";
-import AddEditDealTypeDialog from "../AddEditDealTypeDialog.vue";
 import { APIRequests } from "../../../utility/api.handler";
 import { ProjectCreateRequest } from "@shared/request";
 import { LeadDataResponse } from "@shared/response";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('../TemplateDialog.vue')
+);
+const AddEditDealSourceDialog = defineAsyncComponent(() =>
+  import('../AddEditDealSourceDialog.vue')
+);
+const AddEditDealTypeDialog = defineAsyncComponent(() =>
+  import('../AddEditDealTypeDialog.vue')
+);
 
 interface LeadForm {
   dealName: string;

@@ -161,18 +161,27 @@
 
 <script lang="ts">
 import { defineComponent, ref, watch, PropType } from "vue";
+import { defineAsyncComponent } from 'vue';
 import { QDialog, useQuasar } from "quasar";
 import GButton from "src/components/shared/buttons/GButton.vue";
-import SelectMultipleEmployeeDialog from "./ManpowerSelectMultipleEmployeeDialog.vue";
 import type { LeavePlanResponse } from "@shared/response/leave-plan-response.interface";
-import LeaveCreditsFormDialog from "./ManpowerLeaveCreditsFormDialog.vue";
 import {
   AssignEmployeesToPlanRequest,
   EmployeeAssignmentRequest,
 } from "@shared/request/leave-configuration.request";
 import { api } from "src/boot/axios";
 import { handleAxiosError } from "src/utility/axios.error.handler";
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const SelectMultipleEmployeeDialog = defineAsyncComponent(() =>
+  import('./ManpowerSelectMultipleEmployeeDialog.vue')
+);
+const LeaveCreditsFormDialog = defineAsyncComponent(() =>
+  import('./ManpowerLeaveCreditsFormDialog.vue')
+);
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default defineComponent({
   name: "CreateAllowanceDialog",

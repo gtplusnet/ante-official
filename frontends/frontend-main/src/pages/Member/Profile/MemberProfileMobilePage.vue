@@ -96,13 +96,20 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth';
 import { useMultiAccountStore } from 'src/stores/multiAccount';
 import { useQuasar } from 'quasar';
 import MyEmployeeInformationWidget from 'src/pages/Member/Dashboard/MyEmploymentInformationWidget/MyEmploymentInformationWidget.vue';
-import AddAccountDialog from 'src/components/auth/AddAccountDialog.vue';
-import ManageAccountDialog from 'src/components/profile/ManageAccountDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddAccountDialog = defineAsyncComponent(() =>
+  import('src/components/auth/AddAccountDialog.vue')
+);
+const ManageAccountDialog = defineAsyncComponent(() =>
+  import('src/components/profile/ManageAccountDialog.vue')
+);
 
 // Composables
 const router = useRouter();

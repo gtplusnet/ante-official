@@ -12,7 +12,11 @@
 
 <script>
 import GInput from "../../components/shared/form/GInput.vue";
-import AddEditLocationDialog from '../dialog/AddEditLocationDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditLocationDialog = defineAsyncComponent(() =>
+  import('../dialog/AddEditLocationDialog.vue')
+);
 
 export default {
   name: 'SelectionLocation',

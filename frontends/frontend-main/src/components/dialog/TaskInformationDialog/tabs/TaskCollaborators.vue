@@ -43,7 +43,11 @@
 
 <script>
 import { api } from 'boot/axios';
-import UserSelectionDialog from '../../../../pages/Member/Settings/dialogs/SettingsUserSelectionDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const UserSelectionDialog = defineAsyncComponent(() =>
+  import('../../../../pages/Member/Settings/dialogs/SettingsUserSelectionDialog.vue')
+);
 
 export default {
   name: 'TaskCollaborators',

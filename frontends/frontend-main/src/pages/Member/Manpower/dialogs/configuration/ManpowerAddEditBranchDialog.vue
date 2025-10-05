@@ -79,10 +79,15 @@ import SelectionLocation from "../../../../../components/selection/SelectionLoca
 import { api } from "src/boot/axios";
 import { QDialog, useQuasar } from "quasar";
 import { ref, watch } from "vue";
+import { defineAsyncComponent } from 'vue';
 import { handleAxiosError } from "../../../../../utility/axios.error.handler";
 import { BranchCreateRequest } from "@shared/request/branch.request";
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default {
   name: "AddEditBranchManagementDialog",

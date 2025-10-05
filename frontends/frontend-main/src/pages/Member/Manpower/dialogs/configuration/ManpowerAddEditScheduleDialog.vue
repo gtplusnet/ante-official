@@ -92,14 +92,21 @@
 <script lang="ts">
 import { useQuasar, QDialog } from "quasar";
 import { api } from "src/boot/axios";
-import AddEditShiftDialog from "./ManpowerAddEditShiftDialog.vue";
 import { handleAxiosError } from "../../../../../utility/axios.error.handler";
 import GButton from "src/components/shared/buttons/GButton.vue";
 import { nextTick, Ref, ref, watch } from "vue";
+import { defineAsyncComponent } from 'vue';
 import { ScheduleDataRequest } from "@shared/request/schedule.request";
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue";
 import { useSupabaseShifts } from "src/composables/supabase/useSupabaseShifts";
 import { useAuthStore } from "src/stores/auth";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditShiftDialog = defineAsyncComponent(() =>
+  import('./ManpowerAddEditShiftDialog.vue')
+);
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default {
   name: "AddEditScheduleDialog",

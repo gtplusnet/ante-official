@@ -305,13 +305,19 @@
 <style scoped lang="scss" src="../EditCreateEmployee.scss"></style>
 
 <script>
-import AddEditPayrollGroupDialog from '../../../../dialogs/configuration/ManpowerAddEditPayrollGroupDialog.vue';
-import AddEditScheduleDialog from '../../../../dialogs/configuration/ManpowerAddEditScheduleDialog.vue';
 import { api } from 'src/boot/axios';
 import { useSupabaseSchedules } from 'src/composables/supabase/useSupabaseSchedules';
 import { useSupabasePayrollGroups } from 'src/composables/supabase/useSupabasePayrollGroups';
 import { useAuthStore } from 'src/stores/auth';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditPayrollGroupDialog = defineAsyncComponent(() =>
+  import('../../../../dialogs/configuration/ManpowerAddEditPayrollGroupDialog.vue')
+);
+const AddEditScheduleDialog = defineAsyncComponent(() =>
+  import('../../../../dialogs/configuration/ManpowerAddEditScheduleDialog.vue')
+);
 
 export default {
   name: 'EmployeeDetailsTab',

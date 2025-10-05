@@ -278,10 +278,18 @@
 <script>
 import { useSocketStore } from 'src/stores/socketStore';
 import bus from 'src/bus';
-import TemplateDialog from 'src/components/dialog/TemplateDialog.vue';
-import ManpowerAllowanceImportHistoryDialog from './ManpowerAllowanceImportHistoryDialog.vue';
-import ManpowerAllowanceImportErrorsDialog from './ManpowerAllowanceImportErrorsDialog.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
+const ManpowerAllowanceImportHistoryDialog = defineAsyncComponent(() =>
+  import('./ManpowerAllowanceImportHistoryDialog.vue')
+);
+const ManpowerAllowanceImportErrorsDialog = defineAsyncComponent(() =>
+  import('./ManpowerAllowanceImportErrorsDialog.vue')
+);
 
 export default {
   name: 'ImportAllowance',

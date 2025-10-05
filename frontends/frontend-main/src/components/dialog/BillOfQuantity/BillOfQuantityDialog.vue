@@ -116,11 +116,13 @@
 
 <script>
 import { defineAsyncComponent } from 'vue';
-import BillOfQuantityDialogItems from './BillOfQuantityDialogItems.vue';
 import { api } from 'src/boot/axios';
 import { useUtilityStore } from '../../../stores/utility';
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const BillOfQuantityDialogItems = defineAsyncComponent(() =>
+  import('./BillOfQuantityDialogItems.vue')
+);
 const BillOfQuantityDialogUpdate = defineAsyncComponent(() =>
   import('./BillOfQuantityDialogUpdate.vue')
 );

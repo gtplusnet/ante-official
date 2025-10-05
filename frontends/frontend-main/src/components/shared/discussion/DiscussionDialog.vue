@@ -217,6 +217,7 @@
 
 <script lang="ts">
 import { PropType, ref, onMounted, onUnmounted, nextTick, computed } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { QEditor } from 'quasar';
 import { DiscussionModule, DiscussionProps } from './DiscussionProps';
 import { CreateDiscussionMessageRequest } from '@shared/request/discussion.request';
@@ -233,7 +234,11 @@ import { useAuthStore } from "../../../stores/auth";
 import { useDiscussionStore } from 'src/stores/discussionStore';
 import { useSocketStore } from 'src/stores/socketStore';
 import bus from 'src/bus';
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue"
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default {
   name: 'DiscussionDialog',

@@ -95,13 +95,18 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, watch, onMounted, getCurrentInstance } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import { AxiosError } from 'axios';
 import { handleAxiosError } from 'src/utility/axios.error.handler';
-import ManpowerAnnouncementDetailDialog from 'src/pages/Member/Manpower/dialogs/ManpowerAnnouncementDetailDialog.vue';
 import GlobalWidgetCardBoxTitle from 'src/components/shared/global/GlobalWidgetCardBoxTitle.vue';
 import GlobalWidgetCardBoxSubtitle from 'src/components/shared/global/GlobalWidgetCardBoxSubtitle.vue';
 import GlobalWidgetCardBox from 'src/components/shared/global/GlobalWidgetCardBox.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ManpowerAnnouncementDetailDialog = defineAsyncComponent(() =>
+  import('src/pages/Member/Manpower/dialogs/ManpowerAnnouncementDetailDialog.vue')
+);
 
 interface Announcement {
   id: number;

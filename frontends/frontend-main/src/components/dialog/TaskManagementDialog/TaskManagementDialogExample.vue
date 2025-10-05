@@ -23,7 +23,12 @@
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
-import TaskManagementDialog from './TaskManagementDialog.vue';
+import { defineAsyncComponent } from 'vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TaskManagementDialog = defineAsyncComponent(() =>
+  import('./TaskManagementDialog.vue')
+);
 
 export default defineComponent({
   name: 'TaskManagementDialogExample',

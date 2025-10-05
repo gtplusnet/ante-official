@@ -148,14 +148,23 @@
 import GInput from "../../../../../components/shared/form/GInput.vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
 import { onMounted, ref, watch } from "vue";
+import { defineAsyncComponent } from 'vue';
 import { api } from "src/boot/axios";
 import { handleAxiosError } from "../../../../../utility/axios.error.handler";
 import { QDialog, useQuasar } from "quasar";
 import { CreateAllowancePlanRequest } from "@shared/request/allowance-plan.request";
 import { DeductionPeriod } from "@shared/request";
-import SelectMultipleEmployeeDialog from "./ManpowerSelectMultipleEmployeeDialog.vue";
-import AllowanceFormDialog from "src/pages/Member/Manpower/dialogs/configuration/ManpowerAllowanceFormDialog.vue";
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const SelectMultipleEmployeeDialog = defineAsyncComponent(() =>
+  import('./ManpowerSelectMultipleEmployeeDialog.vue')
+);
+const AllowanceFormDialog = defineAsyncComponent(() =>
+  import('src/pages/Member/Manpower/dialogs/configuration/ManpowerAllowanceFormDialog.vue')
+);
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 function formatDateForSubmit(date: string): string {
   const d = new Date(date);

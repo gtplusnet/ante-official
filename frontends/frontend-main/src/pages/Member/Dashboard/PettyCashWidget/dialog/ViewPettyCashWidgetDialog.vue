@@ -226,15 +226,22 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, getCurrentInstance, watch } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { date, useQuasar } from 'quasar';
-import TemplateDialog from 'src/components/dialog/TemplateDialog.vue';
 import TransactionCard from '../card/TransactionCard.vue';
 import TransactionTypeFilter from '../components/TransactionTypeFilter.vue';
 import GlobalWidgetPagination from 'src/components/shared/global/GlobalWidgetPagination.vue';
-import PettyCashLiquidationDetailsDialog from 'src/pages/Member/Treasury/dialogs/PettyCashLiquidationDetailsDialog.vue';
 import { APIRequests } from 'src/utility/api.handler';
 import { PettyCashTransactionType, TRANSACTION_TYPE_CONFIG, getAmountPrefix } from 'src/enums/petty-cash.enum';
 import { formatCurrencyShort } from 'src/utility/formatter';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
+const PettyCashLiquidationDetailsDialog = defineAsyncComponent(() =>
+  import('src/pages/Member/Treasury/dialogs/PettyCashLiquidationDetailsDialog.vue')
+);
 
 export default defineComponent({
   name: 'ViewPettyCashWidgetDialog',

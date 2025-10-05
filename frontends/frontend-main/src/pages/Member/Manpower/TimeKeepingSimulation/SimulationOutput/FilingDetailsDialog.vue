@@ -73,6 +73,7 @@
 
 <script lang="ts">
 import { defineComponent, computed, PropType } from "vue";
+import { defineAsyncComponent } from 'vue';
 import { date, useQuasar } from "quasar";
 import { api } from "src/boot/axios";
 import OvertimeFilingDisplay from "src/components/dialog/FilingApprovalDialog/components/OvertimeFilingDisplay.vue";
@@ -81,8 +82,12 @@ import ScheduleAdjustmentFilingDisplay from "src/components/dialog/FilingApprova
 import OfficialBusinessFilingDisplay from "src/components/dialog/FilingApprovalDialog/components/OfficialBusinessFilingDisplay.vue";
 import CertificateOfAttendanceFilingDisplay from "src/components/dialog/FilingApprovalDialog/components/CertificateOfAttendanceFilingDisplay.vue";
 import { FilingResponse } from "src/types/filing.types";
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default defineComponent({
   name: "FilingDetailsDialog",

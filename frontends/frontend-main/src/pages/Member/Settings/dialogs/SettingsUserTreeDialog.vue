@@ -55,11 +55,13 @@
 import { defineAsyncComponent } from 'vue';
 import VueZoomable from 'vue-zoomable';
 import 'vue-zoomable/dist/style.css';
-import UserTreeDialogChild from './SettingsUserTreeDialogChild.vue';
 import { api } from 'src/boot/axios';
 import GlobalLoader from "../../../../components/shared/common/GlobalLoader.vue";
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const UserTreeDialogChild = defineAsyncComponent(() =>
+  import('./SettingsUserTreeDialogChild.vue')
+);
 const SettingsUserCreateEditDialog = defineAsyncComponent(() =>
   import('./SettingsUserCreateEditDialog.vue')
 );

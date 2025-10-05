@@ -247,7 +247,11 @@
 <script>
 import { defineAsyncComponent } from 'vue';
 import { date } from 'quasar';
-import TemplateDialog from 'src/components/dialog/TemplateDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
 const TimekeepingImportErrorsDialog = defineAsyncComponent(() =>

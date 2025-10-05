@@ -23,9 +23,14 @@
 
 <script lang="ts">
 import { computed } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { defineComponent } from 'vue';
-import TemplateDialog from './TemplateDialog.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('./TemplateDialog.vue')
+);
 
 export default defineComponent({
   name: 'RequestFilingDialog',

@@ -56,7 +56,6 @@
 <style scoped src="./QuestItemPartial.scss"></style>
 
 <script>
-import TaskInformationDialog from "../../../../../../components/dialog/TaskInformationDialog/TaskInformationDialog.vue";
 export default {
   name: 'QuestItemPartial',
   components: {

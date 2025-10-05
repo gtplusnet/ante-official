@@ -144,9 +144,14 @@
 
 <script>
 import { defineComponent, ref, onMounted, watch, computed } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
-import LiquidationApprovalDialog from './dialogs/LiquidationApprovalDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const LiquidationApprovalDialog = defineAsyncComponent(() =>
+  import('./dialogs/LiquidationApprovalDialog.vue')
+);
 
 export default defineComponent({
   name: 'WorkflowActionButtons',

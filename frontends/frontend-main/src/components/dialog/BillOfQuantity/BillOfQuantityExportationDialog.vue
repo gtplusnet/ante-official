@@ -63,7 +63,13 @@
 </style>
 <style scoped src="./BillOfQuantityExportationDialog.scss"></style>
 <script>
-import BillOfQuantityDialogExportationItems from './BillOfQuantityExportationItemsDialog.vue';
+import { defineAsyncComponent } from 'vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const BillOfQuantityDialogExportationItems = defineAsyncComponent(() =>
+  import('./BillOfQuantityExportationItemsDialog.vue')
+);
+
 export default {
   name: 'TemplateDialog',
   components: {

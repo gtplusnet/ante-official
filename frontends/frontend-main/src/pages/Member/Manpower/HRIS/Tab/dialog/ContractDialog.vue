@@ -55,6 +55,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, watch } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import GInput from "src/components/shared/form/GInput.vue";
 import { ContractDataResponse } from '@shared/response/contract.response';
 import { ContractCreateRequest, ContractEditRequest, EmploymentStatus } from '@shared/request/contract.request';
@@ -63,8 +64,12 @@ import { handleAxiosError } from "src/utility/axios.error.handler";
 import { AxiosError } from 'axios';
 import { useQuasar } from 'quasar';
 import { FileDataResponse } from "@shared/response";
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue";
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default defineComponent({
   name: 'ContractDialog',

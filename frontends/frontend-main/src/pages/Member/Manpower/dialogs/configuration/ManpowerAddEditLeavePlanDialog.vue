@@ -135,14 +135,19 @@
 <script lang="ts">
 import { QDialog, useQuasar } from 'quasar';
 import { ref, watch } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import type { Ref } from 'vue';
 import GInput from 'src/components/shared/form/GInput.vue';
 import { LeaveTypeConfigurationResponse } from '@shared/response';
 import { api } from 'src/boot/axios';
 import { handleAxiosError } from 'src/utility/axios.error.handler';
 import { LeavePlanResponse } from '@shared/response/leave-plan-response.interface';
-import TemplateDialog from 'src/components/dialog/TemplateDialog.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default {
   name: 'CreateLeavePlanDialog',

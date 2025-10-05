@@ -76,13 +76,25 @@
 
 <script>
 import { api } from "src/boot/axios";
-import PayrollGroupDialogBasicTabPage from "./ManpowerPayrollGroupDialogTab/PayrollGroupDialogBasicTab.vue";
-import PayrollGroupDialogDeductionBasisTab from "./ManpowerPayrollGroupDialogTab/PayrollGroupDialogDeductionBasisTab.vue";
-import PayrollGroupDialogOvertimeRatesTab from "./ManpowerPayrollGroupDialogTab/PayrollGroupDialogOvertimeRatesTab.vue";
-import PayrollGroupDialogShiftingTab from "./ManpowerPayrollGroupDialogTab/PayrollGroupDialogShiftingTab.vue";
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue";
 import { handleAxiosError } from "src/utility/axios.error.handler";
 import GButton from "src/components/shared/buttons/GButton.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const PayrollGroupDialogBasicTabPage = defineAsyncComponent(() =>
+  import('./ManpowerPayrollGroupDialogTab/PayrollGroupDialogBasicTab.vue')
+);
+const PayrollGroupDialogDeductionBasisTab = defineAsyncComponent(() =>
+  import('./ManpowerPayrollGroupDialogTab/PayrollGroupDialogDeductionBasisTab.vue')
+);
+const PayrollGroupDialogOvertimeRatesTab = defineAsyncComponent(() =>
+  import('./ManpowerPayrollGroupDialogTab/PayrollGroupDialogOvertimeRatesTab.vue')
+);
+const PayrollGroupDialogShiftingTab = defineAsyncComponent(() =>
+  import('./ManpowerPayrollGroupDialogTab/PayrollGroupDialogShiftingTab.vue')
+);
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default {
   name: "AddPayrollGroupDialog",

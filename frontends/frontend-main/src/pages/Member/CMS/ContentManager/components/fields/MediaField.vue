@@ -157,8 +157,13 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, PropType } from 'vue';
+import { defineAsyncComponent } from 'vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const MediaLibraryDialog = defineAsyncComponent(() =>
+  import('src/components/shared/MediaLibrary/MediaLibraryDialog.vue')
+);
 import type { Field } from '@components/shared/cms/types/content-type';
-import MediaLibraryDialog from 'src/components/shared/MediaLibrary/MediaLibraryDialog.vue';
 
 interface MediaFile {
   id: string;

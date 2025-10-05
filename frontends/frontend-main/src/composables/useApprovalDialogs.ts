@@ -1,5 +1,10 @@
 import { Component } from 'vue';
-import FilingApprovalDialog from '@/components/dialog/FilingApprovalDialog/FilingApprovalDialog.vue';
+import { defineAsyncComponent } from 'vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const FilingApprovalDialog = defineAsyncComponent(() =>
+  import('@/components/dialog/FilingApprovalDialog/FilingApprovalDialog.vue')
+);
 
 // Map of source modules to their corresponding approval dialog components
 const approvalDialogMap: Record<string, Component> = {

@@ -105,9 +105,14 @@
 
 <script>
 import { defineComponent, ref, onMounted, watch } from "vue";
+import { defineAsyncComponent } from 'vue';
 import { api } from "src/boot/axios";
 import ManpowerEmployeeLeavePlanHistory from "../../../../dialogs/configuration/ManpowerEmployeeLeavePlanHistory.vue";
-import ManpowerAdjustLeaveCreditsDialog from "../../../../dialogs/configuration/ManpowerAdjustLeaveCreditsDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ManpowerAdjustLeaveCreditsDialog = defineAsyncComponent(() =>
+  import('../../../../dialogs/configuration/ManpowerAdjustLeaveCreditsDialog.vue')
+);
 
 export default defineComponent({
   name: "ServiceIncentiveLeaveTab",

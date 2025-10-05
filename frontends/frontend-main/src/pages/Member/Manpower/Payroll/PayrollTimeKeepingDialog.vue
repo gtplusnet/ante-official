@@ -79,6 +79,7 @@
 
 <script lang="ts">
 import { computed, ref, Ref } from "vue";
+import { defineAsyncComponent } from 'vue';
 import { CutoffDateRangeResponse, TimekeepingOutputResponse } from "@shared/response";
 import { useEmployeeTimekeepingStore } from "../../../../stores/employee-timekeeping.store";
 import PayrollTimeKeepingRawLogs from "./PayrollTimeKeepingRawLogs.vue";
@@ -86,7 +87,11 @@ import { useQuasar } from "quasar";
 import PayrollTimeKeepingTab from "./PayrollTimeKeepingTab.vue";
 import PayrollFilingsTab from "./PayrollFilingsTab.vue";
 import PayrollConflictsTab from "./PayrollConflictsTab.vue";
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default {
   name: "PayrollTimeKeepingDialog",

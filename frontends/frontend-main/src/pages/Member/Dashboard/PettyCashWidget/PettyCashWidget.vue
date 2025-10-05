@@ -98,6 +98,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, onUnmounted } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import GlobalWidgetCard from 'src/components/shared/global/GlobalWidgetCard.vue';
 import { APIRequests } from 'src/utility/api.handler';
@@ -105,7 +106,11 @@ import { usePettyCashCacheStore } from 'src/stores/pettyCashCache';
 import { useSocketStore } from 'src/stores/socketStore';
 import { useAuthStore } from 'src/stores/auth';
 import { PettyCashHolderResponse } from 'src/interfaces/petty-cash.interface';
-import ViewPettyCashWidgetDialog from './dialog/ViewPettyCashWidgetDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ViewPettyCashWidgetDialog = defineAsyncComponent(() =>
+  import('./dialog/ViewPettyCashWidgetDialog.vue')
+);
 
 export default defineComponent({
   name: 'PettyCashWidget',

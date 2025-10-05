@@ -21,7 +21,11 @@
 
 <script>
 import GInput from "../../components/shared/form/GInput.vue";
-import AddEditSupplierDialog from '../../pages/Member/Asset/dialogs/AssetAddEditSupplierDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditSupplierDialog = defineAsyncComponent(() =>
+  import('../../pages/Member/Asset/dialogs/AssetAddEditSupplierDialog.vue')
+);
 
 export default {
   name: 'BrandSelection',

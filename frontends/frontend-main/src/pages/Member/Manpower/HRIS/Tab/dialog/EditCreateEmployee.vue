@@ -95,9 +95,6 @@ import AllowanceTab from './tabs/AllowanceTab.vue';
 import DeductionTab from './tabs/DeductionTab.vue';
 import NewContract from './NewContract.vue';
 import EditContract from './EditContract.vue';
-import AddEditPayrollGroupDialog from '../../../dialogs/configuration/ManpowerAddEditPayrollGroupDialog.vue';
-import AddEditScheduleDialog from '../../../dialogs/configuration/ManpowerAddEditScheduleDialog.vue';
-import TemplateDialog from 'src/components/dialog/TemplateDialog.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
 import { useSupabaseSchedules } from 'src/composables/supabase/useSupabaseSchedules';
 import { useSupabasePayrollGroups } from 'src/composables/supabase/useSupabasePayrollGroups';
@@ -105,6 +102,17 @@ import { useSupabaseBranches } from 'src/composables/supabase/useSupabaseBranche
 import { useSupabaseEmployees } from 'src/composables/supabase/useSupabaseEmployees';
 import { useAuthStore } from 'src/stores/auth';
 import supabaseService from 'src/services/supabase';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditPayrollGroupDialog = defineAsyncComponent(() =>
+  import('../../../dialogs/configuration/ManpowerAddEditPayrollGroupDialog.vue')
+);
+const AddEditScheduleDialog = defineAsyncComponent(() =>
+  import('../../../dialogs/configuration/ManpowerAddEditScheduleDialog.vue')
+);
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default {
   name: 'AddEditHRISEmployeeDialog',

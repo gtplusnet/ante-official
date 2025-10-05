@@ -278,12 +278,17 @@
 
 <script lang="ts">
 import { defineComponent, ref, watch, PropType } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
 import { handleAxiosError } from '../../../../../utility/axios.error.handler';
 import { AxiosError } from 'axios';
-import ManpowerPayrollSummaryDialog from './ManpowerPayrollSummaryDialog.vue';
 import { CutoffDateRangeResponse } from '@shared/response';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ManpowerPayrollSummaryDialog = defineAsyncComponent(() =>
+  import('./ManpowerPayrollSummaryDialog.vue')
+);
 
 interface PayrollApproval {
   taskId: string;

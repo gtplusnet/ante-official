@@ -1,15 +1,24 @@
 import GTable from "../../../../../components/shared/display/GTable.vue";
 import GCard from "../../../../../components/shared/display/GCard.vue";
-import ViewShiftCodeDialog from '../../dialogs/configuration/ManpowerViewShiftCodeDialog.vue';
-import ViewScheduleDialog from '../../dialogs/configuration/ManpowerViewScheduleDialog.vue';
-import AddEditScheduleDialog from '../../dialogs/configuration/ManpowerAddEditScheduleDialog.vue';
 import { ref, Ref } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { ScheduleDataResponse } from "@shared/response";
 import { useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
 import { handleAxiosError } from "../../../../../utility/axios.error.handler";
 import ExpandedNavPageContainer from '../../../../../components/shared/ExpandedNavPageContainer.vue';
 import GButton from "src/components/shared/buttons/GButton.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ViewShiftCodeDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerViewShiftCodeDialog.vue')
+);
+const ViewScheduleDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerViewScheduleDialog.vue')
+);
+const AddEditScheduleDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerAddEditScheduleDialog.vue')
+);
 export default {
   name: 'ScheduleManagementMenuPage',
   components: {

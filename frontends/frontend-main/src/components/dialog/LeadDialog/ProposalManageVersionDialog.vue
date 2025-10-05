@@ -43,7 +43,6 @@
 </template>
 
 <script lang="ts">
-import TemplateDialog from '../TemplateDialog.vue';
 
 export default {
   name: 'ProposalManageVersionDilaog',
