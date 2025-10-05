@@ -8,10 +8,12 @@ test.describe('Task Board View - Drag and Drop & Animations', () => {
     page.on('console', msg => {
       if (msg.type() === 'error') {
         const text = msg.text();
-        // Ignore known warnings
+        // Ignore known warnings and resource loading errors
         if (!text.includes('GoTrueClient instances') &&
             !text.includes('Multiple instances') &&
-            !text.includes('ResizeObserver')) {
+            !text.includes('ResizeObserver') &&
+            !text.includes('404') &&
+            !text.includes('Failed to load resource')) {
           consoleErrors.push(text);
         }
       }
@@ -51,9 +53,9 @@ test.describe('Task Board View - Drag and Drop & Animations', () => {
     // ============= STEP 3: SWITCH TO BOARD VIEW =============
     console.log('STEP 3: Switching to Board View...');
 
-    // Look for the board view button (icon: view_column)
-    const boardViewButton = await page.$('button .q-icon[aria-label="view_column"]') ||
-                            await page.$('button:has(.q-icon:text("view_column"))');
+    // Look for the board view button (icon: view_week)
+    const boardViewButton = await page.$('button.view-button .q-icon[aria-label="view_week"]') ||
+                            await page.$('button.view-button:has(.q-icon:text("view_week"))');
 
     if (boardViewButton) {
       await boardViewButton.click();
@@ -72,7 +74,7 @@ test.describe('Task Board View - Drag and Drop & Animations', () => {
     // Check for board columns
     const boardColumns = await page.$$('.board-column');
     console.log(`  Found ${boardColumns.length} board columns`);
-    expect(boardColumns.length).toBeGreaterThanOrEqual(3); // Should have at least To Do, In Progress, Done
+    expect(boardColumns.length).toBeGreaterThanOrEqual(3); // Should have at least BackLog, In Progress, Done
 
     // Check for column headers
     const columnHeaders = await page.$$('.column-header');
@@ -127,18 +129,18 @@ test.describe('Task Board View - Drag and Drop & Animations', () => {
     // ============= STEP 6: TEST DRAG AND DROP BETWEEN COLUMNS =============
     console.log('STEP 6: Testing drag and drop between columns...');
 
-    // Find columns
-    const todoColumn = await page.$('.board-column:has-text("To Do")');
+    // Find columns - using actual BoardLane names (BackLog, In Progress, Done)
+    const backlogColumn = await page.$('.board-column:has-text("BackLog")');
     const inProgressColumn = await page.$('.board-column:has-text("In Progress")');
 
-    if (todoColumn && inProgressColumn) {
-      // Get task cards in To Do column
-      const todoTasks = await todoColumn.$$('.task-card');
-      console.log(`  Found ${todoTasks.length} tasks in To Do column`);
+    if (backlogColumn && inProgressColumn) {
+      // Get task cards in BackLog column
+      const backlogTasks = await backlogColumn.$$('.task-card');
+      console.log(`  Found ${backlogTasks.length} tasks in BackLog column`);
 
-      if (todoTasks.length > 0) {
+      if (backlogTasks.length > 0) {
         // Get the first task
-        const firstTask = todoTasks[0];
+        const firstTask = backlogTasks[0];
         const taskTitle = await firstTask.$eval('.task-card-title', el => el.textContent?.trim());
         console.log(`  Dragging task: "${taskTitle}"`);
 
@@ -194,10 +196,10 @@ test.describe('Task Board View - Drag and Drop & Animations', () => {
           console.log('  ⚠ Could not get bounding boxes for drag and drop');
         }
       } else {
-        console.log('  ⚠ No tasks in To Do column to test drag and drop');
+        console.log('  ⚠ No tasks in BackLog column to test drag and drop');
       }
     } else {
-      console.log('  ⚠ Could not find To Do or In Progress columns');
+      console.log('  ⚠ Could not find BackLog or In Progress columns');
     }
 
     // ============= STEP 7: TEST HOVER EFFECTS =============

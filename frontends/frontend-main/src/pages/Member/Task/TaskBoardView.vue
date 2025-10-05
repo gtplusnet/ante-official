@@ -120,20 +120,45 @@ defineProps({
 const router = useRouter();
 const $q = useQuasar();
 
-// Board columns configuration
-const boardColumns = [
-  { key: 'todo', title: 'To Do', statuses: ['todo', 'pending'] },
-  { key: 'in_progress', title: 'In Progress', statuses: ['in_progress'] },
-  { key: 'review', title: 'Review', statuses: ['review', 'pending_approval'] },
-  { key: 'done', title: 'Done', statuses: ['done', 'completed'] },
-];
+// Board lanes - will be fetched from database
+const boardLanes = ref<any[]>([]);
+
+// Fetch board lanes from database
+const fetchBoardLanes = async () => {
+  try {
+    const { data, error } = await supabaseService.getClient()
+      .from('BoardLane')
+      .select('*')
+      .eq('isDefault', true)
+      .order('order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching board lanes:', error);
+      return;
+    }
+
+    boardLanes.value = data || [];
+  } catch (err) {
+    console.error('Unexpected error fetching board lanes:', err);
+  }
+};
+
+// Computed property for board columns based on fetched board lanes
+const boardColumns = computed(() => {
+  return boardLanes.value.map(lane => ({
+    id: lane.id,
+    key: lane.key || `lane_${lane.id}`,
+    title: lane.name,
+    boardLaneId: lane.id
+  }));
+});
 
 // Type for internal task display
 type TaskDisplayInterface = {
   id: number;
   title: string;
   description: string;
-  status: string;
+  boardLaneId: number;
   priority: string;
   priorityLevel: number;
   assignee: string | null;
@@ -175,10 +200,16 @@ const {
           project:Project (
             id,
             name
+          ),
+          boardLane:BoardLane!Task_boardLaneId_fkey (
+            id,
+            name,
+            key,
+            order
           )
         `)
         .eq('isDeleted', false)
-        .order('createdAt', { ascending: false });
+        .order('order', { ascending: true });
 
       if (error) {
         console.error('Error fetching tasks:', error);
@@ -221,7 +252,7 @@ const taskList = computed<TaskDisplayInterface[]>(() => {
       id: item.id,
       title: item.title || 'Untitled Task',
       description: item.description || '',
-      status: item.status || 'todo',
+      boardLaneId: item.boardLaneId,
       priority: item.priority || 'medium',
       priorityLevel: item.priorityLevel || 2,
       assignee: assigneeName,
@@ -237,11 +268,11 @@ const taskList = computed<TaskDisplayInterface[]>(() => {
 
 // Get tasks for a specific column
 const getColumnTasks = (columnKey: string) => {
-  const column = boardColumns.find(c => c.key === columnKey);
+  const column = boardColumns.value.find((c: any) => c.key === columnKey);
   if (!column) return [];
 
   return taskList.value.filter((task: TaskDisplayInterface) => {
-    return column.statuses.includes(task.status);
+    return task.boardLaneId === column.boardLaneId;
   });
 };
 
@@ -283,18 +314,18 @@ const handleDrop = async (event: DragEvent, columnKey: string) => {
     return;
   }
 
-  const targetColumn = boardColumns.find(col => col.key === columnKey);
+  const targetColumn = boardColumns.value.find((col: any) => col.key === columnKey);
   if (!targetColumn) {
     draggedTask.value = null;
     isDragging.value = false;
     return;
   }
 
-  // Map column to new status
-  const newStatus = targetColumn.statuses[0];
+  // Get the new board lane ID
+  const newBoardLaneId = targetColumn.boardLaneId;
 
-  // Don't update if status is the same
-  if (draggedTask.value.status === newStatus) {
+  // Don't update if already in the same lane
+  if (draggedTask.value.boardLaneId === newBoardLaneId) {
     draggedTask.value = null;
     isDragging.value = false;
     return;
@@ -302,7 +333,7 @@ const handleDrop = async (event: DragEvent, columnKey: string) => {
 
   // Store the task data before the API call
   const taskToMove = { ...draggedTask.value };
-  const originalStatus = taskToMove.status;
+  const originalBoardLaneId = taskToMove.boardLaneId;
 
   // Clear drag state immediately for smooth UX
   draggedTask.value = null;
@@ -314,17 +345,17 @@ const handleDrop = async (event: DragEvent, columnKey: string) => {
       const cacheIndex = cachedTaskData.value.tasks.findIndex((t: any) => t.id === taskToMove.id);
       if (cacheIndex !== -1) {
         // Update the cache
-        cachedTaskData.value.tasks[cacheIndex].status = newStatus;
+        cachedTaskData.value.tasks[cacheIndex].boardLaneId = newBoardLaneId;
 
         // Then update the database
         const { error } = await supabaseService.getClient()
           .from('Task')
-          .update({ status: newStatus })
+          .update({ boardLaneId: newBoardLaneId })
           .eq('id', taskToMove.id);
 
         if (error) {
           // Rollback on error
-          cachedTaskData.value.tasks[cacheIndex].status = originalStatus;
+          cachedTaskData.value.tasks[cacheIndex].boardLaneId = originalBoardLaneId;
           throw error;
         }
       }
@@ -332,11 +363,11 @@ const handleDrop = async (event: DragEvent, columnKey: string) => {
 
     // Silent success - no notification needed for smooth UX
   } catch (error) {
-    console.error('Error updating task status:', error);
+    console.error('Error updating task board lane:', error);
 
     $q.notify({
       type: 'negative',
-      message: 'Failed to update task status',
+      message: 'Failed to update task',
       position: 'top',
       timeout: 3000
     });
@@ -416,8 +447,9 @@ const viewTask = (id: number): void => {
 };
 
 // Lifecycle
-onMounted(() => {
-  loadTasks();
+onMounted(async () => {
+  await fetchBoardLanes();
+  await loadTasks();
 });
 </script>
 
