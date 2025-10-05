@@ -97,10 +97,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, computed, PropType, getCurrentInstance } from 'vue';
+import { defineComponent, ref, onMounted, computed, PropType, getCurrentInstance, defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
-import WorkflowBuilderDialog from '../dialogs/WorkflowBuilderDialog.vue';
 import WorkflowCanvasPreview from './WorkflowCanvasPreview.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const WorkflowBuilderDialog = defineAsyncComponent(() =>
+  import('../dialogs/WorkflowBuilderDialog.vue')
+);
 
 export default defineComponent({
   name: 'WorkflowManagement',

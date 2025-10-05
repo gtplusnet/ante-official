@@ -63,7 +63,7 @@
 <style scoped src="./ServiceIncentiveLeaveMenuPage.scss"></style>
 
 <script lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, defineAsyncComponent } from 'vue';
 import ExpandedNavPageContainer from 'src/components/shared/ExpandedNavPageContainer.vue';
 import GCard from 'src/components/shared/display/GCard.vue';
 import { useQuasar } from 'quasar';
@@ -73,8 +73,12 @@ import { useRoute } from 'vue-router';
 import { LeavePlanResponse } from '@shared/response/leave-plan-response.interface';
 import LeaveActiveTable from 'src/pages/Member/Manpower/components/tables/ManpowerLeaveActiveTable.vue';
 import LeaveInactiveTable from 'src/pages/Member/Manpower/components/tables/ManpowerLeaveInactiveTable.vue';
-import ManpowerCreateEmployeeLeavePlanTagDialog from '../../dialogs/configuration/ManpowerCreateEmployeeLeavePlanTagDialog.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ManpowerCreateEmployeeLeavePlanTagDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerCreateEmployeeLeavePlanTagDialog.vue')
+);
 
 export default {
   name: 'ServiceIncentiveLeaveMenuPagePlan',

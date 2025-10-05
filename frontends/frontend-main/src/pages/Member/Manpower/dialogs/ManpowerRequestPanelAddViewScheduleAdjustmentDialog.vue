@@ -76,16 +76,21 @@
 
 <script lang="ts">
 import { ref, computed } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import GInput from '../../../../components/shared/form/GInput.vue';
 import GButton from '../../../../components/shared/buttons/GButton.vue';
 import ShiftFormFields from '../../../../components/shared/form/ShiftFormFields.vue';
-import TemplateDialog from '../../../../components/dialog/TemplateDialog.vue';
 import { api } from 'src/boot/axios';
 import { handleAxiosError } from '../../../../utility/axios.error.handler';
 import type { Filing } from '../../Dashboard/RequestPanelWidget/types/filing.types';
 import type { ShiftFormData } from '../../../../components/shared/form/ShiftFormFields.vue';
 import { AxiosError } from 'axios';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('../../../../components/dialog/TemplateDialog.vue')
+);
 
 interface FormData extends ShiftFormData {
   date: string;

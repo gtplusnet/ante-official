@@ -55,12 +55,17 @@
 
 <script lang="ts">
 import { ref } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import SummaryTab from './EmployeeTabMenu/SummaryTab.vue';
 import PayrollTimeKeepingTab from "../../../../../../pages/Member/Manpower/Payroll/PayrollTimeKeepingTab.vue";
 import PayrollTimeKeepingRawLogs from "../../../../../../pages/Member/Manpower/Payroll/PayrollTimeKeepingRawLogs.vue";
 import PayrollSalaryComputation from "../../../../../../pages/Member/Manpower/Payroll/PayrollSalaryComputation/PayrollSalaryComputation.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 import type { CutoffDateRangeResponse, SalaryInformationListResponse } from "@shared/response";
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue";
 
 export default {
   name: 'EmployeeInformationDialog',

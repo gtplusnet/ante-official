@@ -57,10 +57,19 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../../../../components/shared/display/GTable.vue";
-import CreateRequestForPaymentDialog from '../../dialogs/TreasuryCreateRequestForPaymentDialog.vue';
-import ApprovePaymentDialog from '../../dialogs/TreasuryApprovePaymentDialog.vue';
-import RejectPaymentDialog from '../../dialogs/TreasuryRejectPaymentDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const CreateRequestForPaymentDialog = defineAsyncComponent(() =>
+  import('../../dialogs/TreasuryCreateRequestForPaymentDialog.vue')
+);
+const ApprovePaymentDialog = defineAsyncComponent(() =>
+  import('../../dialogs/TreasuryApprovePaymentDialog.vue')
+);
+const RejectPaymentDialog = defineAsyncComponent(() =>
+  import('../../dialogs/TreasuryRejectPaymentDialog.vue')
+);
 
 export default {
   name: 'RequestPaymentTable',

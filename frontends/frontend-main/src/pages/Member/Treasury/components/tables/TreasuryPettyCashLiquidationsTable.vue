@@ -216,12 +216,23 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../../../../components/shared/display/GTable.vue";
-import CreateRequestForPaymentDialog from '../../dialogs/TreasuryCreateRequestForPaymentDialog.vue';
-import RejectForLiquidationDialog from '../../dialogs/TreasuryRejectForLiquidationDialog.vue';
-import ReceiptImageViewerDialog from '../../dialogs/ReceiptImageViewerDialog.vue';
-import PettyCashLiquidationDetailsDialog from '../../dialogs/PettyCashLiquidationDetailsDialog.vue';
 import WorkflowStatusBadge from '../../../../../components/workflow/WorkflowStatusBadge.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const CreateRequestForPaymentDialog = defineAsyncComponent(() =>
+  import('../../dialogs/TreasuryCreateRequestForPaymentDialog.vue')
+);
+const RejectForLiquidationDialog = defineAsyncComponent(() =>
+  import('../../dialogs/TreasuryRejectForLiquidationDialog.vue')
+);
+const ReceiptImageViewerDialog = defineAsyncComponent(() =>
+  import('../../dialogs/ReceiptImageViewerDialog.vue')
+);
+const PettyCashLiquidationDetailsDialog = defineAsyncComponent(() =>
+  import('../../dialogs/PettyCashLiquidationDetailsDialog.vue')
+);
 
 export default {
   name: 'PettyCashLiquidationsTable',

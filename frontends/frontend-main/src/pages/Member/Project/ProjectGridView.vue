@@ -191,10 +191,9 @@
 }
 </style>
 <script lang="ts" setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, defineAsyncComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import ProjectCreateDialog from "../../../components/dialog/ProjectCreateDialog.vue";
 import supabaseService from '../../../services/supabase';
 import { useCache } from '../../../composables/useCache';
 import { projectCache, CacheTTL } from '../../../utils/cache/implementations';
@@ -204,6 +203,11 @@ import {
   getBoardStage,
   BOARD_STAGE_COLORS
 } from '../../../reference/board-stages.reference';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ProjectCreateDialog = defineAsyncComponent(() =>
+  import("../../../components/dialog/ProjectCreateDialog.vue")
+);
 
 // Component definition
 defineOptions({

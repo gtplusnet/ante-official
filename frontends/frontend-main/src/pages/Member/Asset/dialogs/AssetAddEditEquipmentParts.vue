@@ -67,9 +67,16 @@
 
 
 <script>
-import AddEditEquipmentPartsDialog from './AssetAddEditEquipmentPartsDialog.vue';
-import AddEditEquipmentItemsDialog from './AssetAddEditEquipmentItemsDialog.vue';
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditEquipmentPartsDialog = defineAsyncComponent(() =>
+  import('./AssetAddEditEquipmentPartsDialog.vue')
+);
+const AddEditEquipmentItemsDialog = defineAsyncComponent(() =>
+  import('./AssetAddEditEquipmentItemsDialog.vue')
+);
 
 export default {
   name: 'AddEditEquipmentParts',

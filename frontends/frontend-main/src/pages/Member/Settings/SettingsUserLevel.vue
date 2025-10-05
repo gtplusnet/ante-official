@@ -35,10 +35,17 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../../components/shared/display/GTable.vue";
-import AddEditUserLevelDialog from './dialogs/SettingsAddEditUserLevelDialog.vue';
-import RoleTreeDialog from './dialogs/SettingsRoleTreeDialog.vue';
 import { api } from 'src/boot/axios';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditUserLevelDialog = defineAsyncComponent(() =>
+  import('./dialogs/SettingsAddEditUserLevelDialog.vue')
+);
+const RoleTreeDialog = defineAsyncComponent(() =>
+  import('./dialogs/SettingsRoleTreeDialog.vue')
+);
 
 export default {
   name: 'SettingsUserLevel',

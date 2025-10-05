@@ -318,12 +318,16 @@
 </style>
 
 <script lang="ts">
-import { defineComponent, computed, onMounted, ref } from 'vue';
+import { defineComponent, computed, onMounted, ref, defineAsyncComponent } from 'vue';
 import { useAuthStore } from "../../stores/auth";
 import { useMultiAccountStore } from "../../stores/multiAccount";
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import AddAccountDialog from '../auth/AddAccountDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddAccountDialog = defineAsyncComponent(() =>
+  import('../auth/AddAccountDialog.vue')
+);
 
 export default defineComponent({
   name: 'HeaderAccount',

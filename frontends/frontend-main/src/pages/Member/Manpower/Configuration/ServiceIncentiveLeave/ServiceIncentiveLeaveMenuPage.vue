@@ -127,13 +127,21 @@ import { useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
 import GCard from 'src/components/shared/display/GCard.vue';
 import { handleAxiosError } from 'src/utility/axios.error.handler';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, defineAsyncComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import ExpandedNavPageContainer from 'src/components/shared/ExpandedNavPageContainer.vue';
-import AddEditLeaveTypeDialog from '../../dialogs/configuration/ManpowerAddEditLeaveTypeDialog.vue';
-import AddEditLeavePlanDialog from '../../dialogs/configuration/ManpowerAddEditLeavePlanDialog.vue';
-import ManpowerViewPlanDetailsDialog from '../../dialogs/configuration/ManpowerViewPlanDetailsDialog.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditLeaveTypeDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerAddEditLeaveTypeDialog.vue')
+);
+const AddEditLeavePlanDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerAddEditLeavePlanDialog.vue')
+);
+const ManpowerViewPlanDetailsDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerViewPlanDetailsDialog.vue')
+);
 
 interface LeavePlan {
   id: number;

@@ -139,6 +139,7 @@
 </template>
 
 <script lang="ts">
+import { defineComponent, defineAsyncComponent, ref, computed, onMounted, getCurrentInstance } from 'vue';
 import GlobalWidgetCard from 'src/components/shared/global/GlobalWidgetCard.vue';
 import GlobalWidgetCardBox from 'src/components/shared/global/GlobalWidgetCardBox.vue';
 import GlobalWidgetCardBoxTitle from 'src/components/shared/global/GlobalWidgetCardBoxTitle.vue';
@@ -146,9 +147,14 @@ import GlobalWidgetCardBoxSubtitle from 'src/components/shared/global/GlobalWidg
 import GlobalWidgetPagination from 'src/components/shared/global/GlobalWidgetPagination.vue';
 import GlobalWidgetCardEmptyContent from 'src/components/shared/global/GlobalWidgetCardEmptyContent.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
-import ManpowerCreateAnnouncementDialog from '../../dialogs/ManpowerCreateAnnouncementDialog.vue';
-import ManpowerAnnouncementStatsDialog from '../../dialogs/ManpowerAnnouncementStatsDialog.vue';
-import { defineComponent, ref, computed, onMounted, getCurrentInstance } from 'vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ManpowerCreateAnnouncementDialog = defineAsyncComponent(() =>
+  import('../../dialogs/ManpowerCreateAnnouncementDialog.vue')
+);
+const ManpowerAnnouncementStatsDialog = defineAsyncComponent(() =>
+  import('../../dialogs/ManpowerAnnouncementStatsDialog.vue')
+);
 import { useQuasar } from 'quasar';
 import { AxiosError } from 'axios';
 import { handleAxiosError } from 'src/utility/axios.error.handler';

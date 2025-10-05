@@ -192,14 +192,22 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, ref, onMounted, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { APIRequests } from '../../../utility/api.handler';
 import { LeadDataResponse, DateFormat } from '@shared/response';
-import LeadCreateDialog from '../../../components/dialog/LeadDialog/LeadCreateDialog.vue';
-import BillOfQuantityDialog from '../../../components/dialog/BillOfQuantity/BillOfQuantityDialog.vue';
-import EmailComposeDialog from '../../../components/dialog/EmailComposeDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const LeadCreateDialog = defineAsyncComponent(() =>
+  import('../../../components/dialog/LeadDialog/LeadCreateDialog.vue')
+);
+const BillOfQuantityDialog = defineAsyncComponent(() =>
+  import('../../../components/dialog/BillOfQuantity/BillOfQuantityDialog.vue')
+);
+const EmailComposeDialog = defineAsyncComponent(() =>
+  import('../../../components/dialog/EmailComposeDialog.vue')
+);
 
 export default defineComponent({
   name: 'MemberLeadPage',

@@ -66,8 +66,13 @@ import { api } from 'src/boot/axios';
 import GInput from "../../../../../components/shared/form/GInput.vue";
 import { handleAxiosError } from "../../../../../utility/axios.error.handler";
 import { onMounted, ref, computed, watch } from 'vue';
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue";
+import { defineAsyncComponent } from 'vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default {
   name: 'CreateAllowanceDialog',

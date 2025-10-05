@@ -306,11 +306,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, getCurrentInstance } from 'vue';
+import { defineComponent, ref, computed, onMounted, getCurrentInstance, defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import WorkflowStageDetails from './WorkflowStageDetails.vue';
 import WorkflowTransitionDetails from './WorkflowTransitionDetails.vue';
-import WorkflowAddStageDialog from '../dialogs/WorkflowAddStageDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const WorkflowAddStageDialog = defineAsyncComponent(() =>
+  import('../dialogs/WorkflowAddStageDialog.vue')
+);
 
 interface StagePosition {
   x: number;

@@ -116,7 +116,12 @@
 </template>
 
 <script>
-import SelectSingleAccountDialog from './SelectSingleAccountDialog.vue';
+import { defineAsyncComponent } from 'vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const SelectSingleAccountDialog = defineAsyncComponent(() =>
+  import('./SelectSingleAccountDialog.vue')
+);
 
 export default {
   name: 'PettyCashAssignmentDialog',

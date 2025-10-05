@@ -90,11 +90,15 @@ import { api } from 'src/boot/axios';
 import GCard from "../../../../../components/shared/display/GCard.vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
 import { handleAxiosError } from "../../../../../utility/axios.error.handler";
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, defineAsyncComponent } from 'vue';
 import ExpandedNavPageContainer from '../../../../../components/shared/ExpandedNavPageContainer.vue';
 import { useRouter } from 'vue-router';
-import AddEditAllowanceTypeDialog from '../../dialogs/configuration/ManpowerAddEditAllowanceTypeDialog.vue';
 import { AllowanceConfigurationDataResponse, AllowanceTreeResponse } from '@shared/response/allowance-configuration.response';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditAllowanceTypeDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerAddEditAllowanceTypeDialog.vue')
+);
 
 export default {
   name: 'AllowanceMenuPage',

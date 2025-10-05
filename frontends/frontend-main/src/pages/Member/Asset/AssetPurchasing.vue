@@ -229,17 +229,32 @@
 <style scoped src="./AssetItem.scss"></style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import AssetNavigation from './AssetNavigation.vue';
 import GTable from "../../../components/shared/display/GTable.vue";
 import GCard from "../../../components/shared/display/GCard.vue";
-import PurchaseRequestDialog from "../../../components/dialog/ItemTransactionsDialog/PurchaseRequestDialog.vue";
-import PurchaseOrderDialog from "../../../components/dialog/ItemTransactionsDialog/PurchaseOrderDialog.vue";
-import ItemReceipt from "../../../components/dialog/ItemReceipt/ItemReceipt.vue";
-import CanvassDialog from './dialogs/AssetCanvassDialog.vue';
-import SupplierSelectionDialog from "../../../components/dialog/SupplierSelectionDialog.vue";
 import SupplierTable from "../../../components/tables/SupplierTable.vue";
-import SupplierInformationDialog from "./dialogs/AssetSupplierInformationDialog/SupplierInformationDialog.vue";
 import { api } from 'src/boot/axios';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const PurchaseRequestDialog = defineAsyncComponent(() =>
+  import("../../../components/dialog/ItemTransactionsDialog/PurchaseRequestDialog.vue")
+);
+const PurchaseOrderDialog = defineAsyncComponent(() =>
+  import("../../../components/dialog/ItemTransactionsDialog/PurchaseOrderDialog.vue")
+);
+const ItemReceipt = defineAsyncComponent(() =>
+  import("../../../components/dialog/ItemReceipt/ItemReceipt.vue")
+);
+const CanvassDialog = defineAsyncComponent(() =>
+  import('./dialogs/AssetCanvassDialog.vue')
+);
+const SupplierSelectionDialog = defineAsyncComponent(() =>
+  import("../../../components/dialog/SupplierSelectionDialog.vue")
+);
+const SupplierInformationDialog = defineAsyncComponent(() =>
+  import("./dialogs/AssetSupplierInformationDialog/SupplierInformationDialog.vue")
+);
 
 export default {
   name: 'MemberAssetPurchasing',

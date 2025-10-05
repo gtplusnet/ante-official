@@ -85,9 +85,16 @@
 </style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../../../components/shared/display/GTable.vue";
-import SupplierInformationDialog from './AssetSupplierInformationDialog/SupplierInformationDialog.vue';
-import AddEditSupplierDialog from './AssetAddEditSupplierDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const SupplierInformationDialog = defineAsyncComponent(() =>
+  import('./AssetSupplierInformationDialog/SupplierInformationDialog.vue')
+);
+const AddEditSupplierDialog = defineAsyncComponent(() =>
+  import('./AssetAddEditSupplierDialog.vue')
+);
 export default {
   name: 'CanvassSelectSupplierDialog',
   components: {

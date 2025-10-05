@@ -490,6 +490,7 @@
 
 <script lang="ts">
 import { Ref, ref, computed } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
 import { AxiosError } from 'axios';
 import { CutoffDateRangeResponse, EmployeeTimekeepingTotal } from "@shared/response";
@@ -497,13 +498,23 @@ import { QDialog, useQuasar } from 'quasar';
 import { handleAxiosError } from "../../../../../utility/axios.error.handler";
 import { useTimekeepingStore } from '../../../../../stores/timekeeping.store';
 import TimeView from "../../../../../components/shared/display/TimeView.vue";
-import EmployeeTimekeepingInformationDialog from "../../Payroll/EmployeeTimekeepingInformationDialog.vue";
-import PayrollTimekeepingDialog from "../../Payroll/PayrollTimeKeepingDialog.vue";
-import QueueDialog from "../../../../../components/dialog/QueueDialog/QueueDialog.vue";
-import BranchReadinessDialog from "../../Payroll/BranchReadinessDialog.vue";
 import CustomBranchTreeSelect from "../../../../../components/selection/CustomBranchTreeSelect.vue";
 import { useAuthStore } from '../../../../../stores/auth';
 import { ScopeList } from 'src/types/prisma-enums.d';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const EmployeeTimekeepingInformationDialog = defineAsyncComponent(() =>
+  import('../../Payroll/EmployeeTimekeepingInformationDialog.vue')
+);
+const PayrollTimekeepingDialog = defineAsyncComponent(() =>
+  import('../../Payroll/PayrollTimeKeepingDialog.vue')
+);
+const QueueDialog = defineAsyncComponent(() =>
+  import('../../../../../components/dialog/QueueDialog/QueueDialog.vue')
+);
+const BranchReadinessDialog = defineAsyncComponent(() =>
+  import('../../Payroll/BranchReadinessDialog.vue')
+);
 
 export default {
   name: 'PayrollTimesheetDialog',

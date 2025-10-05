@@ -52,12 +52,19 @@
 <style src="./SettingsTreeDialog.scss" scoped lang="scss"></style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import VueZoomable from 'vue-zoomable';
 import 'vue-zoomable/dist/style.css';
-import RoleTreeDialogChild from './SettingsRoleTreeDialogChild.vue';
 import { api } from 'src/boot/axios';
 import GlobalLoader from "../../../../components/shared/common/GlobalLoader.vue";
-import CreateEditRoleDialog from './SettingsCreateEditRoleDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const RoleTreeDialogChild = defineAsyncComponent(() =>
+  import('./SettingsRoleTreeDialogChild.vue')
+);
+const CreateEditRoleDialog = defineAsyncComponent(() =>
+  import('./SettingsCreateEditRoleDialog.vue')
+);
 
 export default {
   name: 'RoleTreeDialog',

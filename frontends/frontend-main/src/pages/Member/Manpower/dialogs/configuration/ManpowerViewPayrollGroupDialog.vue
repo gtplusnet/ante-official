@@ -74,12 +74,17 @@
 <style scoped src="./ManpowerPayrollGroupDialog.scss"></style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import ViewPayrollGroupBasicTab from './ManpowerViewPayrollGroupDialog/ViewPayrollGroupBasicTab.vue';
 import ViewPayrollGroupDeductionBasisTab from './ManpowerViewPayrollGroupDialog/ViewPayrollGroupDeductionBasisTab.vue';
 import ViewPayrollGroupOvertimeRatesTab from './ManpowerViewPayrollGroupDialog/ViewPayrollGroupOvertimeRatesTab.vue';
 import ViewPayrollGroupShiftingTab from './ManpowerViewPayrollGroupDialog/ViewPayrollGroupShiftingTab.vue';
-import TemplateDialog from 'src/components/dialog/TemplateDialog.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default {
   name: 'ViewPayrollGroup',

@@ -88,10 +88,15 @@
 }
 </style>
 <script>
+import { defineAsyncComponent } from 'vue';
 import GInput from "../../../components/shared/form/GInput.vue";
 import { api } from 'src/boot/axios';
 import axios from 'axios';
-import ItemCreateEditDialog from "../../../components/dialog/ItemCreateEditDialog/ItemCreateEditDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ItemCreateEditDialog = defineAsyncComponent(() =>
+  import('../../../components/dialog/ItemCreateEditDialog/ItemCreateEditDialog.vue')
+);
 
 export default {
   name: 'BillOfQuantityDialogQtyTakeOff',

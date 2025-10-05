@@ -25,11 +25,15 @@
 <style scoped></style>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { defineComponent, ref, defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import { getCurrentInstance } from 'vue';
-import SettingsUserCreateEditDialog from './dialogs/SettingsUserCreateEditDialog.vue';
 import SettingsPendingInvitesTable from './components/tables/SettingsPendingInvitesTable.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const SettingsUserCreateEditDialog = defineAsyncComponent(() =>
+  import('./dialogs/SettingsUserCreateEditDialog.vue')
+);
 
 export default defineComponent({
   name: 'SettingsUserInvite',

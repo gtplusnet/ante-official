@@ -390,14 +390,19 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, watch } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { onMounted } from 'vue';
 import { Notify } from 'quasar';
 import { useTaskSearchStore, type TaskGroupingMode } from '../../../stores/taskSearch';
 import { useTaskPhaseStore } from '../../../stores/taskPhase';
 import { useAssigneeList } from 'src/composables/useAssigneeList';
 import { useProjectList } from 'src/composables/useProjectList';
-import AddEditTaskPhaseDialog from 'src/components/dialog/TaskPhase/AddEditTaskPhaseDialog.vue';
 import draggable from 'vuedraggable';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditTaskPhaseDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TaskPhase/AddEditTaskPhaseDialog.vue')
+);
 
 interface Task {
   id: string;

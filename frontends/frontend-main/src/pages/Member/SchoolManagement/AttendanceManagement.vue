@@ -144,7 +144,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, computed } from 'vue';
+import { defineComponent, ref, onMounted, computed, defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
 import { AxiosError } from 'axios';
@@ -152,8 +152,12 @@ import { handleAxiosError } from 'src/utility/axios.error.handler';
 import GTable from 'src/components/shared/display/GTable.vue';
 import GCard from 'src/components/shared/display/GCard.vue';
 import GInput from 'src/components/shared/form/GInput.vue';
-import StudentsWithoutCheckoutDialog from './StudentsWithoutCheckoutDialog.vue';
 import ExpandedNavPageContainer from '../../../components/shared/ExpandedNavPageContainer.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const StudentsWithoutCheckoutDialog = defineAsyncComponent(() =>
+  import('./StudentsWithoutCheckoutDialog.vue')
+);
 interface IAttendanceSummaryResponse {
   date: string;
   totalCheckIns: number;

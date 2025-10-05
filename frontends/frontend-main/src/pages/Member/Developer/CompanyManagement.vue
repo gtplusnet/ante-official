@@ -94,10 +94,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, getCurrentInstance } from 'vue';
+import { defineComponent, ref, getCurrentInstance, defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
-import CompanyEditDialog from './CompanyEditDialog.vue';
 import type {  CompanyDataResponse  } from "@shared/response";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const CompanyEditDialog = defineAsyncComponent(() =>
+  import('./CompanyEditDialog.vue')
+);
 import GTable from "../../../components/shared/display/GTable.vue";
 
 export default defineComponent({

@@ -489,13 +489,17 @@
 
 <script lang="ts">
 import { defineComponent, defineAsyncComponent, ref, reactive, onMounted, computed, watch } from "vue";
-import AddAdjustSummaryDialog from "../AddAdjustSummaryDialog.vue";
 import { EmployeeSalaryComputationDeductionsResponse, SalaryInformationListResponse } from "@shared/response";
 import AmountView from "../../../../../../../components/shared/display/AmountView.vue";
 import { api } from "src/boot/axios";
 import { AxiosResponse } from "axios";
 import EditableSpan from "../../../../../../../components/shared/common/EditableSpan.vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddAdjustSummaryDialog = defineAsyncComponent(() =>
+  import('../AddAdjustSummaryDialog.vue')
+);
 
 // Lazy-loaded heavy dialog (TASK-008: Extended - Reduce initial bundle)
 const PayslipPreviewDialog = defineAsyncComponent(() =>

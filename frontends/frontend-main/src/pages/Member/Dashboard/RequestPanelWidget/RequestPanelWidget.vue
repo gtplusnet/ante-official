@@ -103,18 +103,31 @@
 
 <script lang="ts">
 import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import bus from 'src/bus';
 import RequestPanelPendingTab from './Partial/RequestPanelPendingTab.vue';
 import RequestPanelApprovedTab from './Partial/RequestPanelApprovedTab.vue';
 import RequestPanelRejectedTab from './Partial/RequestPanelRejectedTab.vue';
-import AddViewOvertimeApplicationFormDialog from '../../../../pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewOvertimeApplicationFormDialog.vue';
-import AddViewOfficialBusinessAndCertificateOfAttendanceDialog from '../../../../pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewOfficialBusinessAndCertificateOfAttendanceDialog.vue';
-import AddViewLeaveFormDialog from '../../../../pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewLeaveFormDialog.vue';
-import AddViewScheduleAdjustmentDialog from '../../../../pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewScheduleAdjustmentDialog.vue';
 import GlobalWidgetCard from '../../../../components/shared/global/GlobalWidgetCard.vue';
 import GlobalWidgetTab from '../../../../components/shared/global/GlobalWidgetTab.vue';
 import GlobalWidgetPagination from '../../../../components/shared/global/GlobalWidgetPagination.vue';
-import GlobalMoreActionMobileDialog from '../../../../components/shared/global/GlobalMoreActionMobileDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddViewOvertimeApplicationFormDialog = defineAsyncComponent(() =>
+  import('../../../../pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewOvertimeApplicationFormDialog.vue')
+);
+const AddViewOfficialBusinessAndCertificateOfAttendanceDialog = defineAsyncComponent(() =>
+  import('../../../../pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewOfficialBusinessAndCertificateOfAttendanceDialog.vue')
+);
+const AddViewLeaveFormDialog = defineAsyncComponent(() =>
+  import('../../../../pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewLeaveFormDialog.vue')
+);
+const AddViewScheduleAdjustmentDialog = defineAsyncComponent(() =>
+  import('../../../../pages/Member/Manpower/dialogs/ManpowerRequestPanelAddViewScheduleAdjustmentDialog.vue')
+);
+const GlobalMoreActionMobileDialog = defineAsyncComponent(() =>
+  import('../../../../components/shared/global/GlobalMoreActionMobileDialog.vue')
+);
 import type { Filing } from './types/filing.types';
 
 export default {

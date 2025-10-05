@@ -297,12 +297,21 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { useSocketStore } from 'src/stores/socketStore';
 import bus from 'src/bus';
-import TemplateDialog from 'src/components/dialog/TemplateDialog.vue';
-import ManpowerDeductionImportHistoryDialog from './ManpowerDeductionImportHistoryDialog.vue';
-import ManpowerDeductionImportErrorsDialog from './ManpowerDeductionImportErrorsDialog.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
+const ManpowerDeductionImportHistoryDialog = defineAsyncComponent(() =>
+  import('./ManpowerDeductionImportHistoryDialog.vue')
+);
+const ManpowerDeductionImportErrorsDialog = defineAsyncComponent(() =>
+  import('./ManpowerDeductionImportErrorsDialog.vue')
+);
 
 export default {
   name: 'ImportDeduction',

@@ -106,13 +106,22 @@
 
 <script lang="ts">
 import { ref } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import TimeView from "../../../../../components/shared/display/TimeView.vue";
 import { EmployeeTimekeepingTotal, CutoffDateRangeResponse } from "@shared/response";
-import PayrollTimekeepingDialog from "../../../../../pages/Member/Manpower/Payroll/PayrollTimeKeepingDialog.vue";
-import EmployeeTimekeepingInformationDialog from "../../../../../pages/Member/Manpower/Payroll/EmployeeTimekeepingInformationDialog.vue";
-import QueueDialog from "../../../../../components/dialog/QueueDialog/QueueDialog.vue";
 import { useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const PayrollTimekeepingDialog = defineAsyncComponent(() =>
+  import('../../../../../pages/Member/Manpower/Payroll/PayrollTimeKeepingDialog.vue')
+);
+const EmployeeTimekeepingInformationDialog = defineAsyncComponent(() =>
+  import('../../../../../pages/Member/Manpower/Payroll/EmployeeTimekeepingInformationDialog.vue')
+);
+const QueueDialog = defineAsyncComponent(() =>
+  import('../../../../../components/dialog/QueueDialog/QueueDialog.vue')
+);
 
 export default {
   name: 'TimekeepingTable',

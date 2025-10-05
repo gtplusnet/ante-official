@@ -52,11 +52,16 @@
 
 <script lang="ts">
 import { defineComponent, ref } from "vue";
+import { defineAsyncComponent } from 'vue';
 import { QDialog, useQuasar } from "quasar";
 import { getCurrentInstance } from 'vue';
 import GInput from "../shared/form/GInput.vue";
 import GButton from "../shared/buttons/GButton.vue";
-import TemplateDialog from "./TemplateDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('./TemplateDialog.vue')
+);
 
 interface DealTypeForm {
   typeName: string;

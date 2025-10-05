@@ -39,12 +39,16 @@
 
 <script lang="ts">
 import { TimekeepingLogResponse } from "@shared/response";
-import PayrollTimeKeepingRawLogsCreateDialog from './PayrollTimeKeepingRawLogsCreateDialog.vue';
 import GTable from "../../../../components/shared/display/GTable.vue";
-import { ref, Ref } from 'vue';
+import { ref, Ref, defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const PayrollTimeKeepingRawLogsCreateDialog = defineAsyncComponent(() =>
+  import('./PayrollTimeKeepingRawLogsCreateDialog.vue')
+);
 
 export default {
   name: 'PayrollTimeKeepingRawLogs',

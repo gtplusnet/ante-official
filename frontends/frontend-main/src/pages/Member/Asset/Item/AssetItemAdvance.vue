@@ -41,12 +41,21 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import ExpandedNavPageContainer from '../../../../components/shared/ExpandedNavPageContainer.vue';
 import GCard from "../../../../components/shared/display/GCard.vue";
-import ItemCreateEditDialog from "../../../../components/dialog/ItemCreateEditDialog/ItemCreateEditDialog.vue";
-import ItemInformationDialog from "../../../../components/dialog/ItemInformationDialog/ItemInformationDialog.vue";
-import ItemAdvanceListDialog from "../../../../components/dialog/ItemAdvanceListDialog.vue";
 import AdvanceItemTable from "../../../../components/tables/AdvanceItemTable.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ItemCreateEditDialog = defineAsyncComponent(() =>
+  import("../../../../components/dialog/ItemCreateEditDialog/ItemCreateEditDialog.vue")
+);
+const ItemInformationDialog = defineAsyncComponent(() =>
+  import("../../../../components/dialog/ItemInformationDialog/ItemInformationDialog.vue")
+);
+const ItemAdvanceListDialog = defineAsyncComponent(() =>
+  import("../../../../components/dialog/ItemAdvanceListDialog.vue")
+);
 
 export default {
   name: 'MemberAssetItemAdvance',

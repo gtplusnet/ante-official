@@ -138,11 +138,16 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import GlobalWidgetCard from '../../../../../components/shared/global/GlobalWidgetCard.vue';
-import MediaLibraryDialog from '../../../../../components/shared/MediaLibrary/MediaLibraryDialog.vue';
 import type { MediaItem } from '../../../../../components/shared/MediaLibrary/MediaLibraryCore.vue';
 import { CMSAnalyticsService, DetailedMediaStats } from '../../../../../services/cms-analytics.service';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const MediaLibraryDialog = defineAsyncComponent(() =>
+  import('../../../../../components/shared/MediaLibrary/MediaLibraryDialog.vue')
+);
 
 export default defineComponent({
   name: 'CMSMediaStats',

@@ -147,16 +147,22 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { defineComponent, ref, defineAsyncComponent } from 'vue';
 import GTable from 'src/components/shared/display/GTable.vue';
 import GCard from 'src/components/shared/display/GCard.vue';
-import GenerateLicensesDialog from './dialogs/GenerateLicensesDialog.vue';
-import EditLicenseDialog from './dialogs/EditLicenseDialog.vue';
 import { api } from 'src/boot/axios';
 import { useQuasar } from 'quasar';
 import { AxiosError } from 'axios';
 import { handleAxiosError } from 'src/utility/axios.error.handler';
 import ExpandedNavPageContainer from '../../../components/shared/ExpandedNavPageContainer.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const GenerateLicensesDialog = defineAsyncComponent(() =>
+  import('./dialogs/GenerateLicensesDialog.vue')
+);
+const EditLicenseDialog = defineAsyncComponent(() =>
+  import('./dialogs/EditLicenseDialog.vue')
+);
 
 interface DeviceLicenseResponse {
   id: number;

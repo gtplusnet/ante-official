@@ -155,12 +155,17 @@
 
 <script lang="ts">
 import { defineComponent, onMounted, ref, watch } from 'vue';
-import ContractDialog from '../ContractDialog.vue';
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
 import { ContractDataResponse, EmploymentStatusReference } from '@shared/response/contract.response';
 import { ContractCreateRequest, ContractEditRequest, EmploymentStatus } from '@shared/request/contract.request';
 import { useQuasar } from 'quasar';
 import { handleAxiosError } from "../../../../../../../utility/axios.error.handler";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ContractDialog = defineAsyncComponent(() =>
+  import('../ContractDialog.vue')
+);
 
 export default defineComponent({
   name: 'ContractDetailsTab',

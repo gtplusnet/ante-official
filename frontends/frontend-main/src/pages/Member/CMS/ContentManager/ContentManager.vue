@@ -68,6 +68,7 @@
 
 <script lang="ts">
 import { defineComponent, computed, watch, ref } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 
@@ -76,11 +77,15 @@ import ExpandedNavPageContainer from '../../../../components/shared/ExpandedNavP
 import ContentManagerSidebar from './components/ContentManagerSidebar.vue';
 import ContentList from './components/ContentList.vue';
 import ContentForm from './components/ContentForm.vue';
-import PreviewEntryDialog from './components/dialogs/PreviewEntryDialog.vue';
 
 // Composables
 import { useContentTypes } from '../ContentTypes/composables/useContentTypes';
 import { useContentManager } from './composables/useContentManager';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const PreviewEntryDialog = defineAsyncComponent(() =>
+  import('./components/dialogs/PreviewEntryDialog.vue')
+);
 
 export default defineComponent({
   name: 'ContentManager',

@@ -317,10 +317,19 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, onUnmounted, getCurrentInstance } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import GlobalWidgetCard from '../../../../components/shared/global/GlobalWidgetCard.vue';
-import TaskSelectionDialog from './dialog/TaskSelectionDialog.vue';
-import TimeHistoryDialog from './dialog/TimeHistoryDialog.vue';
-import TaskInformationDialog from '../../../../components/dialog/TaskInformationDialog/TaskInformationDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TaskSelectionDialog = defineAsyncComponent(() =>
+  import('./dialog/TaskSelectionDialog.vue')
+);
+const TimeHistoryDialog = defineAsyncComponent(() =>
+  import('./dialog/TimeHistoryDialog.vue')
+);
+const TaskInformationDialog = defineAsyncComponent(() =>
+  import('../../../../components/dialog/TaskInformationDialog/TaskInformationDialog.vue')
+);
 
 interface Task {
   id: number;

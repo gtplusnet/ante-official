@@ -28,11 +28,18 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import ExpandedNavPageContainer from '../../../../components/shared/ExpandedNavPageContainer.vue';
 import GCard from "../../../../components/shared/display/GCard.vue";
-import ItemInformationDialog from "../../../../components/dialog/ItemInformationDialog/ItemInformationDialog.vue";
-import ItemAdvanceListDialog from "../../../../components/dialog/ItemAdvanceListDialog.vue";
 import SimpleItemTable from "../../../../components/tables/SimpleItemTable.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ItemInformationDialog = defineAsyncComponent(() =>
+  import("../../../../components/dialog/ItemInformationDialog/ItemInformationDialog.vue")
+);
+const ItemAdvanceListDialog = defineAsyncComponent(() =>
+  import("../../../../components/dialog/ItemAdvanceListDialog.vue")
+);
 
 export default {
   name: 'MemberAssetItemDeleted',

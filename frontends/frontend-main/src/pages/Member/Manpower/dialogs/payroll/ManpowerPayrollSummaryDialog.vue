@@ -769,8 +769,7 @@
 
 <script lang="ts">
 import { Ref, ref, computed } from 'vue';
-import EmployeeInformationDialog from './ManpowerEmployeeInformationDialog/EmployeeSalaryInformationDialog.vue';
-import BankFileWritersDialog from './BankFileWritersDialog.vue';
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
 import { AxiosError } from 'axios';
 import { CutoffDateRangeResponse, SalaryInformationListResponse } from "@shared/response";
@@ -781,6 +780,14 @@ import DiscussionButton from "../../../../../components/shared/discussion/Discus
 import { DiscussionModule } from "../../../../../components/shared/discussion/DiscussionProps";
 import CustomBranchTreeSelect from "../../../../../components/selection/CustomBranchTreeSelect.vue";
 import { useAuthStore } from 'src/stores/auth';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const EmployeeInformationDialog = defineAsyncComponent(() =>
+  import('./ManpowerEmployeeInformationDialog/EmployeeSalaryInformationDialog.vue')
+);
+const BankFileWritersDialog = defineAsyncComponent(() =>
+  import('./BankFileWritersDialog.vue')
+);
 
 // Type definitions for the optimized payroll summary response
 interface PayrollSummaryEmployeeInfo {

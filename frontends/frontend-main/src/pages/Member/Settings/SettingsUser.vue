@@ -41,9 +41,14 @@
 </template>
 
 <script>
-import UserTreeDialog from "./dialogs/SettingsUserTreeDialog.vue";
+import { defineAsyncComponent } from 'vue';
 import UserTable from "./components/tables/SettingsUserTable.vue";
 import { api } from 'src/boot/axios';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const UserTreeDialog = defineAsyncComponent(() =>
+  import("./dialogs/SettingsUserTreeDialog.vue")
+);
 
 export default {
   name: 'SettingsUser',

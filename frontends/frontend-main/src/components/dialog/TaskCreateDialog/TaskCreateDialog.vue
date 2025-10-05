@@ -453,11 +453,16 @@
 </style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GInput from '../../../components/shared/form/GInput.vue';
-import ChooseUserDialog from './ChooseUserDialog.vue';
 import { api, environment } from 'src/boot/axios';
 import { useGlobalMethods } from 'src/composables/useGlobalMethods';
 import { useAssigneeList } from 'src/composables/useAssigneeList';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ChooseUserDialog = defineAsyncComponent(() =>
+  import('./ChooseUserDialog.vue')
+);
 
 export default {
   name: 'TaskCreateDialog',

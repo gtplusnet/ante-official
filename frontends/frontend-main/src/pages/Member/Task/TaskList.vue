@@ -66,6 +66,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, onActivated, watch } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { Notify } from 'quasar';
@@ -80,7 +81,11 @@ import bus from 'src/bus';
 import TaskListView from './TaskListView.vue';
 import TaskBoardView from './TaskBoardView.vue';
 import TaskCardView from './TaskCardView.vue';
-import TaskCreateDialog from '../../../components/dialog/TaskCreateDialog/TaskCreateDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TaskCreateDialog = defineAsyncComponent(() =>
+  import('../../../components/dialog/TaskCreateDialog/TaskCreateDialog.vue')
+);
 
 interface Task {
   id: string;

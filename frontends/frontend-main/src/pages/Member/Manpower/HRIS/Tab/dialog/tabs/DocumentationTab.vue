@@ -306,11 +306,16 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
 import { FileService } from 'src/services/file.service';
-import TemplateDialog from 'src/components/dialog/TemplateDialog.vue';
 import { useGlobalMethods } from 'src/composables/useGlobalMethods';
 import { useQuasar } from 'quasar';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default {
   name: 'DocumentationTab',

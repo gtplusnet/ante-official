@@ -71,8 +71,13 @@
 </style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
-import ChooseItemDialog from "../../../../components/dialog/ChooseItemDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ChooseItemDialog = defineAsyncComponent(() =>
+  import("../../../../components/dialog/ChooseItemDialog.vue")
+);
 
 export default {
   name: 'AddEditEquipmentPartsDialog',

@@ -96,16 +96,22 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { defineComponent, ref, defineAsyncComponent } from 'vue';
 import GTable from 'src/components/shared/display/GTable.vue';
 import GCard from 'src/components/shared/display/GCard.vue';
-import ViewGradeLevelDialog from './dialogs/ViewGradeLevelDialog.vue';
-import AddEditGradeLevelDialog from './dialogs/AddEditGradeLevelDialog.vue';
 import { api } from 'src/boot/axios';
 import { useQuasar } from 'quasar';
 import { AxiosError } from 'axios';
 import type { GradeLevelResponse } from '@shared/response';
 import ExpandedNavPageContainer from '../../../components/shared/ExpandedNavPageContainer.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ViewGradeLevelDialog = defineAsyncComponent(() =>
+  import('./dialogs/ViewGradeLevelDialog.vue')
+);
+const AddEditGradeLevelDialog = defineAsyncComponent(() =>
+  import('./dialogs/AddEditGradeLevelDialog.vue')
+);
 
 interface GTableInstance {
   refetch: () => void;

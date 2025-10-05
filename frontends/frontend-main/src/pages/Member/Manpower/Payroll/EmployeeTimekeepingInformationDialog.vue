@@ -68,7 +68,12 @@ import EmployeePayrollGroupDetails from "../../../../components/details/employee
 import EmployeeScheduleDetails from "../../../../components/details/employee/EmployeeScheduleDetails.vue";
 import { handleAxiosError } from "../../../../utility/axios.error.handler";
 import { ref, watch } from 'vue';
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue";
+import { defineAsyncComponent } from 'vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default {
   name: 'EmployeeTimekeepingInformationDialog',

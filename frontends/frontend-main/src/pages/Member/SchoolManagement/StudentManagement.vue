@@ -198,26 +198,35 @@
 </style>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, defineAsyncComponent } from "vue";
 import GTable from "src/components/shared/display/GTable.vue";
-import { defineAsyncComponent } from 'vue';
 import GCard from "src/components/shared/display/GCard.vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
-import ViewStudentIdDialog from "./dialogs/ViewStudentIdDialog.vue";
-import ViewStudentDialog from "./dialogs/ViewStudentDialog.vue";
-import AddEditStudentDialog from "./dialogs/AddEditStudentDialog.vue";
-import AssignGuardianDialog from "./dialogs/AssignGuardianDialog.vue";
 import { api } from "src/boot/axios";
 import { useQuasar } from "quasar";
 import { AxiosError } from "axios";
 import type { StudentResponse } from "@shared/response";
 import ExpandedNavPageContainer from "../../../components/shared/ExpandedNavPageContainer.vue";
 import defaultStudentImage from "src/assets/default-student.svg";
-import ViewExportStudentIdDilaog from "./dialogs/ViewExportStudentIdDilaog.vue";
 
-// Lazy-loaded heavy dialog (TASK-008: Extended - Reduce initial bundle)
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ViewStudentIdDialog = defineAsyncComponent(() =>
+  import("./dialogs/ViewStudentIdDialog.vue")
+);
+const ViewStudentDialog = defineAsyncComponent(() =>
+  import("./dialogs/ViewStudentDialog.vue")
+);
+const AddEditStudentDialog = defineAsyncComponent(() =>
+  import("./dialogs/AddEditStudentDialog.vue")
+);
+const AssignGuardianDialog = defineAsyncComponent(() =>
+  import("./dialogs/AssignGuardianDialog.vue")
+);
 const ImportStudentsDialog = defineAsyncComponent(() =>
   import("./dialogs/ImportStudentsDialog.vue")
+);
+const ViewExportStudentIdDilaog = defineAsyncComponent(() =>
+  import("./dialogs/ViewExportStudentIdDilaog.vue")
 );
 
 interface GTableInstance {

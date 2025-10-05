@@ -125,10 +125,17 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { date } from 'quasar';
-import ManpowerDeductionImportErrorsDialog from './ManpowerDeductionImportErrorsDialog.vue';
-import TemplateDialog from 'src/components/dialog/TemplateDialog.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ManpowerDeductionImportErrorsDialog = defineAsyncComponent(() =>
+  import('./ManpowerDeductionImportErrorsDialog.vue')
+);
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default {
   name: 'ManpowerDeductionImportHistoryDialog',

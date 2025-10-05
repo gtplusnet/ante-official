@@ -33,10 +33,17 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../../components/shared/display/GTable.vue";
-import RoleGroupCreateEditDialog from './dialogs/SettingsRoleGroupCreateEditDialog.vue';
-import RoleGroupViewDialog from './dialogs/SettingsRoleGroupViewDialog.vue';
 import { api } from 'src/boot/axios';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const RoleGroupCreateEditDialog = defineAsyncComponent(() =>
+  import('./dialogs/SettingsRoleGroupCreateEditDialog.vue')
+);
+const RoleGroupViewDialog = defineAsyncComponent(() =>
+  import('./dialogs/SettingsRoleGroupViewDialog.vue')
+);
 
 export default {
   name: 'SettingsRoleGroup',

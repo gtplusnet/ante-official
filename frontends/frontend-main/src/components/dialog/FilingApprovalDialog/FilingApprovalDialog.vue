@@ -122,6 +122,7 @@
 
 <script lang="ts">
 import { defineComponent, computed, PropType, ref, watch } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
 import { useAuthStore } from 'src/stores/auth';
@@ -129,7 +130,6 @@ import { CombinedTaskResponseInterface } from 'src/shared/interfaces/task.interf
 import { FilingDisplayData } from 'src/interfaces/filing-notification.interface';
 import { FilingDataResolver } from 'src/services/filing-data-resolver.service';
 import { FileService } from 'src/services/file.service';
-import RejectFilingDialog from './RejectFilingDialog.vue';
 import UnifiedFilingDisplay from './components/UnifiedFilingDisplay.vue';
 import OvertimeFilingDisplay from './components/OvertimeFilingDisplay.vue';
 import LeaveFilingDisplay from './components/LeaveFilingDisplay.vue';
@@ -137,6 +137,11 @@ import OfficialBusinessFilingDisplay from './components/OfficialBusinessFilingDi
 import CertificateOfAttendanceFilingDisplay from './components/CertificateOfAttendanceFilingDisplay.vue';
 import ScheduleAdjustmentFilingDisplay from './components/ScheduleAdjustmentFilingDisplay.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const RejectFilingDialog = defineAsyncComponent(() =>
+  import('./RejectFilingDialog.vue')
+);
 
 export default defineComponent({
   name: 'FilingApprovalDialog',

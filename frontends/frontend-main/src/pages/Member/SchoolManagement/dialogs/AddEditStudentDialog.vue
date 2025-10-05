@@ -195,13 +195,18 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, watch } from "vue";
+import { defineAsyncComponent } from 'vue';
 import { useQuasar } from "quasar";
 import { api } from "src/boot/axios";
 import GButton from "src/components/shared/buttons/GButton.vue";
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue";
 import GlobalInputTemplate from "src/components/shared/form/GlobalInput/GlobalInputTemplate.vue";
 import type { StudentResponse } from "@shared/response";
 import { AxiosError } from "axios";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default defineComponent({
   name: "AddEditStudentDialog",

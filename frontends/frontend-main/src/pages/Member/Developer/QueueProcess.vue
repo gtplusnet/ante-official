@@ -167,9 +167,14 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
-import QueueDialog from "../../../components/dialog/QueueDialog/QueueDialog.vue";
 import QueueStatusBadge from "../../../components/dialog/QueueDialog/QueueStatusBadge.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const QueueDialog = defineAsyncComponent(() =>
+  import("../../../components/dialog/QueueDialog/QueueDialog.vue")
+);
 
 export default {
   name: 'SettingsQueueProcess',

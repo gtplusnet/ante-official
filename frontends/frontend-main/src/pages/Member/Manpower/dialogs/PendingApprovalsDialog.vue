@@ -288,11 +288,16 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, watch, onMounted } from "vue";
+import { defineAsyncComponent } from 'vue';
 import { useQuasar } from "quasar";
-import FilingApprovalDialog from "../../../../components/dialog/FilingApprovalDialog/FilingApprovalDialog.vue";
 import { api } from "src/boot/axios";
 import { date } from "quasar";
 import { useTimekeepingStore } from "src/stores/timekeeping.store";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const FilingApprovalDialog = defineAsyncComponent(() =>
+  import('../../../../components/dialog/FilingApprovalDialog/FilingApprovalDialog.vue')
+);
 
 export default defineComponent({
   name: "PendingApprovalsDialog",

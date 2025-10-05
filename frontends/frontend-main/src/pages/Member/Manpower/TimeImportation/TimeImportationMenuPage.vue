@@ -199,10 +199,14 @@
 </template>
 
 <script lang="ts">
-import { ref, computed } from 'vue';
+import { defineAsyncComponent, ref, computed } from 'vue';
 import ExpandedNavPageContainer from '../../../../components/shared/ExpandedNavPageContainer.vue';
 import ImportMethodSelector from './components/ImportMethodSelector.vue';
-import TimekeepingImportHistoryDialog from './dialogs/TimekeepingImportHistoryDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TimekeepingImportHistoryDialog = defineAsyncComponent(() =>
+  import('./dialogs/TimekeepingImportHistoryDialog.vue')
+);
 import { api } from 'src/boot/axios';
 import { useQuasar } from 'quasar';
 import { handleAxiosError } from "../../../../utility/axios.error.handler";

@@ -75,10 +75,17 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../../../../components/shared/display/GTable.vue";
-import EquipmentPartsMaintenanceDialog from "../../../../../pages/Member/Asset/dialogs/AssetEquipmentPartsMaintenanceDialog.vue";
-import ItemReceiptDialog from "../../../../../components/dialog/ItemReceipt/ItemReceipt.vue";
 import { api } from 'src/boot/axios';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const EquipmentPartsMaintenanceDialog = defineAsyncComponent(() =>
+  import("../../../../../pages/Member/Asset/dialogs/AssetEquipmentPartsMaintenanceDialog.vue")
+);
+const ItemReceiptDialog = defineAsyncComponent(() =>
+  import("../../../../../components/dialog/ItemReceipt/ItemReceipt.vue")
+);
 
 export default {
   name: 'EquipmentJobOrderTable',

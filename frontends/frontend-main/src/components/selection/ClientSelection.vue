@@ -20,8 +20,13 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GInput from "../../components/shared/form/GInput.vue";
-import AddEditClientDialog from '../dialog/AddEditClientDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditClientDialog = defineAsyncComponent(() =>
+  import('../dialog/AddEditClientDialog.vue')
+);
 
 export default {
   name: 'BrandSelection',

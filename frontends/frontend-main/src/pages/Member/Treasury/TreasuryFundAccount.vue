@@ -72,12 +72,19 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import TreasuryHeader from './TreasuryHeader.vue';
-import AddEditFundAccountDialog from './dialogs/TreasuryAddEditFundAccountDialog.vue';
 import GTable from "../../../components/shared/display/GTable.vue";
 import GCard from "../../../components/shared/display/GCard.vue";
-import FundAccountTransactionsDialog from './dialogs/TreasuryFundAccountTransactionsDialog.vue';
 import ExpandedNavPageContainer from '../../../components/shared/ExpandedNavPageContainer.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditFundAccountDialog = defineAsyncComponent(() =>
+  import('./dialogs/TreasuryAddEditFundAccountDialog.vue')
+);
+const FundAccountTransactionsDialog = defineAsyncComponent(() =>
+  import('./dialogs/TreasuryFundAccountTransactionsDialog.vue')
+);
 
 export default {
   name: 'MemberTreasuryFundAccount',

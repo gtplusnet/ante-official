@@ -56,13 +56,20 @@
 </template>
 
 <script>
-import AddEditPayrollGroupDialog from '../dialogs/configuration/ManpowerAddEditPayrollGroupDialog.vue';
+import { defineAsyncComponent } from 'vue';
 import GTable from "src/components/shared/display/GTable.vue";
 import GCard from "src/components/shared/display/GCard.vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
-import ViewPayrollGroupDialog from '../dialogs/configuration/ManpowerViewPayrollGroupDialog.vue';
 import { api } from 'src/boot/axios';
 import ExpandedNavPageContainer from 'src/components/shared/ExpandedNavPageContainer.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditPayrollGroupDialog = defineAsyncComponent(() =>
+  import('../dialogs/configuration/ManpowerAddEditPayrollGroupDialog.vue')
+);
+const ViewPayrollGroupDialog = defineAsyncComponent(() =>
+  import('../dialogs/configuration/ManpowerViewPayrollGroupDialog.vue')
+);
 
 export default {
   name: 'PayrollGroupPage',

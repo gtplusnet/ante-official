@@ -180,10 +180,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, ref, onMounted, defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import { APIRequests } from '../../../utility/api.handler';
-import EmailConfigDialog from '../../../components/dialog/EmailConfigDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const EmailConfigDialog = defineAsyncComponent(() =>
+  import('../../../components/dialog/EmailConfigDialog.vue')
+);
 
 interface EmailConfiguration {
   id: string;

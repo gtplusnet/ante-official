@@ -76,10 +76,15 @@
 <style scoped src="../ManpowerPayrollGroupDialog.scss"></style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
 import GInput from 'src/components/shared/form/GInput.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
-import AddEditCutOffDialog from '../ManpowerAddEditCutOffDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditCutOffDialog = defineAsyncComponent(() =>
+  import('../ManpowerAddEditCutOffDialog.vue')
+);
 
 export default {
   name: 'PayrollGroupBasic',

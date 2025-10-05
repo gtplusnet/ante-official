@@ -59,13 +59,20 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../../../components/shared/display/GTable.vue";
 import GCard from "../../../../components/shared/display/GCard.vue";
-import AddEditShiftDialog from '../dialogs/configuration/ManpowerAddEditShiftDialog.vue';
-import ViewShiftDialog from '../dialogs/configuration/ManpowerViewShiftDialog.vue';
 import { api } from 'src/boot/axios';
 import ExpandedNavPageContainer from '../../../../components/shared/ExpandedNavPageContainer.vue';
 import GButton from "src/components/shared/buttons/GButton.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditShiftDialog = defineAsyncComponent(() =>
+  import('../dialogs/configuration/ManpowerAddEditShiftDialog.vue')
+);
+const ViewShiftDialog = defineAsyncComponent(() =>
+  import('../dialogs/configuration/ManpowerViewShiftDialog.vue')
+);
 export default {
   name: 'ShiftManagementMenuPage',
   components: {

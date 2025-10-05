@@ -76,10 +76,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, getCurrentInstance } from 'vue';
+import { defineComponent, defineAsyncComponent, ref, onMounted, getCurrentInstance } from 'vue';
 import { useQuasar, QTableColumn } from 'quasar';
 import ExpandedNavPageContainer from '../../../../components/shared/ExpandedNavPageContainer.vue';
-import AddEditTeamDialog from './dialogs/AddEditTeamDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditTeamDialog = defineAsyncComponent(() =>
+  import('./dialogs/AddEditTeamDialog.vue')
+);
 
 export default defineComponent({
   name: 'TeamManagementMenuPage',

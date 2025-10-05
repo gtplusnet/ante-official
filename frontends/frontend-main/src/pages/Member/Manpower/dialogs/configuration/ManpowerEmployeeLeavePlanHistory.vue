@@ -65,9 +65,16 @@ import GTable from "src/components/shared/display/GTable.vue";
 import { formatWord } from "src/utility/formatter";
 import { formatName } from "src/utility/formatter";
 import { ref } from "vue";
-import ManpowerAdjustLeaveCreditsDialog from "./ManpowerAdjustLeaveCreditsDialog.vue";
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue";
+import { defineAsyncComponent } from 'vue';
 import GButton from "src/components/shared/buttons/GButton.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ManpowerAdjustLeaveCreditsDialog = defineAsyncComponent(() =>
+  import('./ManpowerAdjustLeaveCreditsDialog.vue')
+);
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default {
   name: "EmployeeLeavePlanHistoryDialog",

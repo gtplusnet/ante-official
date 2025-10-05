@@ -107,9 +107,14 @@ import { QDialog, useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
 import { handleAxiosError } from "../../../../utility/axios.error.handler";
 import { Ref, ref } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { TimekeepingOverrideRequest } from '@shared/request/timekeeping.request';
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue";
 import TimeViewRaw from "../../../../components/shared/display/TimeViewRaw.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default {
   name: 'PayrollTimekeepingOverrrideDialog',

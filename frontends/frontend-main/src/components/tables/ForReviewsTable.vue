@@ -29,8 +29,13 @@
 </template>
 
 <script>
-import ForReviewStartCollectionDialog from '../dialog/ForReviewStartCollectionDialog.vue';
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../components/shared/display/GTable.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ForReviewStartCollectionDialog = defineAsyncComponent(() =>
+  import('../dialog/ForReviewStartCollectionDialog.vue')
+);
 
 export default {
   name: 'ForReviewsTable',

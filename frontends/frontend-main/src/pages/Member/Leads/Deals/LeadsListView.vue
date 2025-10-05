@@ -55,14 +55,20 @@
 
 <style scoped src="../Leads.scss"></style>
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, ref, onMounted, defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
-import LeadCreateDialog from "src/components/dialog/LeadDialog/LeadCreateDialog.vue";
 import { APIRequests } from "src/utility/api.handler";
 import GlobalLoader from "src/components/shared/common/GlobalLoader.vue";
 import type { ProjectStatus } from "@shared/response";
 import { LeadDataResponse, ClientDataResponse } from "@shared/response";
-import ViewLeadDialog from "src/components/dialog/LeadDialog/ViewLeadDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const LeadCreateDialog = defineAsyncComponent(() =>
+  import("src/components/dialog/LeadDialog/LeadCreateDialog.vue")
+);
+const ViewLeadDialog = defineAsyncComponent(() =>
+  import("src/components/dialog/LeadDialog/ViewLeadDialog.vue")
+);
 
 interface TableResponse<T> {
   list: T[];

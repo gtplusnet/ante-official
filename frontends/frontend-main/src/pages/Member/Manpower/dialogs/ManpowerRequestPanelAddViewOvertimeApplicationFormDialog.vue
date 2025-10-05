@@ -185,8 +185,8 @@
 
 <script lang="ts">
 import { ref, computed, onUnmounted } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import GInput from '../../../../components/shared/form/GInput.vue';
-import TemplateDialog from 'src/components/dialog/TemplateDialog.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
 import { formatDate } from '../../../../utility/formatter';
 import { useQuasar } from 'quasar';
@@ -196,6 +196,11 @@ import { useAuthStore } from '../../../../stores/auth';
 import type { Filing } from '../../Dashboard/RequestPanelWidget/types/filing.types';
 import type { CreateFilingRequest, UpdateFilingRequest } from 'src/types/filing.types';
 import { AxiosError } from 'axios';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 // Simple debounce implementation to avoid external dependency
 function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {

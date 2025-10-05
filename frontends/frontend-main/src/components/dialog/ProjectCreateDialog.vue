@@ -87,14 +87,19 @@
 <script lang="ts">
 import GInput from "../../components/shared/form/GInput.vue";
 import { environment } from 'src/boot/axios';
-import AddEditClientDialog from './AddEditClientDialog.vue';
 import SelectionLocation from "../selection/SelectionLocation.vue";
 import { defineComponent } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { ProjectCreateRequest } from "@shared/request";
 import { ProjectDataResponse } from "@shared/response";
 import { QDialog } from 'quasar';
 import { APIRequests } from "../../utility/api.handler";
 import { ProjectStatus } from '@/types/prisma-enums';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditClientDialog = defineAsyncComponent(() =>
+  import('./AddEditClientDialog.vue')
+);
 
 export default defineComponent({
   name: 'ProjectCreateDialog',

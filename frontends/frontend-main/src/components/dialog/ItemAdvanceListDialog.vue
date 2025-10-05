@@ -34,8 +34,13 @@
 </style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../components/shared/display/GTable.vue";
-import ItemInformationDialog from './ItemInformationDialog/ItemInformationDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ItemInformationDialog = defineAsyncComponent(() =>
+  import('./ItemInformationDialog/ItemInformationDialog.vue')
+);
 
 export default {
   name: 'ItemAdvanceListDialog',

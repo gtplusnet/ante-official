@@ -105,13 +105,19 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { defineComponent, ref, defineAsyncComponent } from 'vue';
 import GTable from 'src/components/shared/display/GTable.vue';
 import GCard from 'src/components/shared/display/GCard.vue';
 import ExpandedNavPageContainer from 'src/components/shared/ExpandedNavPageContainer.vue';
-import ViewSectionDialog from './dialogs/ViewSectionDialog.vue';
-import AddEditSectionDialog from './dialogs/AddEditSectionDialog.vue';
 import { useQuasar } from 'quasar';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ViewSectionDialog = defineAsyncComponent(() =>
+  import('./dialogs/ViewSectionDialog.vue')
+);
+const AddEditSectionDialog = defineAsyncComponent(() =>
+  import('./dialogs/AddEditSectionDialog.vue')
+);
 
 export default defineComponent({
   name: 'SectionManagement',

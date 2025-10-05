@@ -140,13 +140,24 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GTable from '../../../../../components/shared/display/GTable.vue';
 import GButton from '../../../../../components/shared/buttons/GButton.vue';
-import PettyCashRefillDialog from '../../dialogs/PettyCashRefillDialog.vue';
-import ViewPettyCashWidgetDialog from 'src/pages/Member/Dashboard/PettyCashWidget/dialog/ViewPettyCashWidgetDialog.vue';
-import PettyCashReturnDialog from '../../dialogs/PettyCashReturnDialog.vue';
-import PettyCashTransferDialog from '../../dialogs/PettyCashTransferDialog.vue';
 import { date } from 'quasar';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const PettyCashRefillDialog = defineAsyncComponent(() =>
+  import('../../dialogs/PettyCashRefillDialog.vue')
+);
+const ViewPettyCashWidgetDialog = defineAsyncComponent(() =>
+  import('src/pages/Member/Dashboard/PettyCashWidget/dialog/ViewPettyCashWidgetDialog.vue')
+);
+const PettyCashReturnDialog = defineAsyncComponent(() =>
+  import('../../dialogs/PettyCashReturnDialog.vue')
+);
+const PettyCashTransferDialog = defineAsyncComponent(() =>
+  import('../../dialogs/PettyCashTransferDialog.vue')
+);
 
 export default {
   name: 'TreasuryPettyCashHoldersTable',

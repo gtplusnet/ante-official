@@ -89,9 +89,14 @@
 </style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../../components/shared/display/GTable.vue";
-import AddWorkAccomplishmentFormDialog from './AddEditWorkAccomplishmentFormDialog.vue';
 import { api } from 'src/boot/axios';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddWorkAccomplishmentFormDialog = defineAsyncComponent(() =>
+  import('./AddEditWorkAccomplishmentFormDialog.vue')
+);
 
 export default {
   name: 'WorkAccomplishmentDialog',

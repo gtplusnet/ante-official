@@ -85,9 +85,14 @@
 <style src="./ItemTableSelect.scss" scoped></style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
 import GlobalLoader from "../../../components/shared/common/GlobalLoader.vue";
-import ChooseItemDialog from "../../../components/dialog/ChooseItemDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ChooseItemDialog = defineAsyncComponent(() =>
+  import("../../../components/dialog/ChooseItemDialog.vue")
+);
 
 export default {
   name: 'ItemTableSelect',

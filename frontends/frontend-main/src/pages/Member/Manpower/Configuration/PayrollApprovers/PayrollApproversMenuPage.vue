@@ -123,11 +123,15 @@ import { api } from 'src/boot/axios';
 import ExpandedNavPageContainer from '../../../../../components/shared/ExpandedNavPageContainer.vue';
 import { handleAxiosError } from '../../../../../utility/axios.error.handler';
 import { AxiosError } from 'axios';
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref, computed, defineAsyncComponent } from 'vue';
 import { PayrollApproverDataResponse } from '@shared/response/payroll-approvers.response';
-import SelectMultipleEmployeeDialog from '../../dialogs/configuration/ManpowerSelectMultipleEmployeeDialog.vue';
 import { DeletePayrollApproverRequest } from '@shared/request';
 import GButton from 'src/components/shared/buttons/GButton.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const SelectMultipleEmployeeDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerSelectMultipleEmployeeDialog.vue')
+);
 
 export default {
   name: 'PayrollApproversMenuPage',

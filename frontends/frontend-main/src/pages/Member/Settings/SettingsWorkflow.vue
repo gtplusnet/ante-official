@@ -53,13 +53,21 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, ref, onMounted, defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import axios from 'axios';
 import WorkflowList from './components/WorkflowList.vue';
-import WorkflowCreateDialog from './dialogs/WorkflowCreateDialog.vue';
-import WorkflowBuilderDialog from './dialogs/WorkflowBuilderDialog.vue';
-import WorkflowCloneDialog from './dialogs/WorkflowCloneDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const WorkflowCreateDialog = defineAsyncComponent(() =>
+  import('./dialogs/WorkflowCreateDialog.vue')
+);
+const WorkflowBuilderDialog = defineAsyncComponent(() =>
+  import('./dialogs/WorkflowBuilderDialog.vue')
+);
+const WorkflowCloneDialog = defineAsyncComponent(() =>
+  import('./dialogs/WorkflowCloneDialog.vue')
+);
 
 export default defineComponent({
   name: 'SettingsWorkflow',

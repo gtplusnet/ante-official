@@ -40,12 +40,19 @@
 <script lang="ts">
 import { useQuasar } from 'quasar';
 import { PropType, ref } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../../../../components/shared/display/GTable.vue";
 import { DeductionConfigurationDataResponse, DeductionPlanConfigurationDataResponse } from "@shared/response";
 import { api } from 'src/boot/axios';
 import { handleAxiosError } from "../../../../../utility/axios.error.handler";
-import DeductionHistoryDialog from '../../dialogs/configuration/ManpowerDeductionHistoryDialog.vue';
-import AddEditDeductionDialog from '../../dialogs/configuration/ManpowerAddEditDeductionDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const DeductionHistoryDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerDeductionHistoryDialog.vue')
+);
+const AddEditDeductionDialog = defineAsyncComponent(() =>
+  import('../../dialogs/configuration/ManpowerAddEditDeductionDialog.vue')
+);
 
 export default {
   name: 'DeductionActiveTable',

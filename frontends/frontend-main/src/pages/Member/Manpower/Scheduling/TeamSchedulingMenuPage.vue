@@ -158,12 +158,16 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted } from 'vue';
+import { defineComponent, defineAsyncComponent, ref, computed, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
 import { handleAxiosError } from '../../../../utility/axios.error.handler';
 import ExpandedNavPageContainer from 'src/components/shared/ExpandedNavPageContainer.vue';
-import CreateTeamScheduleDialog from '../dialogs/CreateTeamScheduleDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const CreateTeamScheduleDialog = defineAsyncComponent(() =>
+  import('../dialogs/CreateTeamScheduleDialog.vue')
+);
 
 interface DaySchedule {
   project: number | null;

@@ -95,12 +95,17 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, watch } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import { APIRequests } from '../../../utility/api.handler';
 import EmailSidebar from './components/EmailSidebar.vue';
 import EmailList from './components/EmailList.vue';
 import EmailViewer from './components/EmailViewer.vue';
-import EmailComposeDialog from '../../../components/dialog/EmailComposeDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const EmailComposeDialog = defineAsyncComponent(() =>
+  import('../../../components/dialog/EmailComposeDialog.vue')
+);
 
 interface EmailRecipient {
   name?: string;

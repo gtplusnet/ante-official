@@ -35,10 +35,15 @@
 
 <script lang="ts">
 import { defineComponent, ref, watch, getCurrentInstance } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { QDialog, useQuasar } from 'quasar';
 import GInput from '@components/shared/form/GInput.vue';
-import TemplateDialog from '@components/dialog/TemplateDialog.vue';
 import { handleAxiosError } from 'src/utility/axios.error.handler';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('@components/dialog/TemplateDialog.vue')
+);
 
 interface Form {
   firstName: string;

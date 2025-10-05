@@ -100,13 +100,17 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, reactive, getCurrentInstance } from 'vue';
+import { defineComponent, ref, reactive, getCurrentInstance, defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import { useAuthStore } from '../../../stores/auth';
 import { useMultiAccountStore } from '../../../stores/multiAccount';
 import { useRouter } from 'vue-router';
 import GTable from '../../../components/shared/display/GTable.vue';
-import DeveloperUserManagementDialog from './DeveloperUserManagementDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const DeveloperUserManagementDialog = defineAsyncComponent(() =>
+  import('./DeveloperUserManagementDialog.vue')
+);
 
 export default defineComponent({
   name: 'DeveloperUserManagement',

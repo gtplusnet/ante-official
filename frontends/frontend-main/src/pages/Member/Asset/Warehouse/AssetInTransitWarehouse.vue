@@ -57,11 +57,18 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import ExpandedNavPageContainer from '../../../../components/shared/ExpandedNavPageContainer.vue';
 import GTable from "../../../../components/shared/display/GTable.vue";
 import GCard from "../../../../components/shared/display/GCard.vue";
-import AddEditWarehouseDialog from '../dialogs/AssetAddEditWarehouseDialog.vue';
-import WarehouseInformationDialog from '../dialogs/AssetWarehouseInformationDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditWarehouseDialog = defineAsyncComponent(() =>
+  import('../dialogs/AssetAddEditWarehouseDialog.vue')
+);
+const WarehouseInformationDialog = defineAsyncComponent(() =>
+  import('../dialogs/AssetWarehouseInformationDialog.vue')
+);
 
 export default {
   name: 'MemberAssetInTransitWarehouse',

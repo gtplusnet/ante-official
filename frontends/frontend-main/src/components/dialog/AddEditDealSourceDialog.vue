@@ -45,10 +45,15 @@
 
 <script lang="ts" setup>
 import { ref, getCurrentInstance } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { useQuasar, QDialog } from 'quasar';
 import GInput from '../shared/form/GInput.vue';
 import GButton from '../shared/buttons/GButton.vue';
-import TemplateDialog from './TemplateDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('./TemplateDialog.vue')
+);
 
 defineOptions({
   name: 'AddEditDealSourceDialog',

@@ -135,9 +135,14 @@
 
 <script lang="ts">
 import { ref, computed } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import GlobalWidgetCard from '../../../../components/shared/global/GlobalWidgetCard.vue';
 import CalendarView from './components/CalendarView.vue';
-import AddEditCalendarDialog from './dialog/AddEditCalendarDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditCalendarDialog = defineAsyncComponent(() =>
+  import('./dialog/AddEditCalendarDialog.vue')
+);
 
 export default {
   name: 'CalendarWidget',

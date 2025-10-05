@@ -129,10 +129,17 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
 import { date } from 'quasar';
-import ManpowerImportErrorsDialog from './ManpowerImportErrorsDialog.vue';
-import TemplateDialog from 'src/components/dialog/TemplateDialog.vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ManpowerImportErrorsDialog = defineAsyncComponent(() =>
+  import('./ManpowerImportErrorsDialog.vue')
+);
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 
 export default {
   name: 'ManpowerImportHistoryDialog',

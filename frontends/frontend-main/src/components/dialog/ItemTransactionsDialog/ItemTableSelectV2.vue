@@ -87,12 +87,16 @@
 <style src="./ItemTableSelect.scss" scoped></style>
 
 <script lang="ts">
+import { ref, Ref, PropType, defineAsyncComponent } from 'vue';
 import GlobalLoader from "../../../components/shared/common/GlobalLoader.vue";
-import ChooseItemDialog from "../../../components/dialog/ChooseItemDialog.vue";
 import { ItemAdvanceDataResponse } from '@shared/response/item.response';
 import { formatCurrency } from "../../../utility/formatter";
-import { ref, Ref, PropType } from 'vue';
 import { ItemTableSelectRequest } from '@shared/request/item.request';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ChooseItemDialog = defineAsyncComponent(() =>
+  import("../../../components/dialog/ChooseItemDialog.vue")
+);
 
 interface InitialData {
   id: string;

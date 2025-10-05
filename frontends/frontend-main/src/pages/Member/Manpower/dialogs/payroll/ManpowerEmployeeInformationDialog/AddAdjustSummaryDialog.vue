@@ -76,10 +76,17 @@
 <script lang="ts">
 import { useQuasar } from "quasar";
 import { computed, reactive, ref, nextTick } from "vue";
+import { defineAsyncComponent } from 'vue';
 import GSelect from "src/components/shared/form/GSelect.vue";
 import GInput from "src/components/shared/form/GInput.vue";
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue";
-import ManpowerAddEditAllowanceDialog from "src/pages/Member/Manpower/dialogs/configuration/ManpowerAddEditAllowanceTypeDialog.vue";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
+const ManpowerAddEditAllowanceDialog = defineAsyncComponent(() =>
+  import('src/pages/Member/Manpower/dialogs/configuration/ManpowerAddEditAllowanceTypeDialog.vue')
+);
 
 export default {
   name: "AddAdjustSummaryDialog",

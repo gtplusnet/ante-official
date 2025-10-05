@@ -88,15 +88,25 @@
 </template>
 
 <script lang="ts">
-import AddViewOvertimeApplicationFormDialog from '../../dialogs/ManpowerRequestPanelAddViewOvertimeApplicationFormDialog.vue';
-import AddViewOfficialBusinessAndCertificateOfAttendanceDialog from '../../dialogs/ManpowerRequestPanelAddViewOfficialBusinessAndCertificateOfAttendanceDialog.vue';
-import AddViewLeaveFormDialog from '../../dialogs/ManpowerRequestPanelAddViewLeaveFormDialog.vue';
-import AddViewScheduleAdjustmentDialog from '../../dialogs/ManpowerRequestPanelAddViewScheduleAdjustmentDialog.vue';
+import { defineAsyncComponent, ref, onMounted } from 'vue';
 import RequestCard from 'src/pages/Member/Dashboard/RequestPanelWidget/Partial/cards/RequestCard.vue';
 import GlobalWidgetCard from 'src/components/shared/global/GlobalWidgetCard.vue';
 import GlobalWidgetPagination from 'src/components/shared/global/GlobalWidgetPagination.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
-import { ref, onMounted } from 'vue';
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddViewOvertimeApplicationFormDialog = defineAsyncComponent(() =>
+  import('../../dialogs/ManpowerRequestPanelAddViewOvertimeApplicationFormDialog.vue')
+);
+const AddViewOfficialBusinessAndCertificateOfAttendanceDialog = defineAsyncComponent(() =>
+  import('../../dialogs/ManpowerRequestPanelAddViewOfficialBusinessAndCertificateOfAttendanceDialog.vue')
+);
+const AddViewLeaveFormDialog = defineAsyncComponent(() =>
+  import('../../dialogs/ManpowerRequestPanelAddViewLeaveFormDialog.vue')
+);
+const AddViewScheduleAdjustmentDialog = defineAsyncComponent(() =>
+  import('../../dialogs/ManpowerRequestPanelAddViewScheduleAdjustmentDialog.vue')
+);
 import { api } from 'src/boot/axios';
 import { handleAxiosError } from 'src/utility/axios.error.handler';
 import { AxiosError } from 'axios';

@@ -33,13 +33,21 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, ref } from "vue";
-import TemplateDialog from "src/components/dialog/TemplateDialog.vue";
+import { defineComponent, computed, ref, defineAsyncComponent } from "vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
-import ViewStudentIdPdfDialog from "./ViewStudentIdPdfDialog.vue";
 import StudentIdCard from "./StudentIdCard.vue";
 import { useStudentIdPdf } from "src/composables/useStudentIdPdf";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const TemplateDialog = defineAsyncComponent(() =>
+  import('src/components/dialog/TemplateDialog.vue')
+);
 import type { StudentResponse } from "@shared/response";
+
+// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+const ViewStudentIdPdfDialog = defineAsyncComponent(() =>
+  import("./ViewStudentIdPdfDialog.vue")
+);
 
 export default defineComponent({
   name: "ViewStudentIdDialog",
