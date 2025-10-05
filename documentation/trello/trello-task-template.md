@@ -84,14 +84,16 @@ When someone asks you to create a Trello task, follow these steps:
 
 ## Card Description Template
 
-**⚠️ IMPORTANT: We have multiple frontend apps!** Always specify which one:
+**⚠️ IMPORTANT: We have multiple frontend apps!** Always specify which one.
+
+**Current Frontend Apps** (this list may expand as the project grows):
 - `frontend-main` - Main ERP application (Vue 3 + Quasar)
 - `frontend-gate-app` - School gate attendance app (Vue 3 + Quasar)
 - `frontend-guardian-app` - Parent portal app (Vue 3 + Quasar)
 - `ante-facial-recognition` - Facial recognition mobile app (Flutter)
 - `user-manual` - User documentation (VitePress)
 
-**Not sure which frontend?** Ask the project manager or team for clarification BEFORE creating the task!
+**Not sure which frontend?** Check `frontends/` directory or ask the project manager/team for clarification BEFORE creating the task!
 
 Copy and paste this into your Trello card description:
 
@@ -113,8 +115,8 @@ So that I can [achieve some goal].
 
 ### Frontend
 ⚠️ **IMPORTANT:** Specify which frontend app!
-- **Frontend App:** [frontend-main | frontend-gate-app | frontend-guardian-app | ante-facial-recognition | user-manual]
-  - **Not sure?** Ask project manager/team for clarification first!
+- **Frontend App:** [specify: frontend-main | frontend-gate-app | frontend-guardian-app | ante-facial-recognition | user-manual | other]
+  - **Not sure?** Check `frontends/` directory or ask project manager/team for clarification first!
 - Files: [list files to modify/create]
 - Components: [list components]
 - UI: [any specific UI requirements]
@@ -208,7 +210,7 @@ Drafts → To Do → In Progress → QA Review → Done
 1. ❌ **Creating tasks in "To Do" instead of "Drafts"** - All new tasks MUST start in "Drafts" list!
 2. ❌ **Creating tasks without asking clarifying questions** - Always understand requirements fully first!
 3. ❌ Vague titles like "Fix bug" or "Update feature"
-4. ❌ **Not specifying which frontend app** (we have 5 different frontends!)
+4. ❌ **Not specifying which frontend app** (we have multiple frontend apps!)
 5. ❌ Missing acceptance criteria
 6. ❌ No Definition of Done checklist
 7. ❌ Tasks too large (should be 1-3 days max)
@@ -221,7 +223,7 @@ Drafts → To Do → In Progress → QA Review → Done
 
 - **Follow the 5-step process** - See "Steps When Asked to Create a Task" section above
 - **Ask questions first** - Never create a task without fully understanding requirements
-- **Specify the frontend** - We have 5 different frontends! Always specify which one. If unsure, ask for clarification first.
+- **Specify the frontend** - We have multiple frontend apps! Always specify which one. If unsure, ask for clarification first.
 - **Keep it small** - If task takes >3 days, break it down
 - **Be specific** - What exactly should work when done?
 - **Think errors** - Add acceptance criteria for error cases

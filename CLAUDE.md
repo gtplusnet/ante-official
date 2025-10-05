@@ -336,7 +336,7 @@ Dashboard, HRIS, Projects, Tasks, Treasury, Assets, CRM, Communication, Settings
 
 **Creating Tasks**: Follow the structured template at `/documentation/trello/trello-task-template.md`
 - ⚠️ **CRITICAL**: New tasks MUST be created in "Drafts" list (not "To Do")
-- ⚠️ **CRITICAL**: Always specify which frontend app (we have 5: main, gate, guardian, facial, user-manual)
+- ⚠️ **CRITICAL**: Always specify which frontend app (main, gate, guardian, facial, user-manual, etc.)
 - Use proper card title format: `[TYPE] Description` (FEAT, BUG, ENHANCEMENT, etc.)
 - Include user story, acceptance criteria, technical requirements, and Definition of Done
 - If unsure which frontend, ask project manager/team for clarification BEFORE creating task
