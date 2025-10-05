@@ -52,11 +52,14 @@ jobs:
     steps:
       - name: Send deployment start notification
         run: |
+          # Extract only the first line of commit message to avoid bash escaping issues
+          COMMIT_TITLE=$(echo "${{ github.event.head_commit.message }}" | head -n 1 | sed 's/[`*_]/\\&/g')
+
           MESSAGE="🚀 *ANTE ERP - Deployment Started*%0A%0A"
           MESSAGE="${MESSAGE}📦 *Repository:* ${{ github.repository }}%0A"
           MESSAGE="${MESSAGE}👤 *Triggered by:* ${{ github.actor }}%0A"
           MESSAGE="${MESSAGE}🔀 *Branch:* ${{ github.ref_name }}%0A"
-          MESSAGE="${MESSAGE}💬 *Commit:* ${{ github.event.head_commit.message }}%0A%0A"
+          MESSAGE="${MESSAGE}💬 *Commit:* ${COMMIT_TITLE}%0A%0A"
 
           if [ "${{ needs.detect-changes.outputs.frontend-main-changed }}" == "true" ]; then
             MESSAGE="${MESSAGE}🏢 Frontend Main (ERP) will be deployed%0A"
