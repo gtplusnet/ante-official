@@ -305,6 +305,7 @@
 <style scoped lang="scss" src="../EditCreateEmployee.scss"></style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
 import { useSupabaseSchedules } from 'src/composables/supabase/useSupabaseSchedules';
 import { useSupabasePayrollGroups } from 'src/composables/supabase/useSupabasePayrollGroups';
