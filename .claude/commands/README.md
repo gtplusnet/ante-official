@@ -32,6 +32,19 @@ This directory contains custom slash commands for the ANTE ERP project.
 - Moves card to "QA Review"
 - Adds QA checklist to card
 
+#### `/trello-review`
+**Description**: Review PR in QA Review and move to Done when merged
+**Usage**: `/trello-review`
+**What it does**:
+- Lists all cards in "QA Review" lane
+- Reviews PR code against coding guidelines
+- Checks SOLID principles adherence
+- Runs tests (Playwright for frontend, unit tests for backend)
+- Verifies all acceptance criteria met
+- Approves/requests changes/rejects PR
+- Moves card to "Done" after PR is merged
+- Provides comprehensive review summary
+
 ## Command Workflow
 
 Typical workflow for a task:
@@ -49,7 +62,16 @@ Typical workflow for a task:
 # 4. Create PR when done
 /trello-pr
 
-# 5. After PR approved and merged, move card to "Done" manually
+# 5. Review PR in QA Review
+/trello-review
+# - Reviews code against guidelines (SOLID principles, etc.)
+# - Runs tests (Playwright/unit tests)
+# - Verifies acceptance criteria
+# - Approves/merges PR
+# - Moves card to "Done" automatically
+
+# Alternative: Manual review and merge
+# Then move card to "Done" manually on Trello
 ```
 
 ## Creating New Commands
