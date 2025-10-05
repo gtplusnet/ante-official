@@ -288,6 +288,9 @@ ante-official/
 - **Supabase Migration**: `/documentation/infrastructure/supabase-migration-guide.md`
 - **Supabase Frontend**: `/documentation/frontend/supabase-integration.md`
 
+### Project Management
+- **Trello Task Template**: `/documentation/trello/trello-task-template.md` ⚠️ Use when creating tasks
+
 ### API & Integration
 - **API Integration**: `/documentation/standards/api-integration-guide.md`
 - **API Response Patterns**: `/documentation/standards/api-response-patterns.md` ⚠️ CRITICAL
@@ -330,6 +333,13 @@ Dashboard, HRIS, Projects, Tasks, Treasury, Assets, CRM, Communication, Settings
 
 ### Trello Task Workflow
 **Quick Start**: Use `/trello-todo`, `/trello-start`, `/trello-pr` slash commands
+
+**Creating Tasks**: Follow the structured template at `/documentation/trello/trello-task-template.md`
+- ⚠️ **CRITICAL**: Always specify which frontend app (we have 5: main, gate, guardian, facial, user-manual)
+- Use proper card title format: `[TYPE] Description` (FEAT, BUG, ENHANCEMENT, etc.)
+- Include user story, acceptance criteria, technical requirements, and Definition of Done
+- If unsure which frontend, ask project manager/team for clarification BEFORE creating task
+- See template for copy-paste ready format and complete guidelines
 
 **Process**:
 1. **Start Task**: Pull latest main, create branch (feat/enhancement/bug)
@@ -396,4 +406,4 @@ Dashboard, HRIS, Projects, Tasks, Treasury, Assets, CRM, Communication, Settings
 
 **Purpose**: This file provides critical context for Claude AI to work effectively on this project. Keep it concise. Move detailed documentation to `/documentation/` folder and reference it here.
 
-**Last Updated**: 2025-01-03
+**Last Updated**: 2025-10-05
