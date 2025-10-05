@@ -57,12 +57,14 @@ When someone asks you to create a Trello task, follow these steps:
    - Only after all questions are answered
    - Use the template below with complete information
    - Include all gathered details in appropriate sections
+   - ⚠️ **IMPORTANT: Create task in "Drafts" list** (not "To Do")
 
 ### 5. **Validate Before Posting**
    - Review the Quick Checklist (see below)
    - Ensure all required sections are filled
    - Confirm frontend app is specified
    - Verify acceptance criteria are clear and testable
+   - ✅ **Confirm task is in "Drafts" list** - Tasks are reviewed and moved to "To Do" when ready
 
 ---
 
@@ -150,6 +152,7 @@ So that I can [achieve some goal].
 
 Before saving your card, verify:
 
+- [ ] **Card in "Drafts" List** - ⚠️ New tasks MUST go in "Drafts", not "To Do"
 - [ ] **Title** - Clear with [TYPE] prefix
 - [ ] **User Story** - As a/I want/So that format filled
 - [ ] **Acceptance Criteria** - At least 3 specific criteria
@@ -171,16 +174,46 @@ Before saving your card, verify:
 
 ---
 
+## Board Lists & Workflow
+
+**⚠️ CRITICAL: Newly created tasks MUST be in "Drafts" list!**
+
+**Board Lists (in order):**
+1. **Drafts** - ✅ **All new tasks go here first**
+   - Tasks are reviewed by project manager/team
+   - Refined and validated before moving to "To Do"
+
+2. **To Do** - Ready to be worked on (source of truth)
+   - Only well-defined, approved tasks
+   - Moved here after review from "Drafts"
+
+3. **In Progress** - Active development
+   - Moved here when developer starts working
+
+4. **QA Review** - Awaiting review/testing
+   - Moved here after PR is created
+
+5. **Done** - Completed tasks
+   - Moved here after PR is merged
+
+**Workflow:**
+```
+Drafts → To Do → In Progress → QA Review → Done
+```
+
+---
+
 ## Common Mistakes to Avoid
 
-1. ❌ **Creating tasks without asking clarifying questions** - Always understand requirements fully first!
-2. ❌ Vague titles like "Fix bug" or "Update feature"
-3. ❌ **Not specifying which frontend app** (we have 5 different frontends!)
-4. ❌ Missing acceptance criteria
-5. ❌ No Definition of Done checklist
-6. ❌ Tasks too large (should be 1-3 days max)
-7. ❌ Forgetting to add labels or assignee
-8. ❌ Making assumptions instead of asking for clarification
+1. ❌ **Creating tasks in "To Do" instead of "Drafts"** - All new tasks MUST start in "Drafts" list!
+2. ❌ **Creating tasks without asking clarifying questions** - Always understand requirements fully first!
+3. ❌ Vague titles like "Fix bug" or "Update feature"
+4. ❌ **Not specifying which frontend app** (we have 5 different frontends!)
+5. ❌ Missing acceptance criteria
+6. ❌ No Definition of Done checklist
+7. ❌ Tasks too large (should be 1-3 days max)
+8. ❌ Forgetting to add labels or assignee
+9. ❌ Making assumptions instead of asking for clarification
 
 ---
 

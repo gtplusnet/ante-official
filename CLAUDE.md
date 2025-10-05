@@ -335,6 +335,7 @@ Dashboard, HRIS, Projects, Tasks, Treasury, Assets, CRM, Communication, Settings
 **Quick Start**: Use `/trello-todo`, `/trello-start`, `/trello-pr` slash commands
 
 **Creating Tasks**: Follow the structured template at `/documentation/trello/trello-task-template.md`
+- ⚠️ **CRITICAL**: New tasks MUST be created in "Drafts" list (not "To Do")
 - ⚠️ **CRITICAL**: Always specify which frontend app (we have 5: main, gate, guardian, facial, user-manual)
 - Use proper card title format: `[TYPE] Description` (FEAT, BUG, ENHANCEMENT, etc.)
 - Include user story, acceptance criteria, technical requirements, and Definition of Done
@@ -354,7 +355,8 @@ Dashboard, HRIS, Projects, Tasks, Treasury, Assets, CRM, Communication, Settings
 - `bug/{description}` - Bug fixes
 
 **Board Lists**:
-- **To Do**: Source of truth for pending work
+- **Drafts**: All new tasks created here first (for review/refinement)
+- **To Do**: Approved tasks ready to be worked on (source of truth)
 - **In Progress**: Active development
 - **QA Review**: Awaiting review/testing
 - **Done**: Completed tasks
