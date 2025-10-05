@@ -17,17 +17,28 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      frontend-main-changed: ${{ steps.changes.outputs.frontend-main }}
-      gate-app-changed: ${{ steps.changes.outputs.gate-app }}
-      guardian-app-changed: ${{ steps.changes.outputs.guardian-app }}
-      backend-changed: ${{ steps.changes.outputs.backend }}
+      frontend-main-changed: ${{ steps.manual.outputs.all == 'true' || steps.changes.outputs.frontend-main }}
+      gate-app-changed: ${{ steps.manual.outputs.all == 'true' || steps.changes.outputs.gate-app }}
+      guardian-app-changed: ${{ steps.manual.outputs.all == 'true' || steps.changes.outputs.guardian-app }}
+      backend-changed: ${{ steps.manual.outputs.all == 'true' || steps.changes.outputs.backend }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Check if manual trigger
+        id: manual
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "all=true" >> $GITHUB_OUTPUT
+            echo "Manual trigger detected - will deploy all components"
+          else
+            echo "all=false" >> $GITHUB_OUTPUT
+          fi
+
       - uses: dorny/paths-filter@v2
         id: changes
+        if: github.event_name != 'workflow_dispatch'
         with:
           filters: |
             frontend-main:
