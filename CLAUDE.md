@@ -324,45 +324,33 @@ Dashboard, HRIS, Projects, Tasks, Treasury, Assets, CRM, Communication, Settings
 - **Gate App**: School attendance management
 - **Guardian App**: Parent portal for student monitoring
 
-## 🚨 Critical Workflows
-
-### Task Management Workflow
-
-**System**: Modular task system with dashboard + detail files
-
-**Dashboard**: [TASK.md](TASK.md) - Lean overview (~250 lines)
-**Details**: `.tasks/` folder - Detailed task tracking
-**Guide**: [.tasks/README.md](.tasks/README.md) - Full workflow documentation
-
-#### Starting a Task
-1. Check [TASK.md](TASK.md) for priorities (P0 > P1 > P2)
-2. Read task details: `.tasks/active/TASK-XXX.md`
-3. Update dashboard status: `[ ]` → `[-]`
-4. Begin implementation
-
-#### During Work
-- Add notes to `.tasks/active/TASK-XXX.md` (not dashboard!)
-- Document challenges/solutions in task file
-- Track actual time vs estimate
-- Keep dashboard clean (status only)
-
-#### Completing a Task
-1. Verify acceptance criteria met
-2. Update dashboard: `[-]` → `[x]`
-3. Move file: `active/TASK-XXX.md` → `completed/TASK-XXX.md`
-4. Update milestone progress
-5. Commit: `git commit -m "type(scope): description [TASK-XXX]"`
-
-#### Creating New Tasks
-1. Copy template: `.tasks/templates/task-template.md`
-2. Name: `TASK-XXX.md` (next available number)
-3. Fill in all required fields
-4. Add to [TASK.md](TASK.md) and milestone file
-5. Link: `[Details](.tasks/active/TASK-XXX.md)`
-
-**Benefits**: Scalable, git-friendly, full history preserved
-
 ---
+
+## 🔄 Development Workflows
+
+### Trello Task Workflow
+**Quick Start**: Use `/trello-todo`, `/trello-start`, `/trello-pr` slash commands
+
+**Process**:
+1. **Start Task**: Pull latest main, create branch (feat/enhancement/bug)
+2. **Update Trello**: Add branch name to card, move "To Do" → "In Progress"
+3. **Develop**: Commit regularly, update card with progress
+4. **Create PR**: Push branch, create PR, move card to "QA Review"
+5. **Complete**: Merge PR, move card to "Done", delete branch
+
+**Branch Naming**:
+- `feat/{description}` - New features
+- `enhancement/{description}` - Improvements
+- `bug/{description}` - Bug fixes
+
+**Board Lists**:
+- **To Do**: Source of truth for pending work
+- **In Progress**: Active development
+- **QA Review**: Awaiting review/testing
+- **Done**: Completed tasks
+
+**Details**: See "Trello Development Workflow" in `CLAUDE.local.md`
+**Commands**: See `.claude/commands/README.md`
 
 ### Schema Change Protocol
 1. Edit `backend/prisma/schema.prisma`

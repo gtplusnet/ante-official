@@ -63,6 +63,9 @@ docker/archive/
 .claude/settings.local.json
 CLAUDE.local.md
 
+# MCP Server configs (no longer needed - using user-level config in ~/.claude.json)
+# .mcp.json
+
 # Certificates (except examples)
 *.pem
 *.key
