@@ -222,6 +222,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)

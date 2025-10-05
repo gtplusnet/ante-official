@@ -276,6 +276,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { useSocketStore } from 'src/stores/socketStore';
 import bus from 'src/bus';
 import GButton from 'src/components/shared/buttons/GButton.vue';

@@ -18,6 +18,7 @@
 </template>
 
 <script lang="ts">
+import { defineAsyncComponent } from 'vue';
 import { TimekeepingOutputResponse } from "@shared/response";
 import SimulationOutputDay from '../TimeKeepingSimulation/SimulationOutput/SimulationOutputDay.vue';
 

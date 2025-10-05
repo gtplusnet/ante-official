@@ -55,6 +55,7 @@
 </style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GInput from "../../components/shared/form/GInput.vue";
 import GButton from "../../components/shared/buttons/GButton.vue";
 import SelectionLocation from "../selection/SelectionLocation.vue";

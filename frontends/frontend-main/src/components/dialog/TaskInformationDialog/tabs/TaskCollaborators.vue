@@ -42,6 +42,7 @@
 <style scoped src="../../../shared/display/GTable.scss"></style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { api } from 'boot/axios';
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)

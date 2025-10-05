@@ -88,6 +88,7 @@
 }
 </style>
 <script>
+import { defineAsyncComponent } from 'vue';
 import GInput from "../../../components/shared/form/GInput.vue";
 import { api } from 'src/boot/axios';
 import axios from 'axios';

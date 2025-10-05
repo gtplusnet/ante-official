@@ -129,6 +129,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
 import { date } from 'quasar';
 

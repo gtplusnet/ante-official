@@ -130,6 +130,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GInput from "../../components/shared/form/GInput.vue";
 import { api, environment } from "src/boot/axios";
 

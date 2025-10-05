@@ -74,6 +74,7 @@
 <style scoped src="./ManpowerPayrollGroupDialog.scss"></style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import ViewPayrollGroupBasicTab from './ManpowerViewPayrollGroupDialog/ViewPayrollGroupBasicTab.vue';
 import ViewPayrollGroupDeductionBasisTab from './ManpowerViewPayrollGroupDialog/ViewPayrollGroupDeductionBasisTab.vue';
 import ViewPayrollGroupOvertimeRatesTab from './ManpowerViewPayrollGroupDialog/ViewPayrollGroupOvertimeRatesTab.vue';

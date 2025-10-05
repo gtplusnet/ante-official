@@ -306,6 +306,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
 import { FileService } from 'src/services/file.service';
 import { useGlobalMethods } from 'src/composables/useGlobalMethods';

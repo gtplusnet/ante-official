@@ -213,6 +213,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { date } from 'quasar';
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)

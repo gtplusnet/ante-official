@@ -75,6 +75,7 @@
 <style scoped src="./ManpowerPayrollGroupDialog.scss"></style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { api } from "src/boot/axios";
 import { handleAxiosError } from "src/utility/axios.error.handler";
 import GButton from "src/components/shared/buttons/GButton.vue";

@@ -290,6 +290,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
 import { useSocketStore } from 'src/stores/socketStore';
 import bus from 'src/bus';

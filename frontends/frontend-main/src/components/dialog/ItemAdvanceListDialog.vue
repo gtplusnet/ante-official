@@ -34,6 +34,7 @@
 </style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import GTable from "../../components/shared/display/GTable.vue";
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)

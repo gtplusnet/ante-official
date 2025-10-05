@@ -84,6 +84,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import EmployeeDetailsTab from './tabs/EmployeeDetailsTab.vue';
 import ContractDetailsTab from './tabs/ContractDetailsTab.vue';
 import JobDetailsTab from './tabs/JobDetailsTab.vue';

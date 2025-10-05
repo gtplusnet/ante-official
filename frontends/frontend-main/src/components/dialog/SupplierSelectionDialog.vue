@@ -143,6 +143,7 @@
 </style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import axios from 'axios';
 import { api } from 'src/boot/axios';
 import GlobalLoader from "../../components/shared/common/GlobalLoader.vue";

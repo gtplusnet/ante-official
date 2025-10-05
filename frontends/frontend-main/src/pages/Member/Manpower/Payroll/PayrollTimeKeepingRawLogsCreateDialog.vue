@@ -23,6 +23,7 @@
 </style>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
 import TimeKeepingSimulationForm from '../TimeKeepingSimulation/TimeKeepingSimulationForm.vue';
 

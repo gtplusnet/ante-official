@@ -37,6 +37,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { api } from "src/boot/axios";
 import ShiftFormFields from "../../../../../components/shared/form/ShiftFormFields.vue";
 import { handleAxiosError } from "../../../../../utility/axios.error.handler";

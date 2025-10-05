@@ -125,6 +125,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { date } from 'quasar';
 import GButton from 'src/components/shared/buttons/GButton.vue';
 
