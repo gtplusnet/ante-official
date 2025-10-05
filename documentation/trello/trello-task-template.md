@@ -4,6 +4,68 @@
 
 ---
 
+## 📋 Steps When Asked to Create a Task
+
+When someone asks you to create a Trello task, follow these steps:
+
+### 1. **Understand the Requirements**
+   - Read the request carefully
+   - Identify the core objective and desired outcome
+   - Determine task type: [FEAT], [BUG], [ENHANCEMENT], [REFACTOR], etc.
+
+### 2. **Ask Clarifying Questions**
+   Before creating the task, ask questions about anything unclear:
+
+   **Required Information:**
+   - ❓ **Which frontend app?** (frontend-main, gate-app, guardian-app, facial, user-manual)
+   - ❓ **Who is the target user?** (For user story: "As a...")
+   - ❓ **What is the expected behavior?** (For acceptance criteria)
+   - ❓ **Are there backend changes needed?** (API endpoints, database)
+   - ❓ **What is the priority?** (High, Medium, Low)
+   - ❓ **Complexity estimate?** (Easy, Medium, Hard)
+   - ❓ **Which module?** (HRIS, CMS, Treasury, etc.)
+   - ❓ **Any dependencies?** (Other tasks, external APIs)
+
+   **Example Clarification Questions:**
+   ```
+   Before I create the task, I need to clarify:
+
+   1. Which frontend app should this be implemented in?
+      - frontend-main (Main ERP)?
+      - frontend-gate-app (School gate)?
+      - frontend-guardian-app (Parent portal)?
+      - ante-facial-recognition (Mobile app)?
+
+   2. Who is the primary user for this feature?
+      (e.g., HR Manager, Teacher, Student, Admin)
+
+   3. What are the specific success criteria?
+      (What should happen when the feature works correctly?)
+
+   4. Are there any backend/database changes needed?
+
+   5. What is the priority and complexity level?
+   ```
+
+### 3. **Gather Complete Information**
+   - Don't make assumptions - ask for clarification
+   - Understand edge cases and error scenarios
+   - Confirm technical scope (frontend only, backend only, full-stack?)
+   - Identify any existing code/components to reference
+
+### 4. **Create the Task**
+   - Only after all questions are answered
+   - Use the template below with complete information
+   - Include all gathered details in appropriate sections
+
+### 5. **Validate Before Posting**
+   - Review the Quick Checklist (see below)
+   - Ensure all required sections are filled
+   - Confirm frontend app is specified
+   - Verify acceptance criteria are clear and testable
+
+---
+
 ## Card Title Format
 ```
 [TYPE] Brief, clear description of what needs to be done
@@ -111,17 +173,21 @@ Before saving your card, verify:
 
 ## Common Mistakes to Avoid
 
-1. ❌ Vague titles like "Fix bug" or "Update feature"
-2. ❌ **Not specifying which frontend app** (we have 5 different frontends!)
-3. ❌ Missing acceptance criteria
-4. ❌ No Definition of Done checklist
-5. ❌ Tasks too large (should be 1-3 days max)
-6. ❌ Forgetting to add labels or assignee
+1. ❌ **Creating tasks without asking clarifying questions** - Always understand requirements fully first!
+2. ❌ Vague titles like "Fix bug" or "Update feature"
+3. ❌ **Not specifying which frontend app** (we have 5 different frontends!)
+4. ❌ Missing acceptance criteria
+5. ❌ No Definition of Done checklist
+6. ❌ Tasks too large (should be 1-3 days max)
+7. ❌ Forgetting to add labels or assignee
+8. ❌ Making assumptions instead of asking for clarification
 
 ---
 
 ## Tips
 
+- **Follow the 5-step process** - See "Steps When Asked to Create a Task" section above
+- **Ask questions first** - Never create a task without fully understanding requirements
 - **Specify the frontend** - We have 5 different frontends! Always specify which one. If unsure, ask for clarification first.
 - **Keep it small** - If task takes >3 days, break it down
 - **Be specific** - What exactly should work when done?
