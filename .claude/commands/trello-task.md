@@ -1,18 +1,11 @@
 ---
-description: Complete Trello task workflow (list, start, create PR)
-tags: [trello, workflow, git, pr]
+description: Automated Trello task workflow (AI-driven, no user intervention)
+tags: [trello, workflow, git, pr, automated]
 ---
 
-# Trello Task Workflow
+# Automated Trello Task Workflow
 
-Comprehensive workflow for managing Trello tasks from start to finish.
-
-## Usage
-
-When invoked, this command will:
-1. Show available actions (List, Start, Complete)
-2. Guide you through the selected workflow
-3. Handle all Trello and Git operations
+Fully automated workflow for managing Trello tasks. AI analyzes and selects the most urgent task, creates branches, and handles PR creation automatically.
 
 ## Trello Board Configuration
 
@@ -22,273 +15,270 @@ When invoked, this command will:
 - **QA Review**: 68de606c8035e07e7dcd094c
 - **Done**: 68de5fd51be89a62a492b228
 
-## Instructions
+---
 
-### Main Menu
+## Main Workflow Logic
 
-Ask user what they want to do:
-```
-What would you like to do?
+When `/trello-task` is invoked, automatically determine the current state and take appropriate action:
 
-1. 📋 List tasks in "To Do"
-2. 🚀 Start working on a task
-3. 📝 Complete task and create PR
-4. ❌ Cancel
+1. **If on main branch** → Start new task workflow (Workflow A)
+2. **If on feature branch** → Complete task and create PR (Workflow B)
 
-Choose an option (1-4):
-```
-
-Based on selection, proceed to the appropriate workflow below.
+No user prompts. AI makes all decisions based on context analysis.
 
 ---
 
-## Workflow 1: List Tasks (📋)
+## Workflow A: Start New Task (Auto-Select Most Urgent)
 
-Display all tasks currently in the "To Do" list.
-
-### Steps
-
-1. Fetch all cards from "To Do" list (ID: 68de5fcf7534f0085373f7f0)
-2. If empty, inform user there are no pending tasks
-3. Sort by:
-   - Due date (urgent first)
-   - Labels/priority (if available)
-   - Creation date (newest first)
-4. Display in formatted table with:
-   - Card name
-   - Card ID (for reference)
-   - Labels (if any)
-   - Due date (if set)
-   - Link to card
-
-### Output Format
-
-```
-📋 Tasks in "To Do" (3 tasks)
-
-1. [URGENT] Fix login redirect bug
-   ID: abc123
-   Labels: bug, high-priority
-   Due: 2025-10-06
-   Link: https://trello.com/c/abc123
-
-2. Add dark mode toggle
-   ID: def456
-   Labels: feature
-   Due: Not set
-   Link: https://trello.com/c/def456
-
-3. Optimize database queries
-   ID: ghi789
-   Labels: enhancement, performance
-   Due: 2025-10-10
-   Link: https://trello.com/c/ghi789
-```
-
-Provide summary with task count and any urgent/overdue items.
-
-After listing, ask: "Would you like to start working on one of these tasks? (y/n)"
-- If yes, proceed to Workflow 2
-- If no, return to main menu
-
----
-
-## Workflow 2: Start Task (🚀)
-
-Interactive workflow to start working on a task from "To Do" list.
+**Trigger**: User is on main branch
 
 ### Step 1: Check Prerequisites
 
-1. Verify current git status
-2. Check if on main branch
-3. If not on main, ask user if they want to switch
-4. If uncommitted changes exist:
-   - Show files
-   - Ask if user wants to stash or commit them
-   - Handle accordingly
+1. Verify git status
+2. If uncommitted changes:
+   - Automatically stash them
+   - Continue with workflow
+   - Note: Will remind user to apply stash later
 
 ### Step 2: Sync with Main
 
-1. Ensure main branch is up to date:
-   ```bash
-   git checkout main
-   git pull origin main
-   ```
+```bash
+git checkout main
+git pull origin main
+```
 
-### Step 3: Select Task
+### Step 3: Fetch and Analyze Tasks
 
 1. Fetch all cards from "To Do" list (ID: 68de5fcf7534f0085373f7f0)
-2. Display available tasks (if multiple)
-3. Ask user to select which task to work on (by number or card ID)
+2. If no tasks available:
+   - Display: "✅ No pending tasks in 'To Do'. All caught up!"
+   - Exit
 
-### Step 4: Determine Task Type
+### Step 4: AI Task Selection (AUTOMATIC)
 
-1. Analyze the card to determine type:
-   - **Feature**: New functionality (use `feat/` prefix)
-   - **Enhancement**: Improvement to existing feature (use `enhancement/` prefix)
-   - **Bug**: Bug fix (use `bug/` prefix)
-2. Look at:
-   - Card labels
-   - Card title keywords (feat, fix, enhance, etc.)
-   - Card description
-3. If unclear, ask user to specify type
+Analyze all tasks and score them based on:
 
-### Step 5: Create Branch
+#### Urgency Score Calculation
 
-1. Generate branch name from card title:
+**Due Date Score** (40 points max):
+- Overdue: 40 points
+- Due today: 35 points
+- Due within 3 days: 30 points
+- Due within 7 days: 20 points
+- Due within 14 days: 10 points
+- No due date: 0 points
+
+**Label Score** (30 points max):
+- Labels containing "urgent", "critical", "blocker", "high-priority": +30 points
+- Labels containing "bug", "security", "production": +20 points
+- Labels containing "enhancement", "feature": +10 points
+- Labels containing "low-priority", "nice-to-have": +5 points
+
+**Description Analysis Score** (20 points max):
+- Contains "URGENT", "CRITICAL", "ASAP": +20 points
+- Contains "Important", "High priority": +15 points
+- Contains "Bug", "Issue", "Broken": +10 points
+- Contains "Enhancement", "Improvement": +5 points
+
+**Age Score** (10 points max):
+- Created >14 days ago: +10 points
+- Created >7 days ago: +5 points
+- Created >3 days ago: +2 points
+- Created recently: 0 points
+
+**Total Score**: Sum all scores (max 100 points)
+
+**Selection**: Pick the task with the highest score
+
+### Step 5: Determine Task Type (AUTOMATIC)
+
+Analyze selected card to determine type:
+
+**Check labels first**:
+- If has "bug", "fix", "issue" label → `bug/`
+- If has "feature", "new" label → `feat/`
+- If has "enhancement", "improve", "optimize" label → `enhancement/`
+
+**Check title if labels unclear**:
+- Title starts with "Fix", "Bug", "Issue" → `bug/`
+- Title starts with "Add", "New", "Create" → `feat/`
+- Title starts with "Improve", "Enhance", "Optimize", "Update" → `enhancement/`
+
+**Default**: `enhancement/`
+
+### Step 6: Generate Branch Name (AUTOMATIC)
+
+1. Extract card title
+2. Apply transformations:
    - Convert to lowercase
+   - Remove special characters (keep only alphanumeric and spaces)
    - Replace spaces with hyphens
-   - Remove special characters
-   - Add appropriate prefix (feat/enhancement/bug)
-   - Example: "Add dark mode toggle" → "feat/add-dark-mode-toggle"
-2. Show proposed branch name to user for confirmation
-3. Allow user to edit if needed
-4. Create the branch:
-   ```bash
-   git checkout -b [branch-name]
-   ```
+   - Truncate to max 50 characters
+   - Add type prefix
+3. Branch name format: `{type}/{sanitized-title}`
 
-### Step 6: Update Trello Card
+**Examples**:
+- "Fix login redirect bug" → `bug/fix-login-redirect-bug`
+- "Add dark mode toggle" → `feat/add-dark-mode-toggle`
+- "Optimize database queries for performance" → `enhancement/optimize-database-queries-for-performance`
 
-1. Update card description by prepending:
+### Step 7: Create Branch
+
+```bash
+git checkout -b [generated-branch-name]
+```
+
+### Step 8: Update Trello Card
+
+1. Prepend to card description:
    ```markdown
    ## Development Info
    Branch: [branch-name]
    Developer: @[username]
    Started: [current-date]
+   AI Selected: Yes (Urgency Score: [score]/100)
 
    ---
 
-   [existing description content]
+   [existing description]
    ```
-2. Add a comment to the card:
+
+2. Add comment:
    ```
-   🚀 Development started
+   🤖 AI automatically started this task
    Branch: [branch-name]
+   Urgency Score: [score]/100
+   Reason: [brief explanation of why this task was selected]
    Started: [current-date]
    ```
+
 3. Move card from "To Do" → "In Progress" (ID: 68de5fd2323f4388c651cdef)
 
-### Step 7: Display Summary
+### Step 9: Display Summary
 
 ```
-✅ Task started successfully!
+🤖 AI SELECTED TASK
+
+✅ Automatically started most urgent task:
 
 Card: [Card Name]
+Urgency Score: [score]/100
+Type: [Feature/Enhancement/Bug]
 Branch: [branch-name]
+
+Selection Reasoning:
+- Due Date: [due date or "Not set"]
+- Labels: [list labels]
+- Priority Indicators: [what made it urgent]
+
 Status: In Progress
 
-Next steps:
+📝 NEXT STEPS:
 1. Implement the feature/fix
 2. Commit changes regularly
-3. Run tests before completing
-4. Use /trello-task (option 3) when ready to create pull request
+3. When done, run /trello-task again to auto-create PR
 ```
 
-### Error Handling
-
-- If git has uncommitted changes, warn user and ask if they want to stash
-- If branch already exists:
-  - Inform user
-  - Ask if they want to switch to existing branch or create new one with different name
-  - Handle accordingly
-- If Trello API fails, show error and manual steps to complete
+If stash was created:
+```
+⚠️ Note: Previous uncommitted changes were stashed
+Run 'git stash pop' to restore them if needed
+```
 
 ---
 
-## Workflow 3: Complete Task & Create PR (📝)
+## Workflow B: Complete Task & Auto-Create PR
 
-Automated workflow to complete a task and create a pull request.
+**Trigger**: User is on a feature branch (not main)
 
-### Step 1: Verify Current State
+### Step 1: Verify Readiness
 
 1. Get current branch name
-2. Verify it's not main branch (if main, warn and exit)
-3. Check git status for uncommitted changes
-4. If uncommitted changes exist:
-   - Show files with changes
-   - Ask if user wants to commit them now
-   - If yes, ask for commit message and commit
+2. Check git status
+3. If uncommitted changes:
+   - Display files with changes
+   - Display: "⚠️ You have uncommitted changes. Please commit them first, then run /trello-task again."
+   - Exit (do not proceed)
 
-### Step 2: Find Associated Trello Card
+### Step 2: Find Associated Trello Card (AUTOMATIC)
 
-1. Look for card in "In Progress" list (ID: 68de5fd2323f4388c651cdef)
+1. Search "In Progress" list (ID: 68de5fd2323f4388c651cdef)
 2. Match by branch name in card description
-3. If multiple matches or no match:
-   - Show available cards in "In Progress"
-   - Ask user to select the correct card
-   - Manual fallback: ask for card ID
+3. If not found in "In Progress":
+   - Search "To Do" list
+   - Search "QA Review" list
+4. If still not found:
+   - Display: "⚠️ Cannot find Trello card for branch: [branch-name]"
+   - Display: "Create PR manually or check Trello card description"
+   - Exit
 
-### Step 3: Pre-PR Checks
+### Step 3: Push Branch (AUTOMATIC)
 
-Ask user to confirm:
-```
-Before creating PR, please confirm:
-- [ ] All acceptance criteria met?
-- [ ] Tests passing locally?
-- [ ] Build successful?
-- [ ] Code reviewed (self-review completed)?
-- [ ] Documentation updated (if needed)?
-
-Ready to proceed? (y/n)
+```bash
+git push -u origin [current-branch]
 ```
 
-If any "No" or user declines, suggest completing those items first and exit.
+If push fails (e.g., conflicts):
+- Display error
+- Provide resolution steps
+- Exit
 
-### Step 4: Push Branch
+### Step 4: Generate PR Details (AUTOMATIC)
 
-1. Push current branch to origin:
-   ```bash
-   git push -u origin [current-branch]
-   ```
-2. Handle errors (e.g., remote already exists, conflicts)
+**PR Title** (from branch name):
+- Extract type prefix (bug/feat/enhancement)
+- Convert branch name to title case
+- Remove hyphens
+- Format: `{type}: {Title}`
 
-### Step 5: Generate PR Details
+Examples:
+- Branch: `bug/fix-login-redirect` → PR Title: `bug: Fix login redirect`
+- Branch: `feat/add-dark-mode` → PR Title: `feat: Add dark mode`
+- Branch: `enhancement/optimize-queries` → PR Title: `enhancement: Optimize queries`
 
-1. Get card details (title, description, labels)
-2. Generate PR title from branch name and card:
-   - Format: `type: Brief description`
-   - Examples:
-     - `feat: Add dark mode toggle`
-     - `enhancement: Optimize database queries`
-     - `bug: Fix login redirect issue`
-3. Generate PR body template:
-   ```markdown
-   ## Summary
-   [Brief description from Trello card]
+**PR Body** (from card details):
 
-   **Trello Card**: [Link to card]
-   **Type**: [Feature/Enhancement/Bug]
+```markdown
+## Summary
+[First paragraph from Trello card description, or card name if no description]
 
-   ## Changes
-   - [List main changes - extracted from commits or ask user]
+**Trello Card**: [Link to card]
+**Type**: [Feature/Enhancement/Bug based on branch prefix]
+**AI Automated**: Yes
 
-   ## Testing
-   - [ ] Manual testing completed
-   - [ ] E2E tests added/updated
-   - [ ] All tests passing
+## Changes
+[Extract from commit messages - list all commits in this branch]
 
-   ## Screenshots/Demos
-   [If applicable - ask user]
+## Implementation Details
+[Extract remaining content from Trello card description]
 
-   ## Checklist
-   - [ ] Code follows project style guide
-   - [ ] Documentation updated
-   - [ ] No console warnings/errors
-   - [ ] Performance impact considered
-   ```
-4. Show generated PR title and body to user for review/editing
+## Testing
+- [ ] Manual testing completed
+- [ ] E2E tests added/updated (if applicable)
+- [ ] All tests passing
+- [ ] No console errors
 
-### Step 6: Create Pull Request
+## Checklist
+- [ ] Code follows project style guide
+- [ ] Documentation updated (if needed)
+- [ ] No console warnings/errors
+- [ ] Performance impact considered
+- [ ] SOLID principles followed
 
-1. Create PR using GitHub CLI:
-   ```bash
-   gh pr create --title "[PR title]" --body "[PR body]"
-   ```
-2. Get PR URL from output
-3. Display PR URL to user
+---
 
-### Step 7: Update Trello Card
+🤖 PR created automatically by AI workflow
+```
+
+### Step 5: Create Pull Request (AUTOMATIC)
+
+```bash
+gh pr create --title "[PR title]" --body "[PR body]"
+```
+
+Get PR URL from output.
+
+### Step 6: Update Trello Card (AUTOMATIC)
 
 1. Update card description to add PR link:
    ```markdown
@@ -297,104 +287,259 @@ If any "No" or user declines, suggest completing those items first and exit.
    Developer: @[username]
    Started: [start-date]
    PR: [PR-URL]
+   PR Created: [current-date]
    ```
-2. Add comment to card:
+
+2. Add comment:
    ```
-   📝 Pull request created
+   🤖 AI automatically created pull request
    PR: [PR-URL]
    Ready for review
    Created: [current-date]
+
+   Commits included:
+   [List all commit messages]
    ```
+
 3. Move card from "In Progress" → "QA Review" (ID: 68de606c8035e07e7dcd094c)
 
-### Step 8: Add QA Checklist to Card
+### Step 7: Add QA Checklist to Card (AUTOMATIC)
 
-Add a comment with QA checklist:
+Add comment with QA checklist:
 ```markdown
 ## QA Review Checklist
-- [ ] Code review passed
+
+### Code Quality
+- [ ] Follows coding standards
+- [ ] SOLID principles applied
+- [ ] No TypeScript/ESLint errors
+- [ ] Proper error handling
+
+### Testing
 - [ ] All tests passing
 - [ ] Manual testing completed
 - [ ] No console errors
-- [ ] Responsive design verified (if UI changes)
 - [ ] Performance acceptable
+
+### Acceptance Criteria
+- [ ] All criteria met
+- [ ] Edge cases handled
 - [ ] Documentation updated
-- [ ] Meets acceptance criteria
+
+**Auto-generated by AI workflow**
 ```
 
-### Step 9: Display Summary
+### Step 8: Display Summary
 
 ```
-✅ Pull request created successfully!
+🤖 PULL REQUEST CREATED AUTOMATICALLY
+
+✅ Task completed and ready for review!
 
 PR: [PR-URL]
 Branch: [branch-name]
-Card Status: QA Review
+Card: [Card Name]
+Status: QA Review
 
-Next steps:
-1. Wait for code review
-2. Address any feedback
-3. Once approved, use /trello-review to merge
-4. Card will automatically move to "Done" after merge
+PR Details:
+- Title: [PR title]
+- Commits: [number] commits
+- Files changed: [number] files
 
-To review and merge:
-/trello-review
+Card has been moved to "QA Review" with checklist added.
+
+📝 NEXT STEPS:
+1. Code review will be conducted
+2. Address any feedback if requested
+3. Use /trello-review to merge when approved
+4. Card will auto-move to "Done" after merge
+
+🔗 View PR: [PR-URL]
 ```
-
-### Error Handling
-
-- If branch not pushed, show error and provide manual steps
-- If gh CLI not available, provide web URL to create PR manually
-- If Trello update fails, show manual steps to update card
-- If card not found in "In Progress", search other lists and inform user
-- Handle PR creation failures gracefully
 
 ---
 
-## Complete Workflow Example
+## AI Decision Making Examples
 
-### Typical Flow
+### Example 1: Urgent Bug Selection
+
+**Available Tasks**:
+1. "Add dark mode" (no due date, "feature" label)
+2. "Fix login crash" (overdue, "bug, urgent" labels)
+3. "Optimize images" (due in 7 days, "enhancement" label)
+
+**AI Analysis**:
+```
+Task 1 Score: 10 (label: feature)
+Task 2 Score: 90 (overdue: 40, labels: 50)
+Task 3 Score: 30 (due soon: 20, label: 10)
+
+✅ SELECTED: Task 2 - "Fix login crash"
+Reason: Overdue critical bug
+```
+
+### Example 2: No Clear Winner
+
+**Available Tasks**:
+1. "Update docs" (no due date, "documentation" label)
+2. "Add analytics" (due in 5 days, "feature" label)
+3. "Refactor service" (due in 4 days, "enhancement" label)
+
+**AI Analysis**:
+```
+Task 1 Score: 5
+Task 2 Score: 40 (due soon: 30, label: 10)
+Task 3 Score: 45 (due soon: 30, label: 10, age: 5)
+
+✅ SELECTED: Task 3 - "Refactor service"
+Reason: Due sooner and slightly older
+```
+
+### Example 3: All Equal Priority
+
+**Available Tasks**:
+1. "Feature A" (due in 7 days)
+2. "Feature B" (due in 7 days)
+3. "Feature C" (due in 7 days)
+
+**AI Analysis**:
+```
+All tasks have equal scores (20 points each)
+
+✅ SELECTED: Task 1 - "Feature A"
+Reason: First in list (oldest creation date)
+```
+
+---
+
+## Error Handling
+
+### No Tasks Available
+```
+✅ No pending tasks in "To Do"
+
+All caught up! Great work! 🎉
+```
+
+### Git Conflicts on Push
+```
+❌ Failed to push branch
+
+Error: [git error message]
+
+Resolution steps:
+1. Pull latest changes: git pull origin main
+2. Resolve any conflicts
+3. Run /trello-task again to retry PR creation
+```
+
+### PR Creation Failed
+```
+❌ Failed to create pull request
+
+Error: [gh error message]
+
+Manual steps:
+1. Go to: https://github.com/[repo]/compare/[branch]
+2. Create PR manually
+3. Update Trello card with PR link
+
+Branch pushed successfully: [branch-name]
+```
+
+### Trello API Failed
+```
+⚠️ Trello update failed but PR created successfully
+
+PR: [PR-URL]
+
+Manual Trello steps:
+1. Open card: [Card Name]
+2. Add PR link to description
+3. Move card to "QA Review"
+4. Add QA checklist comment
+```
+
+---
+
+## Complete Automated Flow Example
+
+### Scenario: Starting Fresh
 
 ```bash
-# 1. Invoke command
+# User runs command on main branch
 /trello-task
 
-# 2. List available tasks
-Choose option 1 → See all tasks in "To Do"
+🤖 AI SELECTED TASK
+✅ Automatically started most urgent task:
 
-# 3. Start working on a task
-Choose option 2 → Select task → Branch created → Card moved to "In Progress"
+Card: Fix login redirect bug
+Urgency Score: 85/100
+Type: Bug Fix
+Branch: bug/fix-login-redirect-bug
 
-# 4. Do development work...
-[User implements feature, commits regularly, tests locally]
+Selection Reasoning:
+- Due Date: 2025-10-07 (2 days overdue)
+- Labels: bug, urgent, production
+- Priority Indicators: Overdue, critical label, production impact
 
-# 5. Complete task
-/trello-task → Choose option 3 → PR created → Card moved to "QA Review"
+Status: In Progress
 
-# 6. Review and merge
-/trello-review → PR merged → Card moved to "Done"
+📝 NEXT STEPS:
+1. Implement the bug fix
+2. Commit changes regularly
+3. When done, run /trello-task again to auto-create PR
+```
+
+### Scenario: Completing Work
+
+```bash
+# User completes work, commits, then runs command on feature branch
+/trello-task
+
+🤖 PULL REQUEST CREATED AUTOMATICALLY
+
+✅ Task completed and ready for review!
+
+PR: https://github.com/gtplusnet/ante-official/pull/15
+Branch: bug/fix-login-redirect-bug
+Card: Fix login redirect bug
+Status: QA Review
+
+PR Details:
+- Title: bug: Fix login redirect bug
+- Commits: 3 commits
+- Files changed: 5 files
+
+Card has been moved to "QA Review" with checklist added.
+
+📝 NEXT STEPS:
+1. Code review will be conducted
+2. Address any feedback if requested
+3. Use /trello-review to merge when approved
+4. Card will auto-move to "Done" after merge
+
+🔗 View PR: https://github.com/gtplusnet/ante-official/pull/15
 ```
 
 ---
 
 ## Notes
 
-- **Trello API**: Commands use MCP server configured in CLAUDE.local.md
-- **GitHub CLI**: Requires `gh` CLI to be installed and authenticated
-- **Branch Strategy**: Uses feat/enhancement/bug prefixes
-- **PR Strategy**: Always use squash and merge (never delete source branch)
-- **Card Movement**: Follows To Do → In Progress → QA Review → Done
+- **Zero user prompts**: AI makes all decisions automatically
+- **Smart selection**: AI analyzes urgency, deadlines, labels, and content
+- **Context-aware**: Different actions based on current branch
+- **Fail-safe**: Clear error messages with manual fallback steps
+- **Transparent**: Shows reasoning for AI decisions
 
-## Tips
+## Integration
 
-- Use `/trello-task` option 1 regularly to see what's pending
-- Start tasks from "To Do" only (maintains clean workflow)
-- Commit frequently during development
-- Run tests before creating PR
-- Update documentation as you code (not after)
-- Use meaningful commit messages
+Use with `/trello-review` for complete automated workflow:
+```bash
+/trello-task   # Auto-selects and starts task
+[Do the work]
+/trello-task   # Auto-creates PR
+/trello-review # Reviews and merges
+```
 
-## Related Commands
-
-- `/trello-review` - Review PRs in QA Review and merge when approved
-- See `.claude/commands/README.md` for complete workflow
+**Total commands needed**: 2 (`/trello-task` twice, once before and once after work)
