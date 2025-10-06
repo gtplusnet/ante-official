@@ -107,13 +107,6 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Copy staging environment config
-        run: |
-          cd frontends/frontend-main
-          cp environment/env.staging .env
-          echo "Environment file configured:"
-          cat .env
-
       - name: Deploy Frontend Main to Vercel
         run: |
           cd frontends/frontend-main

@@ -107,20 +107,13 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Copy production environment config
-        run: |
-          cd frontends/frontend-main
-          cp environment/env.production .env
-          echo "Environment file configured:"
-          cat .env
-
       - name: Deploy Frontend Main to Vercel
         run: |
           cd frontends/frontend-main
           npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_MAIN_PROD }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND_MAIN }}
 
   deploy-gate-app:
     needs: [detect-changes, notify-start]
@@ -140,7 +133,7 @@ jobs:
           npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_GATE_PROD }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_GATE_APP }}
 
   deploy-guardian-app:
     needs: [detect-changes, notify-start]
@@ -160,7 +153,7 @@ jobs:
           npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_GUARDIAN_PROD }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_GUARDIAN_APP }}
 
   build-and-deploy-backend:
     needs: [detect-changes, notify-start]
