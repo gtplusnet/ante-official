@@ -380,10 +380,53 @@ Dashboard, HRIS, Projects, Tasks, Treasury, Assets, CRM, Communication, Settings
 5. **CRITICAL**: Update `isExpandedNav` in `MainLayout.vue`
 
 ### Deployment
-- Build Docker images: `docker build --target production-alpine`
-- Environment files in each module (`.env.example`)
-- PM2 for process management
-- Consult deployment docs for CI/CD setup
+
+**Infrastructure Overview:**
+- **Backend**: DigitalOcean App Platform (Docker containers from GHCR)
+- **Frontends**: Vercel (3 apps: Main, Gate, Guardian)
+- **CI/CD**: GitHub Actions workflows
+- **Branches**: `main` (staging), `production` (production)
+
+**Staging Environment:**
+- Workflow: `.github/workflows/deploy.yml`
+- Trigger: Push to `main` branch
+- Backend: https://ante-backend-staging-q6udd.ondigitalocean.app
+- Frontends:
+  - Main: https://ante-main-staging.vercel.app
+  - Gate: https://ante-gate-staging.vercel.app
+  - Guardian: https://ante-guardian-staging.vercel.app
+- Database: Supabase (ofnmfmwywkhosrmycltb), MongoDB (ante-staging), Redis (DB 1)
+
+**Production Environment:**
+- Workflow: `.github/workflows/deploy-production.yml`
+- Trigger: Push to `production` branch
+- Backend: https://ante-backend-production-gael2.ondigitalocean.app
+- Frontends:
+  - Main: https://ante-main-production.vercel.app
+  - Gate: https://ante-gate-production.vercel.app
+  - Guardian: https://ante-guardian-production.vercel.app
+- Database: Supabase (ccdlrujemqfwclogysjv), MongoDB (ante-production), Redis (DB 0)
+
+**Deployment Process:**
+1. Push to `main` (staging) or `production` branch
+2. GitHub Actions detects changes (path filters)
+3. Backend: Builds Docker image → Pushes to GHCR → Triggers DO deployment
+4. Frontends: Deploys changed apps to Vercel
+5. Telegram notifications for deployment status
+
+**Manual Deployment:**
+```bash
+# Trigger staging deployment
+gh workflow run deploy.yml --ref main
+
+# Trigger production deployment
+gh workflow run deploy-production.yml --ref production
+```
+
+**Environment Configuration:**
+- Staging: `frontends/{app}/environment/env.development`
+- Production: `frontends/{app}/environment/env.production`
+- Backend: Environment variables configured in DigitalOcean App Platform
 
 ## 🎯 Testing Requirements
 - **Playwright**: Headless only (never `--headed` or `--ui`)
