@@ -1,0 +1,122 @@
+name: Deploy Production Backend
+
+on:
+  push:
+    branches: [production]
+    paths:
+      - 'backend/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - '.github/workflows/deploy-production.yml'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  notify-start:
+    runs-on: [self-hosted, staging]
+    steps:
+      - name: Send deployment start notification
+        run: |
+          # Extract only the first line of commit message to avoid bash escaping issues
+          COMMIT_TITLE=$(echo "${{ github.event.head_commit.message }}" | head -n 1 | sed 's/[`*_]/\\&/g')
+
+          MESSAGE="🚀 *ANTE ERP - PRODUCTION Deployment Started*%0A%0A"
+          MESSAGE="${MESSAGE}📦 *Repository:* ${{ github.repository }}%0A"
+          MESSAGE="${MESSAGE}👤 *Triggered by:* ${{ github.actor }}%0A"
+          MESSAGE="${MESSAGE}🔀 *Branch:* production%0A"
+          MESSAGE="${MESSAGE}💬 *Commit:* ${COMMIT_TITLE}%0A%0A"
+          MESSAGE="${MESSAGE}⚙️ Backend API (PRODUCTION) will be deployed%0A"
+
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=${MESSAGE}" \
+            -d "parse_mode=Markdown"
+
+  build-and-deploy-backend:
+    needs: notify-start
+    runs-on: [self-hosted, staging]
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/ante-backend-production
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          target: production-alpine
+
+      - name: Trigger DigitalOcean deployment
+        run: |
+          echo "Triggering PRODUCTION deployment for app ${{ secrets.DO_APP_ID_PRODUCTION }}..."
+
+          RESPONSE=$(curl -s -X POST \
+            "https://api.digitalocean.com/v2/apps/${{ secrets.DO_APP_ID_PRODUCTION }}/deployments" \
+            -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"force_build": false}')
+
+          DEPLOYMENT_ID=$(echo "$RESPONSE" | jq -r '.deployment.id // empty')
+
+          if [ -z "$DEPLOYMENT_ID" ]; then
+            echo "Error: Failed to trigger deployment"
+            echo "$RESPONSE" | jq '.'
+            exit 1
+          fi
+
+          echo "PRODUCTION Deployment triggered successfully!"
+          echo "Deployment ID: $DEPLOYMENT_ID"
+          echo "View deployment: https://cloud.digitalocean.com/apps/${{ secrets.DO_APP_ID_PRODUCTION }}/deployments/$DEPLOYMENT_ID"
+
+  notify:
+    needs: [build-and-deploy-backend]
+    if: always()
+    runs-on: [self-hosted, staging]
+    steps:
+      - name: Send deployment result notification
+        run: |
+          MESSAGE="📊 *ANTE ERP - PRODUCTION Deployment Results*%0A%0A"
+          MESSAGE="${MESSAGE}📦 *Repository:* ${{ github.repository }}%0A"
+          MESSAGE="${MESSAGE}🔗 *Workflow:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}%0A%0A"
+
+          # Backend deployment status
+          if [ "${{ needs.build-and-deploy-backend.result }}" == "success" ]; then
+            MESSAGE="${MESSAGE}✅ *Backend API (PRODUCTION):* Successfully deployed%0A"
+            MESSAGE="${MESSAGE}   🔗 Production URL will be available after deployment%0A%0A"
+            MESSAGE="${MESSAGE}🎉 *Status:* PRODUCTION deployment successful!"
+          elif [ "${{ needs.build-and-deploy-backend.result }}" == "failure" ]; then
+            MESSAGE="${MESSAGE}❌ *Backend API (PRODUCTION):* Deployment failed%0A%0A"
+            MESSAGE="${MESSAGE}🚨 *Status:* PRODUCTION deployment failed - needs immediate attention!"
+          fi
+
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=${MESSAGE}" \
+            -d "parse_mode=Markdown"
