@@ -12,8 +12,17 @@ The ANTE ERP system uses a modern CI/CD pipeline with GitHub Actions, DigitalOce
 - **Notifications**: Telegram
 
 ### Branch Strategy
-- `main` → **Staging** environment
-- `production` → **Production** environment
+- `main` → **Staging** environment (Vercel Preview)
+- `production` → **Production** environment (Vercel Production)
+
+### Vercel Environment Architecture
+**Environment-Based Deployment** (3 projects, 2 environments each):
+- Each Vercel project supports both **Production** and **Preview** environments
+- Environment variables configured separately for each environment in Vercel dashboard
+- Custom domains assigned per environment:
+  - **Preview** (main branch): *.geertest.com domains
+  - **Production** (production branch): ante.ph domains
+- No environment file copying needed - Vercel injects variables at build time
 
 ---
 
@@ -31,19 +40,22 @@ The ANTE ERP system uses a modern CI/CD pipeline with GitHub Actions, DigitalOce
 
 **Frontends (Vercel):**
 - **Main ERP**:
-  - Project: `ante-main-staging`
+  - Project: `ante-main`
   - Project ID: `prj_96zz5i9lKcdV7MlYcQD2fCRyXgD3`
-  - URL: https://ante-main-staging.vercel.app
+  - Environment: Preview (main branch)
+  - URL: https://ante.geertest.com
 
 - **Gate App**:
-  - Project: `ante-gate-staging`
+  - Project: `ante-gate`
   - Project ID: `prj_dgxFqGSheEXelIUCTOlV4aT1oB9d`
-  - URL: https://ante-gate-staging.vercel.app
+  - Environment: Preview (main branch)
+  - URL: https://ante-gate.geertest.com
 
 - **Guardian App**:
-  - Project: `ante-guardian-staging`
+  - Project: `ante-guardian`
   - Project ID: `prj_3p2gtMLxAz25siKsyEyLbb5p9dBa`
-  - URL: https://ante-guardian-staging.vercel.app
+  - Environment: Preview (main branch)
+  - URL: https://ante-guardian.geertest.com
 
 **Databases:**
 - PostgreSQL: Supabase (ofnmfmwywkhosrmycltb.supabase.co)
@@ -64,19 +76,22 @@ The ANTE ERP system uses a modern CI/CD pipeline with GitHub Actions, DigitalOce
 
 **Frontends (Vercel):**
 - **Main ERP**:
-  - Project: `ante-main-production`
-  - Project ID: `prj_aoIACdfG8ZVDNLYrnRpE4S5vzYmV`
-  - URL: https://ante-main-production.vercel.app
+  - Project: `ante-main`
+  - Project ID: `prj_96zz5i9lKcdV7MlYcQD2fCRyXgD3`
+  - Environment: Production (production branch)
+  - URL: https://ante.ph
 
 - **Gate App**:
-  - Project: `ante-gate-production`
-  - Project ID: `prj_ORcH6osvYvGcHgQ8Oilz11NYQ7cx`
-  - URL: https://ante-gate-production.vercel.app
+  - Project: `ante-gate`
+  - Project ID: `prj_dgxFqGSheEXelIUCTOlV4aT1oB9d`
+  - Environment: Production (production branch)
+  - URL: https://gate.ante.ph
 
 - **Guardian App**:
-  - Project: `ante-guardian-production`
-  - Project ID: `prj_T7Ugc4QomFnTER1q7burzhRcErUq`
-  - URL: https://ante-guardian-production.vercel.app
+  - Project: `ante-guardian`
+  - Project ID: `prj_3p2gtMLxAz25siKsyEyLbb5p9dBa`
+  - Environment: Production (production branch)
+  - URL: https://guardian.ante.ph
 
 **Databases:**
 - PostgreSQL: Supabase (ccdlrujemqfwclogysjv.supabase.co)
@@ -105,8 +120,8 @@ The ANTE ERP system uses a modern CI/CD pipeline with GitHub Actions, DigitalOce
    - Trigger DigitalOcean deployment via API
 
 3. **Frontend Deployments** (if frontend changed):
-   - Copy environment file: `environment/env.development` → `.env`
-   - Deploy to Vercel: `npx vercel --prod --token=$VERCEL_TOKEN --yes`
+   - Deploy to Vercel Preview: `npx vercel --token=$VERCEL_TOKEN --yes`
+   - Environment variables injected by Vercel from Preview environment
    - Each frontend deploys independently
 
 4. **Notifications**:
@@ -126,8 +141,9 @@ gh workflow run deploy.yml --ref main
 
 **Process**: Same as staging but with:
 - Docker image: `ghcr.io/gtplusnet/ante-backend-production:latest`
-- Environment file: `environment/env.production`
-- Different DigitalOcean app ID and Vercel project IDs
+- Deploy to Vercel Production: `npx vercel --prod --token=$VERCEL_TOKEN --yes`
+- Environment variables injected by Vercel from Production environment
+- Different DigitalOcean app ID (same Vercel project IDs, different environment)
 
 **Manual Trigger**:
 ```bash
@@ -147,14 +163,11 @@ All secrets configured at: https://github.com/gtplusnet/ante-official/settings/s
 **Vercel:**
 - `VERCEL_TOKEN`: Vercel deployment token
 - `VERCEL_ORG_ID`: Team organization ID
-- **Staging Project IDs**:
-  - `VERCEL_PROJECT_ID_FRONTEND_MAIN`
-  - `VERCEL_PROJECT_ID_GATE_APP`
-  - `VERCEL_PROJECT_ID_GUARDIAN_APP`
-- **Production Project IDs**:
-  - `VERCEL_PROJECT_ID_MAIN_PROD`
-  - `VERCEL_PROJECT_ID_GATE_PROD`
-  - `VERCEL_PROJECT_ID_GUARDIAN_PROD`
+- **Project IDs** (used by both staging and production workflows):
+  - `VERCEL_PROJECT_ID_FRONTEND_MAIN`: Main ERP project
+  - `VERCEL_PROJECT_ID_GATE_APP`: Gate app project
+  - `VERCEL_PROJECT_ID_GUARDIAN_APP`: Guardian app project
+- **Note**: Same project IDs used for both environments (Vercel manages environments internally)
 
 **DigitalOcean:**
 - `DO_API_TOKEN`: DigitalOcean API token
@@ -170,21 +183,28 @@ All secrets configured at: https://github.com/gtplusnet/ante-official/settings/s
 
 ---
 
-## 📝 Environment Files
+## 📝 Environment Configuration
 
-### Frontend Environment Files
+### Vercel Environment Variables
 
-**Staging**: `frontends/{app}/environment/env.development`
+Environment variables are configured in the Vercel dashboard for each project and environment. **No environment files are copied during deployment** - Vercel injects these variables at build time.
+
+**Configuration Location**: Vercel Dashboard → Project Settings → Environment Variables
+
+**Preview Environment** (main branch → staging):
 ```env
-ENVIRONMENT=development
+ENVIRONMENT=staging
 WHITELABEL=ante
 API_URL=https://ante-backend-staging-q6udd.ondigitalocean.app
 VITE_SOCKET_URL=https://ante-backend-staging-q6udd.ondigitalocean.app
 VITE_SUPABASE_URL=https://ofnmfmwywkhosrmycltb.supabase.co
 VITE_SUPABASE_ANON_KEY={staging_anon_key}
+API_DELAY=0
+VITE_GOOGLE_CLIENT_ID={google_client_id}
+VITE_FACEBOOK_APP_ID={facebook_app_id}
 ```
 
-**Production**: `frontends/{app}/environment/env.production`
+**Production Environment** (production branch):
 ```env
 ENVIRONMENT=production
 WHITELABEL=ante
@@ -192,7 +212,18 @@ API_URL=https://ante-backend-production-gael2.ondigitalocean.app
 VITE_SOCKET_URL=https://ante-backend-production-gael2.ondigitalocean.app
 VITE_SUPABASE_URL=https://ccdlrujemqfwclogysjv.supabase.co
 VITE_SUPABASE_ANON_KEY={production_anon_key}
+API_DELAY=0
+VITE_GOOGLE_CLIENT_ID={google_client_id}
+VITE_FACEBOOK_APP_ID={facebook_app_id}
 ```
+
+**How It Works**:
+1. GitHub Actions triggers Vercel deployment (with or without `--prod` flag)
+2. Vercel automatically selects environment based on:
+   - `--prod` flag → Production environment
+   - No `--prod` flag → Preview environment
+3. Vercel injects environment variables during build
+4. Application built with correct environment variables
 
 ### Backend Environment Variables
 
