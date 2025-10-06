@@ -107,10 +107,10 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Deploy Frontend Main to Vercel
+      - name: Deploy Frontend Main to Vercel (Preview/Staging)
         run: |
           cd frontends/frontend-main
-          npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+          npx vercel --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND_MAIN }}
@@ -127,10 +127,10 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Deploy Gate App to Vercel
+      - name: Deploy Gate App to Vercel (Preview/Staging)
         run: |
           cd frontends/frontend-gate-app
-          npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+          npx vercel --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_GATE_APP }}
@@ -147,10 +147,10 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Deploy Guardian App to Vercel
+      - name: Deploy Guardian App to Vercel (Preview/Staging)
         run: |
           cd frontends/frontend-guardian-app
-          npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+          npx vercel --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_GUARDIAN_APP }}

@@ -6,7 +6,7 @@
       </template>
 
       <template #DialogTitle>
-        <div>{{ data.discussionTitle }}</div>
+        <div class="text-title-medium discuss-title">{{ data.discussionTitle }}</div>
       </template>
       
       <template #DialogQuickActions>

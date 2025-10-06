@@ -28,8 +28,11 @@
     <template v-if="$slots.icon" #default>
       <slot name="icon"></slot>
     </template>
+    <!-- This is My last Changes Here: Allow custom loading slot for parent components -->
     <template v-slot:loading>
-      <q-spinner-dots color="primary"/>
+      <slot name="loading">
+        <q-spinner-dots color="primary"/>
+      </slot>
     </template>
   </q-btn>
 </template>

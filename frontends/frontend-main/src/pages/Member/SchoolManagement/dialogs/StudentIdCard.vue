@@ -1,7 +1,7 @@
 <template>
   <div class="student-id-card" :class="{ 'preview-mode': preview }">
     <div ref="idFrontRef" class="id-front">
-      <img src="/FRONT_BG with BLEED.webp" alt="" />
+      <img src="/front-id.png" alt="" />
       <div class="profile-container">
         <div class="profile-image">
           <img
@@ -16,9 +16,9 @@
           </div>
         </div>
       </div>
-      <div class="student-name">
+      <div class="student-name" :class="{ 'long-name': hasLongFirstName }">
         {{ studentData.firstName }}
-        {{ studentData.middleName ? studentData.middleName + " " : ""
+        {{ formattedMiddleName ? formattedMiddleName + " " : ""
         }}{{ studentData.lastName }}
       </div>
       <div class="student-lrn">{{ studentData.lrn }}</div>
@@ -39,8 +39,31 @@
     </div>
 
     <div ref="idBackRef" class="id-back">
-      <img src="/BACK_BG with BLEED.webp" alt="" />
-      <div
+      <img
+        src="images/back-ec.png"
+        alt=""
+        v-if="studentData.section.gradeLevel.educationLevel === 'COLLEGE'"
+      />
+      <img
+        src="images/back-jhsh.png"
+        alt=""
+        v-else-if="
+          studentData.section.gradeLevel.educationLevel === 'JUNIOR_HIGH' ||
+          studentData.section.gradeLevel.educationLevel === 'SENIOR_HIGH'
+        "
+      />
+      <img
+        src="images/back-elem.png"
+        alt=""
+        v-else-if="
+          studentData.section.gradeLevel.educationLevel === 'ELEMENTARY' ||
+          studentData.section.gradeLevel.educationLevel === 'NURSERY' ||
+          studentData.section.gradeLevel.educationLevel === 'PRE-SCHOOL' ||
+          studentData.section.gradeLevel.educationLevel === 'KINDERGARTEN'
+        "
+      />
+
+      <!-- <div
         v-if="studentData.section.gradeLevel.educationLevel === 'COLLEGE'"
         class="college-signatorist"
         style="background-image: url('/college-employee-signatorist.png')"
@@ -59,8 +82,11 @@
         "
         class="hs-signatorist"
         style="background-image: url('/hs-signatorist.png')"
-      ></div>
-      <div class="person-emergency" :class="{ 'multiple-contacts': hasMultipleContacts }">
+      ></div> -->
+      <div
+        class="person-emergency"
+        :class="{ 'multiple-contacts': hasMultipleContacts }"
+      >
         <div class="row">
           <div class="label">Name:</div>
           <div class="value">{{ emergencyContactName }}</div>
@@ -117,6 +143,35 @@ export default defineComponent({
         .join(" ");
     });
 
+    // This is My Last Changes Here - Middle Name Formatter
+    const formattedMiddleName = computed(() => {
+      if (!props.studentData?.middleName) return "";
+
+      const middleName = props.studentData.middleName.trim();
+
+      // If already formatted as initials (e.g., 'DC.' or 'D.C.' or 'D.A'), return as-is
+      // Must have dots to be considered already formatted
+      if (/^[A-Z]\.\s?[A-Z]\.?$|^[A-Z]\.([A-Z]\.)*$|^[A-Z]{2,}\.$|^[A-Z]\.[A-Z]$/i.test(middleName)) {
+        return middleName;
+      }
+
+      // Handle multi-word middle names (e.g., "Dela Cruz" -> "DC.")
+      const words = middleName.split(/\s+/);
+      if (words.length > 1) {
+        return words.map((word: string) => word.charAt(0).toUpperCase()).join("") + ".";
+      }
+
+      // Single word middle name (e.g., "Maria" -> "M.")
+      return middleName.charAt(0).toUpperCase() + ".";
+    });
+
+    // This is My Last Changes Here - Check if first name has 3 or more words for smaller font
+    const hasLongFirstName = computed(() => {
+      if (!props.studentData?.firstName) return false;
+      const words = props.studentData.firstName.trim().split(/\s+/);
+      return words.length >= 3;
+    });
+
     // Computed properties for dynamic data
     const emergencyContactName = computed(() => {
       const names = [];
@@ -127,12 +182,19 @@ export default defineComponent({
       }
 
       // Add temporary guardian name if available and different
-      if (props.studentData?.temporaryGuardianName &&
-          props.studentData.temporaryGuardianName !== props.studentData?.guardian?.name) {
+      if (
+        props.studentData?.temporaryGuardianName &&
+        props.studentData.temporaryGuardianName !==
+          props.studentData?.guardian?.name
+      ) {
         names.push(props.studentData.temporaryGuardianName);
       }
 
-      return names.length > 0 ? names.join(" / ") : "Not available";
+      const fullName = names.length > 0 ? names.join(" / ") : "Not available";
+      // If there are multiple names separated by "/", take only the first one
+      return fullName.includes(" / ")
+        ? fullName.split(" / ")[0].trim()
+        : fullName;
     });
 
     const emergencyContactAddress = computed(() => {
@@ -146,7 +208,11 @@ export default defineComponent({
         if (location.province) parts.push(location.province);
         return parts.length > 0 ? parts.join(", ") : "Not available";
       }
-      return props.studentData?.guardian?.address || props.studentData?.temporaryGuardianAddress || "Not available";
+      return (
+        props.studentData?.guardian?.address ||
+        props.studentData?.temporaryGuardianAddress ||
+        "Not available"
+      );
     });
 
     const emergencyContactMobile = computed(() => {
@@ -158,17 +224,36 @@ export default defineComponent({
       }
 
       // Add temporary guardian contact if available and different
-      if (props.studentData?.temporaryGuardianContactNumber &&
-          props.studentData.temporaryGuardianContactNumber !== props.studentData?.guardian?.contactNumber) {
+      if (
+        props.studentData?.temporaryGuardianContactNumber &&
+        props.studentData.temporaryGuardianContactNumber !==
+          props.studentData?.guardian?.contactNumber
+      ) {
         numbers.push(props.studentData.temporaryGuardianContactNumber);
       }
 
-      return numbers.length > 0 ? numbers.join(" / ") : "Not available";
+      const fullNumber =
+        numbers.length > 0 ? numbers.join(" / ") : "Not available";
+      // If there are multiple numbers separated by "/", take only the first one
+      return fullNumber.includes(" / ")
+        ? fullNumber.split(" / ")[0].trim()
+        : fullNumber;
     });
 
     // Check if there are multiple contacts (for conditional styling)
     const hasMultipleContacts = computed(() => {
-      return emergencyContactName.value.includes(" / ");
+      // Check if name has multiple contacts
+      if (emergencyContactName.value.includes(" / ")) {
+        return true;
+      }
+
+      // Check if address has 10 or more words
+      const addressWords = emergencyContactAddress.value.trim().split(/\s+/);
+      if (addressWords.length >= 10) {
+        return true;
+      }
+
+      return false;
     });
 
     // Template refs for PDF generation
@@ -246,6 +331,8 @@ export default defineComponent({
 
     return {
       formattedSectionName,
+      formattedMiddleName,
+      hasLongFirstName,
       emergencyContactName,
       emergencyContactAddress,
       emergencyContactMobile,
@@ -277,11 +364,11 @@ export default defineComponent({
     }
 
     .id-front {
-      left: -10%;
+      margin-left: -170px;
     }
 
     .id-back {
-      right: -10%;
+      margin-right: -170px;
     }
   }
 }
@@ -323,12 +410,12 @@ export default defineComponent({
     overflow: hidden;
 
     img {
-      transform: rotate(-45deg);
-      margin-top: -5px;
-      margin-left: -5px;
       position: absolute;
-      width: 150px;
-      height: 150px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-45deg);
+      width: 160px;
+      height: 160px;
       box-shadow: none;
     }
   }
@@ -345,6 +432,14 @@ export default defineComponent({
     color: #541d23;
     text-align: center;
     letter-spacing: 1px;
+
+    // This is My Last Changes Here
+    &.long-name {
+      font-size: 10px; 
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+      letter-spacing: 1px;
+    }
   }
 
   .student-lrn {
@@ -445,7 +540,7 @@ export default defineComponent({
       width: 60px;
       color: #fec609;
       font-weight: bold;
-      font-size: 11px;
+      font-size: 10px;
       text-align: right;
 
       &:nth-child(1) {
@@ -456,7 +551,7 @@ export default defineComponent({
     .value {
       width: 180px;
       font-weight: bold;
-      font-size: 11px;
+      font-size: 10px;
       color: #fff;
       margin-left: 5px;
       line-height: 1.2;
@@ -468,13 +563,13 @@ export default defineComponent({
 
       .label {
         width: 55px;
-        font-size: 10px;
+        font-size: 9px;
       }
 
       .value {
         width: 185px;
         padding-top: 1px;
-        font-size: 10px;
+        font-size: 9px;
       }
     }
   }
