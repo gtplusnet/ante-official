@@ -332,8 +332,36 @@ export class StudentService {
     query: TableQueryDTO,
     companyId: number,
   ): Promise<any> {
-    this.tableHandler.initialize(query, body, 'student');
+    // This is my last changes here
+    // Configure filter settings to allow sectionId filtering
+    const modifiedBody = {
+      ...body,
+      settings: {
+        ...body.settings,
+        filter: [
+          {
+            key: 'sectionId',
+            column: 'sectionId',
+          }
+        ],
+      },
+    };
+    // This is my last changes here: modifiedBody
+    this.tableHandler.initialize(query, modifiedBody, 'student');
     const tableQuery = this.tableHandler.constructTableQuery();
+
+    // This is my last changes here
+    // Apply sectionId filter directly if present (fallback to ensure it works)
+    if (modifiedBody.filters && Array.isArray(modifiedBody.filters)) {
+      modifiedBody.filters.forEach(filter => {
+        if (filter.sectionId) {
+          tableQuery.where = {
+            ...tableQuery.where,
+            sectionId: filter.sectionId,
+          };
+        }
+      });
+    }
 
     tableQuery['include'] = {
       /* location: {
