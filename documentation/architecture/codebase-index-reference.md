@@ -27,6 +27,8 @@ GEER-ANTE is a comprehensive ERP (Enterprise Resource Planning) system built wit
 ├── playwright.config.ts        # Playwright testing configuration
 ├── yarn-dev.sh                # Development startup script
 ├── run-ai.sh                  # AI utilities script
+├── websites/                   # CMS-connected websites (git removed)
+│   └── multibook/              # Multibook website
 └── tests/                      # Playwright E2E tests directory
     ├── e2e/                    # End-to-end test files
     │   ├── helpers/            # Test utilities and auth helpers
@@ -467,6 +469,21 @@ pages/Member/
     └── PettyCash.vue
 ```
 
+### 🌐 Websites (`/websites/`)
+
+#### CMS-Connected Websites
+```
+websites/
+└── multibook/          # Multibook website (git removed)
+    ├── src/            # Source files
+    ├── public/         # Static assets
+    └── package.json    # Dependencies
+
+Note: Additional websites connected to ANTE CMS will be added here.
+Each website is cloned and then has its .git folder removed to be
+managed as part of the main repository.
+```
+
 ### 📚 Documentation (`/docs/`)
 
 #### Structure
@@ -716,5 +733,5 @@ curl -X GET "http://localhost:3000/email-config" \
 
 ---
 
-*Last updated: June 2025*
+*Last updated: October 2025*
 *This index should be updated when major structural changes occur.*
