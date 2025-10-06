@@ -34,6 +34,14 @@ export class WarehouseController {
     );
   }
 
+  @Get('options')
+  async getWarehouseOptions(@Res() response) {
+    return this.utility.responseHandler(
+      this.warehouseService.getWarehouseOptions(),
+      response,
+    );
+  }
+
   @Get(':id')
   async getWarehouseById(@Res() response, @Param('id') id: string) {
     return this.utility.responseHandler(

@@ -24,13 +24,20 @@
                 type="readonly"
               />
             </div>
-            <div class="col-6">
+            <div class="col-6 q-mb-md">
               <selection-location
                 required
                 :disabled="true"
                 label="Location"
                 v-model="form.selectedLocation"
               ></selection-location>
+            </div>
+            <div class="col-6">
+              <g-input
+                v-model="form.mainWarehouse"
+                label="Main Warehouse"
+                type="readonly"
+              />
             </div>
 
             <div class="full-width text-right q-mt-md">
@@ -95,6 +102,7 @@ export default {
       branchCode: "",
       branchName: "",
       selectedLocation: "",
+      mainWarehouse: "",
     });
 
     const fetchData = () => {
@@ -102,10 +110,12 @@ export default {
         form.value.branchCode = props.branchData.code;
         form.value.branchName = props.branchData.name;
         form.value.selectedLocation = props.branchData.location.id;
+        form.value.mainWarehouse = props.branchData.mainWarehouse?.name || "No Warehouse";
       } else {
         form.value.branchCode = "";
         form.value.branchName = "";
         form.value.selectedLocation = "";
+        form.value.mainWarehouse = "";
       }
     };
 

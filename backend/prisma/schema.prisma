@@ -389,6 +389,7 @@ model Project {
   mmr                           Float?
   relationshipOwnerId           String?
   parentId                      Int?
+  mainWarehouseId               String?
   TaskProjectNotifications      AccountNotifications[]
   boqs                          BillOfQuantity[]
   BranchTimekeepingStatus       BranchTimekeepingStatus[]
@@ -402,6 +403,7 @@ model Project {
   location                      Location                       @relation(fields: [locationId], references: [id], onDelete: Cascade)
   parent                        Project?                       @relation("BranchHierarchy", fields: [parentId], references: [id])
   children                      Project[]                      @relation("BranchHierarchy")
+  mainWarehouse                 Warehouse?                     @relation("BranchMainWarehouse", fields: [mainWarehouseId], references: [id])
   personInCharge                Account?                       @relation("ProjectPersonInCharge", fields: [personInChargeId], references: [id])
   relationshipOwner             Account?                       @relation("ProjectRelationshipOwner", fields: [relationshipOwnerId], references: [id])
   projectAccomplishment         ProjectAccomplishment[]
@@ -590,6 +592,7 @@ model Warehouse {
   Equipment          Equipment[]
   inventories        InventoryItem[]
   itemReceipt        ItemReceipt[]
+  branchesAsMain     Project[]       @relation("BranchMainWarehouse")
   company            Company?        @relation(fields: [companyId], references: [id])
   location           Location?       @relation(fields: [locationId], references: [id], onDelete: Cascade)
   project            Project?        @relation(fields: [projectId], references: [id], onDelete: Cascade)

@@ -43,6 +43,21 @@
                 :loading="loadingBranches"
               />
             </div>
+            <div class="col-6">
+              <q-select
+                v-model="form.mainWarehouseId"
+                :options="availableWarehouses"
+                option-label="name"
+                option-value="id"
+                label="Main Warehouse"
+                clearable
+                emit-value
+                map-options
+                outlined
+                dense
+                :loading="loadingWarehouses"
+              />
+            </div>
 
             <div class="full-width row justify-end q-gutter-sm">
               <GButton
@@ -111,10 +126,13 @@ export default {
       branchName: "",
       selectedLocation: "",
       parentId: null as number | null,
+      mainWarehouseId: null as string | null,
     });
 
     const availableBranches = ref([]);
     const loadingBranches = ref(false);
+    const availableWarehouses = ref([]);
+    const loadingWarehouses = ref(false);
 
     const fetchData = async () => {
       if (props.branchData) {
@@ -122,13 +140,16 @@ export default {
         form.value.branchName = props.branchData.name;
         form.value.selectedLocation = props.branchData.location.id;
         form.value.parentId = props.branchData.parentId || null;
+        form.value.mainWarehouseId = props.branchData.mainWarehouse?.id || null;
       } else {
         form.value.branchCode = "";
         form.value.branchName = "";
         form.value.selectedLocation = "";
         form.value.parentId = null;
+        form.value.mainWarehouseId = null;
       }
       await fetchAvailableBranches();
+      await fetchAvailableWarehouses();
     };
 
     const fetchAvailableBranches = async () => {
@@ -148,6 +169,18 @@ export default {
       }
     };
 
+    const fetchAvailableWarehouses = async () => {
+      loadingWarehouses.value = true;
+      try {
+        const response = await api.get('warehouse/options');
+        availableWarehouses.value = response.data;
+      } catch (error: any) {
+        handleAxiosError($q, error);
+      } finally {
+        loadingWarehouses.value = false;
+      }
+    };
+
     const saveBranch = async () => {
       $q.loading.show();
 
@@ -163,6 +196,7 @@ export default {
         branchCode: form.value.branchCode,
         branchName: form.value.branchName,
         branchLocationId: form.value.selectedLocation,
+        mainWarehouseId: form.value.mainWarehouseId,
         ...(form.value.parentId && { parentId: form.value.parentId }),
       };
 
@@ -188,6 +222,7 @@ export default {
         branchCode: form.value.branchCode,
         branchName: form.value.branchName,
         branchLocationId: form.value.selectedLocation,
+        mainWarehouseId: form.value.mainWarehouseId,
         ...(form.value.parentId && { parentId: form.value.parentId }),
       };
       api
@@ -213,6 +248,8 @@ export default {
       form,
       availableBranches,
       loadingBranches,
+      availableWarehouses,
+      loadingWarehouses,
       fetchData,
       saveBranch,
     };

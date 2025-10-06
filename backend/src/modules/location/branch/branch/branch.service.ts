@@ -27,6 +27,7 @@ export class BranchService {
     tableQuery['include'] = {
       ...tableQuery['include'],
       parent: true,
+      mainWarehouse: true,
       children: {
         where: {
           status: ProjectStatus.BRANCH,
@@ -69,7 +70,7 @@ export class BranchService {
       await this.validateParentBranch(body.parentId, body.id);
     }
 
-    const createProjectParams: Prisma.ProjectCreateInput = {
+    const baseParams = {
       name: body.branchName,
       code: body.branchCode,
       description: 'This is a BRANCH',
@@ -85,22 +86,42 @@ export class BranchService {
     let response;
 
     if (body.id) {
+      // Update operation
+      const updateParams: Prisma.ProjectUpdateInput = {
+        ...baseParams,
+        ...(body.mainWarehouseId !== undefined && {
+          mainWarehouse: body.mainWarehouseId
+            ? { connect: { id: body.mainWarehouseId } }
+            : { disconnect: true },
+        }),
+      };
+
       response = await this.prisma.project.update({
         where: {
           id: Number(body.id),
         },
-        data: createProjectParams,
+        data: updateParams,
         include: {
           parent: true,
           children: true,
+          mainWarehouse: true,
         },
       });
     } else {
+      // Create operation
+      const createParams: Prisma.ProjectCreateInput = {
+        ...baseParams,
+        ...(body.mainWarehouseId && {
+          mainWarehouse: { connect: { id: body.mainWarehouseId } },
+        }),
+      };
+
       response = await this.prisma.project.create({
-        data: createProjectParams,
+        data: createParams,
         include: {
           parent: true,
           children: true,
+          mainWarehouse: true,
         },
       });
     }
@@ -115,6 +136,7 @@ export class BranchService {
       },
       include: {
         parent: true,
+        mainWarehouse: true,
         children: {
           where: {
             status: ProjectStatus.BRANCH,
@@ -194,6 +216,7 @@ export class BranchService {
       include: {
         location: true,
         parent: true,
+        mainWarehouse: true,
         children: {
           where: {
             status: ProjectStatus.BRANCH,
@@ -201,6 +224,7 @@ export class BranchService {
           },
           include: {
             location: true,
+            mainWarehouse: true,
             children: {
               where: {
                 status: ProjectStatus.BRANCH,
@@ -208,6 +232,7 @@ export class BranchService {
               },
               include: {
                 location: true,
+                mainWarehouse: true,
               },
             },
           },
@@ -242,6 +267,11 @@ export class BranchService {
       code: branch.code,
       location: location,
       parentId: branch.parentId,
+      mainWarehouse: branch.mainWarehouse ? {
+        id: branch.mainWarehouse.id,
+        name: branch.mainWarehouse.name,
+        warehouseType: branch.mainWarehouse.warehouseType,
+      } : undefined,
       createdAt: this.utilityService.formatDate(branch.createdAt),
       updatedAt: this.utilityService.formatDate(branch.updatedAt),
       children: [],
@@ -306,6 +336,11 @@ export class BranchService {
           )
         : undefined,
       childrenCount: data.children?.length || 0,
+      mainWarehouse: data.mainWarehouse ? {
+        id: data.mainWarehouse.id,
+        name: data.mainWarehouse.name,
+        warehouseType: data.mainWarehouse.warehouseType,
+      } : undefined,
       createdAt: this.utilityService.formatDate(data.createdAt),
       updatedAt: this.utilityService.formatDate(data.updatedAt),
     };
