@@ -61,9 +61,11 @@ export class FileUploadService {
   }
 
   async getFileInformation(id: number): Promise<FileDataResponse> {
-    const file = await this.prisma.files.findUnique({
+    // Apply company filter to ensure users can only access files from their own company
+    const file = await this.prisma.files.findFirst({
       where: {
         id,
+        companyId: this.utility.companyId,
       },
       include: {
         uploadedBy: true,
@@ -223,6 +225,16 @@ export class FileUploadService {
       );
       throw new BadRequestException(
         'Authentication required for file upload',
+      );
+    }
+
+    // Check if company ID is present - critical for multi-tenant isolation
+    if (!this.utility.companyId) {
+      this.utility.log(
+        'Error: No company information available for file upload',
+      );
+      throw new BadRequestException(
+        'Company information is required for file upload. Please ensure your account is properly configured.',
       );
     }
 

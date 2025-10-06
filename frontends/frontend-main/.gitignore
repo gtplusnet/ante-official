@@ -71,6 +71,8 @@ test-artifacts/
 *.har
 *.webm
 screenshots/
+test-board-*.png
+test-results.xml
 
 # Temporary files
 *.tmp

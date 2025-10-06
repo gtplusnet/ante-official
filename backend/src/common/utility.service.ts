@@ -4,6 +4,7 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  UnauthorizedException,
   HttpStatus,
 } from '@nestjs/common';
 import { randomBytes } from 'crypto';
@@ -44,7 +45,15 @@ export class UtilityService {
 
   setAccountInformation(accountInformation: AccountSocketDataInterface) {
     this.accountInformation = accountInformation;
-    this.companyId = accountInformation.company?.id || 1;
+
+    // Require company ID - throw error if not present
+    if (!accountInformation.company?.id) {
+      throw new UnauthorizedException(
+        'Company information is required. Please ensure your account is properly configured.',
+      );
+    }
+
+    this.companyId = accountInformation.company.id;
   }
 
   clearContext() {

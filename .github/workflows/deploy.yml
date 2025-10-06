@@ -10,22 +10,35 @@ on:
       - 'backend/**'
       - 'package.json'
       - 'yarn.lock'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:  # Allow manual triggering
 
 jobs:
   detect-changes:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, staging]
     outputs:
-      frontend-main-changed: ${{ steps.changes.outputs.frontend-main }}
-      gate-app-changed: ${{ steps.changes.outputs.gate-app }}
-      guardian-app-changed: ${{ steps.changes.outputs.guardian-app }}
-      backend-changed: ${{ steps.changes.outputs.backend }}
+      frontend-main-changed: ${{ steps.manual.outputs.all == 'true' || steps.changes.outputs.frontend-main }}
+      gate-app-changed: ${{ steps.manual.outputs.all == 'true' || steps.changes.outputs.gate-app }}
+      guardian-app-changed: ${{ steps.manual.outputs.all == 'true' || steps.changes.outputs.guardian-app }}
+      backend-changed: ${{ steps.manual.outputs.all == 'true' || steps.changes.outputs.backend }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Check if manual trigger
+        id: manual
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "all=true" >> $GITHUB_OUTPUT
+            echo "Manual trigger detected - will deploy all components"
+          else
+            echo "all=false" >> $GITHUB_OUTPUT
+          fi
+
       - uses: dorny/paths-filter@v2
         id: changes
+        if: github.event_name != 'workflow_dispatch'
         with:
           filters: |
             frontend-main:
@@ -48,15 +61,18 @@ jobs:
   notify-start:
     needs: detect-changes
     if: needs.detect-changes.outputs.frontend-main-changed == 'true' || needs.detect-changes.outputs.gate-app-changed == 'true' || needs.detect-changes.outputs.guardian-app-changed == 'true' || needs.detect-changes.outputs.backend-changed == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, staging]
     steps:
       - name: Send deployment start notification
         run: |
+          # Extract only the first line of commit message to avoid bash escaping issues
+          COMMIT_TITLE=$(echo "${{ github.event.head_commit.message }}" | head -n 1 | sed 's/[`*_]/\\&/g')
+
           MESSAGE="🚀 *ANTE ERP - Deployment Started*%0A%0A"
           MESSAGE="${MESSAGE}📦 *Repository:* ${{ github.repository }}%0A"
           MESSAGE="${MESSAGE}👤 *Triggered by:* ${{ github.actor }}%0A"
           MESSAGE="${MESSAGE}🔀 *Branch:* ${{ github.ref_name }}%0A"
-          MESSAGE="${MESSAGE}💬 *Commit:* ${{ github.event.head_commit.message }}%0A%0A"
+          MESSAGE="${MESSAGE}💬 *Commit:* ${COMMIT_TITLE}%0A%0A"
 
           if [ "${{ needs.detect-changes.outputs.frontend-main-changed }}" == "true" ]; then
             MESSAGE="${MESSAGE}🏢 Frontend Main (ERP) will be deployed%0A"
@@ -82,7 +98,7 @@ jobs:
   deploy-frontend-main:
     needs: [detect-changes, notify-start]
     if: needs.detect-changes.outputs.frontend-main-changed == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, staging]
     steps:
       - uses: actions/checkout@v4
 
@@ -109,7 +125,7 @@ jobs:
   deploy-gate-app:
     needs: [detect-changes, notify-start]
     if: needs.detect-changes.outputs.gate-app-changed == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, staging]
     steps:
       - uses: actions/checkout@v4
 
@@ -129,7 +145,7 @@ jobs:
   deploy-guardian-app:
     needs: [detect-changes, notify-start]
     if: needs.detect-changes.outputs.guardian-app-changed == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, staging]
     steps:
       - uses: actions/checkout@v4
 
@@ -149,7 +165,7 @@ jobs:
   build-and-deploy-backend:
     needs: [detect-changes, notify-start]
     if: needs.detect-changes.outputs.backend-changed == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, staging]
     permissions:
       contents: read
       packages: write
@@ -214,7 +230,7 @@ jobs:
   notify:
     needs: [detect-changes, deploy-frontend-main, deploy-gate-app, deploy-guardian-app, build-and-deploy-backend]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, staging]
     steps:
       - name: Send deployment result notification
         run: |

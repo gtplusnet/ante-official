@@ -6,51 +6,90 @@ This directory contains custom slash commands for the ANTE ERP project.
 
 ### Trello Workflow Commands
 
-#### `/trello-todo`
-**Description**: List all tasks in Trello "To Do" list
-**Usage**: `/trello-todo`
-**Output**: Formatted table of pending tasks with priorities and due dates
+#### `/trello-task`
+**Description**: Fully automated Trello task workflow (AI-driven, zero user prompts)
+**Usage**: `/trello-task`
 
-#### `/trello-start`
-**Description**: Start working on a Trello task (interactive workflow)
-**Usage**: `/trello-start`
-**What it does**:
-- Ensures you're on latest main branch
-- Shows available tasks from "To Do" list
-- Creates feature branch with proper naming
-- Updates Trello card with branch info
-- Moves card to "In Progress"
+**AI-Powered Automation**:
+- **On main branch**: AI automatically selects most urgent task and starts work
+- **On feature branch**: AI automatically creates PR and moves card to QA Review
 
-#### `/trello-pr`
-**Description**: Complete task and create pull request
-**Usage**: `/trello-pr`
 **What it does**:
-- Verifies all changes are committed
-- Pushes branch to origin
-- Creates PR with proper template
-- Updates Trello card with PR link
-- Moves card to "QA Review"
-- Adds QA checklist to card
+- **Smart Task Selection**: AI scores tasks by urgency (due date, labels, age, keywords)
+- **Auto Branch Creation**: Creates properly named branch (feat/enhancement/bug)
+- **Auto PR Creation**: Generates PR with proper title and body from commits
+- **Trello Sync**: Updates cards with branch info, PR links, and QA checklists
+
+**Zero User Interaction**:
+- No menus or prompts
+- AI decides everything based on context
+- Transparent decision-making (shows reasoning)
+
+#### `/trello-review`
+**Description**: Review PR in QA Review and move to Done when merged
+**Usage**: `/trello-review`
+**What it does**:
+- Lists all cards in "QA Review" lane
+- Reviews PR code against coding guidelines
+- Checks SOLID principles adherence
+- Runs tests (Playwright for frontend, unit tests for backend)
+- Verifies all acceptance criteria met
+- Approves/requests changes/rejects PR
+- Moves card to "Done" after PR is merged
+- Provides comprehensive review summary
 
 ## Command Workflow
 
-Typical workflow for a task:
+**Fully automated workflow** - AI handles all decisions:
 
 ```bash
-# 1. See what tasks are available
-/trello-todo
+# 1. Start task (AI auto-selects most urgent)
+/trello-task
 
-# 2. Start working on a task
-/trello-start
+🤖 AI SELECTED TASK
+✅ Automatically started most urgent task:
 
-# 3. Do your development work...
+Card: Fix login redirect bug
+Urgency Score: 85/100
+Type: Bug Fix
+Branch: bug/fix-login-redirect-bug
+
+Selection Reasoning:
+- Due Date: 2025-10-07 (overdue)
+- Labels: bug, urgent, production
+- Priority: Critical production issue
+
+# 2. Do your development work...
 # (commit regularly, run tests, etc.)
 
-# 4. Create PR when done
-/trello-pr
+# 3. Complete task (AI auto-creates PR)
+/trello-task
 
-# 5. After PR approved and merged, move card to "Done" manually
+🤖 PULL REQUEST CREATED AUTOMATICALLY
+✅ Task completed and ready for review!
+
+PR: https://github.com/.../pull/15
+Branch: bug/fix-login-redirect-bug
+Status: QA Review
+
+# 4. Review and merge (AI handles review)
+/trello-review
+# - AI reviews code against guidelines
+# - Runs all tests
+# - Verifies acceptance criteria
+# - Merges PR and moves to "Done"
 ```
+
+**Total commands needed**: 3
+1. `/trello-task` - AI starts most urgent task
+2. `/trello-task` - AI creates PR when done
+3. `/trello-review` - AI reviews and merges
+
+**Key Features**:
+- ✅ Zero user prompts or menus
+- ✅ AI makes all decisions transparently
+- ✅ Shows reasoning for selections
+- ✅ Context-aware (branch determines action)
 
 ## Creating New Commands
 
