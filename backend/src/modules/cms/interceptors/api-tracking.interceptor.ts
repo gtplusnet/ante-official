@@ -95,7 +95,7 @@ export class ApiTrackingInterceptor implements NestInterceptor {
       // Also increment Redis counters for the dashboard
       if (usageData.companyId) {
         // Set company context for analytics service
-        this.analyticsService['utility'].companyId = usageData.companyId;
+        this.analyticsService['utility'].setCompanyId(usageData.companyId);
         await this.analyticsService.incrementApiCall();
       }
     } catch (error) {

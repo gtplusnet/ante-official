@@ -38,7 +38,7 @@ export class DiscussionEventListener {
       if (event.companyId && this.discussionService['utilityService']) {
         // Temporarily set companyId on utility service for this operation
         const originalCompanyId = this.discussionService['utilityService'].companyId;
-        this.discussionService['utilityService'].companyId = event.companyId;
+        this.discussionService['utilityService'].setCompanyId(event.companyId);
 
         try {
           // Create discussion with initial message
@@ -63,7 +63,7 @@ export class DiscussionEventListener {
           }
         } finally {
           // Restore original companyId
-          this.discussionService['utilityService'].companyId = originalCompanyId;
+          this.discussionService['utilityService'].setCompanyId(originalCompanyId);
         }
       } else if (event.initialWatchers?.length > 0) {
         // If we couldn't set companyId but have watchers, log a warning
