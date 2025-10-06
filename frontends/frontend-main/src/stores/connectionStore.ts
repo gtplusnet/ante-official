@@ -15,7 +15,7 @@ export const useConnectionStore = defineStore('connection', {
     connections: [
       {
         NAME: 'Default',
-        API_URL: process.env.API_URL || 'http://localhost:3000',
+        API_URL: import.meta.env.API_URL || 'http://localhost:3000',
         SOCKET_URL: import.meta.env.VITE_SOCKET_URL || 'ws://localhost:4000'
       }
     ] as Connection[],
