@@ -91,8 +91,16 @@ export default async function RootLayout({
               },
             },
           },
+          privacyPolicy: {
+            url: '',
+          },
+          termsAndConditions: {
+            url: '',
+          },
+          copyright: '© 2025 Multibook. All rights reserved.',
         },
       };
+      socialMediaData = [];
     }
   }
 

@@ -40,6 +40,26 @@ module.exports = {
       error_file: './logs/frontend-main-error.log',
       out_file: './logs/frontend-main-out.log',
       time: true
+    },
+    {
+      name: 'ante-website-multibook',
+      cwd: './websites/multibook',
+      script: 'npx',
+      args: 'next dev -p 5001',
+      env: {
+        PORT: 5001
+      },
+      watch: false, // Next.js dev handles its own file watching
+      ignore_watch: ['node_modules', '.next', 'out'],
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      max_restarts: 5,
+      restart_delay: 2000,
+      log_file: './logs/website-multibook.log',
+      error_file: './logs/website-multibook-error.log',
+      out_file: './logs/website-multibook-out.log',
+      time: true
     }
   ]
 };

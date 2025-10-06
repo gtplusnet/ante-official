@@ -330,7 +330,8 @@ Dashboard, HRIS, Projects, Tasks, Treasury, Assets, CRM, Communication, Settings
 - **Guardian App**: Parent portal for student monitoring
 
 ### CMS-Connected Websites (`/websites/`)
-- **Multibook**: Basic website connected to ANTE CMS
+- **Multibook**: Basic website connected to ANTE CMS (Port: 5001)
+- **Port Convention**: Websites use port series 5001, 5002, 5003, etc.
 - **Note**: Additional websites will be added here, each as standalone projects (git removed after cloning)
 
 ---

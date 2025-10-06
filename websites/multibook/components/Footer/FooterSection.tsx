@@ -43,15 +43,32 @@ interface FooterData {
 }
 
 interface FooterSectionProps {
-  footerData: FooterData;
-  socialMediaData: SocialMedia[];
+  footerData?: FooterData;
+  socialMediaData?: SocialMedia[];
 }
 
-export default function FooterSection({ footerData, socialMediaData }: FooterSectionProps) {
-  const footerLogoUrl = footerData?.attributes?.footerLogo?.variants.large.webp.url;
+export default function FooterSection({
+  footerData,
+  socialMediaData = []
+}: FooterSectionProps) {
+  // Provide safe defaults for missing CMS data
+  const safeFooterData = footerData?.attributes ? footerData : {
+    attributes: {
+      title: 'Connect With Us',
+      emailAddress: 'info@multibook.com',
+      address: 'Address not available',
+      madeBy: 'Multibook',
+      footerLogo: { url: '', variants: { large: { webp: { url: '' } } } },
+      privacyPolicy: { url: '' },
+      termsAndConditions: { url: '' },
+      copyright: '© 2025 Multibook. All rights reserved.'
+    }
+  };
 
-  const privacyPolicyUrl = footerData?.attributes?.privacyPolicy?.url;
-  const termsAndConditionsUrl = footerData?.attributes?.termsAndConditions?.url;
+  const footerLogoUrl = safeFooterData?.attributes?.footerLogo?.variants?.large?.webp?.url || '';
+
+  const privacyPolicyUrl = safeFooterData?.attributes?.privacyPolicy?.url || '';
+  const termsAndConditionsUrl = safeFooterData?.attributes?.termsAndConditions?.url || '';
 
   const pathname = usePathname();
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
@@ -72,19 +89,21 @@ export default function FooterSection({ footerData, socialMediaData }: FooterSec
     }
   };
 
-  const processedSocialMedia = socialMediaData.map((item) => ({
-    id: item.id,
-    url: item.attributes.socialMediaLogo?.url
-      ? item.attributes.socialMediaLogo.url.startsWith('http')
-        ? item.attributes.socialMediaLogo.url
-        : `${process.env.NEXT_PUBLIC_STRAPI_URL || 'https://multibook-admin.geertest.com'}${
-            item.attributes.socialMediaLogo.url
-          }`
-      : '',
-    socMedURL: item.attributes.socialMediaLink?.startsWith('https://')
-      ? item.attributes.socialMediaLink
-      : `https://${item.attributes.socialMediaLink || ''}`,
-  }));
+  const processedSocialMedia = Array.isArray(socialMediaData)
+    ? socialMediaData.map((item) => ({
+        id: item.id,
+        url: item.attributes.socialMediaLogo?.url
+          ? item.attributes.socialMediaLogo.url.startsWith('http')
+            ? item.attributes.socialMediaLogo.url
+            : `${process.env.NEXT_PUBLIC_STRAPI_URL || 'https://multibook-admin.geertest.com'}${
+                item.attributes.socialMediaLogo.url
+              }`
+          : '',
+        socMedURL: item.attributes.socialMediaLink?.startsWith('https://')
+          ? item.attributes.socialMediaLink
+          : `https://${item.attributes.socialMediaLink || ''}`,
+      }))
+    : [];
 
   return (
     <div className="bg-oxford-blue pb-12">
@@ -100,7 +119,7 @@ export default function FooterSection({ footerData, socialMediaData }: FooterSec
           {/* Left Section - Title and Contact */}
           <div className="w-full text-center sm:text-left mb-8 lg:mb-0">
             <h2 className="text-[2.2rem] sm:text-[3rem] lg:text-[4.5rem] leading-[2.5rem] lg:leading-[6rem] max-w-3xl font-[600] text-multibook-red mb-8 sm:mb-12 lg:mb-16 mt-8 lg:mt-0">
-              {footerData.attributes.title}
+              {safeFooterData.attributes.title}
             </h2>
 
             <div className="text-oxford-blue text-sm sm:text-base">
@@ -112,7 +131,7 @@ export default function FooterSection({ footerData, socialMediaData }: FooterSec
                 >
                   <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
                 </svg>
-                <span>{footerData.attributes.emailAddress}</span>
+                <span>{safeFooterData.attributes.emailAddress}</span>
               </div>
 
               <div className="flex items-center sm:items-start mb-6">
@@ -124,7 +143,7 @@ export default function FooterSection({ footerData, socialMediaData }: FooterSec
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                 </svg>
                 <span className="text-center sm:text-left sm:w-[75%] lg:w-[55%]">
-                  {footerData.attributes.address}
+                  {safeFooterData.attributes.address}
                 </span>
               </div>
             </div>
@@ -273,7 +292,7 @@ export default function FooterSection({ footerData, socialMediaData }: FooterSec
           </div>
 
           {/* Made by */}
-          <p className="text-oxford-blue text-base font-bold">{footerData.attributes.madeBy}</p>
+          <p className="text-oxford-blue text-base font-bold">{safeFooterData.attributes.madeBy}</p>
         </div>
 
         {/* Footer Logo */}
@@ -291,7 +310,7 @@ export default function FooterSection({ footerData, socialMediaData }: FooterSec
       {/* Copyright */}
       <div className="flex justify-center items-center mt-12 px-4 sm:px-16 lg:px-32 text-center">
         <p className="text-multibook-red text-[0.6em] sm:text-sm lg:text-base">
-          {footerData.attributes.copyright}
+          {safeFooterData.attributes.copyright}
         </p>
       </div>
     </div>
