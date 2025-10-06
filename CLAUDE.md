@@ -265,6 +265,8 @@ ante-official/
 │   ├── user-manual/      # VitePress docs
 │   ├── frontend-gate-app/      # School gate app
 │   └── frontend-guardian-app/  # Parent portal
+├── websites/             # CMS-connected websites (git removed)
+│   └── multibook/        # Multibook website
 ├── docker/               # Docker configurations
 ├── documentation/        # Technical documentation
 ├── playwright-testing/   # E2E tests (centralized)
@@ -326,6 +328,11 @@ Dashboard, HRIS, Projects, Tasks, Treasury, Assets, CRM, Communication, Settings
 - **Facial Recognition**: Employee time tracking with face recognition
 - **Gate App**: School attendance management
 - **Guardian App**: Parent portal for student monitoring
+
+### CMS-Connected Websites (`/websites/`)
+- **Multibook**: Basic website connected to ANTE CMS (Port: 5001)
+- **Port Convention**: Websites use port series 5001, 5002, 5003, etc.
+- **Note**: Additional websites will be added here, each as standalone projects (git removed after cloning)
 
 ---
 
@@ -451,4 +458,4 @@ gh workflow run deploy-production.yml --ref production
 
 **Purpose**: This file provides critical context for Claude AI to work effectively on this project. Keep it concise. Move detailed documentation to `/documentation/` folder and reference it here.
 
-**Last Updated**: 2025-10-05
+**Last Updated**: 2025-10-06

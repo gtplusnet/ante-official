@@ -1,0 +1,9 @@
+{
+    "deploymentKey": "3eb511d8-9a23-128b-a9e3-30cc2f43605f",
+    "deploymentId": "staging-20250901-205722-3eb511d8-9a23-128b-a9e3-30cc2f43605f",
+    "timestamp": "20250901-205722",
+    "environment": "staging",
+    "branch": "test",
+    "buildDate": "2025-09-01T12:57:22Z",
+    "deploymentHash": "3eb511d89a23128ba9e330cc2f43605f212ee46e13c8238f19f417722a71d07b"
+}
