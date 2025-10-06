@@ -16,6 +16,7 @@ import {
 } from '@infrastructure/redis/redis.service';
 import { SupabaseTokenManagerService } from '@modules/auth/supabase-auth/supabase-token-manager.service';
 import { BenchmarkService } from '@common/benchmark.service';
+import { ClsService } from 'nestjs-cls';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
@@ -25,8 +26,22 @@ export class AuthMiddleware implements NestMiddleware {
   @Inject() private redisService: RedisService;
   @Inject() private supabaseTokenManager: SupabaseTokenManagerService;
   @Inject() private benchmark: BenchmarkService;
+  @Inject() private cls: ClsService;
 
   async use(req: Request, res: Response, next: NextFunction) {
+    // If CLS context is not active, create one
+    if (!this.cls.isActive()) {
+      // Run the middleware within a new CLS context
+      return this.cls.run(async () => {
+        await this.executeMiddleware(req, res, next);
+      });
+    }
+
+    // CLS context is already active, proceed normally
+    await this.executeMiddleware(req, res, next);
+  }
+
+  private async executeMiddleware(req: Request, res: Response, next: NextFunction) {
     const benchmarkKey = `auth-${Date.now()}`;
     const method = req.method;
     const endpoint = req.originalUrl || req.url || '';

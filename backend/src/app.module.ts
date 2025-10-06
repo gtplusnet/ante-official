@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ClsModule } from 'nestjs-cls';
 import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from '@common/logger';
 import { SentryModule, SentryGlobalFilter } from '@sentry/nestjs/setup';
@@ -178,6 +179,16 @@ const ENV = process.env.NODE_ENV;
       envFilePath: !ENV ? '.env' : `.env.${ENV}`,
     }),
     EventEmitterModule.forRoot(),
+
+    // Configure ClsModule for request-scoped context storage
+    ClsModule.forRoot({
+      global: true,
+      middleware: {
+        mount: true,
+        generateId: true,
+        idGenerator: () => Math.random().toString(36).substring(2, 15),
+      },
+    }),
 
     // Sentry module - only in staging and production
     ...(isSentryEnabled ? [SentryModule.forRoot()] : []),
