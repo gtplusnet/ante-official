@@ -80,7 +80,6 @@ export class BranchService {
       endDate: new Date(),
       location: { connect: { id: body.branchLocationId } },
       company: { connect: { id: this.utilityService.companyId } },
-      ...(body.parentId && { parent: { connect: { id: body.parentId } } }),
     };
 
     let response;
@@ -89,6 +88,11 @@ export class BranchService {
       // Update operation
       const updateParams: Prisma.ProjectUpdateInput = {
         ...baseParams,
+        ...(body.parentId !== undefined && {
+          parent: body.parentId
+            ? { connect: { id: body.parentId } }
+            : { disconnect: true },
+        }),
         ...(body.mainWarehouseId !== undefined && {
           mainWarehouse: body.mainWarehouseId
             ? { connect: { id: body.mainWarehouseId } }
@@ -111,6 +115,7 @@ export class BranchService {
       // Create operation
       const createParams: Prisma.ProjectCreateInput = {
         ...baseParams,
+        ...(body.parentId && { parent: { connect: { id: body.parentId } } }),
         ...(body.mainWarehouseId && {
           mainWarehouse: { connect: { id: body.mainWarehouseId } },
         }),

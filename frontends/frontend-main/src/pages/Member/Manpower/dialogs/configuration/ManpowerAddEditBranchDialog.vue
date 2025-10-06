@@ -197,7 +197,7 @@ export default {
         branchName: form.value.branchName,
         branchLocationId: form.value.selectedLocation,
         mainWarehouseId: form.value.mainWarehouseId,
-        ...(form.value.parentId && { parentId: form.value.parentId }),
+        parentId: form.value.parentId,
       };
 
       api
@@ -223,7 +223,7 @@ export default {
         branchName: form.value.branchName,
         branchLocationId: form.value.selectedLocation,
         mainWarehouseId: form.value.mainWarehouseId,
-        ...(form.value.parentId && { parentId: form.value.parentId }),
+        parentId: form.value.parentId,
       };
       api
         .patch("branch/update", updatedParams)
