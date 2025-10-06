@@ -44,7 +44,7 @@
           <div class="row items-center">
             <div class="col-2">
               <div class="timer-icon-wrapper">
-                <q-icon name="timer_off" size="18px" />
+                <q-icon name="timer_off" size="30px" />
               </div>
             </div>
             <div class="col-10">
@@ -59,11 +59,11 @@
           <div class="task-input-dense q-mt-sm">
             <!-- If task selected, show it -->
             <div v-if="selectedTask" class="selected-task-display">
-              <div class="row q-col-gutter-xs items-center">
+              <div class="row items-center">
                 <div class="col">
                   <div class="task-display-field">
                     <q-icon name="assignment_turned_in" size="14px" color="primary" />
-                    <span class="q-ml-xs ellipsis">{{ selectedTask.title }}</span>
+                    <span>{{ selectedTask.title }}</span>
                   </div>
                 </div>
                 <div class="col-auto">
@@ -153,7 +153,7 @@
           <div class="row items-center">
             <div class="col-2">
               <div class="timer-icon-wrapper active">
-                <q-icon name="timer" size="18px" />
+                <q-icon name="timer" size="30px" />
               </div>
             </div>
             <div class="col-10">
@@ -163,7 +163,7 @@
                     {{ formattedTime }}
                     <q-spinner-dots size="12px" class="q-ml-xs" />
                   </div>
-                  <div class="text-caption text-grey ellipsis">
+                  <div class="text-caption text-grey">
                     {{ currentTimer?.taskTitle || currentTimer?.task?.title || 'Working...' }}
                     <span v-if="currentTimer?.task?.project"> • {{ currentTimer.task.project.name }}</span>
                   </div>
@@ -278,10 +278,16 @@
       border: 1px solid var(--md3-sys-color-primary);
       border-radius: 4px;
       display: flex;
-      align-items: center;
-      font-size: 13px;
+      align-items: start;
+      gap: 6px;
+      font-size: var(--font-label-medium);
       color: var(--md3-sys-color-on-primary-container);
-      min-height: 32px;
+      line-height: 1.2;
+      width: 240px;
+
+      span {
+        min-width: 100%;
+      }
     }
   }
   
@@ -295,6 +301,12 @@
     flex: 1;
     padding-left: 8px;
   }
+}
+
+.text-caption {
+  line-height: 1.2;
+  width: 240px;
+  margin-top: 4px;
 }
 
 // Action icons - smaller size
@@ -317,19 +329,10 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, onUnmounted, getCurrentInstance } from 'vue';
-import { defineAsyncComponent } from 'vue';
 import GlobalWidgetCard from '../../../../components/shared/global/GlobalWidgetCard.vue';
-
-// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
-const TaskSelectionDialog = defineAsyncComponent(() =>
-  import('./dialog/TaskSelectionDialog.vue')
-);
-const TimeHistoryDialog = defineAsyncComponent(() =>
-  import('./dialog/TimeHistoryDialog.vue')
-);
-const TaskInformationDialog = defineAsyncComponent(() =>
-  import('../../../../components/dialog/TaskInformationDialog/TaskInformationDialog.vue')
-);
+import TaskSelectionDialog from './dialog/TaskSelectionDialog.vue';
+import TimeHistoryDialog from './dialog/TimeHistoryDialog.vue';
+import TaskInformationDialog from '../../../../components/dialog/TaskInformationDialog/TaskInformationDialog.vue';
 
 interface Task {
   id: number;

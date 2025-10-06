@@ -99,7 +99,7 @@
     .task-page-card-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: start;
     }
 
     .task-page-card-footer {
@@ -110,6 +110,7 @@
 
     .task-title {
       font-weight: 600;
+      line-height: 1;
     }
 
     .task-assignee {
@@ -119,9 +120,6 @@
       display: flex;
       align-items: center;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 20%;
 
       span {
         white-space: nowrap;
