@@ -20,10 +20,10 @@
             v-close-popup
           />
           <div class="header-title">
-            <h2 class="text-h6">
+            <span class="text-title-medium">
               <span v-if="taskInformation.id" class="task-id">#{{ taskInformation.id }} - </span>
               {{ taskInformation.title }}
-            </h2>
+            </span>
             <div class="text-caption text-grey-7" v-if="taskInformation.project">
               {{ taskInformation.project.name }}
             </div>
@@ -34,8 +34,7 @@
             flat
             round
             icon="o_comment"
-            size="md"
-            class="header-action q-mr-sm"
+            class="q-mr-sm"
             :data="discussionData"
           />
           <q-btn
@@ -44,7 +43,7 @@
             round
             dense
             icon="close"
-            class="header-action"
+            class="q-mt-xs"
             v-close-popup
           />
         </div>
@@ -185,9 +184,8 @@ $md3-elevation-2: 0px 3px 6px rgba(0, 0, 0, 0.16), 0px 3px 6px rgba(0, 0, 0, 0.2
 
   .header-content {
     display: flex;
-    align-items: center;
-    padding: 4px;
-    min-height: 64px;
+    align-items: start;
+    padding: 10px 16px;
 
     @media (max-width: 768px) {
       min-height: 56px;
@@ -200,15 +198,9 @@ $md3-elevation-2: 0px 3px 6px rgba(0, 0, 0, 0.16), 0px 3px 6px rgba(0, 0, 0, 0.2
   }
 
   .header-title {
-    flex: 1;
-    padding: 0 16px;
-
-    h2 {
-      margin: 0;
-      font-weight: 400;
-      color: $md3-on-surface;
-      line-height: 1.2;
-    }
+    max-width: 80%;
+    padding: 0 0 0 8px;
+    line-height: 1.2;
 
     .text-caption {
       margin-top: 2px;

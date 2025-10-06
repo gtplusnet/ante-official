@@ -1,5 +1,5 @@
 <template>
-  <q-btn @click="isDialogOpen = true" icon="o_mode_comment" size="14px" rounded>
+  <g-button @click="isDialogOpen = true" icon="o_mode_comment" icon-size="lg" class="text-dark" rounded>
     <q-badge 
       v-if="unreadCount > 0" 
       color="red" 
@@ -13,7 +13,7 @@
       v-model="isDialogOpen" 
       @messages-read="handleMessagesRead"
     />
-  </q-btn>
+  </g-button>
 </template>
 
 <script lang="ts">
@@ -22,6 +22,7 @@ import { DiscussionProps, DiscussionModule } from './DiscussionProps';
 import { useDiscussionStore } from 'src/stores/discussionStore';
 import { useSocketStore } from 'src/stores/socketStore';
 import bus from 'src/bus';
+import GButton from '../buttons/GButton.vue';
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
 const DiscussionDialog = defineAsyncComponent(() =>
@@ -32,6 +33,7 @@ export default {
   name: 'DiscussionButton',
   components: {
     DiscussionDialog,
+    GButton,
   },
   props: {
     data: {
