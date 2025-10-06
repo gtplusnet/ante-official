@@ -16,9 +16,9 @@ declare module 'vue' {
 // good idea to move this instance creation inside of the
 // "export default () => {}" function below (which runs individually
 // for each client)
-const api = axios.create({ baseURL: process.env.API_URL });
-const environment = process.env.ENVIRONMENT || 'development';
-const whitelabel = process.env.WHITELABEL || 'ante';
+const api = axios.create({ baseURL: import.meta.env.API_URL || 'http://localhost:3000' });
+const environment = import.meta.env.ENVIRONMENT || 'development';
+const whitelabel = import.meta.env.WHITELABEL || 'ante';
 
 export default boot(({ app }) => {
   // for use inside Vue files (Options API) through this.$axios and this.$api
