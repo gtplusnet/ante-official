@@ -69,6 +69,34 @@ export class UtilityService {
     this.logger.error(data);
   }
 
+  /**
+   * Development-only benchmark logger
+   * Logs performance metrics only in development environment
+   * @param label - Description of what's being measured
+   * @param startTime - Start timestamp from performance.now()
+   * @param metadata - Additional context to log
+   */
+  benchmark(label: string, startTime: number, metadata?: Record<string, any>) {
+    // Only log in development environment
+    if (process.env.NODE_ENV !== 'development') {
+      return;
+    }
+
+    const endTime = performance.now();
+    const duration = endTime - startTime;
+    const durationSeconds = (duration / 1000).toFixed(3);
+
+    const logData = {
+      benchmark: label,
+      duration: `${duration.toFixed(2)}ms`,
+      durationSeconds: `${durationSeconds}s`,
+      timestamp: new Date().toISOString(),
+      ...metadata,
+    };
+
+    this.logger.info(`[BENCHMARK] ${JSON.stringify(logData)}`);
+  }
+
   setAccountInformation(accountInformation: AccountSocketDataInterface) {
     // Ensure CLS context is available
     if (!this.cls.isActive()) {

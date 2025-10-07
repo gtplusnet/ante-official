@@ -895,11 +895,13 @@ export class EmployeeTimekeepingService {
     return response;
   }
   public async recompute(body: RecomputeTimekeepingDTO): Promise<void> {
+    const startTotal = performance.now();
     this.utilityService.log(
       `[RECOMPUTE] Starting recompute for employeeAccountId: ${body.employeeAccountId}, date: ${body.date}`,
     );
 
     // Check if raw logs exist for this date
+    const startRawLogsQuery = performance.now();
     const dateStart = new Date(body.date);
     dateStart.setHours(0, 0, 0, 0);
     const dateEnd = new Date(body.date);
@@ -914,14 +916,26 @@ export class EmployeeTimekeepingService {
         },
       },
     });
+    this.utilityService.benchmark('Raw logs count query', startRawLogsQuery, {
+      employeeAccountId: body.employeeAccountId,
+      date: body.date,
+      rawLogsCount,
+    });
 
     this.utilityService.log(
       `[RECOMPUTE] Raw logs count for date ${body.date}: ${rawLogsCount}`,
     );
 
+    // Create TimekeepingGroupingService
+    const startGroupingServiceCreation = performance.now();
     const timekeepingGroupingService = await this.moduleRef.create(
       TimekeepingGroupingService,
     );
+    this.utilityService.benchmark(
+      'Create TimekeepingGroupingService',
+      startGroupingServiceCreation,
+    );
+
     const dateFormatted = this.utilityService.formatDate(body.date);
 
     this.utilityService.log(
@@ -933,13 +947,27 @@ export class EmployeeTimekeepingService {
       dateFormatted,
     );
 
+    // Save timekeeping logs
+    const startSaveTimekeepingLogs = performance.now();
     this.utilityService.log(`[RECOMPUTE] Calling saveTimekeepingLogs...`);
     await timekeepingGroupingService.saveTimekeepingLogs();
+    this.utilityService.benchmark(
+      'Save timekeeping logs',
+      startSaveTimekeepingLogs,
+      { date: body.date },
+    );
     this.utilityService.log(`[RECOMPUTE] saveTimekeepingLogs completed`);
 
+    // Create TimekeepingComputationService
+    const startComputationServiceCreation = performance.now();
     const timekeepingComputationService = await this.moduleRef.create(
       TimekeepingComputationService,
     );
+    this.utilityService.benchmark(
+      'Create TimekeepingComputationService',
+      startComputationServiceCreation,
+    );
+
     const currentDateFormatted = this.utilityService.formatDate(body.date);
 
     this.utilityService.log(
@@ -948,12 +976,20 @@ export class EmployeeTimekeepingService {
     timekeepingComputationService.setEmployeeAccountId(body.employeeAccountId);
     timekeepingComputationService.setDate(currentDateFormatted);
 
+    // Compute timekeeping
+    const startComputeTimekeeping = performance.now();
     this.utilityService.log(`[RECOMPUTE] Starting computeTimekeeping...`);
     await timekeepingComputationService.computeTimekeeping();
+    this.utilityService.benchmark(
+      'Compute timekeeping',
+      startComputeTimekeeping,
+      { date: body.date },
+    );
     this.utilityService.log(`[RECOMPUTE] computeTimekeeping completed`);
 
     // Sync overtime filings after computation to preserve the values
     try {
+      const startOvertimeSync = performance.now();
       this.utilityService.log(`[RECOMPUTE] Syncing overtime filings...`);
       const { OvertimeFilingIntegrationService } = await import(
         '../../filing/services/overtime-filing-integration.service'
@@ -965,6 +1001,11 @@ export class EmployeeTimekeepingService {
         body.employeeAccountId,
         new Date(body.date),
       );
+      this.utilityService.benchmark(
+        'Sync overtime filings',
+        startOvertimeSync,
+        { date: body.date },
+      );
       this.utilityService.log(`[RECOMPUTE] Overtime filings sync completed`);
     } catch (error) {
       this.utilityService.log(
@@ -974,6 +1015,7 @@ export class EmployeeTimekeepingService {
 
     // Detect attendance conflicts after computation
     try {
+      const startConflictDetection = performance.now();
       this.utilityService.log(`[RECOMPUTE] Detecting attendance conflicts...`);
 
       // Get the timekeeping record for conflict detection
@@ -1004,6 +1046,11 @@ export class EmployeeTimekeepingService {
         );
       }
 
+      this.utilityService.benchmark(
+        'Detect attendance conflicts',
+        startConflictDetection,
+        { date: body.date },
+      );
       this.utilityService.log(
         `[RECOMPUTE] Attendance conflict detection completed`,
       );
@@ -1014,27 +1061,85 @@ export class EmployeeTimekeepingService {
       // Don't throw - conflict detection failure shouldn't stop the recompute
     }
 
+    // Log total recompute time
+    this.utilityService.benchmark('TOTAL recompute for single day', startTotal, {
+      employeeAccountId: body.employeeAccountId,
+      date: body.date,
+    });
+
     this.utilityService.log(`[RECOMPUTE] Recompute completed successfully`);
   }
   public async recomputeCutoff(
     body: RecomputeCutoffTimekeepingDTO,
   ): Promise<void> {
+    const startTotal = performance.now();
+    this.utilityService.log(
+      `[RECOMPUTE-CUTOFF] Starting recompute cutoff for employeeAccountId: ${body.employeeAccountId}, cutoffDateRangeId: ${body.cutoffDateRangeId}`,
+    );
+
+    const startFetchCutoff = performance.now();
     const cutoffDateRange: CutoffDateRange =
       await this.prisma.cutoffDateRange.findUnique({
         where: { id: body.cutoffDateRangeId },
       });
+    this.utilityService.benchmark(
+      'Fetch cutoff date range',
+      startFetchCutoff,
+      { cutoffDateRangeId: body.cutoffDateRangeId },
+    );
 
-    // loop date ranges and call recompute
+    // Calculate total days
     let currentDate = moment(cutoffDateRange.startDate).startOf('day');
     const endDate = moment(cutoffDateRange.endDate).endOf('day');
+    const totalDays = endDate.diff(currentDate, 'days') + 1;
+
+    this.utilityService.log(
+      `[RECOMPUTE-CUTOFF] Processing ${totalDays} days from ${currentDate.format('YYYY-MM-DD')} to ${endDate.format('YYYY-MM-DD')}`,
+    );
+
+    // Loop through date ranges and call recompute
+    let dayCounter = 0;
     while (currentDate.isSameOrBefore(endDate)) {
+      dayCounter++;
+      const dateString = currentDate.format('YYYY-MM-DD');
+      const startDayRecompute = performance.now();
+
+      this.utilityService.log(
+        `[RECOMPUTE-CUTOFF] Processing day ${dayCounter}/${totalDays}: ${dateString}`,
+      );
+
       await this.recompute({
         employeeAccountId: body.employeeAccountId,
-        date: currentDate.format('YYYY-MM-DD'),
+        date: dateString,
       });
+
+      this.utilityService.benchmark(
+        `Day ${dayCounter}/${totalDays} recompute`,
+        startDayRecompute,
+        {
+          date: dateString,
+          dayNumber: dayCounter,
+          totalDays,
+        },
+      );
 
       currentDate = currentDate.add(1, 'day');
     }
+
+    // Log total cutoff recompute time
+    this.utilityService.benchmark(
+      'TOTAL recompute cutoff (all days)',
+      startTotal,
+      {
+        employeeAccountId: body.employeeAccountId,
+        cutoffDateRangeId: body.cutoffDateRangeId,
+        totalDays,
+      },
+    );
+
+    this.utilityService.log(
+      `[RECOMPUTE-CUTOFF] Recompute cutoff completed successfully for ${totalDays} days`,
+    );
   }
   private async recordRawTimeInOut(
     employeeAccountId: string,
