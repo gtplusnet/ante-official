@@ -323,11 +323,11 @@ export default {
       this.form = {
         title: this.taskInformation.title,
         assignee: this.taskInformation.assignedTo ? this.taskInformation.assignedTo.id : null,
-        priorityLevel: this.taskInformation.priorityLevel?.key || null,
+        priorityLevel: this.taskInformation.priorityLevel?.key ?? null,
         description: this.taskInformation.description,
-        difficultyLevel: this.taskInformation.assignedToDifficultySet?.key || null,
+        difficultyLevel: this.taskInformation.assignedToDifficultySet?.key ?? null,
         dueDateString: this.taskInformation.dueDate?.dateStandard || null,
-        project: this.taskInformation.project?.id || this.taskInformation.projectId || null,
+        project: this.taskInformation.project?.id ?? this.taskInformation.projectId ?? 0,
       };
 
       this.isInitialized = true;
