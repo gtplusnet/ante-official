@@ -70,6 +70,20 @@
           </div>
         </div>
 
+        <div class="row q-col-gutter-x-md">
+          <div class="col-12 q-mb-md">
+            <GInput
+              :isDisabled="!permissions.isAllowedEditTask"
+              type="select-search"
+              apiUrl="/select-box/project-list"
+              null-option="No Project"
+              label="Project"
+              v-model="form.project"
+              :storeCache="true"
+            />
+          </div>
+        </div>
+
         <div class="col-12">
           <GInput
             :isDisabled="!permissions.isAllowedEditTask"
@@ -312,11 +326,8 @@ export default {
         priorityLevel: this.taskInformation.priorityLevel?.key || null,
         description: this.taskInformation.description,
         difficultyLevel: this.taskInformation.assignedToDifficultySet?.key || null,
-        dueDateString: this.taskInformation.dueDate
-          ? (this.taskInformation.dueDate.raw
-              ? new Date(this.taskInformation.dueDate.raw).toISOString().substr(0, 10)
-              : new Date(this.taskInformation.dueDate).toISOString().substr(0, 10))
-          : null,
+        dueDateString: this.taskInformation.dueDate?.dateStandard || null,
+        project: this.taskInformation.project?.id || this.taskInformation.projectId || null,
       };
 
       this.isInitialized = true;
@@ -542,7 +553,8 @@ export default {
         title: this.form.title,
         description: this.form.description,
         assignee: this.form.assignee,
-        dueDate: this.form.dueDateString ? new Date(this.form.dueDateString) : null,
+        dueDate: this.form.dueDateString || null,
+        projectId: this.form.project || null,
         // Convert to numbers - API expects numbers for these fields
         priorityLevel: this.form.priorityLevel !== null ? Number(this.form.priorityLevel) : null,
         difficultyLevel:
@@ -553,6 +565,7 @@ export default {
         .put(`/task?id=${this.taskInformation.id}`, updateData)
         .then(() => {
           this.$bus.emit('reloadTaskList');
+          this.$emit('closeDialog');
 
           this.$q.notify({
             message: 'Task updated successfully',

@@ -405,11 +405,36 @@ export default defineComponent({
       // Format dates
       const formatDate = (date: string | Date | null) => {
         if (!date) return null;
+        // The backend's manilaToUTC shifts dates back 8 hours
+        // So we need to add 8 hours to get the correct date
         const dateObj = new Date(date);
+        dateObj.setHours(dateObj.getHours() + 8);
+
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        const dateStandard = `${year}-${month}-${day}`; // "2025-10-10"
+
+        // Calculate timeAgo
+        const now = new Date();
+        const diffMs = now.getTime() - dateObj.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        let timeAgo = '';
+        if (diffMins < 1) timeAgo = 'just now';
+        else if (diffMins < 60) timeAgo = `${diffMins}m ago`;
+        else if (diffHours < 24) timeAgo = `${diffHours}h ago`;
+        else if (diffDays < 30) timeAgo = `${diffDays}d ago`;
+        else timeAgo = dateObj.toLocaleDateString();
+
         return {
           raw: date,
           formatted: dateObj.toLocaleDateString(),
-          date: dateObj.toISOString().split('T')[0]
+          date: dateStandard,
+          dateStandard: dateStandard,
+          timeAgo: timeAgo
         };
       };
 
