@@ -3,15 +3,6 @@ name: Deploy to Vercel
 on:
   push:
     branches: [main]
-    paths:
-      - 'frontends/frontend-main/**'
-      - 'frontends/frontend-gate-app/**'
-      - 'frontends/frontend-guardian-app/**'
-      - 'websites/multibook/**'
-      - 'backend/**'
-      - 'package.json'
-      - 'yarn.lock'
-      - '.github/workflows/deploy.yml'
   workflow_dispatch:  # Allow manual triggering
 
 jobs:
