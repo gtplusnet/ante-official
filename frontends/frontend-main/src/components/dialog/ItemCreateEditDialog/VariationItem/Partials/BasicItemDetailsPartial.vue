@@ -35,7 +35,7 @@
         <GInput required type="number" label="Maximum Stock Level" v-model="form.maximumStockLevel"></GInput>
       </div>
     </div>
-    <!-- Category & Branch -->
+    <!-- Category, Brand & Branch -->
     <div class="row q-gutter-sm">
       <div class="col">
         <q-select
@@ -51,6 +51,22 @@
           dense
           class="text-body-small"
           :loading="loadingCategories"
+        />
+      </div>
+      <div class="col">
+        <q-select
+          v-model="form.brandId"
+          :options="brandOptions"
+          option-label="name"
+          option-value="id"
+          label="Brand (Optional)"
+          clearable
+          emit-value
+          map-options
+          outlined
+          dense
+          class="text-body-small"
+          :loading="loadingBrands"
         />
       </div>
       <div class="col">
@@ -110,14 +126,17 @@ export default {
       keywords: [],
       enabledInPOS: false,
       branchId: null,
+      brandId: null,
     },
     isTagPartialDisplayed: true,
     isKeywordsPartialDisplayed: true,
     showMeasurement: false,
     categoryOptions: [],
     branchOptions: [],
+    brandOptions: [],
     loadingCategories: false,
     loadingBranches: false,
+    loadingBrands: false,
   }),
   watch: {
     form: {
@@ -129,6 +148,7 @@ export default {
   },
   mounted() {
     this.fetchCategoryOptions();
+    this.fetchBrandOptions();
     this.fetchBranchOptions();
   },
   computed: {},
@@ -142,6 +162,17 @@ export default {
         console.error('Error fetching categories:', error);
       } finally {
         this.loadingCategories = false;
+      }
+    },
+    async fetchBrandOptions() {
+      this.loadingBrands = true;
+      try {
+        const response = await this.$api.get('/brand/select-box');
+        this.brandOptions = response.data;
+      } catch (error) {
+        console.error('Error fetching brands:', error);
+      } finally {
+        this.loadingBrands = false;
       }
     },
     async fetchBranchOptions() {

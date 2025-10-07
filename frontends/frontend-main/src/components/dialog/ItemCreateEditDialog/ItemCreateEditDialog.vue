@@ -195,7 +195,7 @@ export default {
       const { data, type } = this.data;
 
       if (type === 'simple') {
-        const { itemName: name, sku, description, estimatedBuyingPrice, size, tags, isDraft, uom, tiers, sellingPrice, minimumStockLevel, maximumStockLevel, categoryId, branchId, keywords, enabledInPOS } = data;
+        const { itemName: name, sku, description, estimatedBuyingPrice, size, tags, isDraft, uom, tiers, sellingPrice, minimumStockLevel, maximumStockLevel, categoryId, brandId, branchId, keywords, enabledInPOS } = data;
 
         return {
           name,
@@ -211,12 +211,13 @@ export default {
           minimumStockLevel: Number(minimumStockLevel),
           maximumStockLevel: Number(maximumStockLevel),
           categoryId: categoryId ? Number(categoryId) : null,
+          brandId: brandId ? Number(brandId) : null,
           branchId: branchId ? Number(branchId) : null,
           keywords: keywords || [],
           enabledInPOS: Boolean(enabledInPOS),
         };
       } else if (type === 'variation') {
-        const { itemName, description, tags, tiers, variations, isDraft, uom, sellingPrice, minimumStockLevel, maximumStockLevel, categoryId, branchId, keywords, enabledInPOS } =
+        const { itemName, description, tags, tiers, variations, isDraft, uom, sellingPrice, minimumStockLevel, maximumStockLevel, categoryId, brandId, branchId, keywords, enabledInPOS } =
           data;
         return {
           name: itemName,
@@ -230,6 +231,7 @@ export default {
           minimumStockLevel: Number(minimumStockLevel),
           maximumStockLevel: Number(maximumStockLevel),
           categoryId: categoryId ? Number(categoryId) : null,
+          brandId: brandId ? Number(brandId) : null,
           branchId: branchId ? Number(branchId) : null,
           keywords: keywords || [],
           enabledInPOS: Boolean(enabledInPOS),

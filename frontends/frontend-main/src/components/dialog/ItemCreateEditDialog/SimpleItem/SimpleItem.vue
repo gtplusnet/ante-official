@@ -50,7 +50,7 @@
           <tags-partial ref="tagsPartial" class="text-body-small" v-model="isTagPartialDisplayed" @onTagUpdate="onTagUpdated" />
         </div>
       </div>
-      <!-- Category & Branch -->
+      <!-- Category, Brand & Branch -->
       <div class="row q-gutter-sm">
         <div class="col">
           <q-select
@@ -66,6 +66,22 @@
             dense
             class="text-body-small"
             :loading="loadingCategories"
+          />
+        </div>
+        <div class="col">
+          <q-select
+            v-model="form.brandId"
+            :options="brandOptions"
+            option-label="name"
+            option-value="id"
+            label="Brand (Optional)"
+            clearable
+            emit-value
+            map-options
+            outlined
+            dense
+            class="text-body-small"
+            :loading="loadingBrands"
           />
         </div>
         <div class="col">
@@ -139,13 +155,16 @@ export default {
       keywords: [],
       enabledInPOS: false,
       branchId: null,
+      brandId: null,
     },
     isTagPartialDisplayed: true,
     isKeywordsPartialDisplayed: true,
     categoryOptions: [],
     branchOptions: [],
+    brandOptions: [],
     loadingCategories: false,
     loadingBranches: false,
+    loadingBrands: false,
   }),
   watch: {
     form: {
@@ -168,6 +187,7 @@ export default {
   mounted() {
     this.isTagHidden = false;
     this.fetchCategoryOptions();
+    this.fetchBrandOptions();
     this.fetchBranchOptions();
     this.initialize()
   },
@@ -182,6 +202,17 @@ export default {
         console.error('Error fetching categories:', error);
       } finally {
         this.loadingCategories = false;
+      }
+    },
+    async fetchBrandOptions() {
+      this.loadingBrands = true;
+      try {
+        const response = await this.$api.get('/brand/select-box');
+        this.brandOptions = response.data;
+      } catch (error) {
+        console.error('Error fetching brands:', error);
+      } finally {
+        this.loadingBrands = false;
       }
     },
     async fetchBranchOptions() {
@@ -239,6 +270,7 @@ export default {
 
         // Handle new fields
         this.form.categoryId = this.itemInformation.categoryId || null;
+        this.form.brandId = this.itemInformation.brandId || null;
         this.form.enabledInPOS = this.itemInformation.enabledInPOS || false;
         this.form.branchId = this.itemInformation.branchId || null;
         this.$refs.keywordsPartial.keywords = this.itemInformation.keywords || [];

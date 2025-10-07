@@ -50,6 +50,7 @@ export default {
       keywords: [],
       enabledInPOS: false,
       branchId: null,
+      brandId: null,
     },
   }),
   watch: {
@@ -87,6 +88,7 @@ export default {
 
         // Handle new fields
         this.$refs.basicDetails.form.categoryId = this.itemInformation.categoryId || null;
+        this.$refs.basicDetails.form.brandId = this.itemInformation.brandId || null;
         this.$refs.basicDetails.form.enabledInPOS = this.itemInformation.enabledInPOS || false;
         this.$refs.basicDetails.form.branchId = this.itemInformation.branchId || null;
         this.$refs.basicDetails.setKeywords(this.itemInformation.keywords || []);
@@ -112,6 +114,7 @@ export default {
       this.form.minimumStockLevel = newUpdate.minimumStockLevel;
       this.form.maximumStockLevel = newUpdate.maximumStockLevel;
       this.form.categoryId = newUpdate.categoryId;
+      this.form.brandId = newUpdate.brandId;
       this.form.keywords = newUpdate.keywords;
       this.form.enabledInPOS = newUpdate.enabledInPOS;
       this.form.branchId = newUpdate.branchId;
