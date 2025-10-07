@@ -2,7 +2,9 @@
 
 Vue.js + Quasar frontend for the GEER-ANTE ERP system.
 
-**Deployment**: Staging environment configured for automatic deployments.
+**Deployment**: Automatic deployments configured via GitHub Actions.
+- **Staging**: Deploys to Vercel staging environment on push to `main`
+- **Production**: Deploys to Vercel production environment on GitHub release
 
 ## 🚀 Quick Start
 
