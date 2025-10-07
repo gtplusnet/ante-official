@@ -45,7 +45,11 @@ export default {
       uom: null,
       sellingPrice: '',
       minimumStockLevel: 0,
-      maximumStockLevel: 0
+      maximumStockLevel: 0,
+      categoryId: null,
+      keywords: [],
+      enabledInPOS: false,
+      branchId: null,
     },
   }),
   watch: {
@@ -70,16 +74,22 @@ export default {
         this.$refs.basicDetails.form.description = this.itemInformation.description;
         this.$refs.basicDetails.form.tags = this.itemInformation.tags;
         this.$refs.basicDetails.setTags(this.itemInformation.tags);
-        
+
         // Initialize price fields with proper value handling
         this.$refs.basicDetails.form.sellingPrice = this.itemInformation.sellingPrice || '';
         this.$refs.basicDetails.form.minimumStockLevel = this.itemInformation.minimumStockLevel || 0;
         this.$refs.basicDetails.form.maximumStockLevel = this.itemInformation.maximumStockLevel || 0;
-        
+
         // Set UOM if available
         if (this.itemInformation.uom) {
           this.$refs.basicDetails.form.uom = this.itemInformation.uom;
         }
+
+        // Handle new fields
+        this.$refs.basicDetails.form.categoryId = this.itemInformation.categoryId || null;
+        this.$refs.basicDetails.form.enabledInPOS = this.itemInformation.enabledInPOS || false;
+        this.$refs.basicDetails.form.branchId = this.itemInformation.branchId || null;
+        this.$refs.basicDetails.setKeywords(this.itemInformation.keywords || []);
 
         if (!this.itemInformation.hasOwnProperty('parent') && this.itemInformation.parent) {
           this.$refs.basicDetails.showMeasurement = true;
@@ -101,6 +111,10 @@ export default {
       this.form.sellingPrice = newUpdate.sellingPrice;
       this.form.minimumStockLevel = newUpdate.minimumStockLevel;
       this.form.maximumStockLevel = newUpdate.maximumStockLevel;
+      this.form.categoryId = newUpdate.categoryId;
+      this.form.keywords = newUpdate.keywords;
+      this.form.enabledInPOS = newUpdate.enabledInPOS;
+      this.form.branchId = newUpdate.branchId;
     },
 
     onVariationUpdate(newUpdate) {

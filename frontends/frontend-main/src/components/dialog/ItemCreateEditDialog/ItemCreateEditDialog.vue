@@ -40,7 +40,7 @@
             <q-dialog v-model="confirm" persistent>
               <q-card>
                 <q-card-section class="row items-center">
-                  <span class="q-ml-sm text-body-medium">Are you sure you want to add this new item?</span>
+                  <span class="q-ml-sm text-body-medium">{{ itemInformation ? 'Are you sure you want to update this item?' : 'Are you sure you want to add this new item?' }}</span>
                 </q-card-section>
                 <q-card-actions align="right">
                   <q-btn flat label="Cancel" color="primary" v-close-popup class="text-label-large"/>
@@ -195,7 +195,7 @@ export default {
       const { data, type } = this.data;
 
       if (type === 'simple') {
-        const { itemName: name, sku, description, estimatedBuyingPrice, size, tags, isDraft, uom, tiers, sellingPrice, minimumStockLevel, maximumStockLevel } = data;
+        const { itemName: name, sku, description, estimatedBuyingPrice, size, tags, isDraft, uom, tiers, sellingPrice, minimumStockLevel, maximumStockLevel, categoryId, branchId, keywords, enabledInPOS } = data;
 
         return {
           name,
@@ -210,9 +210,13 @@ export default {
           sellingPrice: Number(sellingPrice),
           minimumStockLevel: Number(minimumStockLevel),
           maximumStockLevel: Number(maximumStockLevel),
+          categoryId: categoryId ? Number(categoryId) : null,
+          branchId: branchId ? Number(branchId) : null,
+          keywords: keywords || [],
+          enabledInPOS: Boolean(enabledInPOS),
         };
       } else if (type === 'variation') {
-        const { itemName, description, tags, tiers, variations, isDraft, uom, sellingPrice, minimumStockLevel, maximumStockLevel } =
+        const { itemName, description, tags, tiers, variations, isDraft, uom, sellingPrice, minimumStockLevel, maximumStockLevel, categoryId, branchId, keywords, enabledInPOS } =
           data;
         return {
           name: itemName,
@@ -225,6 +229,10 @@ export default {
           sellingPrice: Number(sellingPrice),
           minimumStockLevel: Number(minimumStockLevel),
           maximumStockLevel: Number(maximumStockLevel),
+          categoryId: categoryId ? Number(categoryId) : null,
+          branchId: branchId ? Number(branchId) : null,
+          keywords: keywords || [],
+          enabledInPOS: Boolean(enabledInPOS),
           variants: variations.map((variation) => ({
             name: variation.itemName,
             sku: variation.sku,

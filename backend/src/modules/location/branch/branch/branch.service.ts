@@ -210,6 +210,25 @@ export class BranchService {
     return options;
   }
 
+  async getSelectBox() {
+    const branches = await this.prisma.project.findMany({
+      where: {
+        status: ProjectStatus.BRANCH,
+        isDeleted: false,
+        company: { id: this.utilityService.companyId },
+      },
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        parentId: true,
+      },
+    });
+
+    return branches;
+  }
+
   async getBranchTree() {
     // Fetch all branches with their relations
     const branches = await this.prisma.project.findMany({

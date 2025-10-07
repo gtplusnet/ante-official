@@ -54,6 +54,7 @@ export class ItemService {
     itemDto.sku = itemDto.sku.toUpperCase();
     await this.ensureUniqueSKU(itemDto.sku);
     const tagIds = await this.createTags(itemDto.tags);
+    const keywordIds = await this.createKeywords(itemDto.keywords);
 
     const item = await this.prisma.item.create({
       data: {
@@ -67,12 +68,16 @@ export class ItemService {
         sellingPrice: itemDto.sellingPrice,
         minimumStockLevelPrice: itemDto.minimumStockLevel,
         maximumStockLevelPrice: itemDto.maximumStockLevel,
+        enabledInPOS: itemDto.enabledInPOS || false,
         company: { connect: { id: this.utility.companyId } },
         ...(itemDto.brandId && { brand: { connect: { id: itemDto.brandId } } }),
+        ...(itemDto.categoryId && { category: { connect: { id: itemDto.categoryId } } }),
+        ...(itemDto.branchId && { branch: { connect: { id: itemDto.branchId } } }),
       },
     });
 
     await this.createItemTags(item.id, tagIds);
+    await this.createItemKeywords(item.id, keywordIds);
 
     return this.formatResponse(item);
   }
@@ -81,8 +86,10 @@ export class ItemService {
     itemDto.sku = itemDto.sku.toUpperCase();
     await this.ensureUniqueSKU(itemDto.sku);
     const tagIds = await this.createTags(itemDto.tags);
+    const keywordIds = await this.createKeywords(itemDto.keywords);
     const parentItem = await this.createParentItem(itemDto);
     await this.createItemTags(parentItem.id, tagIds);
+    await this.createItemKeywords(parentItem.id, keywordIds);
     await this.saveTiers(parentItem.id, itemDto.tiers);
 
     const variantItems = await this.createVariantItems(
@@ -201,10 +208,17 @@ export class ItemService {
       where: tableQuery.where,
     });
 
-    // Get items with brand data
+    // Get items with brand data and keywords
     const baseList = await this.prisma.item.findMany({
       ...tableQuery,
-      include: { brand: true },
+      include: {
+        brand: true,
+        keywords: {
+          include: {
+            keyword: true,
+          },
+        },
+      },
     });
 
     const currentPage = Number(query.page);
@@ -353,7 +367,15 @@ export class ItemService {
   async getItemInfoById(id: string) {
     const itemInformation = await this.prisma.item.findUnique({
       where: { id },
-      include: { brand: true },
+      include: {
+        brand: true,
+        category: true,
+        keywords: {
+          include: {
+            keyword: true,
+          },
+        },
+      },
     });
 
     const formattedItemInformation = this.formatResponse(itemInformation);
@@ -375,6 +397,12 @@ export class ItemService {
         description: true,
         estimatedBuyingPrice: true,
         size: true,
+        sellingPrice: true,
+        minimumStockLevelPrice: true,
+        maximumStockLevelPrice: true,
+        categoryId: true,
+        branchId: true,
+        enabledInPOS: true,
       },
     });
 
@@ -411,12 +439,30 @@ export class ItemService {
       }
     }
 
+    // Fetch keywords
+    const keywords = await this.prisma.itemKeyword.findMany({
+      where: { itemId: id },
+      select: { keywordId: true },
+    });
+
+    const keywordValues: string[] = [];
+    for (const kw of keywords) {
+      const keywordRecord = await this.prisma.keyword.findUnique({
+        where: { id: kw.keywordId },
+        select: { keywordValue: true },
+      });
+      if (keywordRecord) {
+        keywordValues.push(keywordRecord.keywordValue);
+      }
+    }
+
     const parentTags = await this.getParentItemTags(id);
 
     return {
       parent: {
         ...parentItem,
         tags: parentTags.join(', '),
+        keywords: keywordValues,
       },
       children: childItems.length > 0 ? childItems : ['No children item'],
     };
@@ -473,7 +519,10 @@ export class ItemService {
         sellingPrice: itemDto.sellingPrice,
         minimumStockLevelPrice: itemDto.minimumStockLevel,
         maximumStockLevelPrice: itemDto.maximumStockLevel,
+        enabledInPOS: itemDto.enabledInPOS || false,
         company: { connect: { id: this.utility.companyId } },
+        ...(itemDto.categoryId && { category: { connect: { id: itemDto.categoryId } } }),
+        ...(itemDto.branchId && { branch: { connect: { id: itemDto.branchId } } }),
       },
     });
   }
@@ -481,6 +530,33 @@ export class ItemService {
   private async createItemTags(itemId: string, tagIds: string[]) {
     const itemTags = tagIds.map((tagId) => ({ itemId, tagId }));
     await this.prisma.itemTag.createMany({ data: itemTags });
+  }
+
+  private async createKeywords(keywordValues: string[]): Promise<string[]> {
+    const createdKeywordIds: string[] = [];
+
+    if (keywordValues && keywordValues.length > 0) {
+      for (const keywordValue of keywordValues) {
+        let keyword = await this.prisma.keyword.findFirst({
+          where: { keywordValue: keywordValue.toUpperCase() },
+        });
+
+        if (!keyword) {
+          keyword = await this.prisma.keyword.create({
+            data: { keywordValue: keywordValue.toUpperCase() },
+          });
+        }
+
+        createdKeywordIds.push(keyword.id);
+      }
+    }
+
+    return createdKeywordIds;
+  }
+
+  private async createItemKeywords(itemId: string, keywordIds: string[]) {
+    const itemKeywords = keywordIds.map((keywordId) => ({ itemId, keywordId }));
+    await this.prisma.itemKeyword.createMany({ data: itemKeywords });
   }
 
   private async createVariantItems(
@@ -797,6 +873,7 @@ export class ItemService {
     await this.ensureUniqueSKU(itemDto.sku, itemId);
 
     const tagIds = itemDto.tags ? await this.createTags(itemDto.tags) : [];
+    const keywordIds = itemDto.keywords ? await this.createKeywords(itemDto.keywords) : [];
 
     const parentItemUpdate: any = {
       name: itemDto.name,
@@ -814,6 +891,15 @@ export class ItemService {
     if (itemDto.maximumStockLevel !== undefined) {
       parentItemUpdate.maximumStockLevelPrice = itemDto.maximumStockLevel;
     }
+    if (itemDto.enabledInPOS !== undefined) {
+      parentItemUpdate.enabledInPOS = itemDto.enabledInPOS;
+    }
+    if (itemDto.categoryId !== undefined) {
+      parentItemUpdate.categoryId = itemDto.categoryId;
+    }
+    if (itemDto.branchId !== undefined) {
+      parentItemUpdate.branchId = itemDto.branchId;
+    }
 
     const updatedParentItem = await this.prisma.item.update({
       where: { id: itemId },
@@ -823,6 +909,11 @@ export class ItemService {
     if (itemDto.tags) {
       await this.prisma.itemTag.deleteMany({ where: { itemId } });
       await this.createItemTags(itemId, tagIds);
+    }
+
+    if (itemDto.keywords) {
+      await this.prisma.itemKeyword.deleteMany({ where: { itemId } });
+      await this.createItemKeywords(itemId, keywordIds);
     }
 
     const variantItems = await Promise.all(
@@ -883,6 +974,7 @@ export class ItemService {
 
     await this.ensureUniqueSKU(itemDto.sku, itemDto.id);
     const tagIds = await this.createTags(itemDto.tags);
+    const keywordIds = await this.createKeywords(itemDto.keywords);
 
     const updateData = {
       name: itemDto.name,
@@ -902,6 +994,9 @@ export class ItemService {
         maximumStockLevelPrice: itemDto.maximumStockLevel,
       }),
       ...(itemDto.brandId !== undefined && { brandId: itemDto.brandId }),
+      ...(itemDto.enabledInPOS !== undefined && { enabledInPOS: itemDto.enabledInPOS }),
+      ...(itemDto.categoryId !== undefined && { categoryId: itemDto.categoryId }),
+      ...(itemDto.branchId !== undefined && { branchId: itemDto.branchId }),
     };
 
     if (uomInformation) {
@@ -937,6 +1032,7 @@ export class ItemService {
     }
 
     await this.updateItemTags(item.id, tagIds);
+    await this.updateItemKeywords(item.id, keywordIds);
 
     return this.formatResponse(item);
   }
@@ -954,6 +1050,23 @@ export class ItemService {
 
       await this.prisma.itemTag.createMany({
         data: itemTags,
+      });
+    }
+  }
+
+  private async updateItemKeywords(itemId: string, keywordIds: string[]) {
+    await this.prisma.itemKeyword.deleteMany({
+      where: { itemId },
+    });
+
+    if (keywordIds && keywordIds.length > 0) {
+      const itemKeywords = keywordIds.map((keywordId) => ({
+        itemId,
+        keywordId,
+      }));
+
+      await this.prisma.itemKeyword.createMany({
+        data: itemKeywords,
       });
     }
   }
@@ -1183,6 +1296,11 @@ export class ItemService {
   private formatResponse(item: any): any {
     const uomInfo = UnitOfMeasurementReference.find((u) => u.key === item.uom);
 
+    // Extract keywords if available
+    const keywords = item.keywords
+      ? item.keywords.map((kw) => kw.keyword.keywordValue)
+      : [];
+
     return {
       id: item.id,
       name: item.name,
@@ -1208,6 +1326,10 @@ export class ItemService {
       uom: uomInfo || null,
       brandId: item.brandId || null,
       brand: item.brand || null,
+      categoryId: item.categoryId || null,
+      branchId: item.branchId || null,
+      keywords: keywords,
+      enabledInPOS: item.enabledInPOS || false,
     };
   }
 

@@ -50,12 +50,60 @@
           <tags-partial ref="tagsPartial" class="text-body-small" v-model="isTagPartialDisplayed" @onTagUpdate="onTagUpdated" />
         </div>
       </div>
+      <!-- Category & Branch -->
+      <div class="row q-gutter-sm">
+        <div class="col">
+          <q-select
+            v-model="form.categoryId"
+            :options="categoryOptions"
+            option-label="name"
+            option-value="id"
+            label="Category"
+            clearable
+            emit-value
+            map-options
+            outlined
+            dense
+            class="text-body-small"
+            :loading="loadingCategories"
+          />
+        </div>
+        <div class="col">
+          <q-select
+            v-model="form.branchId"
+            :options="branchOptions"
+            option-label="name"
+            option-value="id"
+            label="Branch (Optional)"
+            clearable
+            emit-value
+            map-options
+            outlined
+            dense
+            class="text-body-small"
+            :loading="loadingBranches"
+          />
+        </div>
+      </div>
+      <!-- Keywords -->
+      <div class="row q-gutter-sm">
+        <div class="col">
+          <keywords-partial ref="keywordsPartial" class="text-body-small" v-model="isKeywordsPartialDisplayed" @onKeywordUpdate="onKeywordUpdated" />
+        </div>
+      </div>
+      <!-- Enable in POS -->
+      <div class="row q-gutter-sm">
+        <div class="col flex items-center">
+          <q-checkbox v-model="form.enabledInPOS" label="Enable in POS" class="text-body-small" />
+        </div>
+      </div>
     </div>
   </div>
 </template>
 <script>
 import GInput from "../../../../components/shared/form/GInput.vue";
 import TagsPartial from '../Partials/TagsPartial.vue';
+import KeywordsPartial from '../Partials/KeywordsPartial.vue';
 import { environment } from 'src/boot/axios';
 
 export default {
@@ -63,6 +111,7 @@ export default {
   components: {
     GInput,
     TagsPartial,
+    KeywordsPartial,
   },
   props: {
     itemInformation: {
@@ -86,8 +135,17 @@ export default {
       sellingPrice: '',
       minimumStockLevel: 0,
       maximumStockLevel: 0,
+      categoryId: null,
+      keywords: [],
+      enabledInPOS: false,
+      branchId: null,
     },
     isTagPartialDisplayed: true,
+    isKeywordsPartialDisplayed: true,
+    categoryOptions: [],
+    branchOptions: [],
+    loadingCategories: false,
+    loadingBranches: false,
   }),
   watch: {
     form: {
@@ -109,10 +167,34 @@ export default {
   },
   mounted() {
     this.isTagHidden = false;
+    this.fetchCategoryOptions();
+    this.fetchBranchOptions();
     this.initialize()
   },
   computed: {},
   methods: {
+    async fetchCategoryOptions() {
+      this.loadingCategories = true;
+      try {
+        const response = await this.$api.get('/item-category/select-box');
+        this.categoryOptions = response.data;
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        this.loadingCategories = false;
+      }
+    },
+    async fetchBranchOptions() {
+      this.loadingBranches = true;
+      try {
+        const response = await this.$api.get('/branch/select-box');
+        this.branchOptions = response.data;
+      } catch (error) {
+        console.error('Error fetching branches:', error);
+      } finally {
+        this.loadingBranches = false;
+      }
+    },
     initialize() {
       if (this.itemInformation) {
         this.form.itemName = this.itemInformation.name;
@@ -154,6 +236,13 @@ export default {
         }
 
         this.$refs.tagsPartial.tags = this.itemInformation.tags;
+
+        // Handle new fields
+        this.form.categoryId = this.itemInformation.categoryId || null;
+        this.form.enabledInPOS = this.itemInformation.enabledInPOS || false;
+        this.form.branchId = this.itemInformation.branchId || null;
+        this.$refs.keywordsPartial.keywords = this.itemInformation.keywords || [];
+
         if (this.itemInformation.hasOwnProperty('parent') && this.itemInformation.parent) {
           this.isTagHidden = true;
         }
@@ -174,6 +263,9 @@ export default {
     },
     onTagUpdated(val) {
       this.form.tags = val;
+    },
+    onKeywordUpdated(val) {
+      this.form.keywords = val;
     },
     fillData() {
       if (environment === 'development') {

@@ -656,6 +656,8 @@ model Item {
   minimumStockLevelPrice   Int                        @default(0)
   brandId                  Int?
   categoryId               Int?
+  branchId                 Int?
+  enabledInPOS             Boolean                    @default(false)
   boqTable                 BillOfQuantityTable[]
   BillOfQuantityTableItems BillOfQuantityTableItems[]
   EquipmentPartsItem       EquipmentPartsItem[]
@@ -665,6 +667,7 @@ model Item {
   company                  Company?                   @relation(fields: [companyId], references: [id])
   itemReceiptItems         ItemReceiptItems[]
   tags                     ItemTag[]
+  keywords                 ItemKeyword[]
   ItemTier                 ItemTier[]
   SupplierItems            SupplierItems[]
   SupplierPriceUpdate      SupplierPriceUpdate[]
@@ -703,6 +706,21 @@ model Tag {
   id     String    @id @default(uuid())
   tagKey String
   items  ItemTag[]
+}
+
+model ItemKeyword {
+  itemId    String
+  keywordId String
+  item      Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  keyword   Keyword @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, keywordId])
+}
+
+model Keyword {
+  id           String        @id @default(uuid())
+  keywordValue String
+  items        ItemKeyword[]
 }
 
 model InventoryItem {

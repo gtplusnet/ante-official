@@ -50,6 +50,22 @@ export class CreateSimpleItemDto {
 
   @IsNumber()
   maximumStockLevel: number;
+
+  @IsOptional()
+  @IsNumber()
+  categoryId?: number;
+
+  @IsOptional()
+  @IsArray()
+  keywords?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  enabledInPOS?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  branchId?: number;
 }
 export class UpdateSimpleItemDto {
   @IsNotEmpty()
@@ -113,4 +129,20 @@ export class UpdateSimpleItemDto {
   @IsOptional()
   @IsNumber()
   maximumStockLevel?: number;
+
+  @IsOptional()
+  @IsNumber()
+  categoryId?: number;
+
+  @IsOptional()
+  @IsArray()
+  keywords?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  enabledInPOS?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  branchId?: number;
 }
