@@ -108,7 +108,14 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Deploy Frontend Main to Vercel
+      - name: Prepare production environment
+        run: |
+          cd frontends/frontend-main
+          cp environment/env.production .env
+          echo "✅ Copied env.production to .env"
+          cat .env
+
+      - name: Deploy Frontend Main to Vercel (Production)
         run: |
           cd frontends/frontend-main
           npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
