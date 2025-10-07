@@ -2,6 +2,8 @@
 
 Vue.js + Quasar frontend for the GEER-ANTE ERP system.
 
+**Deployment**: Staging environment configured for automatic deployments.
+
 ## 🚀 Quick Start
 
 ### Prerequisites

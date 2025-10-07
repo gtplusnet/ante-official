@@ -108,10 +108,17 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Deploy Frontend Main to Vercel (Preview/Staging)
+      - name: Prepare staging environment
         run: |
           cd frontends/frontend-main
-          npx vercel --token=${{ secrets.VERCEL_TOKEN }} --yes
+          cp environment/env.staging .env
+          echo "✅ Copied env.staging to .env"
+          cat .env
+
+      - name: Deploy Frontend Main to Vercel (Staging Environment)
+        run: |
+          cd frontends/frontend-main
+          npx vercel --token=${{ secrets.VERCEL_TOKEN }} --target=staging --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND_MAIN }}
