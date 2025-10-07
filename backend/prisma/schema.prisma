@@ -615,6 +615,26 @@ model Brand {
   @@unique([companyId, code])
 }
 
+model ItemCategory {
+  id          Int            @id @default(autoincrement())
+  name        String
+  code        String
+  description String?
+  isActive    Boolean        @default(true)
+  parentId    Int?
+  companyId   Int
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  company     Company        @relation(fields: [companyId], references: [id])
+  parent      ItemCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    ItemCategory[] @relation("CategoryHierarchy")
+  items       Item[]
+
+  @@unique([companyId, code])
+  @@index([parentId])
+  @@index([companyId])
+}
+
 model Item {
   id                       String                     @id @default(uuid())
   name                     String
@@ -635,11 +655,13 @@ model Item {
   maximumStockLevelPrice   Int                        @default(0)
   minimumStockLevelPrice   Int                        @default(0)
   brandId                  Int?
+  categoryId               Int?
   boqTable                 BillOfQuantityTable[]
   BillOfQuantityTableItems BillOfQuantityTableItems[]
   EquipmentPartsItem       EquipmentPartsItem[]
   inventories              InventoryItem[]
   brand                    Brand?                     @relation(fields: [brandId], references: [id])
+  category                 ItemCategory?              @relation(fields: [categoryId], references: [id])
   company                  Company?                   @relation(fields: [companyId], references: [id])
   itemReceiptItems         ItemReceiptItems[]
   tags                     ItemTag[]
@@ -2065,6 +2087,7 @@ model Company {
   Guardian                      Guardian[]
   individualScheduleAssignments IndividualScheduleAssignment[]
   Item                          Item[]
+  ItemCategory                  ItemCategory[]
   ItemReceipt                   ItemReceipt[]
   leadCompanies                 LeadCompany[]                  @relation("LeadCompanies")
   leadDeals                     LeadDeal[]

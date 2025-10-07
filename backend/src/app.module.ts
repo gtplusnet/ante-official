@@ -39,6 +39,7 @@ import { ProjectModule } from '@modules/project/project/project/project.module';
 // Inventory modules
 import { SupplierModule } from '@modules/inventory/supplier/supplier/supplier.module';
 import { BrandModule } from '@modules/inventory/brand/brand/brand.module';
+import { ItemCategoryModule } from '@modules/inventory/item-category/item-category/item-category.module';
 import { PurchaseOrderModule } from '@modules/finance/purchase-order/purchase-order/purchase-order.module';
 
 // Communication modules
@@ -229,6 +230,7 @@ const ENV = process.env.NODE_ENV;
     // Inventory & Finance
     SupplierModule,
     BrandModule,
+    ItemCategoryModule,
     PurchaseOrderModule,
 
     // Communication

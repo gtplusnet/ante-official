@@ -132,6 +132,11 @@ export default {
         requiredScope: ['ASSET_ACCESS']
       },
       {
+        title: 'Item Categories',
+        key: 'member_asset_item_categories',
+        requiredScope: ['ASSET_ACCESS']
+      },
+      {
         title: 'Equipment',
         key: 'equipment',
         child: [
