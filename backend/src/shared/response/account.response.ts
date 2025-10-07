@@ -16,7 +16,7 @@ export interface AccountDataResponse {
   company: CompanyDataResponse | null;
   parentAccountId: string | null;
   status: string;
-  image: string;
+  image: string | null;
   createdAt: DateFormat;
   updatedAt: DateFormat;
   isDeveloper?: boolean;
