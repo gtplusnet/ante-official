@@ -793,8 +793,14 @@ export default defineComponent({
     const paginatedTasks = computed(() => {
       let sortedTasks = [...taskList.value];
 
-      // Priority weight helper
-      const priorityOrder: { [key: string]: number } = { 'High': 3, 'Medium': 2, 'Low': 1 };
+      // Priority weight helper (matches task-priority.reference.ts)
+      const priorityOrder: { [key: string]: number } = {
+        'Urgent': 5,
+        'High Priority': 4,
+        'Priority': 3,
+        'Low Priority': 2,
+        'Very Low': 1
+      };
 
       // Helper function to calculate urgency score
       const getUrgencyScore = (task: TaskWithUIProps) => {
@@ -827,17 +833,11 @@ export default defineComponent({
           return getUrgencyScore(b) - getUrgencyScore(a);
         });
       } else if (currentSortOption.value === 'priority') {
-        // Group by priority, then by due date within each priority
+        // Sort purely by priority (High -> Medium -> Low)
         sortedTasks.sort((a, b) => {
           const priorityA = priorityOrder[(a.priorityLevel as TagInfo)?.label || ''] || 0;
           const priorityB = priorityOrder[(b.priorityLevel as TagInfo)?.label || ''] || 0;
-          const priorityCompare = priorityB - priorityA;
-
-          if (priorityCompare !== 0) return priorityCompare;
-          // Within same priority, sort by nearest due date
-          const dateA = a.dueDate?.raw ? new Date(a.dueDate.raw).getTime() : Infinity;
-          const dateB = b.dueDate?.raw ? new Date(b.dueDate.raw).getTime() : Infinity;
-          return dateA - dateB;
+          return priorityB - priorityA;
         });
       } else if (currentSortOption.value === 'dueDate') {
         // Sort by due date, then by priority as tie-breaker
