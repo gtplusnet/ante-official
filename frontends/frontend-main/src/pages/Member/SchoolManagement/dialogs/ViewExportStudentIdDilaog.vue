@@ -327,7 +327,10 @@ export default defineComponent({
           requestBody.filters.push({
             sectionId: selectedSectionFilter.value,
           });
-          console.log('Section filter applied:', selectedSectionFilter.value);
+          console.log('[Section Filter] Applied:', {
+            sectionId: selectedSectionFilter.value,
+            sectionName: sectionOptions.value.find(s => s.value === selectedSectionFilter.value)?.label || 'Unknown'
+          });
         }
 
         // Add search parameters if search is active
@@ -339,18 +342,20 @@ export default defineComponent({
         // If searching or filtering by section, load all students at once
         const searchPerPage = (search.value || selectedSectionFilter.value) ? 99999 : perPage.value;
 
-        console.log('Request body:', requestBody);
-        console.log('Loading page:', page, 'with perPage:', searchPerPage);
-
         const response = await $api.put(
           `school/student/table?page=${page}&perPage=${searchPerPage}`,
           requestBody
         );
 
-        console.log('Response data:', response.data);
-        console.log('Students loaded:', response.data.list?.length || 0);
-        if (selectedSectionFilter.value && response.data.list?.length > 0) {
-          console.log('First student section:', response.data.list[0].section);
+        // For Debugging
+        if (selectedSectionFilter.value) {
+          console.log('[Section Filter] Results:', {
+            studentsLoaded: response.data.list?.length || 0,
+            firstStudent: response.data.list?.[0] ? {
+              name: `${response.data.list[0].firstName} ${response.data.list[0].lastName}`,
+              section: response.data.list[0].section?.name || 'No section'
+            } : 'No students'
+          });
         }
 
         if (append) {
@@ -377,8 +382,6 @@ export default defineComponent({
           totalPages.value = lastPage || 1;
         }
 
-        console.log("studentData.value", studentData.value);
-        console.log("Total pages:", totalPages.value);
         return response.data;
       } catch (error) {
         console.error("Error fetching student data:", error);
@@ -404,7 +407,6 @@ export default defineComponent({
         // Set all students as the current view
         studentData.value = { list: allStudents.value };
         hasLoadedAll.value = true;
-        console.log(`Loaded all ${allStudents.value.length} students`);
       } catch (error) {
         console.error("Error loading all students:", error);
       } finally {
@@ -506,12 +508,6 @@ export default defineComponent({
         exportStage.value = "";
         await new Promise((resolve) => setTimeout(resolve, 150));
 
-        console.log(
-          "Starting PDF export for",
-          selectedStudents.value.length,
-          "students"
-        );
-
         // This is My last Changes Here: Clear previous refs
         cardRefs.value = [];
 
@@ -561,12 +557,6 @@ export default defineComponent({
             const frontEl = cardRef.$refs.idFrontRef as HTMLElement;
             const backEl = cardRef.$refs.idBackRef as HTMLElement;
             if (frontEl && backEl) {
-              console.log(`Found elements for student ${index + 1}:`, {
-                front: frontEl.offsetWidth,
-                back: backEl.offsetWidth,
-                profilePhoto:
-                  selectedStudentsData.value[index]?.profilePhoto?.url,
-              });
               frontElements.push(frontEl);
               backElements.push(backEl);
             } else {
@@ -585,10 +575,6 @@ export default defineComponent({
           return;
         }
 
-        console.log(
-          `Found ${frontElements.length} front elements and ${backElements.length} back elements`
-        );
-
         // This is My last Changes Here: Stage 3 - Collecting elements (10-15%)
         exportProgress.value = 12;
         await new Promise((resolve) => setTimeout(resolve, 150));
@@ -598,7 +584,6 @@ export default defineComponent({
         await new Promise((resolve) => setTimeout(resolve, 100));
 
         // This is My last Changes Here: PDF generation with progress callback (15-85%)
-        console.log("Starting PDF generation...");
         const pdfDataUri = await generateBatchStudentIdPdf(
           selectedStudentsData.value,
           frontElements,
@@ -610,8 +595,6 @@ export default defineComponent({
             exportStage.value = `(${current}/${total})`;
           }
         );
-
-        console.log("PDF generated successfully");
 
         // This is My last Changes Here: Final stages with smooth progress (85-100%)
         // This is My last Changes Here: Stage 4 - Finalizing PDF (85-95%)
