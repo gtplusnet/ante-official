@@ -4,7 +4,7 @@
     <div v-if="showFilter && filterActions.length > 0" class="action-wrapper q-ml-xs">
       <GButton
         variant="icon"
-        icon="o_filter_alt"
+        icon="swap_vert"
         color="grey-7"
         size="sm"
         icon-size="md"
