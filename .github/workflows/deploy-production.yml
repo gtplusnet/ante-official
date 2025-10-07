@@ -1,59 +1,28 @@
 name: Deploy to Production
 
 on:
-  push:
-    branches: [production]
+  release:
+    types: [published]
   workflow_dispatch:  # Allow manual triggering
 
 jobs:
   detect-changes:
     runs-on: [self-hosted, staging]
     outputs:
-      frontend-main-changed: ${{ steps.manual.outputs.all == 'true' || steps.changes.outputs.frontend-main }}
-      gate-app-changed: ${{ steps.manual.outputs.all == 'true' || steps.changes.outputs.gate-app }}
-      guardian-app-changed: ${{ steps.manual.outputs.all == 'true' || steps.changes.outputs.guardian-app }}
-      website-multibook-changed: ${{ steps.manual.outputs.all == 'true' || steps.changes.outputs.website-multibook }}
-      backend-changed: ${{ steps.manual.outputs.all == 'true' || steps.changes.outputs.backend }}
+      frontend-main-changed: 'true'
+      gate-app-changed: 'true'
+      guardian-app-changed: 'true'
+      website-multibook-changed: 'true'
+      backend-changed: 'true'
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Check if manual trigger
-        id: manual
+      - name: Production deployment - deploy all components
         run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "all=true" >> $GITHUB_OUTPUT
-            echo "Manual trigger detected - will deploy all components"
-          else
-            echo "all=false" >> $GITHUB_OUTPUT
-          fi
-
-      - uses: dorny/paths-filter@v2
-        id: changes
-        if: github.event_name != 'workflow_dispatch'
-        with:
-          filters: |
-            frontend-main:
-              - 'frontends/frontend-main/**'
-              - 'package.json'
-              - 'yarn.lock'
-            gate-app:
-              - 'frontends/frontend-gate-app/**'
-              - 'package.json'
-              - 'yarn.lock'
-            guardian-app:
-              - 'frontends/frontend-guardian-app/**'
-              - 'package.json'
-              - 'yarn.lock'
-            website-multibook:
-              - 'websites/multibook/**'
-              - 'package.json'
-              - 'yarn.lock'
-            backend:
-              - 'backend/**'
-              - 'package.json'
-              - 'yarn.lock'
+          echo "Production deployment triggered - all components will be deployed"
+          echo "This ensures consistency across all production services"
 
   notify-start:
     needs: detect-changes
@@ -62,14 +31,11 @@ jobs:
     steps:
       - name: Send deployment start notification
         run: |
-          # Extract only the first line of commit message to avoid bash escaping issues
-          COMMIT_TITLE=$(echo "${{ github.event.head_commit.message }}" | head -n 1 | sed 's/[`*_]/\\&/g')
-
           MESSAGE="🚀 *ANTE ERP - PRODUCTION Deployment Started*%0A%0A"
           MESSAGE="${MESSAGE}📦 *Repository:* ${{ github.repository }}%0A"
           MESSAGE="${MESSAGE}👤 *Triggered by:* ${{ github.actor }}%0A"
-          MESSAGE="${MESSAGE}🔀 *Branch:* production%0A"
-          MESSAGE="${MESSAGE}💬 *Commit:* ${COMMIT_TITLE}%0A%0A"
+          MESSAGE="${MESSAGE}🏷️ *Release:* ${{ github.event.release.tag_name }}%0A"
+          MESSAGE="${MESSAGE}📝 *Release Name:* ${{ github.event.release.name }}%0A%0A"
 
           if [ "${{ needs.detect-changes.outputs.frontend-main-changed }}" == "true" ]; then
             MESSAGE="${MESSAGE}🏢 Frontend Main (ERP) will be deployed%0A"
@@ -108,7 +74,14 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Deploy Frontend Main to Vercel
+      - name: Prepare production environment
+        run: |
+          cd frontends/frontend-main
+          cp environment/env.production .env
+          echo "✅ Copied env.production to .env"
+          cat .env
+
+      - name: Deploy Frontend Main to Vercel (Production)
         run: |
           cd frontends/frontend-main
           npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
@@ -205,7 +178,8 @@ jobs:
           images: ghcr.io/${{ github.repository_owner }}/ante-backend-production
           tags: |
             type=raw,value=latest
-            type=sha,prefix={{branch}}-
+            type=ref,event=tag
+            type=sha,prefix=prod-
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
