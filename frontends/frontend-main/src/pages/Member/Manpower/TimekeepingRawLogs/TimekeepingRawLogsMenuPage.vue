@@ -136,9 +136,33 @@
         </q-td>
       </template>
 
-      <template v-slot:body-cell-remarks="props">
+      <template v-slot:body-cell-timeInLocation="props">
         <q-td :props="props">
-          <span class="text-grey">{{ props.row.remarks || '-' }}</span>
+          <div class="row items-center q-gutter-xs">
+            <q-icon name="place" color="positive" size="sm" />
+            <span>{{ props.row.timeInLocation || 'N/A' }}</span>
+          </div>
+        </q-td>
+      </template>
+
+      <template v-slot:body-cell-timeInIpAddress="props">
+        <q-td :props="props">
+          <span class="text-grey">{{ props.row.timeInIpAddress || 'N/A' }}</span>
+        </q-td>
+      </template>
+
+      <template v-slot:body-cell-timeOutLocation="props">
+        <q-td :props="props">
+          <div class="row items-center q-gutter-xs">
+            <q-icon name="place" color="negative" size="sm" />
+            <span>{{ props.row.timeOutLocation || 'N/A' }}</span>
+          </div>
+        </q-td>
+      </template>
+
+      <template v-slot:body-cell-timeOutIpAddress="props">
+        <q-td :props="props">
+          <span class="text-grey">{{ props.row.timeOutIpAddress || 'N/A' }}</span>
         </q-td>
       </template>
 
@@ -190,14 +214,18 @@ interface TimekeepingRawLog {
     key: string;
     label: string;
   };
-  remarks: string | null;
+  // TIME-IN GEOLOCATION
+  timeInLocation: string | null;
+  timeInIpAddress: string | null;
+  // TIME-OUT GEOLOCATION
+  timeOutLocation: string | null;
+  timeOutIpAddress: string | null;
   importBatchId: string | null;
   importBatch: {
     id: string;
     fileName: string;
   } | null;
   createdAt: string;
-  updatedAt: string;
 }
 
 interface ImportBatchInfo {
@@ -285,10 +313,31 @@ export default {
         sortable: true,
       },
       {
-        name: 'remarks',
-        label: 'Remarks',
+        name: 'timeInLocation',
+        label: 'Time In Location',
         align: 'left' as const,
-        field: 'remarks',
+        field: 'timeInLocation',
+        sortable: false,
+      },
+      {
+        name: 'timeInIpAddress',
+        label: 'Time In IP',
+        align: 'left' as const,
+        field: 'timeInIpAddress',
+        sortable: false,
+      },
+      {
+        name: 'timeOutLocation',
+        label: 'Time Out Location',
+        align: 'left' as const,
+        field: 'timeOutLocation',
+        sortable: false,
+      },
+      {
+        name: 'timeOutIpAddress',
+        label: 'Time Out IP',
+        align: 'left' as const,
+        field: 'timeOutIpAddress',
         sortable: false,
       },
       {
@@ -296,13 +345,6 @@ export default {
         label: 'Created At',
         align: 'left' as const,
         field: 'createdAt',
-        sortable: true,
-      },
-      {
-        name: 'updatedAt',
-        label: 'Updated At',
-        align: 'left' as const,
-        field: 'updatedAt',
         sortable: true,
       },
     ];

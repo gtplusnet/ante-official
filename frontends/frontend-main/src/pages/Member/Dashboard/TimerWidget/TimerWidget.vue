@@ -333,6 +333,7 @@ import GlobalWidgetCard from '../../../../components/shared/global/GlobalWidgetC
 import TaskSelectionDialog from './dialog/TaskSelectionDialog.vue';
 import TimeHistoryDialog from './dialog/TimeHistoryDialog.vue';
 import TaskInformationDialog from '../../../../components/dialog/TaskInformationDialog/TaskInformationDialog.vue';
+import { GeolocationService } from 'src/services/geolocation.service';
 
 interface Task {
   id: number;
@@ -470,20 +471,37 @@ export default defineComponent({
     };
     
     const performStartTimer = async (isNewTask: boolean, isSwitching: boolean = false) => {
+      // Request TIME-IN geolocation BEFORE starting timer
+      // This will reverse geocode coordinates to location name
+      const timeInGeoData = await GeolocationService.requestWithWarning();
+
+      // User cancelled geolocation warning
+      if (timeInGeoData === null) {
+        return;
+      }
+
       isLoading.value = true;
       try {
         let response: any;
-        
+
         if (selectedTask.value) {
-          // Use existing task
-          response = await api.post('/time-tracking/start', { 
-            taskId: selectedTask.value.id 
+          // Use existing task with TIME-IN geolocation (includes location name)
+          response = await api.post('/time-tracking/start', {
+            taskId: selectedTask.value.id,
+            timeInLatitude: timeInGeoData.latitude || undefined,
+            timeInLongitude: timeInGeoData.longitude || undefined,
+            timeInLocation: timeInGeoData.location || undefined,
+            timeInGeolocationEnabled: timeInGeoData.geolocationEnabled,
           });
         } else {
-          // Create new task and start timer
-          response = await api.post('/time-tracking/create-and-start', { 
+          // Create new task and start timer with TIME-IN geolocation
+          response = await api.post('/time-tracking/create-and-start', {
             title: newTaskTitle.value,
-            description: ''
+            description: '',
+            timeInLatitude: timeInGeoData.latitude || undefined,
+            timeInLongitude: timeInGeoData.longitude || undefined,
+            timeInLocation: timeInGeoData.location || undefined,
+            timeInGeolocationEnabled: timeInGeoData.geolocationEnabled,
           });
           // Response includes both task and timer
           response.data = response.data.timer;
@@ -508,13 +526,19 @@ export default defineComponent({
         newTaskTitle.value = '';
         selectedTask.value = null;
         
+        // Show success message with location if captured
         let message = '';
         if (isSwitching) {
           message = isNewTask ? 'Task created and timer switched' : 'Timer switched successfully';
         } else {
           message = isNewTask ? 'Task created and timer started' : 'Timer started';
         }
-        
+
+        // Append location to message if available
+        if (timeInGeoData.geolocationEnabled && timeInGeoData.location) {
+          message += ` at ${timeInGeoData.location}`;
+        }
+
         instance?.proxy?.$q.notify({
           type: 'positive',
           message
@@ -543,18 +567,33 @@ export default defineComponent({
     
     const stopTimer = async () => {
       if (!currentTimer.value) return;
-      
+
+      // Capture TIME-OUT geolocation silently (includes reverse geocoding)
+      // Non-blocking, no warnings
+      const timeOutGeoData = await GeolocationService.getGeolocationSilent();
+
       isLoading.value = true;
       try {
-        await api.post('/time-tracking/stop', {});
-        
+        await api.post('/time-tracking/stop', {
+          timeOutLatitude: timeOutGeoData.latitude || undefined,
+          timeOutLongitude: timeOutGeoData.longitude || undefined,
+          timeOutLocation: timeOutGeoData.location || undefined,
+          timeOutGeolocationEnabled: timeOutGeoData.geolocationEnabled,
+        });
+
         stopTimerInterval();
         currentTimer.value = null;
         elapsedSeconds.value = 0;
-        
+
+        // Show success message with location if captured
+        let message = 'Timer stopped successfully';
+        if (timeOutGeoData.geolocationEnabled && timeOutGeoData.location) {
+          message += ` at ${timeOutGeoData.location}`;
+        }
+
         instance?.proxy?.$q.notify({
           type: 'positive',
-          message: 'Timer stopped successfully'
+          message
         });
       } catch (error: any) {
         instance?.proxy?.$q.notify({

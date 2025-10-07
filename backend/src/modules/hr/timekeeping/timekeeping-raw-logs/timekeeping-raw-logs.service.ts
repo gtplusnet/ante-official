@@ -120,11 +120,15 @@ export class TimekeepingRawLogsService {
         key: log.source,
         label: log.source,
       },
-      remarks: log.remarks,
+      // TIME-IN GEOLOCATION
+      timeInLocation: log.timeInLocation,
+      timeInIpAddress: log.timeInIpAddress,
+      // TIME-OUT GEOLOCATION
+      timeOutLocation: log.timeOutLocation,
+      timeOutIpAddress: log.timeOutIpAddress,
       importBatchId: log.importBatchId,
       importBatch: log.importBatch,
       createdAt: log.createdAt.toISOString(),
-      updatedAt: log.updatedAt.toISOString(),
     };
   }
 

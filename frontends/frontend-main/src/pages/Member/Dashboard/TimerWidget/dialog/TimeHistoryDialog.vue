@@ -117,14 +117,34 @@
               <q-item-label class="text-body-medium">
                 {{ entry.taskTitle || entry.task?.title || 'Quick Task' }}
               </q-item-label>
-              <q-item-label caption>
-                <span>{{ formatDate(entry.timeIn) }}</span>
-                <span> • </span>
-                <span>{{ formatTimeRange(entry.timeIn, entry.timeOut) }}</span>
-                <span v-if="entry.project || entry.task?.project"> • </span>
-                <span v-if="entry.project || entry.task?.project">
-                  {{ entry.project?.name || entry.task?.project?.name }}
-                </span>
+
+              <!-- TIME-IN Info -->
+              <q-item-label caption class="q-mt-xs">
+                <div class="row items-center q-gutter-x-xs">
+                  <q-icon name="login" size="12px" color="positive" />
+                  <span class="text-weight-medium">Time In:</span>
+                  <span>{{ formatDate(entry.timeIn) }} • {{ formatTime(entry.timeIn) }}</span>
+                  <span v-if="entry.project || entry.task?.project"> • {{ entry.project?.name || entry.task?.project?.name }}</span>
+                </div>
+                <div class="row items-center q-gutter-x-xs q-mt-xs location-row">
+                  <q-icon name="location_on" size="12px" class="location-icon" />
+                  <span>{{ entry.timeInLocation || 'N/A' }}</span>
+                  <span class="q-ml-sm">IP: {{ entry.timeInIpAddress || 'N/A' }}</span>
+                </div>
+              </q-item-label>
+
+              <!-- TIME-OUT Info -->
+              <q-item-label caption class="q-mt-sm">
+                <div class="row items-center q-gutter-x-xs">
+                  <q-icon name="logout" size="12px" color="negative" />
+                  <span class="text-weight-medium">Time Out:</span>
+                  <span>{{ formatDate(entry.timeOut) }} • {{ formatTime(entry.timeOut) }}</span>
+                </div>
+                <div class="row items-center q-gutter-x-xs q-mt-xs location-row">
+                  <q-icon name="location_on" size="12px" class="location-icon" />
+                  <span>{{ entry.timeOutLocation || 'N/A' }}</span>
+                  <span class="q-ml-sm">IP: {{ entry.timeOutIpAddress || 'N/A' }}</span>
+                </div>
               </q-item-label>
             </q-item-section>
 
@@ -189,8 +209,18 @@
   
   .history-item {
     border: 1px solid var(--md3-sys-color-outline-variant);
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     border-radius: 8px;
+    padding: 12px;
+  }
+
+  .location-row {
+    color: var(--md3-sys-color-on-surface-variant);
+    font-size: 11px;
+
+    .location-icon {
+      color: var(--md3-sys-color-primary);
+    }
   }
 }
 </style>
@@ -208,6 +238,18 @@ interface TimeEntry {
   taskId: number | null;
   taskTitle: string | null;
   projectId: number | null;
+  // TIME-IN GEOLOCATION
+  timeInLatitude?: number | null;
+  timeInLongitude?: number | null;
+  timeInLocation?: string | null;
+  timeInIpAddress?: string | null;
+  timeInGeolocationEnabled?: boolean | null;
+  // TIME-OUT GEOLOCATION
+  timeOutLatitude?: number | null;
+  timeOutLongitude?: number | null;
+  timeOutLocation?: string | null;
+  timeOutIpAddress?: string | null;
+  timeOutGeolocationEnabled?: boolean | null;
   task?: {
     id: number;
     title: string;
@@ -337,7 +379,11 @@ export default defineComponent({
     const formatDate = (dateStr: string) => {
       return date.formatDate(dateStr, 'MMM DD, YYYY');
     };
-    
+
+    const formatTime = (dateStr: string) => {
+      return date.formatDate(dateStr, 'h:mm A');
+    };
+
     const formatTimeRange = (timeIn: string, timeOut: string) => {
       const start = date.formatDate(timeIn, 'h:mm A');
       const end = date.formatDate(timeOut, 'h:mm A');
@@ -386,6 +432,7 @@ export default defineComponent({
       clearFilters,
       formatDuration,
       formatDate,
+      formatTime,
       formatTimeRange,
       getSourceIcon,
       getSourceColor
