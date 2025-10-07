@@ -43,9 +43,11 @@ supabase db reset --linked     # Reset to match hosted (BE CAREFUL!)
 # Uses the SAME hosted Supabase as Local Development
 # See "Local Development & Staging" section above for configuration
 
-# Deployment Server: 157.230.246.107
-# Backend Container: ante-backend-staging
-# Backend URL: https://ante-staging-backend.geertest.com
+# Infrastructure: DigitalOcean App Platform
+# Backend URL: https://ante-backend-staging-q6udd.ondigitalocean.app
+# App ID: c65a4023-4aa4-40c4-92e4-b9b89bb0b4dd
+
+# Note: Old deployment server (157.230.246.107) still runs Redis for staging
 
 # ⚠️ WARNING: Any data changes affect both local and staging!
 ```
@@ -67,8 +69,11 @@ Backend: https://api.ante.ph
 Pooled DB: aws-1-ap-southeast-1.pooler.supabase.com:6543
 Direct DB: aws-1-ap-southeast-1.pooler.supabase.com:5432
 
-# Deployment Server: 178.128.49.38
-# Backend Container: ante-backend-production
+# Infrastructure: DigitalOcean App Platform
+# Backend URL: https://ante-backend-production-gael2.ondigitalocean.app
+# App ID: 7d280155-6063-4dbd-b7ac-31f48a4cf97c
+
+# Note: Old deployment server (178.128.49.38) has been decommissioned
 
 # Supabase CLI Commands (if needed)
 supabase link --project-ref ccdlrujemqfwclogysjv

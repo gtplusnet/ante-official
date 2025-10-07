@@ -53,9 +53,11 @@ export const useSocketStore = defineStore('socket', {
       this.isInitializing = true;
 
       // Use connection store for socket URL in development, otherwise use env
-      const environment = process.env.ENVIRONMENT || 'development';
-      let SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'ws://localhost:4000';
-      
+      // @ts-ignore - Defined by Quasar rawDefine
+      const environment = __ENVIRONMENT;
+      // @ts-ignore - Defined by Quasar rawDefine
+      let SOCKET_URL = __SOCKET_URL;
+
       if (environment === 'development') {
         connectionStore.loadFromStorage();
         SOCKET_URL = connectionStore.socketUrl;
