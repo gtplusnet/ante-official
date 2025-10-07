@@ -29,8 +29,9 @@ export default boot(({ app }) => {
   
   // Load additional connections from file if available
   connectionStore.loadAdditionalConnections().then(() => {
-    // Load connection preference and update base URL if not in production
-    if (environment !== 'production') {
+    // Load connection preference and update base URL only in development
+    // staging and production should use environment variables
+    if (environment === 'development') {
       connectionStore.loadFromStorage();
       api.defaults.baseURL = connectionStore.apiUrl;
     }
