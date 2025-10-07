@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, MaxLength, IsOptional, IsInt } from 'class-validator';
+import { IsString, IsNotEmpty, MaxLength, IsOptional, IsInt, IsNumber, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateTaskAndStartDto {
@@ -16,4 +16,23 @@ export class CreateTaskAndStartDto {
   @IsInt()
   @Type(() => Number)
   projectId?: number;
+
+  // TIME-IN GEOLOCATION FIELDS
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  timeInLatitude?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  timeInLongitude?: number;
+
+  @IsOptional()
+  @IsString()
+  timeInLocation?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  timeInGeolocationEnabled?: boolean;
 }

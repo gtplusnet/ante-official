@@ -1922,6 +1922,18 @@ model EmployeeTimekeepingRaw {
   taskTitle               String?
   projectId               Int?
   deviceId                String?                   // Device that recorded this entry
+  // TIME-IN GEOLOCATION FIELDS
+  timeInLatitude          Float?                    // Latitude when timer started
+  timeInLongitude         Float?                    // Longitude when timer started
+  timeInLocation          String?                   // Location name (e.g., "Manila, Philippines")
+  timeInIpAddress         String?                   // IP address when timer started
+  timeInGeolocationEnabled Boolean?                 // Whether geolocation was enabled
+  // TIME-OUT GEOLOCATION FIELDS
+  timeOutLatitude         Float?                    // Latitude when timer stopped
+  timeOutLongitude        Float?                    // Longitude when timer stopped
+  timeOutLocation         String?                   // Location name (e.g., "Quezon City, Philippines")
+  timeOutIpAddress        String?                   // IP address when timer stopped
+  timeOutGeolocationEnabled Boolean?                // Whether geolocation was enabled
   EmployeeTimekeepingLogs EmployeeTimekeepingLogs[]
   account                 Account                   @relation(fields: [accountId], references: [id], onDelete: Cascade)
   importBatch             TimekeepingImportBatch?   @relation(fields: [importBatchId], references: [id])
@@ -1933,6 +1945,8 @@ model EmployeeTimekeepingRaw {
   @@index([accountId, taskId])
   @@index([accountId, createdAt])
   @@index([accountId, source])
+  @@index([accountId, timeInLocation])
+  @@index([accountId, timeOutLocation])
 }
 
 model AttendanceConflict {
