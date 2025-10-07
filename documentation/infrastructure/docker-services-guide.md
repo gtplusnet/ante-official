@@ -65,22 +65,28 @@ In production and staging, all services run as Docker containers with orchestrat
 - **Management**: Via Supabase CLI (`supabase` commands)
 - **⚠️ SHARED DATABASE**: Local and Staging use the same database instance!
 
-#### Staging Environment (157.230.246.107)
-**Status**: Uses same hosted Supabase as local development
-- **Database**: Same as local - https://ofnmfmwywkhosrmycltb.supabase.co
-- **Backend Container**: ante-backend-staging at https://ante-staging-backend.geertest.com
-- **Server**: 157.230.246.107 (Docker deployment server)
-- **⚠️ SHARED DATABASE**: Uses the same database as local development!
+#### Staging Environment
+**Status**: Uses same hosted Supabase as local development + Utility Server
+- **Backend**: DigitalOcean App Platform at https://ante-backend-staging-q6udd.ondigitalocean.app
+- **PostgreSQL**: Same as local - https://ofnmfmwywkhosrmycltb.supabase.co
+- **Utility Server**: 157.230.246.107 (Repurposed as shared infrastructure)
+  - **GitHub Runner**: Self-hosted runner for staging workflows
+  - **Redis**: 157.230.246.107:16379 (DB 1 for staging)
+  - **MongoDB**: 157.230.246.107:27017 (ante-staging database)
+- **⚠️ SHARED DATABASE**: PostgreSQL uses the same Supabase as local development!
 
-#### Production Environment (178.128.49.38)
-**Status**: Separate hosted Supabase instance
+#### Production Environment (DigitalOcean App Platform)
+**Status**: Separate hosted Supabase instance + DigitalOcean App Platform
 - **Supabase Instance**: https://ccdlrujemqfwclogysjv.supabase.co (Ante Production project)
 - **Studio**: https://supabase.com/dashboard/project/ccdlrujemqfwclogysjv
-- **Backend**: https://api.ante.ph
-- **Server**: 178.128.49.38 (Docker deployment server)
+- **Backend**: https://ante-backend-production-gael2.ondigitalocean.app
+- **Infrastructure**: DigitalOcean App Platform (Docker containers via GHCR)
+- **App ID**: `7d280155-6063-4dbd-b7ac-31f48a4cf97c`
 - **Pooled Connection**: `postgresql://postgres.ccdlrujemqfwclogysjv:[password]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true`
 - **Direct Connection**: `postgresql://postgres.ccdlrujemqfwclogysjv:[password]@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres`
 - **✅ SEPARATE DATABASE**: Production has its own dedicated database
+
+**Note**: Old production server (178.128.49.38) has been decommissioned and deleted.
 
 ## Service Architecture
 

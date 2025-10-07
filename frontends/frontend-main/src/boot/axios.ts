@@ -16,9 +16,12 @@ declare module 'vue' {
 // good idea to move this instance creation inside of the
 // "export default () => {}" function below (which runs individually
 // for each client)
-const api = axios.create({ baseURL: process.env.API_URL });
-const environment = process.env.ENVIRONMENT || 'development';
-const whitelabel = process.env.WHITELABEL || 'ante';
+// @ts-ignore - These are defined by Quasar rawDefine at build time
+const api = axios.create({ baseURL: __API_URL });
+// @ts-ignore
+const environment = __ENVIRONMENT;
+// @ts-ignore
+const whitelabel = __WHITELABEL;
 
 export default boot(({ app }) => {
   // for use inside Vue files (Options API) through this.$axios and this.$api
@@ -29,8 +32,9 @@ export default boot(({ app }) => {
   
   // Load additional connections from file if available
   connectionStore.loadAdditionalConnections().then(() => {
-    // Load connection preference and update base URL if not in production
-    if (environment !== 'production') {
+    // Load connection preference and update base URL only in development
+    // staging and production should use environment variables
+    if (environment === 'development') {
       connectionStore.loadFromStorage();
       api.defaults.baseURL = connectionStore.apiUrl;
     }

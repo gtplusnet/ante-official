@@ -15,8 +15,10 @@ export const useConnectionStore = defineStore('connection', {
     connections: [
       {
         NAME: 'Default',
-        API_URL: process.env.API_URL || 'http://localhost:3000',
-        SOCKET_URL: import.meta.env.VITE_SOCKET_URL || 'ws://localhost:4000'
+        // @ts-ignore - Defined by Quasar rawDefine
+        API_URL: __API_URL,
+        // @ts-ignore - Defined by Quasar rawDefine
+        SOCKET_URL: __SOCKET_URL
       }
     ] as Connection[],
     selectedConnectionName: 'Default',
