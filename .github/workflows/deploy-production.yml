@@ -98,8 +98,7 @@ jobs:
 
   deploy-frontend-main:
     needs: [detect-changes, notify-start]
-    if: false  # Temporarily disabled
-    # if: needs.detect-changes.outputs.frontend-main-changed == 'true'
+    if: needs.detect-changes.outputs.frontend-main-changed == 'true'
     runs-on: [self-hosted, staging]
     steps:
       - uses: actions/checkout@v4
