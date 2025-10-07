@@ -86,7 +86,14 @@ module.exports = configure(function (/* ctx */) {
       // publicPath: '/',
       // analyze: true,
       // env: {},
-      // rawDefine: {}
+      rawDefine: {
+        'import.meta.env.API_URL': JSON.stringify(process.env.API_URL),
+        'import.meta.env.ENVIRONMENT': JSON.stringify(process.env.ENVIRONMENT),
+        'import.meta.env.WHITELABEL': JSON.stringify(process.env.WHITELABEL),
+        'import.meta.env.SOCKET_URL': JSON.stringify(process.env.SOCKET_URL),
+        'import.meta.env.VITE_SOCKET_URL': JSON.stringify(process.env.VITE_SOCKET_URL),
+        'import.meta.env.VITE_ENVIRONMENT': JSON.stringify(process.env.ENVIRONMENT),
+      },
       // ignorePublicFolder: true,
       // minify: false,
       // polyfillModulePreload: true,
@@ -94,15 +101,6 @@ module.exports = configure(function (/* ctx */) {
 
       extendViteConf() {
         return {
-          // Define environment variables for import.meta.env
-          define: {
-            'import.meta.env.API_URL': JSON.stringify(process.env.API_URL),
-            'import.meta.env.ENVIRONMENT': JSON.stringify(process.env.ENVIRONMENT),
-            'import.meta.env.WHITELABEL': JSON.stringify(process.env.WHITELABEL),
-            'import.meta.env.SOCKET_URL': JSON.stringify(process.env.SOCKET_URL),
-            'import.meta.env.VITE_SOCKET_URL': JSON.stringify(process.env.VITE_SOCKET_URL),
-            'import.meta.env.VITE_ENVIRONMENT': JSON.stringify(process.env.ENVIRONMENT),
-          },
           resolve: {
             alias: {
               '@': path.resolve(__dirname, './src'),
