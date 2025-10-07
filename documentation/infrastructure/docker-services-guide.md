@@ -72,15 +72,18 @@ In production and staging, all services run as Docker containers with orchestrat
 - **Server**: 157.230.246.107 (Docker deployment server)
 - **⚠️ SHARED DATABASE**: Uses the same database as local development!
 
-#### Production Environment (178.128.49.38)
-**Status**: Separate hosted Supabase instance
+#### Production Environment (DigitalOcean App Platform)
+**Status**: Separate hosted Supabase instance + DigitalOcean App Platform
 - **Supabase Instance**: https://ccdlrujemqfwclogysjv.supabase.co (Ante Production project)
 - **Studio**: https://supabase.com/dashboard/project/ccdlrujemqfwclogysjv
-- **Backend**: https://api.ante.ph
-- **Server**: 178.128.49.38 (Docker deployment server)
+- **Backend**: https://ante-backend-production-gael2.ondigitalocean.app
+- **Infrastructure**: DigitalOcean App Platform (Docker containers via GHCR)
+- **App ID**: `7d280155-6063-4dbd-b7ac-31f48a4cf97c`
 - **Pooled Connection**: `postgresql://postgres.ccdlrujemqfwclogysjv:[password]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true`
 - **Direct Connection**: `postgresql://postgres.ccdlrujemqfwclogysjv:[password]@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres`
 - **✅ SEPARATE DATABASE**: Production has its own dedicated database
+
+**Note**: Old production server (178.128.49.38) has been decommissioned and deleted.
 
 ## Service Architecture
 
