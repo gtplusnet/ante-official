@@ -26,6 +26,15 @@
           label="Select All (on this page)"
           @update:model-value="toggleSelectAll"
         />
+        <g-button
+          v-if="selectedStudents.length > 0"
+          @click="clearAllSelections"
+          label="Clear All"
+          flat
+          color="secondary"
+          size="sm"
+          class="q-ml-sm"
+        />
         <q-space />
         <div class="row items-center">
           <q-select
@@ -224,6 +233,7 @@ export default defineComponent({
   setup(props, { emit }) {
     const studentData = ref<{ list: StudentResponse[] } | null>(null);
     const selectedStudents = ref<string[]>([]);
+    const allSelectedStudentsMap = ref<Map<string, StudentResponse>>(new Map());
     const loading = ref(false);
     const cardRefs = ref<any[]>([]);
     const instance = getCurrentInstance();
@@ -299,11 +309,8 @@ export default defineComponent({
     });
 
     const selectedStudentsData = computed(() => {
-      return (
-        studentData.value?.list?.filter((student) =>
-          selectedStudents.value.includes(student.id)
-        ) || []
-      );
+      // Return students from the map to include all selections across pages
+      return Array.from(allSelectedStudentsMap.value.values());
     });
 
     const fetchStudentData = async (page = 1, append = false) => {
@@ -365,8 +372,6 @@ export default defineComponent({
           // Regular page load
           studentData.value = response.data;
           currentPage.value = response.data.currentPage || page;
-          // Clear selections when changing pages
-          selectedStudents.value = [];
           // Reset hasLoadedAll flag when fetching regular pages
           hasLoadedAll.value = false;
         }
@@ -437,6 +442,11 @@ export default defineComponent({
       selectAll.value = value;
     };
 
+    const clearAllSelections = () => {
+      selectedStudents.value = [];
+      allSelectedStudentsMap.value.clear();
+    };
+
     const setCardRef = (el: any) => {
       if (el) {
         cardRefs.value.push(el);
@@ -492,6 +502,29 @@ export default defineComponent({
       // Trigger search even if search is empty (to reset)
       debouncedFetch();
     });
+
+    // Watch for changes in selectedStudents and studentData to maintain the map
+    watch([selectedStudents, studentData], () => {
+      const currentList = studentData.value?.list || [];
+
+      // Add newly selected students to the map
+      selectedStudents.value.forEach((studentId) => {
+        if (!allSelectedStudentsMap.value.has(studentId)) {
+          const student = currentList.find((s) => s.id === studentId);
+          if (student) {
+            allSelectedStudentsMap.value.set(studentId, student);
+          }
+        }
+      });
+
+      // Remove deselected students from the map
+      const mapKeys = Array.from(allSelectedStudentsMap.value.keys());
+      mapKeys.forEach((studentId) => {
+        if (!selectedStudents.value.includes(studentId)) {
+          allSelectedStudentsMap.value.delete(studentId);
+        }
+      });
+    }, { deep: true });
 
     // Load sections on component mount
     onMounted(() => {
@@ -677,6 +710,7 @@ export default defineComponent({
       fetchStudentData,
       loadAllStudents,
       toggleSelectAll,
+      clearAllSelections,
       setCardRef,
       exportSelectedStudents,
     };
