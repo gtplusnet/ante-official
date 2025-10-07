@@ -33,30 +33,15 @@
               @update:modelValue="loadTaskTab"
             />
           </div>
-          <!-- more -->
-          <div class="task-menu-wrapper q-ml-xs">
-            <q-btn
-              flat
-              round
-              dense
-              icon="more_vert"
-              color="grey-7"
-              size="sm"
-              class="task-menu-button"
-              data-testid="task-widget-more-menu"
-            >
-              <q-menu auto-close anchor="bottom end" self="top end">
-                <q-list class="text-label-medium">
-                  <q-item clickable @click="isTaskCreateDialogOpen = true" data-testid="task-create-button">
-                    <q-item-section>Create Task</q-item-section>
-                  </q-item>
-                  <q-item clickable @click="isTaskAccountSummaryDialogOpen = true">
-                    <q-item-section>Account Summary</q-item-section>
-                  </q-item>
-                </q-list>
-              </q-menu>
-            </q-btn>
-          </div>
+          <!-- filter and more actions -->
+          <GlobalWidgetMoreActions
+            :filter-actions="filterActions"
+            :more-actions="moreActionsItems"
+            filter-test-id="task-widget-filter-menu"
+            more-test-id="task-widget-more-menu"
+            @filter-click="handleFilterClick"
+            @more-click="handleMoreClick"
+          />
         </div>
       </template>
 
@@ -154,6 +139,7 @@ import { api } from 'src/boot/axios';
 import GlobalLoader from '../../../../components/shared/common/GlobalLoader.vue';
 import GlobalWidgetCard from '../../../../components/shared/global/GlobalWidgetCard.vue';
 import GlobalWidgetPagination from '../../../../components/shared/global/GlobalWidgetPagination.vue';
+import GlobalWidgetMoreActions from '../../../../components/shared/global/GlobalWidgetMoreActions.vue';
 import { useQuasar } from 'quasar';
 // Import shared interfaces from backend
 import {
@@ -234,6 +220,7 @@ export default defineComponent({
     GlobalWidgetCard,
     GlobalWidgetPagination,
     GlobalWidgetTab,
+    GlobalWidgetMoreActions,
     GlobalMoreActionMobileDialog,
     TaskInformationDialog,
     TaskAccountSummaryDialog,
@@ -350,6 +337,7 @@ export default defineComponent({
     const searchActive = ref(false);
     const sortBy = ref('createdAt');
     const descending = ref(false);
+    const currentSortOption = ref<'all' | 'project' | 'priority' | 'dueDate' | null>(null);
 
     // Tab list
     const tabList = reactive<TabItem[]>([
@@ -801,11 +789,79 @@ export default defineComponent({
       return Math.ceil(taskList.value.length / pagination.rowsPerPage) || 1;
     });
 
-    // Simple client-side pagination
+    // Simple client-side pagination with urgency-aware sorting
     const paginatedTasks = computed(() => {
+      let sortedTasks = [...taskList.value];
+
+      // Priority weight helper
+      const priorityOrder: { [key: string]: number } = { 'High': 3, 'Medium': 2, 'Low': 1 };
+
+      // Helper function to calculate urgency score
+      const getUrgencyScore = (task: TaskWithUIProps) => {
+        const now = new Date().getTime();
+        const dueDate = task.dueDate?.raw ? new Date(task.dueDate.raw).getTime() : null;
+        const priority = priorityOrder[(task.priorityLevel as TagInfo)?.label || ''] || 0;
+
+        // If no due date, use priority only (lower score = less urgent)
+        if (!dueDate) return priority * 1000;
+
+        // Calculate days until due (negative = overdue)
+        const daysUntil = (dueDate - now) / (1000 * 60 * 60 * 24);
+
+        // Urgency formula: closer date + higher priority = higher score
+        // Overdue tasks get highest urgency
+        const dateUrgency = daysUntil <= 0 ? 10000 : Math.max(0, 100 - daysUntil);
+        return dateUrgency * 10 + priority;
+      };
+
+      // Apply sorting based on selected option
+      if (currentSortOption.value === 'project') {
+        // Group by project, then by urgency within each project
+        sortedTasks.sort((a, b) => {
+          const projectA = a.project?.name || 'zzz_No Project'; // Put no-project items at end
+          const projectB = b.project?.name || 'zzz_No Project';
+          const projectCompare = projectA.localeCompare(projectB);
+
+          if (projectCompare !== 0) return projectCompare;
+          // Within same project, sort by urgency
+          return getUrgencyScore(b) - getUrgencyScore(a);
+        });
+      } else if (currentSortOption.value === 'priority') {
+        // Group by priority, then by due date within each priority
+        sortedTasks.sort((a, b) => {
+          const priorityA = priorityOrder[(a.priorityLevel as TagInfo)?.label || ''] || 0;
+          const priorityB = priorityOrder[(b.priorityLevel as TagInfo)?.label || ''] || 0;
+          const priorityCompare = priorityB - priorityA;
+
+          if (priorityCompare !== 0) return priorityCompare;
+          // Within same priority, sort by nearest due date
+          const dateA = a.dueDate?.raw ? new Date(a.dueDate.raw).getTime() : Infinity;
+          const dateB = b.dueDate?.raw ? new Date(b.dueDate.raw).getTime() : Infinity;
+          return dateA - dateB;
+        });
+      } else if (currentSortOption.value === 'dueDate') {
+        // Sort by due date, then by priority as tie-breaker
+        sortedTasks.sort((a, b) => {
+          const dateA = a.dueDate?.raw ? new Date(a.dueDate.raw).getTime() : Infinity;
+          const dateB = b.dueDate?.raw ? new Date(b.dueDate.raw).getTime() : Infinity;
+          const dateCompare = dateA - dateB;
+
+          if (dateCompare !== 0) return dateCompare;
+          // Same due date, use priority
+          const priorityA = priorityOrder[(a.priorityLevel as TagInfo)?.label || ''] || 0;
+          const priorityB = priorityOrder[(b.priorityLevel as TagInfo)?.label || ''] || 0;
+          return priorityB - priorityA;
+        });
+      } else {
+        // 'all' or null - pure urgency sort
+        sortedTasks.sort((a, b) => {
+          return getUrgencyScore(b) - getUrgencyScore(a);
+        });
+      }
+
       const start = (pagination.page - 1) * pagination.rowsPerPage;
       const end = start + pagination.rowsPerPage;
-      return taskList.value.slice(start, end);
+      return sortedTasks.slice(start, end);
     });
 
     // Mobile action items
@@ -827,6 +883,40 @@ export default defineComponent({
         }
       }
     ]);
+
+    // Filter actions for GlobalWidgetMoreActions
+    const filterActions = [
+      { key: 'all', label: 'All', testId: 'sort-by-all' },
+      { key: 'project', label: 'Sort by Project', testId: 'sort-by-project' },
+      { key: 'priority', label: 'Sort by Priority', testId: 'sort-by-priority' },
+      { key: 'dueDate', label: 'Sort by Due Date', testId: 'sort-by-due-date' },
+    ];
+
+    // More actions for GlobalWidgetMoreActions
+    const moreActionsItems = [
+      { key: 'create', label: 'Create Task', testId: 'task-create-button' },
+      { key: 'summary', label: 'Account Summary' },
+    ];
+
+    // Sort tasks by selected option
+    const sortTasks = (sortOption: 'all' | 'project' | 'priority' | 'dueDate') => {
+      currentSortOption.value = sortOption;
+      pagination.page = 1; // Reset to first page when sorting
+    };
+
+    // Handle filter click from GlobalWidgetMoreActions
+    const handleFilterClick = (key: string) => {
+      sortTasks(key as 'all' | 'project' | 'priority' | 'dueDate');
+    };
+
+    // Handle more click from GlobalWidgetMoreActions
+    const handleMoreClick = (key: string) => {
+      if (key === 'create') {
+        isTaskCreateDialogOpen.value = true;
+      } else if (key === 'summary') {
+        isTaskAccountSummaryDialogOpen.value = true;
+      }
+    };
 
     // Task counts are now calculated from fetched data in watchEffect
 
@@ -901,6 +991,13 @@ export default defineComponent({
       loadTaskTab,
       loadTaskList,
       handlePageChange,
+      sortTasks,
+      handleFilterClick,
+      handleMoreClick,
+
+      // Data
+      filterActions,
+      moreActionsItems,
     };
   },
 });
