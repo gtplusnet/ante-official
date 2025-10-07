@@ -702,12 +702,13 @@ export class TimekeepingGroupingService {
     );
   }
   private async getDateRangeByDate(date: string): Promise<CutoffDate> {
+    // First, try to get from cutoff configuration (existing behavior)
     const { cutOffDates } =
       await this.cutoffConfigurationService.infoWithDateRange(
         this.cutoffCodeId,
       );
 
-    // check if date is within Cutoff Dates
+    // Check if date is within Cutoff Dates from configuration
     const matchingDateRange: CutoffDate = cutOffDates.find(
       ({ fromDate, toDate }) => {
         return moment(date).isBetween(
@@ -719,7 +720,50 @@ export class TimekeepingGroupingService {
       },
     );
 
-    return matchingDateRange;
+    // If found in configuration, return it
+    if (matchingDateRange) {
+      return matchingDateRange;
+    }
+
+    // Fallback: Check database for CutoffDateRange records
+    this.utilityService.log(
+      `[RECOMPUTE-GROUPING] No match in configuration, checking database for date: ${date}`,
+    );
+
+    const cutoffDateRange = await this.prisma.cutoffDateRange.findFirst({
+      where: {
+        cutoffId: this.cutoffCodeId,
+        startDate: {
+          lte: moment(date).endOf('day').toDate(),
+        },
+        endDate: {
+          gte: moment(date).startOf('day').toDate(),
+        },
+      },
+    });
+
+    // If found in database, convert to CutoffDate format
+    if (cutoffDateRange) {
+      this.utilityService.log(
+        `[RECOMPUTE-GROUPING] Found in database: ${cutoffDateRange.id}`,
+      );
+
+      return {
+        cutoffId: cutoffDateRange.cutoffId,
+        dateRangeCode: cutoffDateRange.id,
+        dateRange: `${moment(cutoffDateRange.startDate).format('MMM DD, YYYY')} - ${moment(cutoffDateRange.endDate).format('MMM DD, YYYY')}`,
+        fromDate: this.utilityService.formatDate(cutoffDateRange.startDate),
+        toDate: this.utilityService.formatDate(cutoffDateRange.endDate),
+        releaseDate: this.utilityService.formatDate(cutoffDateRange.processingDate),
+        cutoffPeriodType: cutoffDateRange.cutoffPeriodType,
+      };
+    }
+
+    // Not found in either configuration or database
+    this.utilityService.log(
+      `[RECOMPUTE-GROUPING] No matching date range found in configuration or database for date: ${date}`,
+    );
+    return null;
   }
   private async getRawLogs() {
     this.utilityService.log(
