@@ -10,7 +10,7 @@
       <q-card-section class="row items-center">
         <div class="text-title-medium text-dark">
           <q-icon name="o_picture_as_pdf" size="sm" />
-          Export Student ID
+          Export Student IDs
         </div>
         <q-space />
         <div class="text-body-medium text-dark q-mr-md">
