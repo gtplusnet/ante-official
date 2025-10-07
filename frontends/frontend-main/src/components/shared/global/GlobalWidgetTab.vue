@@ -68,7 +68,7 @@ defineEmits<{
   flex-wrap: nowrap;
   overflow-x: auto;
   overflow-y: visible; /* Changed from hidden to visible to show badges */
-  padding: 5px 0; /* Add vertical padding to accommodate badges */
+  padding: 5px 6px; /* Add vertical padding to accommodate badges */
   margin: -5px 0; /* Compensate for padding to maintain layout */
   /* Smooth scrolling on mobile */
   -webkit-overflow-scrolling: touch;

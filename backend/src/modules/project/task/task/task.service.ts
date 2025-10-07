@@ -341,7 +341,9 @@ export class TaskService {
         boardLane: taskInformation.boardLane
           ? this.formatBoardLaneResponse(taskInformation.boardLane)
           : null,
-        project: null, // Task doesn't have direct project relation, only projectId
+        project: taskInformation.project
+          ? this.formatProjectResponse(taskInformation.project)
+          : null,
         dueDate: taskInformation.dueDate
           ? this.utilityService.formatDate(taskInformation.dueDate)
           : null,
@@ -1651,6 +1653,13 @@ export class TaskService {
               firstName: true,
               lastName: true,
               image: true,
+            },
+          },
+          project: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
             },
           },
           boardLane: true,
