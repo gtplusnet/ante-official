@@ -86,7 +86,12 @@ module.exports = configure(function (/* ctx */) {
       // publicPath: '/',
       // analyze: true,
       // env: {},
-      // rawDefine: {}
+      rawDefine: {
+        '__API_URL': JSON.stringify(process.env.API_URL || 'http://localhost:3000'),
+        '__ENVIRONMENT': JSON.stringify(process.env.ENVIRONMENT || 'development'),
+        '__WHITELABEL': JSON.stringify(process.env.WHITELABEL || 'ante'),
+        '__SOCKET_URL': JSON.stringify(process.env.VITE_SOCKET_URL || 'ws://localhost:4000'),
+      },
       // ignorePublicFolder: true,
       // minify: false,
       // polyfillModulePreload: true,
