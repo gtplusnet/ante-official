@@ -65,12 +65,15 @@ In production and staging, all services run as Docker containers with orchestrat
 - **Management**: Via Supabase CLI (`supabase` commands)
 - **⚠️ SHARED DATABASE**: Local and Staging use the same database instance!
 
-#### Staging Environment (157.230.246.107)
-**Status**: Uses same hosted Supabase as local development
-- **Database**: Same as local - https://ofnmfmwywkhosrmycltb.supabase.co
-- **Backend Container**: ante-backend-staging at https://ante-staging-backend.geertest.com
-- **Server**: 157.230.246.107 (Docker deployment server)
-- **⚠️ SHARED DATABASE**: Uses the same database as local development!
+#### Staging Environment
+**Status**: Uses same hosted Supabase as local development + Utility Server
+- **Backend**: DigitalOcean App Platform at https://ante-backend-staging-q6udd.ondigitalocean.app
+- **PostgreSQL**: Same as local - https://ofnmfmwywkhosrmycltb.supabase.co
+- **Utility Server**: 157.230.246.107 (Repurposed as shared infrastructure)
+  - **GitHub Runner**: Self-hosted runner for staging workflows
+  - **Redis**: 157.230.246.107:16379 (DB 1 for staging)
+  - **MongoDB**: 157.230.246.107:27017 (ante-staging database)
+- **⚠️ SHARED DATABASE**: PostgreSQL uses the same Supabase as local development!
 
 #### Production Environment (DigitalOcean App Platform)
 **Status**: Separate hosted Supabase instance + DigitalOcean App Platform
