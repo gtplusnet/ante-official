@@ -391,28 +391,44 @@ Dashboard, HRIS, Projects, Tasks, Treasury, Assets, CRM, Communication, Settings
 **Infrastructure Overview:**
 - **Backend**: DigitalOcean App Platform (Docker containers from GHCR)
 - **Frontends**: Vercel (3 apps: Main, Gate, Guardian)
-- **CI/CD**: GitHub Actions workflows
+- **CI/CD**: GitHub Actions workflows (self-hosted runner on utility server)
+- **Utility Server**: 157.230.246.107 (GitHub Runner, Redis, MongoDB)
 - **Branches**: `main` (staging), `production` (production)
+
+**Utility Server (157.230.246.107):**
+- **Purpose**: Shared infrastructure services
+- **Services**:
+  - GitHub Actions Self-Hosted Runner (staging workflows)
+  - Redis (port 16379, DB 1 for staging)
+  - MongoDB (port 27017, staging database)
+- **Access**: `ssh jdev@157.230.246.107`
 
 **Staging Environment:**
 - Workflow: `.github/workflows/deploy.yml`
 - Trigger: Push to `main` branch
+- Runner: Self-hosted on 157.230.246.107
 - Backend: https://ante-backend-staging-q6udd.ondigitalocean.app
 - Frontends:
-  - Main: https://ante-main-staging.vercel.app
+  - Main: https://ante-main-staging.vercel.app (alias: https://ante.geertest.com)
   - Gate: https://ante-gate-staging.vercel.app
   - Guardian: https://ante-guardian-staging.vercel.app
-- Database: Supabase (ofnmfmwywkhosrmycltb), MongoDB (ante-staging), Redis (DB 1)
+- Database:
+  - PostgreSQL: Supabase (ofnmfmwywkhosrmycltb)
+  - MongoDB: 157.230.246.107:27017 (ante-staging)
+  - Redis: 157.230.246.107:16379 (DB 1)
 
 **Production Environment:**
 - Workflow: `.github/workflows/deploy-production.yml`
 - Trigger: Push to `production` branch
 - Backend: https://ante-backend-production-gael2.ondigitalocean.app
 - Frontends:
-  - Main: https://ante-main-production.vercel.app
+  - Main: https://ante-main-production.vercel.app (alias: https://ante.ph)
   - Gate: https://ante-gate-production.vercel.app
   - Guardian: https://ante-guardian-production.vercel.app
-- Database: Supabase (ccdlrujemqfwclogysjv), MongoDB (ante-production), Redis (DB 0)
+- Database:
+  - PostgreSQL: Supabase (ccdlrujemqfwclogysjv)
+  - MongoDB: MongoDB Atlas (ante-production)
+  - Redis: Redis Cloud (DB 0)
 
 **Deployment Process:**
 1. Push to `main` (staging) or `production` branch
