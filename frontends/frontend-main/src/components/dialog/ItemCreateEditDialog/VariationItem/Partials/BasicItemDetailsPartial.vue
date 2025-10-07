@@ -59,7 +59,7 @@
           :options="brandOptions"
           option-label="name"
           option-value="id"
-          label="Brand (Optional)"
+          label="Brand"
           clearable
           emit-value
           map-options
@@ -75,7 +75,7 @@
           :options="branchOptions"
           option-label="name"
           option-value="id"
-          label="Branch (Optional)"
+          label="Branch"
           clearable
           emit-value
           map-options
