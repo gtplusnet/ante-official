@@ -23,6 +23,7 @@ export interface ProjectCreateRequest {
   contactDetails?: string;
   leadSource?: string;
   leadType?: string;
+  leadBoardStage?: string;
 }
 
 export interface ProjectEditRequest {
@@ -44,4 +45,5 @@ export interface ProjectEditRequest {
   contactDetails?: string;
   leadSource?: string;
   leadType?: string;
+  leadBoardStage?: string;
 }

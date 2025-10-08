@@ -26,40 +26,46 @@ export interface BoardColumnDisplay {
 export const BOARD_STAGES: BoardStage[] = [
   // Lead board stages
   {
-    boardKey: 'opportunity',
-    boardName: 'Opportunity',
+    boardKey: 'prospect',
+    boardName: 'Prospect',
     boardType: 'lead',
     boardOrder: 1,
   },
   {
-    boardKey: 'contacted',
-    boardName: 'Contacted',
+    boardKey: 'initial_meeting',
+    boardName: 'Initial Meeting',
     boardType: 'lead',
     boardOrder: 2,
+  },
+  {
+    boardKey: 'technical_meeting',
+    boardName: 'Technical Meeting',
+    boardType: 'lead',
+    boardOrder: 3,
   },
   {
     boardKey: 'proposal',
     boardName: 'Proposal',
     boardType: 'lead',
-    boardOrder: 3,
-  },
-  {
-    boardKey: 'in_negotiation',
-    boardName: 'In Negotiation',
-    boardType: 'lead',
     boardOrder: 4,
   },
   {
-    boardKey: 'win',
-    boardName: 'Win',
+    boardKey: 'in_negotiation',
+    boardName: 'In-negotiation',
     boardType: 'lead',
     boardOrder: 5,
   },
   {
-    boardKey: 'lost',
-    boardName: 'Lost',
+    boardKey: 'won',
+    boardName: 'Won',
     boardType: 'lead',
     boardOrder: 6,
+  },
+  {
+    boardKey: 'loss',
+    boardName: 'Loss',
+    boardType: 'lead',
+    boardOrder: 7,
   },
   // Project board stages
   {
@@ -135,9 +141,9 @@ export const PROJECT_BOARD_COLUMNS: BoardColumnDisplay[] = [
 // Lead board columns for display
 export const LEAD_BOARD_COLUMNS: BoardColumnDisplay[] = [
   {
-    key: 'opportunity',
-    title: 'Opportunity',
-    stages: ['opportunity'],
+    key: 'prospect',
+    title: 'Prospect',
+    stages: ['prospect'],
     icon: 'lightbulb',
     color: 'var(--md-sys-color-info)',
     emptyIcon: 'lightbulb_outline',
@@ -145,14 +151,24 @@ export const LEAD_BOARD_COLUMNS: BoardColumnDisplay[] = [
     borderColor: 'var(--md-sys-color-info)',
   },
   {
-    key: 'contacted',
-    title: 'Contacted',
-    stages: ['contacted'],
+    key: 'initial_meeting',
+    title: 'Initial Meeting',
+    stages: ['initial_meeting'],
     icon: 'phone_in_talk',
     color: 'var(--md-sys-color-primary)',
     emptyIcon: 'phone_in_talk',
     backgroundColor: 'var(--md-sys-color-primary-container)',
     borderColor: 'var(--md-sys-color-primary)',
+  },
+  {
+    key: 'technical_meeting',
+    title: 'Technical Meeting',
+    stages: ['technical_meeting'],
+    icon: 'engineering',
+    color: 'var(--md-sys-color-tertiary)',
+    emptyIcon: 'engineering',
+    backgroundColor: 'var(--md-sys-color-tertiary-container)',
+    borderColor: 'var(--md-sys-color-tertiary)',
   },
   {
     key: 'proposal',
@@ -166,7 +182,7 @@ export const LEAD_BOARD_COLUMNS: BoardColumnDisplay[] = [
   },
   {
     key: 'in_negotiation',
-    title: 'In Negotiation',
+    title: 'In-negotiation',
     stages: ['in_negotiation'],
     icon: 'handshake',
     color: 'var(--md-sys-color-warning)',
@@ -175,9 +191,9 @@ export const LEAD_BOARD_COLUMNS: BoardColumnDisplay[] = [
     borderColor: 'var(--md-sys-color-warning)',
   },
   {
-    key: 'win',
-    title: 'Win',
-    stages: ['win'],
+    key: 'won',
+    title: 'Won',
+    stages: ['won'],
     icon: 'emoji_events',
     color: 'var(--md-sys-color-success)',
     emptyIcon: 'emoji_events',
@@ -185,9 +201,9 @@ export const LEAD_BOARD_COLUMNS: BoardColumnDisplay[] = [
     borderColor: 'var(--md-sys-color-success)',
   },
   {
-    key: 'lost',
-    title: 'Lost',
-    stages: ['lost'],
+    key: 'loss',
+    title: 'Loss',
+    stages: ['loss'],
     icon: 'cancel',
     color: 'var(--md-sys-color-error)',
     emptyIcon: 'cancel',
@@ -241,15 +257,20 @@ export const BOARD_STAGE_COLORS: Record<string, { bg: string; text: string; bord
     border: '#D4E8D4', // Very light green border
   },
   // Lead stages with minimal subtle colors
-  opportunity: {
+  prospect: {
     bg: '#F5FAFA', // Extremely light cyan
     text: '#00695C', // Muted teal text
     border: '#D0E2E0', // Very light teal border
   },
-  contacted: {
+  initial_meeting: {
     bg: '#FBF5F7', // Extremely light purple
     text: '#6A1B9A', // Muted purple text
     border: '#E8D4ED', // Very light purple border
+  },
+  technical_meeting: {
+    bg: '#F5F8FB', // Extremely light blue
+    text: '#1565C0', // Muted blue text
+    border: '#D4E1F0', // Very light blue border
   },
   proposal: {
     bg: '#F7F5FB', // Extremely light indigo
@@ -261,12 +282,12 @@ export const BOARD_STAGE_COLORS: Record<string, { bg: string; text: string; bord
     text: '#E65100', // Muted orange text
     border: '#F5E6CC', // Very light amber border
   },
-  win: {
+  won: {
     bg: '#F1F8F1', // Extremely light green
     text: '#2E7D32', // Muted green text
     border: '#C8E6C9', // Very light green border
   },
-  lost: {
+  loss: {
     bg: '#FFF5F5', // Extremely light red
     text: '#C62828', // Muted red text
     border: '#F5D0D0', // Very light red border
@@ -275,5 +296,5 @@ export const BOARD_STAGE_COLORS: Record<string, { bg: string; text: string; bord
 
 // Export type for board stage keys
 export type ProjectBoardStageKey = 'planning' | 'mobilization' | 'construction' | 'done';
-export type LeadBoardStageKey = 'opportunity' | 'contacted' | 'proposal' | 'in_negotiation' | 'win' | 'lost';
+export type LeadBoardStageKey = 'prospect' | 'initial_meeting' | 'technical_meeting' | 'proposal' | 'in_negotiation' | 'won' | 'loss';
 export type BoardStageKey = ProjectBoardStageKey | LeadBoardStageKey;

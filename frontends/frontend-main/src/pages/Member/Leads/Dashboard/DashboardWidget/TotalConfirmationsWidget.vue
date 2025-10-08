@@ -3,10 +3,17 @@
     <GlobalWidgetCard class="total-confirmations-widget">
       <template #title>Total Confirmations</template>
       <template #actions>
-        <span class="text-title-medium-w-[700]">19</span>
+        <div v-if="loading">
+          <q-skeleton type="text" width="30px" />
+        </div>
+        <span v-else class="text-title-medium-w-[700]">{{ totalConfirmations }}</span>
       </template>
       <template #content>
-        <div class="q-pb-md">
+        <div v-if="loading" class="q-pb-md">
+          <q-skeleton type="rect" height="50px" class="q-mb-md" />
+          <q-skeleton type="rect" height="50px" />
+        </div>
+        <div v-else class="q-pb-md">
           <!-- Wins -->
           <div class="row items-center justify-between q-pb-md">
             <div class="row items-center">
@@ -15,7 +22,7 @@
               </div>
               <span class="text-label-large text-dark">Wins</span>
             </div>
-            <span class="text-body-medium">13</span>
+            <span class="text-body-medium">{{ winsCount }}</span>
           </div>
           <!-- Losses -->
           <div class="row items-center justify-between">
@@ -25,7 +32,7 @@
               </div>
               <span class="text-label-large text-dark">Losses</span>
             </div>
-            <span class="text-body-medium">6</span>
+            <span class="text-body-medium">{{ lossesCount }}</span>
           </div>
         </div>
       </template>
@@ -34,15 +41,80 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import { Notify, useQuasar } from 'quasar';
 import GlobalWidgetCard from 'src/components/shared/global/GlobalWidgetCard.vue';
+import { APIRequests } from 'src/utility/api.handler';
 
-export default defineComponent({
+interface BoardColumn {
+  boardKey: string;
+  boardName: string;
+  boardType: string;
+  boardOrder: number;
+  boardProjects?: any[];
+}
+
+export default {
   name: "TotalConfirmationsWidget",
   components: {
     GlobalWidgetCard,
   },
-});
+  setup() {
+    const $q = useQuasar();
+
+    // Reactive data
+    const loading = ref(false);
+    const winsCount = ref(0);
+    const lossesCount = ref(0);
+
+    // Computed total confirmations
+    const totalConfirmations = computed(() => winsCount.value + lossesCount.value);
+
+    const loadConfirmationsData = async () => {
+      try {
+        loading.value = true;
+
+        // Fetch board data using the same endpoint as other widgets
+        const response = await APIRequests.getLeadBoard($q);
+
+        if (Array.isArray(response)) {
+          // Find won and loss columns
+          const wonColumn = (response as BoardColumn[]).find(
+            (col) => col.boardKey === 'won'
+          );
+          const lossColumn = (response as BoardColumn[]).find(
+            (col) => col.boardKey === 'loss'
+          );
+
+          // Update counts
+          winsCount.value = wonColumn?.boardProjects?.length || 0;
+          lossesCount.value = lossColumn?.boardProjects?.length || 0;
+        }
+      } catch (error) {
+        console.error('[TotalConfirmations] Failed to load confirmations data:', error);
+        Notify.create({
+          type: 'negative',
+          message: 'Failed to load confirmations data',
+          position: 'top',
+        });
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    // Load data on mount
+    onMounted(async () => {
+      await loadConfirmationsData();
+    });
+
+    return {
+      loading,
+      winsCount,
+      lossesCount,
+      totalConfirmations,
+    };
+  },
+};
 </script>
 
 <style scoped lang="scss">

@@ -3,7 +3,9 @@
     <div class="lead-head">
       <!-- title and button group -->
       <div class="row items-center">
-        <div class="text-dark text-title-medium-f-[18px] q-mr-md">All Deals</div>
+        <div class="text-dark text-title-medium-f-[18px] q-mr-md">
+          All Deals
+        </div>
         <div class="button-group">
           <div
             @click="setActiveView(view.name)"
@@ -44,17 +46,6 @@
               emit-value
               map-options
             />
-            <q-btn
-              round
-              dense
-              size="sm"
-              color="primary"
-              icon="add"
-              class="q-mr-sm"
-              @click="handleAddDealType"
-            >
-              <q-tooltip>Add Deal Type</q-tooltip>
-            </q-btn>
           </div>
           <q-select
             v-if="activeView == 'grid' || activeView == 'list'"
@@ -72,11 +63,20 @@
 
         <!-- action button -->
         <div>
+          <g-button
+            label="Add Deal Type"
+            color="primary"
+            icon="add"
+            icon-size="md"
+            class="q-mr-sm"
+            @click="handleAddDealType"
+          />
           <GButton
             class="actions text-label-large"
             unelevated
             color="primary"
             icon="add"
+            icon-size="md"
             label="New Lead"
             @click="handleAddLead"
           />
@@ -89,10 +89,10 @@
     </div>
 
     <!-- Deal Type Dialog -->
-    <AddEditDealTypeDialog 
+    <AddEditDealTypeDialog
       ref="dealTypeDialog"
       @created="handleDealTypeCreated"
-      @updated="handleDealTypeUpdated" 
+      @updated="handleDealTypeUpdated"
     />
   </div>
 </template>
@@ -113,15 +113,22 @@
 </style>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, ComponentPublicInstance, getCurrentInstance, defineAsyncComponent } from "vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  ComponentPublicInstance,
+  getCurrentInstance,
+  defineAsyncComponent,
+} from "vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
 import LeadsBoardView from "./LeadsBoardView.vue";
 import LeadsGridView from "./LeadsGridView.vue";
 import LeadsListView from "./LeadsListView.vue";
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
-const AddEditDealTypeDialog = defineAsyncComponent(() =>
-  import("src/components/dialog/AddEditDealTypeDialog.vue")
+const AddEditDealTypeDialog = defineAsyncComponent(
+  () => import("src/components/dialog/AddEditDealTypeDialog.vue")
 );
 
 defineOptions({
@@ -147,9 +154,7 @@ const optionsRelationshipOwner = [
 ];
 
 const filterDealType = ref("all");
-const optionsDealType = ref([
-  { label: "All", value: "all" },
-]);
+const optionsDealType = ref([{ label: "All", value: "all" }]);
 
 const filterStage = ref("all");
 const optionsStage = [
@@ -163,7 +168,9 @@ const optionsStage = [
 ];
 
 const leadsView = ref<ComponentPublicInstance | null>(null);
-const dealTypeDialog = ref<InstanceType<typeof AddEditDealTypeDialog> | null>(null);
+const dealTypeDialog = ref<InstanceType<typeof AddEditDealTypeDialog> | null>(
+  null
+);
 
 const activeView = ref<string>("board");
 const viewList = ref<ViewItem[]>([
@@ -213,23 +220,21 @@ const handleDealTypeUpdated = () => {
 
 const loadDealTypes = async () => {
   try {
-    const response = await proxy.$api.get('/deal-type');
+    const response = await proxy.$api.get("/deal-type");
     const dealTypes: DealType[] = response.data.data || [];
-    
+
     // Update the options array
     optionsDealType.value = [
       { label: "All", value: "all" },
       ...dealTypes.map((dealType: DealType) => ({
         label: dealType.typeName,
-        value: dealType.id.toString()
-      }))
+        value: dealType.id.toString(),
+      })),
     ];
   } catch (error) {
-    console.error('Failed to load deal types:', error);
+    console.error("Failed to load deal types:", error);
     // Keep default options on error
-    optionsDealType.value = [
-      { label: "All", value: "all" },
-    ];
+    optionsDealType.value = [{ label: "All", value: "all" }];
   }
 };
 

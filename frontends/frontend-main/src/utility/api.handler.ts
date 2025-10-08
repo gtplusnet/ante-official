@@ -33,6 +33,19 @@ export const APIRequests = {
   getLeadBoard: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'PUT', '/lead/board', {}, { isLead: 'true' }),
   moveLead: (quasar: QVueGlobals, projectId: string, boardKey: string) => apiRequest<unknown>(quasar, 'PATCH', '/lead/move', { projectId, boardKey }),
   convertLeadToProject: (quasar: QVueGlobals, id: string) => apiRequest<ProjectDataResponse>(quasar, 'POST', `/lead/${id}/convert`, {}),
+  getDealTypesSummary: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'GET', '/lead/deal-types-summary', {}, {}),
+  getClosingDatesSummary: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'GET', '/lead/closing-dates-summary', {}, {}),
+  getSalesProbabilitySummary: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'GET', '/lead/sales-probability-summary', {}, {}),
+  getAverageDaysStageSummary: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'GET', '/lead/average-days-stage-summary', {}, {}),
+
+  // CRM Activity API methods
+  getCRMActivities: (quasar: QVueGlobals, params: { page?: string; limit?: string; filter?: string }) =>
+    apiRequest<unknown>(quasar, 'GET', '/crm-activity/recent', {}, params),
+  getCRMUnreadCount: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'GET', '/crm-activity/unread-count', {}, {}),
+  markCRMActivityAsRead: (quasar: QVueGlobals, id: string) =>
+    apiRequest<unknown>(quasar, 'PATCH', `/crm-activity/${id}/mark-read`, {}),
+  markAllCRMActivitiesAsRead: (quasar: QVueGlobals) =>
+    apiRequest<unknown>(quasar, 'PATCH', '/crm-activity/mark-all-read', {}),
 
   // Item API methods
   deleteItem: (quasar: QVueGlobals, id: string) => apiRequest<ItemDataResponse>(quasar, 'DELETE', `/items/${id}`, {}, {}),

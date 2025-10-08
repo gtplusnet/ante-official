@@ -32,13 +32,19 @@
 
 <script lang="ts">
 import { ref, onMounted, computed, nextTick } from "vue";
-import { Notify } from "quasar";
+import { Notify, useQuasar } from "quasar";
 import GlobalWidgetCard from "src/components/shared/global/GlobalWidgetCard.vue";
+import { APIRequests } from "src/utility/api.handler";
 
 interface ClosingDate {
   month: string;
   count: number;
   color: string;
+}
+
+interface ClosingDateSummary {
+  month: string;
+  count: number;
 }
 
 export default {
@@ -47,21 +53,13 @@ export default {
     GlobalWidgetCard,
   },
   setup() {
+    const $q = useQuasar();
+
     const loading = ref(false);
     const chartReady = ref(false);
     const chartKey = ref(0);
 
-    const closingDates = ref<ClosingDate[]>([
-      { month: "Unknown", count: 23, color: "#2f40c4" },
-      { month: "May 2025", count: 1, color: "#615FF6" },
-      { month: "June 2025", count: 3, color: "#615FF6" },
-      { month: "Jul 2025", count: 5, color: "#615FF6" },
-      { month: "Aug 2025", count: 13, color: "#615FF6" },
-      { month: "Sept 2025", count: 10, color: "#615FF6" },
-      { month: "Oct 2025", count: 8, color: "#615FF6" },
-      { month: "Nov 2025", count: 1, color: "#615FF6" },
-      { month: "Dec 2025", count: 0, color: "#615FF6" },
-    ]);
+    const closingDates = ref<ClosingDate[]>([]);
 
     const chartOptions = computed(() => {
       return {
@@ -128,7 +126,7 @@ export default {
             },
           },
           min: 0,
-          max: 25,
+          max: Math.max(...closingDates.value.map((d) => d.count), 25),
           tickAmount: 5,
         },
         grid: {
@@ -175,12 +173,58 @@ export default {
       ];
     });
 
+    // Generate color based on count (darker for higher counts)
+    const generateColor = (count: number, maxCount: number): string => {
+      // Define color palette from darkest to lightest
+      const colors = [
+        "#2f40c4", // Darkest blue (for Unknown or highest)
+        "#615FF6", // Dark blue
+        "#63D7E6", // Light blue
+        "#E3F2FD", // Lightest blue
+      ];
+
+      if (maxCount === 0) return colors[colors.length - 1];
+
+      // Unknown gets the darkest color
+      if (count === -1) return colors[0];
+
+      // Calculate percentage and map to color index
+      const percentage = count / maxCount;
+      if (percentage >= 0.6) return colors[1];
+      if (percentage >= 0.3) return colors[2];
+      return colors[3];
+    };
+
     const loadClosingDatesData = async () => {
       try {
         loading.value = true;
 
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Fetch data from API
+        const response = await APIRequests.getClosingDatesSummary($q);
 
+        if (Array.isArray(response)) {
+          const data = response as ClosingDateSummary[];
+
+          // Find max count for color generation (excluding Unknown)
+          const maxCount = Math.max(
+            ...data
+              .filter((d) => d.month !== "Unknown")
+              .map((d) => d.count),
+            0
+          );
+
+          // Map to ClosingDate format with dynamic colors
+          closingDates.value = data.map((item) => ({
+            month: item.month,
+            count: item.count,
+            color:
+              item.month === "Unknown"
+                ? "#2f40c4" // Dark blue for Unknown
+                : generateColor(item.count, maxCount),
+          }));
+        }
+
+        // Force chart refresh
         chartKey.value++;
 
         await nextTick();
