@@ -98,8 +98,9 @@
 <style scoped src="../Leads.scss"></style>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, onBeforeUnmount } from 'vue';
+import { defineComponent, ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useQuasar } from 'quasar';
+import { useRoute } from 'vue-router';
 import { APIRequests } from 'src/utility/api.handler';
 import LeadCreateDialog from 'src/components/dialog/LeadDialog/LeadCreateDialog.vue';
 import ViewLeadDialog from 'src/components/dialog/LeadDialog/ViewLeadDialog.vue';
@@ -145,8 +146,8 @@ export default defineComponent({
   },
   setup() {
     const $q = useQuasar();
+    const route = useRoute();
     const isLoading = ref(true);
-    // const router = useRouter();
     const boardColumns = ref<BoardColumn[]>([]);
     const draggedLead = ref<Lead | null>(null);
     const dragOverColumn = ref<string | null>(null);
@@ -191,6 +192,30 @@ export default defineComponent({
         });
       } finally {
         isLoading.value = false;
+
+        // Check for query params to highlight and scroll to lead
+        await checkAndHighlightLead();
+      }
+    };
+
+    const checkAndHighlightLead = async () => {
+      const leadId = route.query.leadId as string;
+      if (leadId) {
+        const id = parseInt(leadId, 10);
+        leadViewId.value = id;
+
+        // Wait for DOM to update
+        await nextTick();
+
+        // Scroll to the highlighted card
+        const cardElement = document.querySelector(`.lead-card.active-card`);
+        if (cardElement) {
+          cardElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'center'
+          });
+        }
       }
     };
 

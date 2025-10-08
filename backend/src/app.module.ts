@@ -50,6 +50,7 @@ import { PointOfContactModule } from '@modules/crm/point-of-contact/point-of-con
 import { LeadCompanyModule } from '@modules/crm/lead-company/lead-company/lead-company.module';
 import { DealSourceModule } from '@modules/crm/deal-source/deal-source/deal-source.module';
 import { DealTypeModule } from '@modules/crm/deal-type/deal-type/deal-type.module';
+import { CRMActivityModule } from '@modules/crm/crm-activity/crm-activity/crm-activity.module';
 import { NotificationModule } from '@modules/communication/notification/notification/notification.module';
 import { OTPModule } from '@modules/communication/otp/otp/otp.module';
 import { EmailConfigModule } from '@modules/communication/email-config/email-config.module';
@@ -240,6 +241,7 @@ const ENV = process.env.NODE_ENV;
     LeadCompanyModule,
     DealSourceModule,
     DealTypeModule,
+    CRMActivityModule,
     NotificationModule,
     OTPModule,
     EmailConfigModule,

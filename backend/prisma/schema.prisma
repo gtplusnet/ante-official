@@ -125,6 +125,7 @@ model Account {
   BranchTimekeepingStatus                BranchTimekeepingStatus[]
   Collection                             Collection[]                       @relation("CreatedBy")
   Conversation                           Conversation?
+  crmActivitiesPerformed                 CRMActivity[]                      @relation("CRMActivityPerformedBy")
   dealSourcesCreated                     DealSource[]                       @relation("DealSourceCreatedBy")
   dealTypesCreated                       DealType[]                         @relation("DealTypeCreatedBy")
   DeductionImportBatch                   DeductionImportBatch[]
@@ -2045,6 +2046,7 @@ model Company {
   ClientShareLink               ClientShareLink[]
   Collection                    Collection[]
   seedTracking                  CompanySeedTracking[]
+  crmActivities                 CRMActivity[]
   Cutoff                        Cutoff[]
   dealSources                   DealSource[]
   dealTypes                     DealType[]
@@ -3245,6 +3247,26 @@ model LeadDeal {
   @@index([status])
 }
 
+model CRMActivity {
+  id            Int                @id @default(autoincrement())
+  activityType  CRMActivityType
+  entityType    CRMEntityType
+  entityId      Int
+  entityName    String             @db.VarChar(255)
+  description   String
+  performedById String
+  isRead        Boolean            @default(false)
+  createdAt     DateTime           @default(now())
+  companyId     Int?
+  company       Company?           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  performedBy   Account            @relation("CRMActivityPerformedBy", fields: [performedById], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt])
+  @@index([performedById])
+  @@index([isRead])
+  @@index([entityType, entityId])
+}
+
 model Announcement {
   id              Int                          @id @default(autoincrement())
   title           String                       @db.VarChar(200)
@@ -4279,6 +4301,23 @@ enum LeadDealStatus {
   IN_NEGOTIATION
   WIN
   LOST
+}
+
+enum CRMActivityType {
+  CREATE
+  UPDATE
+  STAGE_CHANGE
+  DELETE
+}
+
+enum CRMEntityType {
+  LEAD
+  LEAD_DEAL
+  CLIENT
+  LEAD_COMPANY
+  POINT_OF_CONTACT
+  DEAL_TYPE
+  DEAL_SOURCE
 }
 
 // OAuth 2.0 Models

@@ -9,6 +9,8 @@ import {
   ProjectStatus,
   LeadDealStatus,
   WinProbability,
+  CRMActivityType,
+  CRMEntityType,
 } from '@prisma/client';
 import { PrismaService } from '@common/prisma.service';
 import { UtilityService } from '@common/utility.service';
@@ -24,6 +26,7 @@ import {
 } from '../../../../shared/response';
 import { LocationService } from '@modules/location/location/location/location.service';
 import { CompanyService } from '@modules/company/company/company.service';
+import { CRMActivityService } from '@modules/crm/crm-activity/crm-activity/crm-activity.service';
 import { ProjectDeleteAllDto } from '@modules/project/project/project/project.validator.dto';
 import {
   LeadCreateDto,
@@ -38,6 +41,7 @@ export class LeadService {
   @Inject() private tableHandlerService: TableHandlerService;
   @Inject() private locationService: LocationService;
   @Inject() private companyService: CompanyService;
+  @Inject() private crmActivityService: CRMActivityService;
 
   async createLead(params: LeadCreateDto) {
     const loggedInAccount: AccountDataResponse =
@@ -95,14 +99,23 @@ export class LeadService {
       },
     });
 
-    this.logLeadCreation(leadDeal);
+    await this.logLeadCreation(leadDeal);
     return this.formatLeadDealAsProject(leadDeal);
   }
 
-  private logLeadCreation(lead: any) {
+  private async logLeadCreation(lead: any) {
     this.utilityService.log(
       `Lead "${lead.dealName || lead.name}" has been created by ${this.utilityService.accountInformation.username}.`,
     );
+
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.CREATE,
+      entityType: CRMEntityType.LEAD_DEAL,
+      entityId: lead.id,
+      entityName: lead.dealName,
+      description: `Created new lead "${lead.dealName}"`,
+      performedById: this.utilityService.accountInformation.id,
+    });
   }
 
   private mapBoardStageToStatus(boardStage: string): LeadDealStatus {
@@ -117,6 +130,20 @@ export class LeadService {
     };
 
     return stageMap[boardStage] || LeadDealStatus.OPPORTUNITY;
+  }
+
+  private getStatusDisplayName(status: LeadDealStatus): string {
+    const statusNameMap: { [key in LeadDealStatus]: string } = {
+      [LeadDealStatus.OPPORTUNITY]: 'Prospect',
+      [LeadDealStatus.CONTACTED]: 'Initial Meeting',
+      [LeadDealStatus.TECHNICAL_MEETING]: 'Technical Meeting',
+      [LeadDealStatus.PROPOSAL]: 'Proposal',
+      [LeadDealStatus.IN_NEGOTIATION]: 'In Negotiation',
+      [LeadDealStatus.WIN]: 'Won',
+      [LeadDealStatus.LOST]: 'Lost',
+    };
+
+    return statusNameMap[status] || status;
   }
 
   async leadBoard() {
@@ -371,6 +398,15 @@ export class LeadService {
       },
     });
 
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.UPDATE,
+      entityType: CRMEntityType.LEAD_DEAL,
+      entityId: updatedLead.id,
+      entityName: updatedLead.dealName,
+      description: `Updated lead "${updatedLead.dealName}"`,
+      performedById: this.utilityService.accountInformation.id,
+    });
+
     return this.formatLeadDealAsProject(updatedLead);
   }
 
@@ -400,6 +436,15 @@ export class LeadService {
         pointOfContact: true,
         company: true,
       },
+    });
+
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.DELETE,
+      entityType: CRMEntityType.LEAD_DEAL,
+      entityId: archivedLead.id,
+      entityName: archivedLead.dealName,
+      description: `Deleted lead "${archivedLead.dealName}"`,
+      performedById: this.utilityService.accountInformation.id,
     });
 
     return this.formatLeadDealAsProject(archivedLead);
@@ -450,6 +495,7 @@ export class LeadService {
 
     // Map board stage to LeadDealStatus
     const newStatus = this.mapBoardStageToLeadDealStatus(boardStage);
+    const oldStatus = lead.status;
 
     const updatedLead = await this.prisma.leadDeal.update({
       where: { id: leadId },
@@ -465,6 +511,15 @@ export class LeadService {
         pointOfContact: true,
         company: true,
       },
+    });
+
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.STAGE_CHANGE,
+      entityType: CRMEntityType.LEAD_DEAL,
+      entityId: updatedLead.id,
+      entityName: updatedLead.dealName,
+      description: `Changed stage from "${this.getStatusDisplayName(oldStatus)}" to "${this.getStatusDisplayName(newStatus)}" for lead "${updatedLead.dealName}"`,
+      performedById: this.utilityService.accountInformation.id,
     });
 
     return this.formatLeadDealAsProject(updatedLead);

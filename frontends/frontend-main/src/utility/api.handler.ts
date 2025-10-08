@@ -38,6 +38,15 @@ export const APIRequests = {
   getSalesProbabilitySummary: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'GET', '/lead/sales-probability-summary', {}, {}),
   getAverageDaysStageSummary: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'GET', '/lead/average-days-stage-summary', {}, {}),
 
+  // CRM Activity API methods
+  getCRMActivities: (quasar: QVueGlobals, params: { page?: string; limit?: string; filter?: string }) =>
+    apiRequest<unknown>(quasar, 'GET', '/crm-activity/recent', {}, params),
+  getCRMUnreadCount: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'GET', '/crm-activity/unread-count', {}, {}),
+  markCRMActivityAsRead: (quasar: QVueGlobals, id: string) =>
+    apiRequest<unknown>(quasar, 'PATCH', `/crm-activity/${id}/mark-read`, {}),
+  markAllCRMActivitiesAsRead: (quasar: QVueGlobals) =>
+    apiRequest<unknown>(quasar, 'PATCH', '/crm-activity/mark-all-read', {}),
+
   // Item API methods
   deleteItem: (quasar: QVueGlobals, id: string) => apiRequest<ItemDataResponse>(quasar, 'DELETE', `/items/${id}`, {}, {}),
   restoreItem: (quasar: QVueGlobals, id: string) => apiRequest<ItemDataResponse>(quasar, 'PUT', `/item/restore/${id}`, {}, {}),
