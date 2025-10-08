@@ -1830,6 +1830,16 @@ export class EmployeeTimekeepingService {
         (source) => source.key === data.source,
       ),
       createdAt: this.utilityService.formatDate(data.createdAt),
+      // TIME-IN GEOLOCATION
+      timeInLocation: data.timeInLocation,
+      timeInIpAddress: data.timeInIpAddress,
+      timeInLatitude: data.timeInLatitude,
+      timeInLongitude: data.timeInLongitude,
+      // TIME-OUT GEOLOCATION
+      timeOutLocation: data.timeOutLocation,
+      timeOutIpAddress: data.timeOutIpAddress,
+      timeOutLatitude: data.timeOutLatitude,
+      timeOutLongitude: data.timeOutLongitude,
     };
     return response;
   }

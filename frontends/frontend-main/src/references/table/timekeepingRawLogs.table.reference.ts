@@ -4,28 +4,11 @@ export default {
 
   columns: [
     {
-      key: 'timeIn.dateTime',
-      label: 'Time In',
-      class: 'text-center',
-      sortable: true,
-    },
-    {
-      key: 'timeIn.day',
-      label: 'Time In (Day)',
-      class: 'text-center',
-      sortable: true,
-    },
-    {
-      key: 'timeOut.dateTime',
-      label: 'Time Out',
-      class: 'text-center',
-      sortable: true,
-    },
-    {
-      key: 'timeOut.day',
-      label: 'Time Out (Day)',
-      class: 'text-center',
-      sortable: true,
+      key: 'timeInOut',
+      label: 'Time In / Time Out',
+      class: 'text-left',
+      sortable: false,
+      customRender: true, // Enable custom rendering in component
     },
     {
       key: 'timeSpan.formatted',
@@ -39,7 +22,14 @@ export default {
       class: 'text-center',
       sortable: true,
     },
+    {
+      key: 'geolocation',
+      label: 'Location & IP',
+      class: 'text-left',
+      sortable: false,
+      customRender: true, // Enable custom rendering in component
+    },
   ],
-  perPage: 7,
+  perPage: 10,
   sort: [],
 };

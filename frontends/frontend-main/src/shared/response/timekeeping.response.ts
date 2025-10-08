@@ -264,6 +264,16 @@ export interface TimekeepingLogResponse {
   source: TimekeepingSourceResponse;
   timeSpan: HoursFormat;
   createdAt: DateFormat;
+  // TIME-IN GEOLOCATION
+  timeInLocation?: string | null;
+  timeInIpAddress?: string | null;
+  timeInLatitude?: number | null;
+  timeInLongitude?: number | null;
+  // TIME-OUT GEOLOCATION
+  timeOutLocation?: string | null;
+  timeOutIpAddress?: string | null;
+  timeOutLatitude?: number | null;
+  timeOutLongitude?: number | null;
 }
 
 export interface TimekeepingSourceResponse {
