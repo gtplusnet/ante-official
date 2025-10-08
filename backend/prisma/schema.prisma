@@ -180,6 +180,10 @@ model Account {
   deletedWorkflowTemplates               WorkflowTemplate[]                 @relation("WorkflowTemplateDeletedBy")
   oauthCodes                             OAuthCode[]
   oauthTokens                            OAuthToken[]
+  createdCalendarEvents                  CalendarEvent[]                    @relation("EventCreator")
+  calendarEventAttendee                  CalendarEventAttendee[]            @relation("EventAttendee")
+  createdCalendarCategories              CalendarCategory[]                 @relation("CategoryCreator")
+  uploadedEventAttachments               CalendarEventAttachment[]          @relation("EventAttachmentUploader")
 
   @@index([firstName])
   @@index([lastName])
@@ -2092,6 +2096,8 @@ model Company {
   Warehouse                     Warehouse[]
   WorkflowTemplate              WorkflowTemplate[]
   ManpowerDevice                ManpowerDevice[]
+  CalendarEvent                 CalendarEvent[]
+  CalendarCategory              CalendarCategory[]
 }
 
 model DeductionConfiguration {
@@ -4316,4 +4322,162 @@ model OAuthToken {
   expiresAt    DateTime
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+// ========================================
+// Calendar Models
+// ========================================
+
+// Main Calendar Events Table
+model CalendarEvent {
+  id               String                    @id @default(uuid())
+  title            String
+  description      String?
+  location         String?
+  startDateTime    DateTime
+  endDateTime      DateTime
+  allDay           Boolean                   @default(false)
+  colorCode        String                    @default("#2196F3")
+  categoryId       Int?
+  creatorId        String
+  isActive         Boolean                   @default(true)
+  visibility       String                    @default("private") // private, public, team
+  companyId        Int
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+
+  // Relations
+  creator          Account                   @relation("EventCreator", fields: [creatorId], references: [id])
+  category         CalendarCategory?         @relation(fields: [categoryId], references: [id])
+  company          Company                   @relation(fields: [companyId], references: [id])
+  attendees        CalendarEventAttendee[]
+  attachments      CalendarEventAttachment[]
+  recurrence       CalendarEventRecurrence?
+  instances        CalendarEventInstance[]
+  reminders        CalendarEventReminder[]
+
+  @@index([creatorId, startDateTime])
+  @@index([categoryId])
+  @@index([companyId])
+}
+
+// Recurrence Rules Table (Google Calendar style)
+model CalendarEventRecurrence {
+  id               String            @id @default(uuid())
+  eventId          String            @unique
+  recurrenceType   String            // daily, weekly, monthly, yearly, custom
+  frequency        Int               @default(1) // every X days/weeks/months
+  interval         String?           // MO,TU,WE,TH,FR,SA,SU
+  byDay            String[]          // ["MO", "WE", "FR"]
+  byMonthDay       Int[]             // [1, 15] for 1st and 15th
+  byMonth          Int[]             // [1, 6, 12] for Jan, Jun, Dec
+  count            Int?              // number of occurrences
+  until            DateTime?         // end date
+  exceptions       String[]          // dates to skip (ISO format)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  event            CalendarEvent     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+// Event Instances (for recurring events)
+model CalendarEventInstance {
+  id               String            @id @default(uuid())
+  parentEventId    String
+  instanceDate     DateTime
+  originalStart    DateTime
+  originalEnd      DateTime
+
+  // Override fields (if this instance is modified)
+  title            String?
+  description      String?
+  location         String?
+  startDateTime    DateTime?
+  endDateTime      DateTime?
+  colorCode        String?
+  isCancelled      Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  parentEvent      CalendarEvent     @relation(fields: [parentEventId], references: [id], onDelete: Cascade)
+
+  @@unique([parentEventId, instanceDate])
+  @@index([parentEventId, instanceDate])
+}
+
+// Event Attendees
+model CalendarEventAttendee {
+  id               String            @id @default(uuid())
+  eventId          String
+  accountId        String
+  email            String?
+  responseStatus   String            @default("pending") // pending, accepted, declined, tentative
+  isOrganizer      Boolean           @default(false)
+  isOptional       Boolean           @default(false)
+  addedAt          DateTime          @default(now())
+  respondedAt      DateTime?
+
+  event            CalendarEvent     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  account          Account           @relation("EventAttendee", fields: [accountId], references: [id])
+
+  @@unique([eventId, accountId])
+  @@index([eventId])
+  @@index([accountId])
+}
+
+// Calendar Categories
+model CalendarCategory {
+  id               Int               @id @default(autoincrement())
+  name             String
+  colorCode        String
+  icon             String?
+  description      String?
+  isSystem         Boolean           @default(false)
+  creatorId        String?
+  companyId        Int
+  isActive         Boolean           @default(true)
+  sortOrder        Int               @default(0)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  events           CalendarEvent[]
+  creator          Account?          @relation("CategoryCreator", fields: [creatorId], references: [id])
+  company          Company           @relation(fields: [companyId], references: [id])
+
+  @@unique([name, companyId])
+  @@index([creatorId])
+  @@index([companyId])
+}
+
+// Event Attachments
+model CalendarEventAttachment {
+  id               String            @id @default(uuid())
+  eventId          String
+  fileName         String
+  fileUrl          String
+  fileSize         Int
+  mimeType         String
+  uploadedBy       String
+  uploadedAt       DateTime          @default(now())
+
+  event            CalendarEvent     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  uploader         Account           @relation("EventAttachmentUploader", fields: [uploadedBy], references: [id])
+
+  @@index([eventId])
+}
+
+// Event Reminders
+model CalendarEventReminder {
+  id               String            @id @default(uuid())
+  eventId          String
+  method           String            @default("popup") // popup, email, notification
+  minutes          Int               @default(15) // minutes before event
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  event            CalendarEvent     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
 }
