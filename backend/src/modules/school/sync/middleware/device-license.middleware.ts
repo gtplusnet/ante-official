@@ -69,7 +69,7 @@ export class DeviceLicenseMiddleware implements NestMiddleware {
       }
 
       // Set context
-      this.utility.companyId = license.companyId;
+      this.utility.setCompanyId(license.companyId);
       req.license = license;
       req.deviceConnection = license.connectedDevice;
 

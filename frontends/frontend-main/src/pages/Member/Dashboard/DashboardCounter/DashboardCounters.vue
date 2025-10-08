@@ -17,18 +17,18 @@
       :loading="showLoading"
     />
     <GlobalWidgetCounter
-      icon="sick"
+      icon="spa"
       icon-color="var(--q-hero)"
-      :value="sickLeaveDisplay"
-      label="Sick Leave"
+      :value="leaveBalanceDisplay"
+      label="Leave Balance"
       card-class="dashboard-card-3"
       :loading="showLoading"
     />
     <GlobalWidgetCounter
-      icon="spa"
+      icon="o_task"
       icon-color="var(--q-accent)"
-      :value="vacationLeaveDisplay"
-      label="Vacation Leave"
+      :value="allTasksDisplay"
+      label="All Tasks"
       card-class="dashboard-card-4"
       :loading="showLoading"
     />
@@ -61,31 +61,26 @@ export default defineComponent({
     const loading = ref(false);
     const outstandingRequests = ref(0);
     const daysBeforeCutoff = ref<number | null>(null);
-    const sickLeave = ref<LeaveBalance | null>(null);
-    const vacationLeave = ref<LeaveBalance | null>(null);
+    const leaveBalance = ref<LeaveBalance | null>(null);
+    const allTasks = ref(0);
 
     const outstandingRequestsDisplay = computed(() => outstandingRequests.value.toString());
-    
+
     const daysBeforeCutoffDisplay = computed(() => {
       if (daysBeforeCutoff.value === null) {
         return 'N/A';
       }
       return daysBeforeCutoff.value.toString();
     });
-    
-    const sickLeaveDisplay = computed(() => {
-      if (!sickLeave.value) {
+
+    const leaveBalanceDisplay = computed(() => {
+      if (!leaveBalance.value) {
         return 'N/A';
       }
-      return `${sickLeave.value.used}/${sickLeave.value.total}`;
+      return `${leaveBalance.value.used}/${leaveBalance.value.total}`;
     });
-    
-    const vacationLeaveDisplay = computed(() => {
-      if (!vacationLeave.value) {
-        return 'N/A';
-      }
-      return `${vacationLeave.value.used}/${vacationLeave.value.total}`;
-    });
+
+    const allTasksDisplay = computed(() => allTasks.value.toString());
 
     // Use the centralized cache system
     const {
@@ -129,8 +124,8 @@ export default defineComponent({
       if (countersData.value) {
         outstandingRequests.value = countersData.value.outstandingRequests;
         daysBeforeCutoff.value = countersData.value.daysBeforeCutoff;
-        sickLeave.value = countersData.value.sickLeave;
-        vacationLeave.value = countersData.value.vacationLeave;
+        leaveBalance.value = countersData.value.leaveBalance;
+        allTasks.value = countersData.value.allTasks;
       }
     };
 
@@ -171,8 +166,8 @@ export default defineComponent({
       showLoading,
       outstandingRequestsDisplay,
       daysBeforeCutoffDisplay,
-      sickLeaveDisplay,
-      vacationLeaveDisplay,
+      leaveBalanceDisplay,
+      allTasksDisplay,
       isCached,
       isRefreshing,
       lastUpdated,

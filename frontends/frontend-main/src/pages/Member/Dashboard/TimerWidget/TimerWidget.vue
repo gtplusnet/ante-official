@@ -44,7 +44,7 @@
           <div class="row items-center">
             <div class="col-2">
               <div class="timer-icon-wrapper">
-                <q-icon name="timer_off" size="18px" />
+                <q-icon name="timer_off" size="30px" />
               </div>
             </div>
             <div class="col-10">
@@ -59,11 +59,11 @@
           <div class="task-input-dense q-mt-sm">
             <!-- If task selected, show it -->
             <div v-if="selectedTask" class="selected-task-display">
-              <div class="row q-col-gutter-xs items-center">
+              <div class="row items-center">
                 <div class="col">
                   <div class="task-display-field">
                     <q-icon name="assignment_turned_in" size="14px" color="primary" />
-                    <span class="q-ml-xs ellipsis">{{ selectedTask.title }}</span>
+                    <span>{{ selectedTask.title }}</span>
                   </div>
                 </div>
                 <div class="col-auto">
@@ -153,7 +153,7 @@
           <div class="row items-center">
             <div class="col-2">
               <div class="timer-icon-wrapper active">
-                <q-icon name="timer" size="18px" />
+                <q-icon name="timer" size="30px" />
               </div>
             </div>
             <div class="col-10">
@@ -163,7 +163,7 @@
                     {{ formattedTime }}
                     <q-spinner-dots size="12px" class="q-ml-xs" />
                   </div>
-                  <div class="text-caption text-grey ellipsis">
+                  <div class="text-caption text-grey">
                     {{ currentTimer?.taskTitle || currentTimer?.task?.title || 'Working...' }}
                     <span v-if="currentTimer?.task?.project"> • {{ currentTimer.task.project.name }}</span>
                   </div>
@@ -278,10 +278,16 @@
       border: 1px solid var(--md3-sys-color-primary);
       border-radius: 4px;
       display: flex;
-      align-items: center;
-      font-size: 13px;
+      align-items: start;
+      gap: 6px;
+      font-size: var(--font-label-medium);
       color: var(--md3-sys-color-on-primary-container);
-      min-height: 32px;
+      line-height: 1.2;
+      width: 240px;
+
+      span {
+        min-width: 100%;
+      }
     }
   }
   
@@ -295,6 +301,12 @@
     flex: 1;
     padding-left: 8px;
   }
+}
+
+.text-caption {
+  line-height: 1.2;
+  width: 240px;
+  margin-top: 4px;
 }
 
 // Action icons - smaller size
@@ -317,19 +329,11 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, onUnmounted, getCurrentInstance } from 'vue';
-import { defineAsyncComponent } from 'vue';
 import GlobalWidgetCard from '../../../../components/shared/global/GlobalWidgetCard.vue';
-
-// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
-const TaskSelectionDialog = defineAsyncComponent(() =>
-  import('./dialog/TaskSelectionDialog.vue')
-);
-const TimeHistoryDialog = defineAsyncComponent(() =>
-  import('./dialog/TimeHistoryDialog.vue')
-);
-const TaskInformationDialog = defineAsyncComponent(() =>
-  import('../../../../components/dialog/TaskInformationDialog/TaskInformationDialog.vue')
-);
+import TaskSelectionDialog from './dialog/TaskSelectionDialog.vue';
+import TimeHistoryDialog from './dialog/TimeHistoryDialog.vue';
+import TaskInformationDialog from '../../../../components/dialog/TaskInformationDialog/TaskInformationDialog.vue';
+import { GeolocationService } from 'src/services/geolocation.service';
 
 interface Task {
   id: number;
@@ -467,20 +471,37 @@ export default defineComponent({
     };
     
     const performStartTimer = async (isNewTask: boolean, isSwitching: boolean = false) => {
+      // Request TIME-IN geolocation BEFORE starting timer
+      // This will reverse geocode coordinates to location name
+      const timeInGeoData = await GeolocationService.requestWithWarning();
+
+      // User cancelled geolocation warning
+      if (timeInGeoData === null) {
+        return;
+      }
+
       isLoading.value = true;
       try {
         let response: any;
-        
+
         if (selectedTask.value) {
-          // Use existing task
-          response = await api.post('/time-tracking/start', { 
-            taskId: selectedTask.value.id 
+          // Use existing task with TIME-IN geolocation (includes location name)
+          response = await api.post('/time-tracking/start', {
+            taskId: selectedTask.value.id,
+            timeInLatitude: timeInGeoData.latitude || undefined,
+            timeInLongitude: timeInGeoData.longitude || undefined,
+            timeInLocation: timeInGeoData.location || undefined,
+            timeInGeolocationEnabled: timeInGeoData.geolocationEnabled,
           });
         } else {
-          // Create new task and start timer
-          response = await api.post('/time-tracking/create-and-start', { 
+          // Create new task and start timer with TIME-IN geolocation
+          response = await api.post('/time-tracking/create-and-start', {
             title: newTaskTitle.value,
-            description: ''
+            description: '',
+            timeInLatitude: timeInGeoData.latitude || undefined,
+            timeInLongitude: timeInGeoData.longitude || undefined,
+            timeInLocation: timeInGeoData.location || undefined,
+            timeInGeolocationEnabled: timeInGeoData.geolocationEnabled,
           });
           // Response includes both task and timer
           response.data = response.data.timer;
@@ -505,13 +526,19 @@ export default defineComponent({
         newTaskTitle.value = '';
         selectedTask.value = null;
         
+        // Show success message with location if captured
         let message = '';
         if (isSwitching) {
           message = isNewTask ? 'Task created and timer switched' : 'Timer switched successfully';
         } else {
           message = isNewTask ? 'Task created and timer started' : 'Timer started';
         }
-        
+
+        // Append location to message if available
+        if (timeInGeoData.geolocationEnabled && timeInGeoData.location) {
+          message += ` at ${timeInGeoData.location}`;
+        }
+
         instance?.proxy?.$q.notify({
           type: 'positive',
           message
@@ -540,18 +567,33 @@ export default defineComponent({
     
     const stopTimer = async () => {
       if (!currentTimer.value) return;
-      
+
+      // Capture TIME-OUT geolocation silently (includes reverse geocoding)
+      // Non-blocking, no warnings
+      const timeOutGeoData = await GeolocationService.getGeolocationSilent();
+
       isLoading.value = true;
       try {
-        await api.post('/time-tracking/stop', {});
-        
+        await api.post('/time-tracking/stop', {
+          timeOutLatitude: timeOutGeoData.latitude || undefined,
+          timeOutLongitude: timeOutGeoData.longitude || undefined,
+          timeOutLocation: timeOutGeoData.location || undefined,
+          timeOutGeolocationEnabled: timeOutGeoData.geolocationEnabled,
+        });
+
         stopTimerInterval();
         currentTimer.value = null;
         elapsedSeconds.value = 0;
-        
+
+        // Show success message with location if captured
+        let message = 'Timer stopped successfully';
+        if (timeOutGeoData.geolocationEnabled && timeOutGeoData.location) {
+          message += ` at ${timeOutGeoData.location}`;
+        }
+
         instance?.proxy?.$q.notify({
           type: 'positive',
-          message: 'Timer stopped successfully'
+          message
         });
       } catch (error: any) {
         instance?.proxy?.$q.notify({

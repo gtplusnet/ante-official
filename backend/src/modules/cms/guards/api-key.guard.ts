@@ -50,7 +50,7 @@ export class ApiKeyGuard implements CanActivate {
 
     // Set company context for multi-tenancy
     // This ensures all database queries are scoped to the correct company
-    this.utilityService.companyId = token.companyId;
+    this.utilityService.setCompanyId(token.companyId);
 
     // Attach token information to request for potential use in controllers
     (request as any).apiToken = token;

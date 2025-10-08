@@ -18,7 +18,11 @@ export class TimeTrackingService {
   
   constructor(private readonly prisma: PrismaService) {}
 
-  async startTimer(accountId: string, dto: StartTimerDto): Promise<EmployeeTimekeepingRaw> {
+  async startTimer(
+    accountId: string,
+    dto: StartTimerDto,
+    timeInIpAddress?: string
+  ): Promise<EmployeeTimekeepingRaw> {
     // Verify task exists and belongs to the user
     const task = await this.prisma.task.findFirst({
       where: {
@@ -79,7 +83,7 @@ export class TimeTrackingService {
         });
       }
 
-      // Create the time entry
+      // Create the time entry with TIME-IN geolocation
       return prisma.employeeTimekeepingRaw.create({
         data: {
           accountId,
@@ -90,6 +94,12 @@ export class TimeTrackingService {
           taskId: task.id,
           taskTitle: task.title,
           projectId: task.projectId,
+          // TIME-IN GEOLOCATION FIELDS
+          timeInLatitude: dto.timeInLatitude,
+          timeInLongitude: dto.timeInLongitude,
+          timeInLocation: dto.timeInLocation,
+          timeInIpAddress: timeInIpAddress,
+          timeInGeolocationEnabled: dto.timeInGeolocationEnabled,
         },
         include: {
           task: {
@@ -103,7 +113,11 @@ export class TimeTrackingService {
     });
   }
 
-  async stopTimer(accountId: string, dto: StopTimerDto): Promise<EmployeeTimekeepingRaw> {
+  async stopTimer(
+    accountId: string,
+    dto: StopTimerDto,
+    timeOutIpAddress?: string
+  ): Promise<EmployeeTimekeepingRaw> {
     // Find the current running timer
     const currentTimer = await this.getCurrentTimer(accountId);
     if (!currentTimer) {
@@ -114,12 +128,18 @@ export class TimeTrackingService {
     const timeIn = new Date(currentTimer.timeIn);
     const timeSpan = (timeOut.getTime() - timeIn.getTime()) / 1000 / 60; // Convert to minutes
 
-    // Update the timer
+    // Update the timer with TIME-OUT geolocation
     return this.prisma.employeeTimekeepingRaw.update({
       where: { id: currentTimer.id },
       data: {
         timeOut,
         timeSpan,
+        // TIME-OUT GEOLOCATION FIELDS
+        timeOutLatitude: dto.timeOutLatitude,
+        timeOutLongitude: dto.timeOutLongitude,
+        timeOutLocation: dto.timeOutLocation,
+        timeOutIpAddress: timeOutIpAddress,
+        timeOutGeolocationEnabled: dto.timeOutGeolocationEnabled,
       },
       include: {
         task: {
@@ -176,6 +196,12 @@ export class TimeTrackingService {
       timeIn: timer.timeIn,
       elapsedSeconds,
       task: timer.task,
+      // Include TIME-IN geolocation
+      timeInLatitude: timer.timeInLatitude,
+      timeInLongitude: timer.timeInLongitude,
+      timeInLocation: timer.timeInLocation,
+      timeInIpAddress: timer.timeInIpAddress,
+      timeInGeolocationEnabled: timer.timeInGeolocationEnabled,
     };
   }
 
@@ -304,7 +330,11 @@ export class TimeTrackingService {
     });
   }
 
-  async createTaskAndStart(accountId: string, dto: CreateTaskAndStartDto): Promise<{
+  async createTaskAndStart(
+    accountId: string,
+    dto: CreateTaskAndStartDto,
+    timeInIpAddress?: string
+  ): Promise<{
     task: Task;
     timer: EmployeeTimekeepingRaw;
   }> {
@@ -363,7 +393,7 @@ export class TimeTrackingService {
         },
       });
 
-      // Start the timer with the new task
+      // Start the timer with TIME-IN geolocation
       const timer = await prisma.employeeTimekeepingRaw.create({
         data: {
           accountId,
@@ -374,6 +404,12 @@ export class TimeTrackingService {
           taskId: task.id,
           taskTitle: task.title,
           projectId: task.projectId,
+          // TIME-IN GEOLOCATION FIELDS
+          timeInLatitude: dto.timeInLatitude,
+          timeInLongitude: dto.timeInLongitude,
+          timeInLocation: dto.timeInLocation,
+          timeInIpAddress: timeInIpAddress,
+          timeInGeolocationEnabled: dto.timeInGeolocationEnabled,
         },
         include: {
           task: {

@@ -26,14 +26,40 @@ import { AccountSocketDataInterface } from '@modules/communication/socket/socket
 import { TelegramService } from '@modules/communication/telegram/telegram/telegram.service';
 import { ScopeList } from '@prisma/client';
 import * as Sentry from '@sentry/nestjs';
+import { ClsService } from 'nestjs-cls';
 
 @Injectable()
 export class UtilityService {
   @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger;
   @Inject() private telegramService: TelegramService;
-  public accountInformation: AccountSocketDataInterface = null;
-  public companyId: number = null;
-  constructor() {}
+
+  // Remove instance properties - now using ClsService for request-scoped storage
+  // public accountInformation: AccountSocketDataInterface = null;
+  // public companyId: number = null;
+
+  constructor(private readonly cls: ClsService) {}
+
+  // Getter for accountInformation - retrieves from request-scoped context
+  get accountInformation(): AccountSocketDataInterface {
+    if (!this.cls.isActive()) {
+      throw new Error(
+        'CLS context not available. Request context has not been properly initialized. ' +
+        'This usually means the request is being processed outside of the normal request lifecycle.'
+      );
+    }
+    return this.cls.get('accountInformation');
+  }
+
+  // Getter for companyId - retrieves from request-scoped context
+  get companyId(): number {
+    if (!this.cls.isActive()) {
+      throw new Error(
+        'CLS context not available. Request context has not been properly initialized. ' +
+        'This usually means the request is being processed outside of the normal request lifecycle.'
+      );
+    }
+    return this.cls.get('companyId');
+  }
 
   log(data: any) {
     this.logger.info(data);
@@ -44,7 +70,16 @@ export class UtilityService {
   }
 
   setAccountInformation(accountInformation: AccountSocketDataInterface) {
-    this.accountInformation = accountInformation;
+    // Ensure CLS context is available
+    if (!this.cls.isActive()) {
+      throw new Error(
+        'CLS context not available. Cannot set account information. ' +
+        'This usually means the ClsMiddleware has not been properly initialized.'
+      );
+    }
+
+    // Store in request-scoped context
+    this.cls.set('accountInformation', accountInformation);
 
     // Require company ID - throw error if not present
     if (!accountInformation.company?.id) {
@@ -53,21 +88,37 @@ export class UtilityService {
       );
     }
 
-    this.companyId = accountInformation.company.id;
+    // Store companyId in request-scoped context
+    this.cls.set('companyId', accountInformation.company.id);
   }
 
   clearContext() {
-    this.accountInformation = null;
-    this.companyId = null;
-    this.logger.info('Cleared user context for system task execution');
+    // Clear from request-scoped context only if available
+    if (this.cls.isActive()) {
+      this.cls.set('accountInformation', null);
+      this.cls.set('companyId', null);
+      this.logger.info('Cleared user context for system task execution');
+    }
+  }
+
+  // Helper method to set only companyId (for system operations without full account context)
+  setCompanyId(companyId: number) {
+    if (!this.cls.isActive()) {
+      throw new Error(
+        'CLS context not available. Cannot set company ID. ' +
+        'This usually means the ClsMiddleware has not been properly initialized.'
+      );
+    }
+    this.cls.set('companyId', companyId);
   }
 
   hasScope(scopeName: ScopeList | string): boolean {
-    if (!this.accountInformation || !this.accountInformation.role) {
+    const accountInfo = this.accountInformation; // Uses getter
+    if (!accountInfo || !accountInfo.role) {
       return false;
     }
 
-    const scopeList = this.accountInformation.role.scopeList || [];
+    const scopeList = accountInfo.role.scopeList || [];
 
     // Check if scopeName exists in the scopeList
     // This works for both enum values (which become strings) and dynamic string scopes
@@ -75,7 +126,8 @@ export class UtilityService {
   }
 
   async getUserBranchId(): Promise<number | null> {
-    if (!this.accountInformation) {
+    const accountInfo = this.accountInformation; // Uses getter
+    if (!accountInfo) {
       return null;
     }
 
@@ -85,7 +137,7 @@ export class UtilityService {
 
     try {
       const employeeData = await prisma.employeeData.findUnique({
-        where: { accountId: this.accountInformation.id },
+        where: { accountId: accountInfo.id },
         select: { branchId: true },
       });
 

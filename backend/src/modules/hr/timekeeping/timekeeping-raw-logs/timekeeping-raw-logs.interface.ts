@@ -22,14 +22,18 @@ export interface TimekeepingRawLogResponse {
     key: string;
     label: string;
   };
-  remarks: string | null;
+  // TIME-IN GEOLOCATION
+  timeInLocation: string | null;
+  timeInIpAddress: string | null;
+  // TIME-OUT GEOLOCATION
+  timeOutLocation: string | null;
+  timeOutIpAddress: string | null;
   importBatchId: string | null;
   importBatch: {
     id: string;
     fileName: string;
   } | null;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface TimekeepingRawLogListResponse {

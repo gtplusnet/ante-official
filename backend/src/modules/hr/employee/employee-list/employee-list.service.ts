@@ -606,9 +606,23 @@ export class EmployeeListService {
   }
 
   async toContractResponseDTO(contract: any): Promise<ContractDataResponse> {
-    const contractFile = contract.contractFileId
-      ? await this.fileUploadService.getFileInformation(contract.contractFileId)
-      : null;
+    let contractFile = null;
+
+    // Safely fetch contract file, handle case where file doesn't exist
+    if (contract.contractFileId) {
+      try {
+        contractFile = await this.fileUploadService.getFileInformation(
+          contract.contractFileId,
+        );
+      } catch (error) {
+        // File not found or other error - log and continue with null
+        this.utilityService.log(
+          `Contract file not found for contractFileId: ${contract.contractFileId}`,
+        );
+        contractFile = null;
+      }
+    }
+
     const employeeInformation = await this.prisma.employeeData.findUnique({
       where: { accountId: contract.accountId },
     });
@@ -623,7 +637,7 @@ export class EmployeeListService {
       ),
       monthlyRate: this.utilityService.formatCurrency(contract.monthlyRate),
       contractFileId: contract.contractFileId,
-      contractFile: contract.contractFileId ? contractFile : null,
+      contractFile: contractFile,
       isActive: contract.isActive,
       isEmployeeActiveContract:
         employeeInformation &&

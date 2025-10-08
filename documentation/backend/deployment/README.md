@@ -8,11 +8,13 @@ This guide covers the deployment process for the GEER-ANTE ERP backend across di
 
 ### Environment Overview
 
-| Environment | Server | URL | Purpose |
-|------------|--------|-----|---------|
+| Environment | Infrastructure | URL | Purpose |
+|------------|----------------|-----|---------|
 | Development | Local | http://localhost:3000 | Local development |
-| Staging | 157.230.246.107 | https://api-staging.ante.ph | Testing and QA |
-| Production | 178.128.49.38 | https://api.ante.ph | Live system |
+| Staging | DigitalOcean App Platform | https://ante-backend-staging-q6udd.ondigitalocean.app | Testing and QA |
+| Production | DigitalOcean App Platform | https://ante-backend-production-gael2.ondigitalocean.app | Live system |
+
+**Note**: Old server-based deployments have been migrated to DigitalOcean App Platform (Docker containers). See Migration section below.
 
 ## Pre-Deployment Checklist
 
@@ -28,133 +30,75 @@ This guide covers the deployment process for the GEER-ANTE ERP backend across di
 - [ ] Performance impact assessed
 - [ ] Rollback plan prepared
 
-## Traditional Deployment (PM2)
+## Current Deployment Method (DigitalOcean App Platform)
 
-### Prerequisites
+### Overview
 
-1. **Server Requirements**
-   - Ubuntu 20.04 LTS or higher
-   - Node.js 20.x
-   - Yarn package manager
-   - PostgreSQL 14.x
-   - MongoDB 6.x (if required)
-   - PM2 process manager
-   - Nginx (for reverse proxy)
-   - SSL certificates
+**Current deployment uses GitHub Actions + DigitalOcean App Platform:**
+- ✅ Automated CI/CD via GitHub workflows
+- ✅ Docker containers (GHCR registry)
+- ✅ Staging and Production environments
+- ✅ Automatic deployments on push to `main` (staging) or `production` branches
 
-2. **Server Setup**
+### Deployment Process
+
+1. **Push to GitHub**
    ```bash
-   # Update system
-   sudo apt update && sudo apt upgrade -y
+   # For staging
+   git push origin main
 
-   # Install Node.js
-   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-   sudo apt install -y nodejs
-
-   # Install Yarn
-   npm install -g yarn
-
-   # Install PM2
-   npm install -g pm2
-
-   # Install PostgreSQL
-   sudo apt install postgresql postgresql-contrib
-
-   # Install MongoDB (optional)
-   sudo apt install mongodb
-
-   # Install Nginx
-   sudo apt install nginx
+   # For production
+   git push origin production
    ```
 
-### Staging Deployment
+2. **GitHub Actions Workflow**
+   - Detects changes in backend/
+   - Builds Docker image
+   - Pushes to GitHub Container Registry (GHCR)
+   - Triggers DigitalOcean deployment
 
-#### Automated Deployment Script
+3. **Monitor Deployment**
+   ```bash
+   # View workflow status
+   gh run list --limit 5
+
+   # Watch specific run
+   gh run watch <run-id>
+   ```
+
+### Manual Deployment Trigger
 
 ```bash
-# Run from local machine
-./deploy-staging.sh
+# Trigger staging deployment
+gh workflow run deploy.yml --ref main
+
+# Trigger production deployment
+gh workflow run deploy-production.yml --ref production
 ```
 
-#### Manual Deployment Steps
+### DigitalOcean App Platform URLs
 
-1. **Connect to staging server**
-   ```bash
-   ssh jdev@157.230.246.107
-   ```
+**Staging:**
+- App ID: `c65a4023-4aa4-40c4-92e4-b9b89bb0b4dd`
+- URL: https://ante-backend-staging-q6udd.ondigitalocean.app
+- Dashboard: https://cloud.digitalocean.com/apps/c65a4023-4aa4-40c4-92e4-b9b89bb0b4dd
 
-2. **Navigate to project directory**
-   ```bash
-   cd /home/jdev/ante/backend
-   ```
+**Production:**
+- App ID: `7d280155-6063-4dbd-b7ac-31f48a4cf97c`
+- URL: https://ante-backend-production-gael2.ondigitalocean.app
+- Dashboard: https://cloud.digitalocean.com/apps/7d280155-6063-4dbd-b7ac-31f48a4cf97c
 
-3. **Pull latest changes**
-   ```bash
-   git pull origin main
-   ```
+---
 
-4. **Install dependencies**
-   ```bash
-   yarn install
-   ```
+## Legacy Deployment Methods (Reference Only)
 
-5. **Run database migrations**
-   ```bash
-   npx prisma migrate deploy
-   ```
+**⚠️ NOTE**: The sections below document old deployment methods using PM2 on dedicated servers. These servers have been decommissioned:
+- Old Staging Server: 157.230.246.107 (Only Redis remains)
+- Old Production Server: 178.128.49.38 ❌ **DELETED**
 
-6. **Build the application**
-   ```bash
-   yarn build
-   ```
+### Traditional Deployment (PM2) - DEPRECATED
 
-7. **Restart PM2 process**
-   ```bash
-   pm2 restart backend
-   # Or if first time
-   pm2 start dist/main.js --name backend
-   ```
-
-8. **Save PM2 configuration**
-   ```bash
-   pm2 save
-   pm2 startup
-   ```
-
-### Production Deployment
-
-#### Automated Deployment Script
-
-```bash
-# Run from local machine
-./deploy-production.sh
-```
-
-#### Manual Deployment Steps
-
-1. **Connect to production server**
-   ```bash
-   ssh jdev@178.128.49.38
-   ```
-
-2. **Create backup**
-   ```bash
-   # Backup database
-   pg_dump ante_db > backup_$(date +%Y%m%d_%H%M%S).sql
-   
-   # Backup application files
-   tar -czf backend_backup_$(date +%Y%m%d_%H%M%S).tar.gz /home/jdev/ante/backend
-   ```
-
-3. **Navigate to project directory**
-   ```bash
-   cd /home/jdev/ante/backend
-   ```
-
-4. **Pull latest changes**
-   ```bash
-   git pull origin main
-   ```
+**This method is no longer used but documented for reference.**
 
 5. **Install production dependencies**
    ```bash

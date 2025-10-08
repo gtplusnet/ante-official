@@ -3,14 +3,6 @@ name: Deploy to Vercel
 on:
   push:
     branches: [main]
-    paths:
-      - 'frontends/frontend-main/**'
-      - 'frontends/frontend-gate-app/**'
-      - 'frontends/frontend-guardian-app/**'
-      - 'backend/**'
-      - 'package.json'
-      - 'yarn.lock'
-      - '.github/workflows/deploy.yml'
   workflow_dispatch:  # Allow manual triggering
 
 jobs:
@@ -20,6 +12,7 @@ jobs:
       frontend-main-changed: ${{ steps.manual.outputs.all == 'true' || steps.changes.outputs.frontend-main }}
       gate-app-changed: ${{ steps.manual.outputs.all == 'true' || steps.changes.outputs.gate-app }}
       guardian-app-changed: ${{ steps.manual.outputs.all == 'true' || steps.changes.outputs.guardian-app }}
+      website-multibook-changed: ${{ steps.manual.outputs.all == 'true' || steps.changes.outputs.website-multibook }}
       backend-changed: ${{ steps.manual.outputs.all == 'true' || steps.changes.outputs.backend }}
     steps:
       - uses: actions/checkout@v4
@@ -53,6 +46,10 @@ jobs:
               - 'frontends/frontend-guardian-app/**'
               - 'package.json'
               - 'yarn.lock'
+            website-multibook:
+              - 'websites/multibook/**'
+              - 'package.json'
+              - 'yarn.lock'
             backend:
               - 'backend/**'
               - 'package.json'
@@ -60,7 +57,7 @@ jobs:
 
   notify-start:
     needs: detect-changes
-    if: needs.detect-changes.outputs.frontend-main-changed == 'true' || needs.detect-changes.outputs.gate-app-changed == 'true' || needs.detect-changes.outputs.guardian-app-changed == 'true' || needs.detect-changes.outputs.backend-changed == 'true'
+    if: needs.detect-changes.outputs.frontend-main-changed == 'true' || needs.detect-changes.outputs.gate-app-changed == 'true' || needs.detect-changes.outputs.guardian-app-changed == 'true' || needs.detect-changes.outputs.website-multibook-changed == 'true' || needs.detect-changes.outputs.backend-changed == 'true'
     runs-on: [self-hosted, staging]
     steps:
       - name: Send deployment start notification
@@ -86,6 +83,10 @@ jobs:
             MESSAGE="${MESSAGE}👨‍👩‍👧 Guardian App will be deployed%0A"
           fi
 
+          if [ "${{ needs.detect-changes.outputs.website-multibook-changed }}" == "true" ]; then
+            MESSAGE="${MESSAGE}📚 Website Multibook will be deployed%0A"
+          fi
+
           if [ "${{ needs.detect-changes.outputs.backend-changed }}" == "true" ]; then
             MESSAGE="${MESSAGE}⚙️ Backend API will be deployed%0A"
           fi
@@ -107,17 +108,17 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Copy staging environment config
+      - name: Prepare staging environment
         run: |
           cd frontends/frontend-main
           cp environment/env.staging .env
-          echo "Environment file configured:"
+          echo "✅ Copied env.staging to .env"
           cat .env
 
-      - name: Deploy Frontend Main to Vercel
+      - name: Deploy Frontend Main to Vercel (Staging Environment)
         run: |
           cd frontends/frontend-main
-          npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+          npx vercel --token=${{ secrets.VERCEL_TOKEN }} --target=staging --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND_MAIN }}
@@ -134,10 +135,10 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Deploy Gate App to Vercel
+      - name: Deploy Gate App to Vercel (Preview/Staging)
         run: |
           cd frontends/frontend-gate-app
-          npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+          npx vercel --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_GATE_APP }}
@@ -154,13 +155,33 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Deploy Guardian App to Vercel
+      - name: Deploy Guardian App to Vercel (Preview/Staging)
         run: |
           cd frontends/frontend-guardian-app
-          npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+          npx vercel --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_GUARDIAN_APP }}
+
+  deploy-website-multibook:
+    needs: [detect-changes, notify-start]
+    if: needs.detect-changes.outputs.website-multibook-changed == 'true'
+    runs-on: [self-hosted, staging]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Deploy Website Multibook to Vercel (Preview/Staging)
+        run: |
+          cd websites/multibook
+          npx vercel --token=${{ secrets.VERCEL_TOKEN }} --yes
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEBSITE_MULTIBOOK }}
 
   build-and-deploy-backend:
     needs: [detect-changes, notify-start]
@@ -228,7 +249,7 @@ jobs:
           echo "View deployment: https://cloud.digitalocean.com/apps/${{ secrets.DO_APP_ID_STAGING }}/deployments/$DEPLOYMENT_ID"
 
   notify:
-    needs: [detect-changes, deploy-frontend-main, deploy-gate-app, deploy-guardian-app, build-and-deploy-backend]
+    needs: [detect-changes, deploy-frontend-main, deploy-gate-app, deploy-guardian-app, deploy-website-multibook, build-and-deploy-backend]
     if: always()
     runs-on: [self-hosted, staging]
     steps:
@@ -268,6 +289,16 @@ jobs:
             MESSAGE="${MESSAGE}⚠️ *Guardian App:* Deployment skipped (error in workflow)%0A%0A"
           fi
 
+          # Website Multibook deployment status
+          if [ "${{ needs.deploy-website-multibook.result }}" == "success" ]; then
+            MESSAGE="${MESSAGE}✅ *Website Multibook:* Successfully deployed%0A"
+            MESSAGE="${MESSAGE}   🔗 https://multibook.geertest.com%0A%0A"
+          elif [ "${{ needs.deploy-website-multibook.result }}" == "failure" ]; then
+            MESSAGE="${MESSAGE}❌ *Website Multibook:* Deployment failed%0A%0A"
+          elif [ "${{ needs.deploy-website-multibook.result }}" == "skipped" ] && [ "${{ needs.detect-changes.outputs.website-multibook-changed }}" == "true" ]; then
+            MESSAGE="${MESSAGE}⚠️ *Website Multibook:* Deployment skipped (error in workflow)%0A%0A"
+          fi
+
           # Backend deployment status
           if [ "${{ needs.build-and-deploy-backend.result }}" == "success" ]; then
             MESSAGE="${MESSAGE}✅ *Backend API:* Successfully deployed%0A"
@@ -279,8 +310,8 @@ jobs:
           fi
 
           # Overall status
-          if [ "${{ needs.deploy-frontend-main.result }}" == "success" ] || [ "${{ needs.deploy-gate-app.result }}" == "success" ] || [ "${{ needs.deploy-guardian-app.result }}" == "success" ] || [ "${{ needs.build-and-deploy-backend.result }}" == "success" ]; then
-            if [ "${{ needs.deploy-frontend-main.result }}" == "failure" ] || [ "${{ needs.deploy-gate-app.result }}" == "failure" ] || [ "${{ needs.deploy-guardian-app.result }}" == "failure" ] || [ "${{ needs.build-and-deploy-backend.result }}" == "failure" ]; then
+          if [ "${{ needs.deploy-frontend-main.result }}" == "success" ] || [ "${{ needs.deploy-gate-app.result }}" == "success" ] || [ "${{ needs.deploy-guardian-app.result }}" == "success" ] || [ "${{ needs.deploy-website-multibook.result }}" == "success" ] || [ "${{ needs.build-and-deploy-backend.result }}" == "success" ]; then
+            if [ "${{ needs.deploy-frontend-main.result }}" == "failure" ] || [ "${{ needs.deploy-gate-app.result }}" == "failure" ] || [ "${{ needs.deploy-guardian-app.result }}" == "failure" ] || [ "${{ needs.deploy-website-multibook.result }}" == "failure" ] || [ "${{ needs.build-and-deploy-backend.result }}" == "failure" ]; then
               MESSAGE="${MESSAGE}⚠️ *Status:* Partial Success"
             else
               MESSAGE="${MESSAGE}🎉 *Status:* All deployments successful!"

@@ -265,6 +265,8 @@ ante-official/
 │   ├── user-manual/      # VitePress docs
 │   ├── frontend-gate-app/      # School gate app
 │   └── frontend-guardian-app/  # Parent portal
+├── websites/             # CMS-connected websites (git removed)
+│   └── multibook/        # Multibook website
 ├── docker/               # Docker configurations
 ├── documentation/        # Technical documentation
 ├── playwright-testing/   # E2E tests (centralized)
@@ -327,6 +329,11 @@ Dashboard, HRIS, Projects, Tasks, Treasury, Assets, CRM, Communication, Settings
 - **Gate App**: School attendance management
 - **Guardian App**: Parent portal for student monitoring
 
+### CMS-Connected Websites (`/websites/`)
+- **Multibook**: Basic website connected to ANTE CMS (Port: 5001)
+- **Port Convention**: Websites use port series 5001, 5002, 5003, etc.
+- **Note**: Additional websites will be added here, each as standalone projects (git removed after cloning)
+
 ---
 
 ## 🔄 Development Workflows
@@ -380,10 +387,69 @@ Dashboard, HRIS, Projects, Tasks, Treasury, Assets, CRM, Communication, Settings
 5. **CRITICAL**: Update `isExpandedNav` in `MainLayout.vue`
 
 ### Deployment
-- Build Docker images: `docker build --target production-alpine`
-- Environment files in each module (`.env.example`)
-- PM2 for process management
-- Consult deployment docs for CI/CD setup
+
+**Infrastructure Overview:**
+- **Backend**: DigitalOcean App Platform (Docker containers from GHCR)
+- **Frontends**: Vercel (3 apps: Main, Gate, Guardian)
+- **CI/CD**: GitHub Actions workflows (self-hosted runner on utility server)
+- **Utility Server**: 157.230.246.107 (GitHub Runner, Redis, MongoDB)
+- **Branches**: `main` (staging), `production` (production)
+
+**Utility Server (157.230.246.107):**
+- **Purpose**: Shared infrastructure services
+- **Services**:
+  - GitHub Actions Self-Hosted Runner (staging workflows)
+  - Redis (port 16379, DB 1 for staging)
+  - MongoDB (port 27017, staging database)
+- **Access**: `ssh jdev@157.230.246.107`
+
+**Staging Environment:**
+- Workflow: `.github/workflows/deploy.yml`
+- Trigger: Push to `main` branch
+- Runner: Self-hosted on 157.230.246.107
+- Backend: https://ante-backend-staging-q6udd.ondigitalocean.app
+- Frontends:
+  - Main: https://ante-main-staging.vercel.app (alias: https://ante.geertest.com)
+  - Gate: https://ante-gate-staging.vercel.app
+  - Guardian: https://ante-guardian-staging.vercel.app
+- Database:
+  - PostgreSQL: Supabase (ofnmfmwywkhosrmycltb)
+  - MongoDB: 157.230.246.107:27017 (ante-staging)
+  - Redis: 157.230.246.107:16379 (DB 1)
+
+**Production Environment:**
+- Workflow: `.github/workflows/deploy-production.yml`
+- Trigger: Push to `production` branch
+- Backend: https://ante-backend-production-gael2.ondigitalocean.app
+- Frontends:
+  - Main: https://ante-main-production.vercel.app (alias: https://ante.ph)
+  - Gate: https://ante-gate-production.vercel.app
+  - Guardian: https://ante-guardian-production.vercel.app
+- Database:
+  - PostgreSQL: Supabase (ccdlrujemqfwclogysjv)
+  - MongoDB: MongoDB Atlas (ante-production)
+  - Redis: Redis Cloud (DB 0)
+
+**Deployment Process:**
+1. Push to `main` (staging) or `production` branch
+2. GitHub Actions detects changes (path filters)
+3. Backend: Builds Docker image → Pushes to GHCR → Triggers DO deployment
+4. Frontends: Deploys changed apps to Vercel
+5. Telegram notifications for deployment status
+
+**Manual Deployment:**
+```bash
+# Trigger staging deployment
+gh workflow run deploy.yml --ref main
+
+# Trigger production deployment
+gh workflow run deploy-production.yml --ref production
+```
+
+**Environment Configuration:**
+- Staging: `frontends/{app}/environment/env.development`
+- Production: `frontends/{app}/environment/env.production`
+- Backend: Environment variables configured in DigitalOcean App Platform
 
 ## 🎯 Testing Requirements
 - **Playwright**: Headless only (never `--headed` or `--ui`)
@@ -408,4 +474,4 @@ Dashboard, HRIS, Projects, Tasks, Treasury, Assets, CRM, Communication, Settings
 
 **Purpose**: This file provides critical context for Claude AI to work effectively on this project. Keep it concise. Move detailed documentation to `/documentation/` folder and reference it here.
 
-**Last Updated**: 2025-10-05
+**Last Updated**: 2025-10-06

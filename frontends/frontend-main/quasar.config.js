@@ -52,11 +52,24 @@ module.exports = configure(function (/* ctx */) {
       env: (() => {
         const dotenv = require('dotenv');
         const path = require('path');
-        
-        // Only load the .env file (which is created from env.staging or env.production)
+
+        // Load .env file for local development (if exists)
         const result = dotenv.config({ path: path.resolve(__dirname, '.env') });
-        
-        return result.parsed || {};
+
+        // Merge with process.env (Vercel injects variables here)
+        // process.env takes precedence over .env file
+        return {
+          ...(result.parsed || {}),
+          ...Object.keys(process.env).reduce((acc, key) => {
+            // Only include variables that are relevant to the frontend
+            if (key.startsWith('VITE_') || key.startsWith('API_') ||
+                key === 'ENVIRONMENT' || key === 'WHITELABEL' ||
+                key === 'SOCKET_URL' || key.includes('SUPABASE')) {
+              acc[key] = process.env[key];
+            }
+            return acc;
+          }, {})
+        };
       })(),
       target: {
         browser: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari13.1'],
@@ -73,7 +86,12 @@ module.exports = configure(function (/* ctx */) {
       // publicPath: '/',
       // analyze: true,
       // env: {},
-      // rawDefine: {}
+      rawDefine: {
+        '__API_URL': JSON.stringify(process.env.API_URL || 'http://localhost:3000'),
+        '__ENVIRONMENT': JSON.stringify(process.env.ENVIRONMENT || 'development'),
+        '__WHITELABEL': JSON.stringify(process.env.WHITELABEL || 'ante'),
+        '__SOCKET_URL': JSON.stringify(process.env.VITE_SOCKET_URL || 'ws://localhost:4000'),
+      },
       // ignorePublicFolder: true,
       // minify: false,
       // polyfillModulePreload: true,
