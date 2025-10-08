@@ -163,7 +163,6 @@ export default {
       this.$q.loading.show();
       try {
         const params = this.formatApiParams();
-
         let apiUrl =
           this.data.type === 'simple' ? '/items' : '/items/withVariants';
 

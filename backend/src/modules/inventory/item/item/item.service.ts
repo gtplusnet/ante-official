@@ -896,7 +896,6 @@ export class ItemService {
     itemDto: UpdateItemWithVariantsDto,
   ) {
     await this.ensureUniqueSKU(itemDto.sku, itemId);
-
     const tagIds = itemDto.tags ? await this.createTags(itemDto.tags) : [];
     const keywordIds = itemDto.keywords ? await this.createKeywords(itemDto.keywords) : [];
 
