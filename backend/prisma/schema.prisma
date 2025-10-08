@@ -4274,6 +4274,7 @@ enum AnnouncementPriority {
 enum LeadDealStatus {
   OPPORTUNITY
   CONTACTED
+  TECHNICAL_MEETING
   PROPOSAL
   IN_NEGOTIATION
   WIN

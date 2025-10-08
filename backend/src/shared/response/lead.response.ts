@@ -8,6 +8,7 @@ export interface LeadDataResponse extends ProjectDataResponse {
   personInChargeId?: string;
   personInCharge?: AccountDataResponse;
   createdAt?: DateFormat;
+  updatedAt?: DateFormat;
   clientId?: number;
   locationId?: string;
   abc?: any; // CurrencyFormat

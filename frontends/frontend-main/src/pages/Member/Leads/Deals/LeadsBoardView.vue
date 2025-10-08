@@ -4,20 +4,26 @@
   </div>
 
   <template v-else>
-    <div class="board-container q-pa-sm" v-dragscroll.x="true">
+    <div class="board-container q-pa-sm" v-dragscroll.x="!isDragging">
       <div v-for="column in boardColumns" :key="column.boardKey" class="board-column" :class="{ 'drop-active': dragOverColumn === column.boardKey }" @dragover.prevent="handleDragOver(column.boardKey)" @dragleave="handleDragLeave" @drop="handleDrop($event, column.boardKey)">
         <div class="column-header">
           <div class="column-header-top">
-            <h6 class="column-title text-title-large">{{ column.boardName }}</h6>
+            <h6 class="column-title text-title-small">{{ column.boardName }}</h6>
             <div class="q-badge text-title-small" :class="column.boardProjects?.length === 0 ? 'q-badge-zero' : ''">{{ column.boardProjects?.length || 0 }}</div>
           </div>
           <div class="divider q-my-sm"></div>
-          <div class="column-total text-title-medium">
+          <div class="column-total text-title-small">
             {{ formatColumnTotal(column.boardProjects) }}
+          </div>
+          <div class="q-mt-sm">
+            <g-button icon="add" icon-size="md" class="full-width" color="grey" label="Add Lead" variant="tonal" @click="openLeadCreateDialog(column.boardKey)" />
           </div>
         </div>
         <div class="column-content">
-          <div v-for="lead in column.boardProjects" :key="lead.id" class="lead-card" draggable="true" @dragstart="handleDragStart($event, lead)" @dragend="handleDragEnd" @click="openLead(lead.id, lead.id === leadViewId)" :class="{ 'active-card': lead.id === leadViewId }">
+          <div v-for="lead in column.boardProjects" :key="lead.id" class="lead-card" :class="{
+            'drag-source': draggedLead?.id === lead.id && isDragging,
+            'active-card': lead.id === leadViewId
+          }" draggable="true" @dragstart="handleDragStart($event, lead)" @dragend="handleDragEnd" @click="openLead(lead.id, lead.id === leadViewId)">
             <div class="lead-card-header">
               <div class="lead-name text-title-small">{{ lead.name }}</div>
               <q-btn flat round dense size="sm" icon="more_vert" @click.stop>
@@ -37,9 +43,9 @@
             </div>
 
             <div class="lead-card-body text-label-small">
-              <div class="deal-badge row">
-                <div class="deal-type">{{ lead.leadType?.key || 'Deal Type' }}</div>
-                <div class="deal-status">{{ lead.winProbability?.label || 'N/A' }}</div>
+              <div class="deal-badge row items-center">
+                <span class="deal-type row items-center justify-center">{{ lead.leadType?.label }}</span>
+                <span class="deal-status row items-center justify-center">{{ lead.winProbability?.label }}</span>
               </div>
               <div class="avatar-container row items-center">
                 <q-avatar size="md">
@@ -50,32 +56,30 @@
               <div class="abc-item row justify-between" v-if="lead.abc">
                 <div class="row items-center">
                   <div class="row items-center q-mr-sm" :style="{ color: '#747786' }">
-                    <q-icon name="savings" size="18px" />
-                    <span class="text-label-medium">ABC</span>
+                    <q-icon name="payments" size="18px" />
+                    <span class="text-label-medium q-ml-xs">Total Contract:</span>
                   </div>
-                  <div class="text-bold text-label-medium" :style="{ color: 'var(--q-text-dark)' }">{{ lead.abc.formatCurrency }}</div>
+                  <div class="text-bold text-label-medium" :style="{ color: 'var(--q-text-dark)' }">{{ lead.initialCosting.formatCurrency }}</div>
                 </div>
               </div>
-              <div class="detail-item row justify-between" v-if="lead.mmr">
-                <div class="row items-center">
-                  <div class="row items-center q-mr-sm" :style="{ color: '#747786' }">
-                    <q-icon name="bar_chart" size="18px" />
-                    <span class="text-label-medium">MMR</span>
-                  </div>
-                  <div class="text-bold text-label-medium" :style="{ color: 'var(--q-text-dark)' }">{{ lead.mmr.formatCurrency }}</div>
+              <div class="detail-item row justify-between">
+                <div class="time-stage row items-center text-label-small text-dark">
+                  <q-icon name="history" size="16px" />
+                  <span class="q-ml-xs">{{ calculateTimeInStage(lead) }}</span>
                 </div>
-                <div class="dropdown" :class="openDropdowns[lead.id] ? 'active' : ''" @click.stop="toggleDropdown(lead.id, $event)">
+
+                <!-- <div class="dropdown" :class="openDropdowns[lead.id] ? 'active' : ''" @click.stop="toggleDropdown(lead.id, $event)">
                   <q-icon name="keyboard_arrow_down" class="q-icon" :style="{ color: 'var(--q-text-dark)' }" />
-                </div>
+                </div> -->
               </div>
 
-              <div v-if="openDropdowns[lead.id]" class="dropdown-content">
+              <!-- <div v-if="openDropdowns[lead.id]" class="dropdown-content">
                 <q-separator class="q-my-xs" />
 
                 <div class="note-container" @click.stop>
                   <q-input class="text-body-medium" v-model="textareaModel" clearable unelevated standout bg-color="yellow-2" autogrow stack-label input-style="color: var(--q-text-dark);" color="grey-6" label="Notes/Next Steps:" />
                 </div>
-              </div>
+              </div> -->
             </div>
           </div>
 
@@ -94,20 +98,15 @@
 <style scoped src="../Leads.scss"></style>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, defineAsyncComponent } from 'vue';
+import { defineComponent, ref, onMounted, onBeforeUnmount } from 'vue';
 import { useQuasar } from 'quasar';
 import { APIRequests } from 'src/utility/api.handler';
+import LeadCreateDialog from 'src/components/dialog/LeadDialog/LeadCreateDialog.vue';
+import ViewLeadDialog from 'src/components/dialog/LeadDialog/ViewLeadDialog.vue';
 import { LeadDataResponse } from '@shared/response';
 import { formatWord } from 'src/utility/formatter';
 import { dragscroll } from 'vue-dragscroll';
-
-// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
-const LeadCreateDialog = defineAsyncComponent(() =>
-  import('src/components/dialog/LeadDialog/LeadCreateDialog.vue')
-);
-const ViewLeadDialog = defineAsyncComponent(() =>
-  import('src/components/dialog/LeadDialog/ViewLeadDialog.vue')
-);
+import GButton from 'src/components/shared/buttons/GButton.vue';
 
 interface Lead {
   id: number;
@@ -122,6 +121,8 @@ interface Lead {
   leadBoardStage: string;
   winProbability: { label: string };
   leadType?: { key: string; label: string };
+  updatedAt?: { raw: Date; timeAgo: string };
+  initialCosting?: { formatCurrency: string; formatNumber: string; raw: number };
 }
 
 interface BoardColumn {
@@ -137,6 +138,7 @@ export default defineComponent({
   components: {
     LeadCreateDialog,
     ViewLeadDialog,
+    GButton,
   },
   directives: {
     dragscroll,
@@ -155,6 +157,9 @@ export default defineComponent({
     const isViewLeadDialogOpen = ref(false);
     const leadViewId = ref<number>(0);
     const activeCard = ref<boolean>(false);
+    const isDragging = ref<boolean>(false);
+    const currentTime = ref(new Date());
+    let timeUpdateInterval: NodeJS.Timeout | null = null;
 
     const toggleDropdown = (leadId: string | number, event: Event) => {
       event.stopPropagation();
@@ -191,9 +196,12 @@ export default defineComponent({
 
     const handleDragStart = (event: DragEvent, lead: Lead) => {
       draggedLead.value = lead;
-      event.dataTransfer!.effectAllowed = 'move';
-      event.dataTransfer!.setData('text/plain', lead.id.toString());
-
+      isDragging.value = true;
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', lead.id.toString());
+        event.dataTransfer.dropEffect = 'move';
+      }
       // Add dragging class to the element
       const target = event.target as HTMLElement;
       target.classList.add('dragging');
@@ -204,6 +212,7 @@ export default defineComponent({
       target.classList.remove('dragging');
       draggedLead.value = null;
       dragOverColumn.value = null;
+      isDragging.value = false;
     };
 
     const handleDragOver = (columnKey: string) => {
@@ -219,16 +228,22 @@ export default defineComponent({
       dragOverColumn.value = null;
 
       if (!draggedLead.value || draggedLead.value.leadBoardStage === targetColumnKey) {
+        draggedLead.value = null;
+        isDragging.value = false;
         return;
       }
 
       // Store the lead data before the API call
       const leadToMove = { ...draggedLead.value };
+      const originalStage = leadToMove.leadBoardStage;
+      const originalUpdatedAt = leadToMove.updatedAt;
+
+      // Clear drag state immediately for smooth UX
+      draggedLead.value = null;
+      isDragging.value = false;
 
       try {
-        await APIRequests.moveLead($q, leadToMove.id.toString(), targetColumnKey);
-
-        // Update the UI after successful API call
+        // Optimistically update the UI first
         const sourceColumn = boardColumns.value.find((col) => col.boardProjects?.some((lead) => lead.id === leadToMove.id));
         const targetColumn = boardColumns.value.find((col) => col.boardKey === targetColumnKey);
 
@@ -236,8 +251,12 @@ export default defineComponent({
           // Remove from source
           sourceColumn.boardProjects = sourceColumn.boardProjects?.filter((lead) => lead.id !== leadToMove.id) || [];
 
-          // Update lead stage
+          // Update lead stage and timestamp
           leadToMove.leadBoardStage = targetColumnKey;
+          leadToMove.updatedAt = {
+            raw: new Date(),
+            timeAgo: 'just now'
+          };
 
           // Add to target
           if (!targetColumn.boardProjects) {
@@ -246,16 +265,35 @@ export default defineComponent({
           targetColumn.boardProjects.push(leadToMove);
         }
 
-        // No notification needed for successful move
+        // Then update the database
+        await APIRequests.moveLead($q, leadToMove.id.toString(), targetColumnKey);
+
+        // Silent success - no notification needed for smooth UX
       } catch (error) {
         console.error('Failed to move lead:', error);
+
+        // Rollback on error - restore to original state
+        const sourceColumn = boardColumns.value.find((col) => col.boardKey === originalStage);
+        const targetColumn = boardColumns.value.find((col) => col.boardProjects?.some((lead) => lead.id === leadToMove.id));
+
+        if (sourceColumn && targetColumn) {
+          // Remove from incorrect target
+          targetColumn.boardProjects = targetColumn.boardProjects?.filter((lead) => lead.id !== leadToMove.id) || [];
+
+          // Restore to original source and timestamp
+          leadToMove.leadBoardStage = originalStage;
+          leadToMove.updatedAt = originalUpdatedAt;
+          if (!sourceColumn.boardProjects) {
+            sourceColumn.boardProjects = [];
+          }
+          sourceColumn.boardProjects.push(leadToMove);
+        }
+
         $q.notify({
           color: 'negative',
           message: 'Failed to move lead',
           icon: 'report_problem',
         });
-        // Refresh the board to reset the state
-        await fetchBoardData();
       }
     };
 
@@ -361,8 +399,57 @@ export default defineComponent({
       isLeadDialogOpen.value = true;
     };
 
+    const openLeadCreateDialog = (boardKey: string) => {
+      leadData.value = {
+        leadBoardStage: boardKey
+      } as LeadDataResponse;
+      isLeadDialogOpen.value = true;
+    };
+
+    const calculateTimeInStage = (lead: Lead) => {
+      if (!lead.updatedAt?.raw) {
+        return 'Recently added';
+      }
+
+      // Reference currentTime.value to make this reactive
+      const now = currentTime.value;
+      const updatedAt = new Date(lead.updatedAt.raw);
+      const diffInMilliseconds = now.getTime() - updatedAt.getTime();
+      const diffInMinutes = Math.floor(diffInMilliseconds / (1000 * 60));
+      const diffInHours = Math.floor(diffInMilliseconds / (1000 * 60 * 60));
+      const diffInDays = Math.floor(diffInHours / 24);
+      const diffInWeeks = Math.floor(diffInDays / 7);
+      const diffInMonths = Math.floor(diffInDays / 30);
+
+      if (diffInMinutes < 1) {
+        return 'Just now';
+      } else if (diffInMinutes < 60) {
+        return `${diffInMinutes}min${diffInMinutes === 1 ? '' : 's'} ago`;
+      } else if (diffInHours < 24) {
+        return `${diffInHours}hr${diffInHours === 1 ? '' : 's'} ago`;
+      } else if (diffInDays < 7) {
+        return `${diffInDays} ${diffInDays === 1 ? 'day' : 'days'}`;
+      } else if (diffInWeeks < 4) {
+        return `${diffInWeeks} ${diffInWeeks === 1 ? 'week' : 'weeks'}`;
+      } else {
+        return `${diffInMonths} ${diffInMonths === 1 ? 'month' : 'months'}`;
+      }
+    };
+
     onMounted(() => {
       fetchBoardData();
+
+      // Update current time every 30 seconds for real-time time stage updates
+      timeUpdateInterval = setInterval(() => {
+        currentTime.value = new Date();
+      }, 30000); // 30 seconds
+    });
+
+    onBeforeUnmount(() => {
+      // Clean up interval to prevent memory leaks
+      if (timeUpdateInterval) {
+        clearInterval(timeUpdateInterval);
+      }
     });
 
     return {
@@ -376,6 +463,7 @@ export default defineComponent({
       openDropdowns,
       leadViewId,
       activeCard,
+      isDragging,
       handleDragStart,
       handleDragEnd,
       handleDragOver,
@@ -390,8 +478,10 @@ export default defineComponent({
       getTotalLeadsCount,
       handleLeadSaved,
       addLead,
+      openLeadCreateDialog,
       toggleDropdown,
       formatWord,
+      calculateTimeInStage,
     };
   },
 });

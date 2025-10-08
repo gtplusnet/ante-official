@@ -54,6 +54,12 @@ export class LeadService {
       );
     }
 
+    // Map board stage to status if provided, otherwise default to OPPORTUNITY
+    let status: LeadDealStatus = LeadDealStatus.OPPORTUNITY;
+    if (params.leadBoardStage) {
+      status = this.mapBoardStageToStatus(params.leadBoardStage);
+    }
+
     // Map LeadCreateDto to LeadDeal creation data
     const leadDealData = {
       dealName: params.name,
@@ -71,7 +77,7 @@ export class LeadService {
         params.personInChargeId ||
         loggedInAccount.id,
       pointOfContactId: params.clientId || null,
-      status: LeadDealStatus.OPPORTUNITY,
+      status: status,
       companyId: loggedInAccount.company.id,
       createdById: loggedInAccount.id,
       isDeleted: false,
@@ -99,6 +105,20 @@ export class LeadService {
     );
   }
 
+  private mapBoardStageToStatus(boardStage: string): LeadDealStatus {
+    const stageMap: { [key: string]: LeadDealStatus } = {
+      'prospect': LeadDealStatus.OPPORTUNITY,
+      'initial_meeting': LeadDealStatus.CONTACTED,
+      'technical_meeting': LeadDealStatus.TECHNICAL_MEETING,
+      'proposal': LeadDealStatus.PROPOSAL,
+      'in_negotiation': LeadDealStatus.IN_NEGOTIATION,
+      'won': LeadDealStatus.WIN,
+      'loss': LeadDealStatus.LOST,
+    };
+
+    return stageMap[boardStage] || LeadDealStatus.OPPORTUNITY;
+  }
+
   async leadBoard() {
     return this.getLeadBoard();
   }
@@ -111,40 +131,53 @@ export class LeadService {
     // Define lead board stages based on LeadDealStatus
     const leadBoards = [
       {
-        boardKey: 'opportunity',
-        boardTitle: 'Opportunity',
+        boardKey: 'prospect',
+        boardName: 'Prospect',
         boardType: 'lead',
         status: LeadDealStatus.OPPORTUNITY,
+        boardOrder: 1,
       },
       {
-        boardKey: 'contacted',
-        boardTitle: 'Contacted',
+        boardKey: 'initial_meeting',
+        boardName: 'Initial Meeting',
         boardType: 'lead',
         status: LeadDealStatus.CONTACTED,
+        boardOrder: 2,
+      },
+      {
+        boardKey: 'technical_meeting',
+        boardName: 'Technical Meeting',
+        boardType: 'lead',
+        status: LeadDealStatus.TECHNICAL_MEETING,
+        boardOrder: 3,
       },
       {
         boardKey: 'proposal',
-        boardTitle: 'Proposal',
+        boardName: 'Proposal',
         boardType: 'lead',
         status: LeadDealStatus.PROPOSAL,
+        boardOrder: 4,
       },
       {
         boardKey: 'in_negotiation',
-        boardTitle: 'In Negotiation',
+        boardName: 'In-negotiation',
         boardType: 'lead',
         status: LeadDealStatus.IN_NEGOTIATION,
+        boardOrder: 5,
       },
       {
-        boardKey: 'win',
-        boardTitle: 'Won',
+        boardKey: 'won',
+        boardName: 'Won',
         boardType: 'lead',
         status: LeadDealStatus.WIN,
+        boardOrder: 6,
       },
       {
-        boardKey: 'lost',
-        boardTitle: 'Lost',
+        boardKey: 'loss',
+        boardName: 'Loss',
         boardType: 'lead',
         status: LeadDealStatus.LOST,
+        boardOrder: 7,
       },
     ];
 
@@ -175,8 +208,9 @@ export class LeadService {
 
         return {
           boardKey: board.boardKey,
-          boardTitle: board.boardTitle,
+          boardName: board.boardName,
           boardType: board.boardType,
+          boardOrder: board.boardOrder,
           boardProjects: formattedLeads,
         };
       }),
@@ -881,6 +915,7 @@ export class LeadService {
       isLead: true,
       leadBoardStage: this.mapLeadDealStatusToBoardStage(leadDeal.status),
       createdAt: this.utilityService.formatDate(leadDeal.createdAt),
+      updatedAt: this.utilityService.formatDate(leadDeal.updatedAt),
       locationId: leadDeal.locationId,
       location: leadDeal.location
         ? await this.getLocationInformation(leadDeal.locationId)
@@ -924,25 +959,27 @@ export class LeadService {
   // Helper to map LeadDealStatus to board stage string
   private mapLeadDealStatusToBoardStage(status: LeadDealStatus): string {
     const statusMap = {
-      [LeadDealStatus.OPPORTUNITY]: 'opportunity',
-      [LeadDealStatus.CONTACTED]: 'contacted',
+      [LeadDealStatus.OPPORTUNITY]: 'prospect',
+      [LeadDealStatus.CONTACTED]: 'initial_meeting',
+      [LeadDealStatus.TECHNICAL_MEETING]: 'technical_meeting',
       [LeadDealStatus.PROPOSAL]: 'proposal',
       [LeadDealStatus.IN_NEGOTIATION]: 'in_negotiation',
-      [LeadDealStatus.WIN]: 'win',
-      [LeadDealStatus.LOST]: 'lost',
+      [LeadDealStatus.WIN]: 'won',
+      [LeadDealStatus.LOST]: 'loss',
     };
-    return statusMap[status] || 'opportunity';
+    return statusMap[status] || 'prospect';
   }
 
   // Helper to map board stage string to LeadDealStatus
   private mapBoardStageToLeadDealStatus(boardStage: string): LeadDealStatus {
     const stageMap = {
-      opportunity: LeadDealStatus.OPPORTUNITY,
-      contacted: LeadDealStatus.CONTACTED,
+      prospect: LeadDealStatus.OPPORTUNITY,
+      initial_meeting: LeadDealStatus.CONTACTED,
+      technical_meeting: LeadDealStatus.TECHNICAL_MEETING,
       proposal: LeadDealStatus.PROPOSAL,
       in_negotiation: LeadDealStatus.IN_NEGOTIATION,
-      win: LeadDealStatus.WIN,
-      lost: LeadDealStatus.LOST,
+      won: LeadDealStatus.WIN,
+      loss: LeadDealStatus.LOST,
     };
     return stageMap[boardStage] || LeadDealStatus.OPPORTUNITY;
   }
