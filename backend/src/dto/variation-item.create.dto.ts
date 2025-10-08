@@ -82,6 +82,10 @@ export class CreateItemWithVariantsDto {
   @IsOptional()
   @IsNumber()
   branchId?: number;
+
+  @IsOptional()
+  @IsNumber()
+  brandId?: number;
 }
 export class UpdateVariantDto {
   @IsNotEmpty()
@@ -170,6 +174,10 @@ export class UpdateItemWithVariantsDto {
   @IsOptional()
   @IsNumber()
   branchId?: number;
+
+  @IsOptional()
+  @IsNumber()
+  brandId?: number;
 }
 export class CreateVariantDto {
   @IsOptional()

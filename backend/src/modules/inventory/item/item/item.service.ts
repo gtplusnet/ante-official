@@ -144,10 +144,15 @@ export class ItemService {
     tableQuery.where['NOT'] = [{ estimatedBuyingPrice: null }, { size: null }];
     tableQuery.where['companyId'] = this.utility.companyId;
 
-    // Get items with brand data
+    // Get items with brand, category, branch, and keywords data
     const itemsWithBrands = await this.prisma.item.findMany({
       ...tableQuery,
-      include: { brand: true },
+      include: {
+        brand: true,
+        category: true,
+        branch: true,
+        keywords: { include: { keyword: true } },
+      },
     });
 
     // Count for pagination
@@ -208,11 +213,13 @@ export class ItemService {
       where: tableQuery.where,
     });
 
-    // Get items with brand data and keywords
+    // Get items with brand, category, branch data and keywords
     const baseList = await this.prisma.item.findMany({
       ...tableQuery,
       include: {
         brand: true,
+        category: true,
+        branch: true,
         keywords: {
           include: {
             keyword: true,
@@ -523,6 +530,7 @@ export class ItemService {
         company: { connect: { id: this.utility.companyId } },
         ...(itemDto.categoryId && { category: { connect: { id: itemDto.categoryId } } }),
         ...(itemDto.branchId && { branch: { connect: { id: itemDto.branchId } } }),
+        ...(itemDto.brandId && { brand: { connect: { id: itemDto.brandId } } }),
       },
     });
   }
@@ -719,6 +727,18 @@ export class ItemService {
     formattedItem.size = this.formatSize(item.size);
     formattedItem.tags = await this.getTagsPerItem(item.id);
 
+    // Add keywords
+    formattedItem.keywords = item.keywords
+      ? item.keywords.map((kw) => kw.keyword.keywordValue)
+      : [];
+
+    // Add display formatting for brand, category, and branch
+    formattedItem.brandDisplay = item.brand ? item.brand.name : 'No Brand';
+    formattedItem.categoryDisplay = item.category
+      ? item.category.name
+      : 'No Category';
+    formattedItem.branchDisplay = item.branch ? item.branch.name : 'No Branch';
+
     // Get stock information from main warehouse
     const mainWarehouseId = await this.ensureMainWarehouse(item.companyId);
     const stock = await this.getItemStock(item.id, mainWarehouseId);
@@ -776,6 +796,11 @@ export class ItemService {
       variationCount > 0 ? `${variationCount} Variations` : 'No Variation';
     formattedItem.variationCount = variationCount;
     formattedItem.tags = await this.getTagsPerItem(item.id);
+
+    // Format brand, category, and branch display with fallbacks
+    formattedItem.brandDisplay = item.brand ? item.brand.name : 'No Brand';
+    formattedItem.categoryDisplay = item.category ? item.category.name : 'No Category';
+    formattedItem.branchDisplay = item.branch ? item.branch.name : 'No Branch';
 
     // Get stock information from main warehouse
     const mainWarehouseId = await this.ensureMainWarehouse(item.companyId);

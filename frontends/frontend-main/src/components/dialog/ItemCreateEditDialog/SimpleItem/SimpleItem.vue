@@ -50,8 +50,8 @@
           <tags-partial ref="tagsPartial" class="text-body-small" v-model="isTagPartialDisplayed" @onTagUpdate="onTagUpdated" />
         </div>
       </div>
-      <!-- Category, Brand & Branch -->
-      <div class="row q-gutter-sm">
+      <!-- Category & Branch -->
+      <div v-if="!isTagHidden" class="row q-gutter-sm">
         <div class="col">
           <q-select
             v-model="form.categoryId"
@@ -66,22 +66,6 @@
             dense
             class="text-body-small"
             :loading="loadingCategories"
-          />
-        </div>
-        <div class="col">
-          <q-select
-            v-model="form.brandId"
-            :options="brandOptions"
-            option-label="name"
-            option-value="id"
-            label="Brand"
-            clearable
-            emit-value
-            map-options
-            outlined
-            dense
-            class="text-body-small"
-            :loading="loadingBrands"
           />
         </div>
         <div class="col">
@@ -101,26 +85,54 @@
           />
         </div>
       </div>
+      <!-- Brand -->
+      <div v-if="!isTagHidden" class="row q-gutter-sm">
+        <div class="col">
+          <GInput
+            ref="brandSelect"
+            v-model="form.brandId"
+            type="select-search-with-add"
+            apiUrl="brand/select-box"
+            label="Brand"
+            nullOption="No Brand"
+            class="text-body-small"
+            @showAddDialog="showBrandAddDialog"
+          />
+        </div>
+      </div>
       <!-- Keywords -->
-      <div class="row q-gutter-sm">
+      <div v-if="!isTagHidden" class="row q-gutter-sm">
         <div class="col">
           <keywords-partial ref="keywordsPartial" class="text-body-small" v-model="isKeywordsPartialDisplayed" @onKeywordUpdate="onKeywordUpdated" />
         </div>
       </div>
       <!-- Enable in POS -->
-      <div class="row q-gutter-sm">
+      <div v-if="!isTagHidden" class="row q-gutter-sm">
         <div class="col flex items-center">
           <q-checkbox v-model="form.enabledInPOS" label="Enable in POS" class="text-body-small" />
         </div>
       </div>
     </div>
+
+    <!-- Add Brand Dialog -->
+    <AddEditBrandDialog
+      v-if="isAddBrandDialogOpen"
+      v-model="isAddBrandDialogOpen"
+      @saveDone="selectNewBrand"
+    />
   </div>
 </template>
 <script>
+import { defineAsyncComponent } from 'vue';
 import GInput from "../../../../components/shared/form/GInput.vue";
 import TagsPartial from '../Partials/TagsPartial.vue';
 import KeywordsPartial from '../Partials/KeywordsPartial.vue';
 import { environment } from 'src/boot/axios';
+
+// Lazy-loaded dialog (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditBrandDialog = defineAsyncComponent(() =>
+  import('../../../dialog/AddEditBrandDialog.vue')
+);
 
 export default {
   name: 'SimpleItem',
@@ -128,6 +140,7 @@ export default {
     GInput,
     TagsPartial,
     KeywordsPartial,
+    AddEditBrandDialog,
   },
   props: {
     itemInformation: {
@@ -159,12 +172,11 @@ export default {
     },
     isTagPartialDisplayed: true,
     isKeywordsPartialDisplayed: true,
+    isAddBrandDialogOpen: false,
     categoryOptions: [],
     branchOptions: [],
-    brandOptions: [],
     loadingCategories: false,
     loadingBranches: false,
-    loadingBrands: false,
   }),
   watch: {
     form: {
@@ -187,7 +199,6 @@ export default {
   mounted() {
     this.isTagHidden = false;
     this.fetchCategoryOptions();
-    this.fetchBrandOptions();
     this.fetchBranchOptions();
     this.initialize()
   },
@@ -204,17 +215,6 @@ export default {
         this.loadingCategories = false;
       }
     },
-    async fetchBrandOptions() {
-      this.loadingBrands = true;
-      try {
-        const response = await this.$api.get('/brand/select-box');
-        this.brandOptions = response.data;
-      } catch (error) {
-        console.error('Error fetching brands:', error);
-      } finally {
-        this.loadingBrands = false;
-      }
-    },
     async fetchBranchOptions() {
       this.loadingBranches = true;
       try {
@@ -226,7 +226,7 @@ export default {
         this.loadingBranches = false;
       }
     },
-    initialize() {
+    async initialize() {
       if (this.itemInformation) {
         this.form.itemName = this.itemInformation.name;
         this.form.sku = this.itemInformation.sku;
@@ -267,13 +267,19 @@ export default {
         }
 
         this.$refs.tagsPartial.tags = this.itemInformation.tags;
+        this.$refs.keywordsPartial.keywords = this.itemInformation.keywords || [];
 
         // Handle new fields
         this.form.categoryId = this.itemInformation.categoryId || null;
         this.form.brandId = this.itemInformation.brandId || null;
         this.form.enabledInPOS = this.itemInformation.enabledInPOS || false;
         this.form.branchId = this.itemInformation.branchId || null;
-        this.$refs.keywordsPartial.keywords = this.itemInformation.keywords || [];
+
+        // Set brand after refs are ready
+        await this.$nextTick();
+        if (this.form.brandId && this.$refs.brandSelect) {
+          await this.$refs.brandSelect.setAutoSelect(this.form.brandId);
+        }
 
         if (this.itemInformation.hasOwnProperty('parent') && this.itemInformation.parent) {
           this.isTagHidden = true;
@@ -322,6 +328,14 @@ export default {
           position: 'top',
         });
       }
+    },
+    showBrandAddDialog() {
+      this.isAddBrandDialogOpen = true;
+    },
+    async selectNewBrand(data) {
+      const autoSelect = data.id;
+      await this.$refs.brandSelect.refreshSelectOptions(autoSelect);
+      this.form.brandId = autoSelect;
     },
   },
 };

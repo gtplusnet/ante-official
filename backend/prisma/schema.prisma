@@ -414,6 +414,7 @@ model Project {
   warehouse                     Warehouse[]
   EmployeeTimekeepingRaw        EmployeeTimekeepingRaw[]
   ManpowerDevice                ManpowerDevice[]
+  items                         Item[]                         @relation("ItemBranch")
 }
 
 model BoardLane {
@@ -663,6 +664,7 @@ model Item {
   EquipmentPartsItem       EquipmentPartsItem[]
   inventories              InventoryItem[]
   brand                    Brand?                     @relation(fields: [brandId], references: [id])
+  branch                   Project?                   @relation("ItemBranch", fields: [branchId], references: [id])
   category                 ItemCategory?              @relation(fields: [categoryId], references: [id])
   company                  Company?                   @relation(fields: [companyId], references: [id])
   itemReceiptItems         ItemReceiptItems[]

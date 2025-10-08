@@ -35,7 +35,7 @@
         <GInput required type="number" label="Maximum Stock Level" v-model="form.maximumStockLevel"></GInput>
       </div>
     </div>
-    <!-- Category, Brand & Branch -->
+    <!-- Category & Branch -->
     <div class="row q-gutter-sm">
       <div class="col">
         <q-select
@@ -55,22 +55,6 @@
       </div>
       <div class="col">
         <q-select
-          v-model="form.brandId"
-          :options="brandOptions"
-          option-label="name"
-          option-value="id"
-          label="Brand"
-          clearable
-          emit-value
-          map-options
-          outlined
-          dense
-          class="text-body-small"
-          :loading="loadingBrands"
-        />
-      </div>
-      <div class="col">
-        <q-select
           v-model="form.branchId"
           :options="branchOptions"
           option-label="name"
@@ -86,6 +70,21 @@
         />
       </div>
     </div>
+    <!-- Brand -->
+    <div class="row q-gutter-sm">
+      <div class="col">
+        <GInput
+          ref="brandSelect"
+          v-model="form.brandId"
+          type="select-search-with-add"
+          apiUrl="brand/select-box"
+          label="Brand"
+          nullOption="No Brand"
+          class="text-body-small"
+          @showAddDialog="showBrandAddDialog"
+        />
+      </div>
+    </div>
     <!-- Keywords -->
     <div class="row q-gutter-sm">
       <div class="col">
@@ -98,12 +97,25 @@
         <q-checkbox v-model="form.enabledInPOS" label="Enable in POS" class="text-body-small" />
       </div>
     </div>
+
+    <!-- Add Brand Dialog -->
+    <AddEditBrandDialog
+      v-if="isAddBrandDialogOpen"
+      v-model="isAddBrandDialogOpen"
+      @saveDone="selectNewBrand"
+    />
   </div>
 </template>
 <script>
+import { defineAsyncComponent } from 'vue';
 import GInput from "../../../../../components/shared/form/GInput.vue";
 import TagsPartial from '../../Partials/TagsPartial.vue';
 import KeywordsPartial from '../../Partials/KeywordsPartial.vue';
+
+// Lazy-loaded dialog (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditBrandDialog = defineAsyncComponent(() =>
+  import('../../../../dialog/AddEditBrandDialog.vue')
+);
 
 export default {
   name: 'BasicItemDetailsPartial',
@@ -111,6 +123,7 @@ export default {
     GInput,
     TagsPartial,
     KeywordsPartial,
+    AddEditBrandDialog,
   },
   props: {},
   data: () => ({
@@ -130,13 +143,12 @@ export default {
     },
     isTagPartialDisplayed: true,
     isKeywordsPartialDisplayed: true,
+    isAddBrandDialogOpen: false,
     showMeasurement: false,
     categoryOptions: [],
     branchOptions: [],
-    brandOptions: [],
     loadingCategories: false,
     loadingBranches: false,
-    loadingBrands: false,
   }),
   watch: {
     form: {
@@ -148,7 +160,6 @@ export default {
   },
   mounted() {
     this.fetchCategoryOptions();
-    this.fetchBrandOptions();
     this.fetchBranchOptions();
   },
   computed: {},
@@ -162,17 +173,6 @@ export default {
         console.error('Error fetching categories:', error);
       } finally {
         this.loadingCategories = false;
-      }
-    },
-    async fetchBrandOptions() {
-      this.loadingBrands = true;
-      try {
-        const response = await this.$api.get('/brand/select-box');
-        this.brandOptions = response.data;
-      } catch (error) {
-        console.error('Error fetching brands:', error);
-      } finally {
-        this.loadingBrands = false;
       }
     },
     async fetchBranchOptions() {
@@ -201,6 +201,14 @@ export default {
     },
     onKeywordUpdated(val) {
       this.form.keywords = val;
+    },
+    showBrandAddDialog() {
+      this.isAddBrandDialogOpen = true;
+    },
+    async selectNewBrand(data) {
+      const autoSelect = data.id;
+      await this.$refs.brandSelect.refreshSelectOptions(autoSelect);
+      this.form.brandId = autoSelect;
     },
   },
 };

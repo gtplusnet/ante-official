@@ -69,7 +69,7 @@ export default {
   },
   computed: {},
   methods: {
-    initialize() {
+    async initialize() {
       if (this.itemInformation) {
         this.$refs.basicDetails.form.itemName = this.itemInformation.name;
         this.$refs.basicDetails.form.description = this.itemInformation.description;
@@ -92,6 +92,12 @@ export default {
         this.$refs.basicDetails.form.enabledInPOS = this.itemInformation.enabledInPOS || false;
         this.$refs.basicDetails.form.branchId = this.itemInformation.branchId || null;
         this.$refs.basicDetails.setKeywords(this.itemInformation.keywords || []);
+
+        // Set brand after refs are ready
+        await this.$nextTick();
+        if (this.$refs.basicDetails.form.brandId && this.$refs.basicDetails.$refs.brandSelect) {
+          await this.$refs.basicDetails.$refs.brandSelect.setAutoSelect(this.$refs.basicDetails.form.brandId);
+        }
 
         if (!this.itemInformation.hasOwnProperty('parent') && this.itemInformation.parent) {
           this.$refs.basicDetails.showMeasurement = true;
