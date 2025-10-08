@@ -18,20 +18,27 @@ export class QueueRedisService implements OnModuleInit, OnModuleDestroy {
   private blockingClient: RedisClientType;
 
   constructor() {
+    // Base socket configuration
+    const socketConfig: any = {
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT) || 6379,
+      connectTimeout: 10000, // 10 second connection timeout
+      reconnectStrategy: (retries) => {
+        // Exponential backoff with max 3 second delay
+        const delay = Math.min(retries * 100, 3000);
+        this.logger.warn(`Reconnecting to Redis (attempt ${retries}) in ${delay}ms`);
+        return delay;
+      },
+    };
+
+    // Add TLS if enabled (must be true, not boolean)
+    if (process.env.REDIS_TLS === 'true') {
+      socketConfig.tls = true;
+    }
+
     // Create a dedicated client for blocking operations
     this.blockingClient = createClient({
-      socket: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT) || 6379,
-        tls: process.env.REDIS_TLS === 'true', // Enable TLS/SSL for managed Redis/Valkey (rediss://)
-        connectTimeout: 10000, // 10 second connection timeout
-        reconnectStrategy: (retries) => {
-          // Exponential backoff with max 3 second delay
-          const delay = Math.min(retries * 100, 3000);
-          this.logger.warn(`Reconnecting to Redis (attempt ${retries}) in ${delay}ms`);
-          return delay;
-        },
-      },
+      socket: socketConfig,
       password: process.env.REDIS_PASSWORD,
       database: parseInt(process.env.REDIS_DB || '0'), // Database selection for multi-environment isolation
       // Note: commandTimeout is not available in node-redis v5
