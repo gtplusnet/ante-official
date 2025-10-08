@@ -125,8 +125,11 @@ jobs:
             -d "parse_mode=Markdown"
 
   deploy-frontend-main:
-    needs: [detect-changes, notify-start]
-    if: needs.detect-changes.outputs.frontend-main-changed == 'true'
+    needs: [detect-changes, notify-start, run-migrations]
+    if: |
+      always() &&
+      needs.detect-changes.outputs.frontend-main-changed == 'true' &&
+      (needs.run-migrations.result == 'success' || needs.run-migrations.result == 'skipped')
     runs-on: [self-hosted, staging]
     steps:
       - uses: actions/checkout@v4
@@ -152,8 +155,11 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND_MAIN }}
 
   deploy-gate-app:
-    needs: [detect-changes, notify-start]
-    if: needs.detect-changes.outputs.gate-app-changed == 'true'
+    needs: [detect-changes, notify-start, run-migrations]
+    if: |
+      always() &&
+      needs.detect-changes.outputs.gate-app-changed == 'true' &&
+      (needs.run-migrations.result == 'success' || needs.run-migrations.result == 'skipped')
     runs-on: [self-hosted, staging]
     steps:
       - uses: actions/checkout@v4
@@ -172,8 +178,11 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_GATE_APP }}
 
   deploy-guardian-app:
-    needs: [detect-changes, notify-start]
-    if: needs.detect-changes.outputs.guardian-app-changed == 'true'
+    needs: [detect-changes, notify-start, run-migrations]
+    if: |
+      always() &&
+      needs.detect-changes.outputs.guardian-app-changed == 'true' &&
+      (needs.run-migrations.result == 'success' || needs.run-migrations.result == 'skipped')
     runs-on: [self-hosted, staging]
     steps:
       - uses: actions/checkout@v4
@@ -192,8 +201,11 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_GUARDIAN_APP }}
 
   deploy-website-multibook:
-    needs: [detect-changes, notify-start]
-    if: needs.detect-changes.outputs.website-multibook-changed == 'true'
+    needs: [detect-changes, notify-start, run-migrations]
+    if: |
+      always() &&
+      needs.detect-changes.outputs.website-multibook-changed == 'true' &&
+      (needs.run-migrations.result == 'success' || needs.run-migrations.result == 'skipped')
     runs-on: [self-hosted, staging]
     steps:
       - uses: actions/checkout@v4
