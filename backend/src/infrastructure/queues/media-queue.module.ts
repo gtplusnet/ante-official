@@ -19,6 +19,14 @@ import { QueueService } from './services/queue.service';
           port: configService.get('REDIS_PORT', 6379),
           password: configService.get('REDIS_PASSWORD'),
           db: configService.get('REDIS_DB', 0),
+          ...(configService.get('REDIS_TLS') === 'true' && {
+            tls: {
+              servername: configService.get('REDIS_HOST'), // SNI for TLS
+            },
+          }),
+          keepAlive: 30000, // Send keep-alive packets every 30 seconds
+          connectTimeout: 10000, // 10 second connection timeout for TLS handshake
+          maxRetriesPerRequest: null, // Disable per-request retries (BullMQ handles retries)
         },
         defaultJobOptions: {
           attempts: 3,
