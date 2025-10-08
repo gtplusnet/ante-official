@@ -1007,4 +1007,66 @@ export class LeadService {
     // Setting day to 0 of next month gives us the last day of current month
     return new Date(year, month + 1, 0, 23, 59, 59, 999);
   }
+
+  /**
+   * Get dashboard counters for leads/CRM
+   */
+  async getLeadDashboardCounters() {
+    const companyId = this.utilityService.companyId;
+
+    // Base where clause for active deals
+    const activeDealsWhere = {
+      companyId,
+      isDeleted: false,
+      status: {
+        notIn: [LeadDealStatus.WIN, LeadDealStatus.LOST],
+      },
+    };
+
+    // Count active deals in pipeline (excluding WIN and LOST)
+    const activeDealsCount = await this.prisma.leadDeal.count({
+      where: activeDealsWhere,
+    });
+
+    // Count total opportunities
+    const opportunitiesCount = await this.prisma.leadDeal.count({
+      where: {
+        companyId,
+        isDeleted: false,
+        status: LeadDealStatus.OPPORTUNITY,
+      },
+    });
+
+    // Get all active deals for aggregation
+    const activeDeals = await this.prisma.leadDeal.findMany({
+      where: activeDealsWhere,
+      select: {
+        monthlyRecurringRevenue: true,
+        totalContract: true,
+      },
+    });
+
+    // Calculate totals
+    const totalMMR = activeDeals.reduce(
+      (sum, deal) => sum + (deal.monthlyRecurringRevenue || 0),
+      0,
+    );
+
+    const totalInitialCost = activeDeals.reduce(
+      (sum, deal) => sum + (deal.totalContract || 0),
+      0,
+    );
+
+    // Format currency values
+    const mmrFormatted = this.utilityService.formatCurrency(totalMMR);
+    const initialCostFormatted =
+      this.utilityService.formatCurrency(totalInitialCost);
+
+    return {
+      activeDealsInPipeline: activeDealsCount,
+      totalOpportunities: opportunitiesCount,
+      mmrOpportunity: mmrFormatted.formatCurrency,
+      initialCostOpportunity: initialCostFormatted.formatCurrency,
+    };
+  }
 }

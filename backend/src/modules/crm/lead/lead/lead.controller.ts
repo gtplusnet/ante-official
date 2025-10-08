@@ -143,4 +143,12 @@ export class LeadController {
       response,
     );
   }
+
+  @Get('dashboard-counters')
+  async getDashboardCounters(@NestResponse() response: Response) {
+    return this.utilityService.responseHandler(
+      this.leadService.getLeadDashboardCounters(),
+      response,
+    );
+  }
 }
