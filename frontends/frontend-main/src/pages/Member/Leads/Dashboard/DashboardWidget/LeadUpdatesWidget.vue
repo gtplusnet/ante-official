@@ -30,13 +30,18 @@
         </div>
         
         <div class="lead-updates-content">
+          <!-- Loading skeleton -->
+          <div v-if="loading">
+            <q-skeleton type="rect" height="60px" class="q-mb-sm" v-for="i in pagination.rowsPerPage" :key="i" />
+          </div>
+
           <!-- No updates -->
-          <div class="q-pa-xl text-center text-label-medium text-grey" v-if="paginatedUpdateList.length === 0">
+          <div v-else-if="paginatedUpdateList.length === 0" class="q-pa-xl text-center text-label-medium text-grey">
             No Lead Updates
           </div>
 
           <!-- Updates list -->
-          <global-widget-card-box v-for="update in paginatedUpdateList" :key="update.id" :class="['update-item', { 'update-item--unread': !update.isRead }]">
+          <global-widget-card-box v-else v-for="update in paginatedUpdateList" :key="update.id" :class="['update-item', { 'update-item--unread': !update.isRead }]" @click="handleUpdateClick(update)">
             <!-- Header -->
             <div class="row items-center">
               <q-icon
@@ -47,15 +52,15 @@
               <span :class="['text-title-small q-ml-sm', update.isRead ? 'text-grey' : 'text-dark']">
                 {{ update.employeeName }}
               </span>
-              <span :class="['text-body-small q-ml-xs', update.isRead ? 'text-grey-light' : 'text-dark']">
+              <span :class="['text-body-small q-ml-xs text-action', update.isRead ? 'text-grey-light' : 'text-dark']">
                 {{ update.action }}
               </span>
             </div>
 
             <!-- Description and time -->
             <div class="row items-center justify-between">
-              <div :class="['text-label-small-w-[400]', update.isRead ? 'text-grey-light' : 'text-dark']">
-                {{ truncateDescription(update.description) }}
+              <div :class="['text-label-small-w-[400] text-description', update.isRead ? 'text-grey-light' : 'text-dark']">
+                {{ update.description }}
               </div>
               <div :class="['text-label-small-w-[400]', update.isRead ? 'text-grey-light' : 'text-dark']">
                 {{ update.timeAgo }}
@@ -68,9 +73,10 @@
       <!-- Footer -->
       <template #footer>
         <GlobalWidgetPagination
+          v-if="!loading"
           :pagination="{
             currentPage: pagination.page,
-            totalItems: filteredUpdateList.length,
+            totalItems: totalItems,
             itemsPerPage: pagination.rowsPerPage,
           }"
           @update:page="handlePageChange"
@@ -81,11 +87,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from "vue";
+import { defineComponent, ref, computed, onMounted } from "vue";
+import { useQuasar } from "quasar";
+import { useRouter } from "vue-router";
+import { APIRequests } from "src/utility/api.handler";
 import GlobalWidgetCard from "src/components/shared/global/GlobalWidgetCard.vue";
 import GlobalWidgetTab from "src/components/shared/global/GlobalWidgetTab.vue";
 import GlobalWidgetPagination from "src/components/shared/global/GlobalWidgetPagination.vue";
 import GlobalWidgetCardBox from "src/components/shared/global/GlobalWidgetCardBox.vue";
+
 interface LeadUpdate {
   id: number;
   employeeName: string;
@@ -93,6 +103,8 @@ interface LeadUpdate {
   description: string;
   timeAgo: string;
   isRead: boolean;
+  entityId: number;
+  activityType: string;
 }
 
 export default defineComponent({
@@ -104,7 +116,12 @@ export default defineComponent({
     GlobalWidgetCardBox,
   },
   setup() {
+    const $q = useQuasar();
+    const router = useRouter();
     const activeTab = ref("all");
+    const loading = ref(false);
+    const updateList = ref<LeadUpdate[]>([]);
+    const totalItems = ref(0);
 
     const tabList = ref([
       { key: "all", title: "All" },
@@ -117,117 +134,159 @@ export default defineComponent({
       rowsPerPage: 5,
     });
 
-    // Mock data
-    const updateList = ref<LeadUpdate[]>([
-      {
-        id: 1,
-        employeeName: "Employee Name",
-        action: "Sent you a filing approval request",
-        description: "Card description goes here Lorem ipsum dolor sit amet consectetur adipiscing elit",
-        timeAgo: "6 hours ago",
-        isRead: false,
-      },
-      {
-        id: 2,
-        employeeName: "Employee Name",
-        action: "Sent you a filing approval request",
-        description: "Card description goes here Lorem ipsum dolor sit amet consectetur adipiscing elit",
-        timeAgo: "6 hours ago",
-        isRead: false,
-      },
-      {
-        id: 3,
-        employeeName: "Employee Name",
-        action: "Sent you a filing approval request",
-        description: "Card description goes here Lorem ipsum dolor sit amet consectetur adipiscing elit",
-        timeAgo: "6 hours ago",
-        isRead: true,
-      },
-      {
-        id: 4,
-        employeeName: "Employee Name",
-        action: "Sent you a filing approval request",
-        description: "Card description goes here Lorem ipsum dolor sit amet consectetur adipiscing elit",
-        timeAgo: "6 hours ago",
-        isRead: true,
-      },
-      {
-        id: 5,
-        employeeName: "Employee Name",
-        action: "Sent you a filing approval request",
-        description: "Card description goes here Lorem ipsum dolor sit amet consectetur adipiscing elit",
-        timeAgo: "6 hours ago",
-        isRead: true,
-      },
-      {
-        id: 6,
-        employeeName: "John Doe",
-        action: "Updated lead status",
-        description: "Lead status changed from Prospect to Qualified",
-        timeAgo: "8 hours ago",
-        isRead: false,
-      },
-      {
-        id: 7,
-        employeeName: "Jane Smith",
-        action: "Added a new comment",
-        description:
-          "Customer is interested in premium package options Lorem ipsum dolor sit amet consectetur adipiscing elit",
-        timeAgo: "1 day ago",
-        isRead: true,
-      },
-    ]);
+    const formatTimeAgo = (date: Date): string => {
+      const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+
+      const intervals: { [key: string]: number } = {
+        year: 31536000,
+        month: 2592000,
+        week: 604800,
+        day: 86400,
+        hour: 3600,
+        minute: 60,
+      };
+
+      for (const [name, secondsInInterval] of Object.entries(intervals)) {
+        const interval = Math.floor(seconds / secondsInInterval);
+        if (interval >= 1) {
+          return interval === 1 ? `1 ${name} ago` : `${interval} ${name}s ago`;
+        }
+      }
+
+      return 'just now';
+    };
+
+    const loadActivities = async () => {
+      try {
+        loading.value = true;
+
+        const response = await APIRequests.getCRMActivities($q, {
+          page: pagination.value.page.toString(),
+          limit: pagination.value.rowsPerPage.toString(),
+          filter: activeTab.value,
+        });
+
+        if (response && response.activities) {
+          updateList.value = response.activities.map((activity: any) => ({
+            id: activity.id,
+            employeeName: activity.performedBy.name,
+            action: activity.description,
+            description: activity.description,
+            timeAgo: formatTimeAgo(new Date(activity.createdAt)),
+            isRead: activity.isRead,
+            entityId: activity.entityId,
+            activityType: activity.activityType,
+          }));
+
+          totalItems.value = response.pagination.total;
+        }
+      } catch (error) {
+        console.error("[LeadUpdatesWidget] Failed to load activities:", error);
+        $q.notify({
+          type: "negative",
+          message: "Failed to load lead updates",
+          position: "top",
+        });
+      } finally {
+        loading.value = false;
+      }
+    };
 
     const filteredUpdateList = computed(() => {
-      if (activeTab.value === "all") {
-        return updateList.value;
-      } else if (activeTab.value === "unread") {
-        return updateList.value.filter((update) => !update.isRead);
-      } else if (activeTab.value === "read") {
-        return updateList.value.filter((update) => update.isRead);
-      }
       return updateList.value;
     });
 
     const paginatedUpdateList = computed(() => {
-      const start = (pagination.value.page - 1) * pagination.value.rowsPerPage;
-      const end = start + pagination.value.rowsPerPage;
-      return filteredUpdateList.value.slice(start, end);
+      return updateList.value;
     });
 
-    const handleTabChange = (tab: string) => {
+    const handleTabChange = async (tab: string) => {
       activeTab.value = tab;
-      pagination.value.page = 1; // Reset to first page when changing tabs
+      pagination.value.page = 1;
+      await loadActivities();
     };
 
-    const handlePageChange = (page: number) => {
+    const handlePageChange = async (page: number) => {
       pagination.value.page = page;
+      await loadActivities();
     };
 
-    const markAllAsRead = () => {
-      updateList.value.forEach((update) => {
-        update.isRead = true;
-      });
-    };
-
-    const truncateDescription = (description: string) => {
-      if (description.length <= 50) {
-        return description;
+    const markAllAsRead = async () => {
+      try {
+        await APIRequests.markAllCRMActivitiesAsRead($q);
+        await loadActivities();
+        $q.notify({
+          type: "positive",
+          message: "All activities marked as read",
+          position: "top",
+        });
+      } catch (error) {
+        console.error("[LeadUpdatesWidget] Failed to mark all as read:", error);
+        $q.notify({
+          type: "negative",
+          message: "Failed to mark all as read",
+          position: "top",
+        });
       }
-      return description.substring(0, 50) + "...";
     };
+
+    const handleUpdateClick = async (update: LeadUpdate) => {
+      try {
+        // Mark the activity as read
+        if (!update.isRead) {
+          await APIRequests.markCRMActivityAsRead($q, update.id.toString());
+        }
+
+        // Don't navigate if the activity is DELETE (lead no longer exists)
+        if (update.activityType === "DELETE" || update.activityType.toUpperCase() === "DELETE") {
+          await loadActivities();
+          return;
+        }
+
+        // Check if the lead still exists and is not deleted before navigating
+        try {
+          const leadInfo = await APIRequests.getLeadInformation($q, { id: update.entityId.toString() });
+
+          // Check if lead is deleted
+          if (leadInfo.isDeleted) {
+            await loadActivities();
+            return;
+          }
+
+          // Lead exists and is not deleted, navigate to deals page
+          await router.push({
+            name: "member_leads_deals",
+            query: {
+              leadId: update.entityId.toString(),
+              activityType: update.activityType,
+            },
+          });
+        } catch (leadError: any) {
+          // Lead doesn't exist (404 or error), just refresh the list
+          await loadActivities();
+        }
+      } catch (error) {
+        console.error("[LeadUpdatesWidget] Failed to handle update click:", error);
+      }
+    };
+
+    onMounted(async () => {
+      await loadActivities();
+    });
 
     return {
       activeTab,
       tabList,
       pagination,
+      loading,
       updateList,
+      totalItems,
       filteredUpdateList,
       paginatedUpdateList,
       handleTabChange,
       handlePageChange,
       markAllAsRead,
-      truncateDescription,
+      handleUpdateClick,
     };
   },
 });
@@ -242,11 +301,23 @@ export default defineComponent({
   overflow-y: auto;
 }
 
-.update-item {
-  background-color: var(--q-extra-lighter);
+.text-action {
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
 }
 
-.update-item--unread {
-  background-color: #DDE1F066;
+.text-description {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
+}
+
+.update-item {
+  background-color: var(--q-extra-lighter);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 </style>

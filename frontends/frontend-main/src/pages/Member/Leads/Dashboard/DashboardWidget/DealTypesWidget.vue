@@ -36,14 +36,20 @@
 
 <script lang="ts">
 import { ref, onMounted, computed, nextTick } from "vue";
-import { Notify } from "quasar";
+import { Notify, useQuasar } from "quasar";
 import GlobalWidgetCard from "src/components/shared/global/GlobalWidgetCard.vue";
 import VueApexCharts from "vue3-apexcharts";
+import { APIRequests } from "src/utility/api.handler";
 
 interface DealType {
   type: string;
   count: number;
   color: string;
+}
+
+interface DealTypeSummary {
+  typeName: string;
+  count: number;
 }
 
 export default {
@@ -53,12 +59,14 @@ export default {
     ApexChart: VueApexCharts,
   },
   setup() {
+    const $q = useQuasar();
+
     // Reactive data
     const loading = ref(false);
     const chartReady = ref(false);
     const chartKey = ref(0);
 
-    // Deal types data based on the provided screenshot
+    // Deal types data - starts with default data, will be updated from API
     const dealTypes = ref<DealType[]>([
       { type: "BPO", count: 8, color: "#615FF6" },
       { type: "SaaS", count: 28, color: "#014781" },
@@ -178,16 +186,48 @@ export default {
       ];
     });
 
+    // Generate color based on count (darker for higher counts)
+    const generateColor = (count: number, maxCount: number): string => {
+      // Define color palette from darkest to lightest
+      const colors = [
+        "#014781", // Darkest blue
+        "#2f40c4", // Dark blue
+        "#615FF6", // Medium blue
+        "#63D7E6", // Light blue
+        "#E3F2FD", // Lightest blue
+      ];
+
+      if (maxCount === 0) return colors[colors.length - 1];
+
+      // Calculate percentage and map to color index
+      const percentage = count / maxCount;
+      if (percentage >= 0.8) return colors[0];
+      if (percentage >= 0.6) return colors[1];
+      if (percentage >= 0.4) return colors[2];
+      if (percentage >= 0.2) return colors[3];
+      return colors[4];
+    };
+
     const loadDealData = async () => {
       try {
         loading.value = true;
 
-        // Simulate API call - replace with actual service call
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Fetch data from API
+        const response = await APIRequests.getDealTypesSummary($q);
 
-        // In production, you would fetch data from your API here:
-        // const data = await LeadService.getDealTypes();
-        // dealTypes.value = data;
+        if (Array.isArray(response)) {
+          const data = response as DealTypeSummary[];
+
+          // Find max count for color generation
+          const maxCount = Math.max(...data.map((d) => d.count), 0);
+
+          // Map to DealType format with dynamic colors
+          dealTypes.value = data.map((item) => ({
+            type: item.typeName,
+            count: item.count,
+            color: generateColor(item.count, maxCount),
+          }));
+        }
 
         // Force chart refresh
         chartKey.value++;

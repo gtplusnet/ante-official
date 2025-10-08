@@ -36,13 +36,22 @@
 
 <script lang="ts">
 import { ref, onMounted, computed, nextTick } from "vue";
-import { Notify } from "quasar";
+import { Notify, useQuasar } from "quasar";
 import GlobalWidgetCard from "src/components/shared/global/GlobalWidgetCard.vue";
+import { APIRequests } from "src/utility/api.handler";
 
 interface SalesStage {
   stage: string;
   count: number;
   color: string;
+}
+
+interface BoardColumn {
+  boardKey: string;
+  boardName: string;
+  boardType: string;
+  boardOrder: number;
+  boardProjects?: any[];
 }
 
 export default {
@@ -51,19 +60,15 @@ export default {
     GlobalWidgetCard,
   },
   setup() {
+    const $q = useQuasar();
+
     // Reactive data
     const loading = ref(false);
     const chartReady = ref(false);
     const chartKey = ref(0);
 
-    // Sales stages data with colors matching the image
-    const salesStages = ref<SalesStage[]>([
-      { stage: "Prospect", count: 24, color: "#2f40c4" },
-      { stage: "Internal Meeting", count: 11, color: "#615FF6" },
-      { stage: "Technical Meeting", count: 6, color: "#014781" },
-      { stage: "Proposal", count: 7, color: "#63D7E6" },
-      { stage: "Negotiations", count: 4, color: "#E3F2FD" },
-    ]);
+    // Sales stages data - will be populated from board data
+    const salesStages = ref<SalesStage[]>([]);
 
     // Chart configuration
     const chartOptions = computed(() => {
@@ -99,7 +104,7 @@ export default {
             fontWeight: 400,
           },
           formatter: function (val: number) {
-            return val.toString();
+            return val > 0 ? val.toString() : "";
           },
           offsetY: 0,
         },
@@ -177,12 +182,32 @@ export default {
       try {
         loading.value = true;
 
-        // Simulate API call - replace with actual service call
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Fetch board data using the same endpoint as LeadsBoardView
+        const response = await APIRequests.getLeadBoard($q);
 
-        // In production, you would fetch data from your API here:
-        // const data = await LeadService.getSalesStages();
-        // salesStages.value = data;
+        if (Array.isArray(response)) {
+          // Define stage mapping with colors
+          const stageMap: Record<string, { name: string; color: string }> = {
+            prospect: { name: "Prospect", color: "#2f40c4" },
+            initial_meeting: { name: "Internal Meeting", color: "#615FF6" },
+            technical_meeting: { name: "Technical Meeting", color: "#014781" },
+            proposal: { name: "Proposal", color: "#63D7E6" },
+            in_negotiation: { name: "Negotiations", color: "#E3F2FD" },
+          };
+
+          // Map board data to sales stages (exclude won/loss stages)
+          salesStages.value = Object.keys(stageMap)
+            .map((key) => {
+              const column = (response as BoardColumn[]).find(
+                (col) => col.boardKey === key
+              );
+              return {
+                stage: stageMap[key].name,
+                count: column?.boardProjects?.length || 0,
+                color: stageMap[key].color,
+              };
+            });
+        }
 
         // Force chart refresh
         chartKey.value++;

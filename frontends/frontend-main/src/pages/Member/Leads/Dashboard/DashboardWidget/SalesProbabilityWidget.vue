@@ -36,9 +36,10 @@
 
 <script lang="ts">
 import { ref, onMounted, computed, nextTick } from "vue";
-import { Notify } from "quasar";
+import { Notify, useQuasar } from "quasar";
 import GlobalWidgetCard from "src/components/shared/global/GlobalWidgetCard.vue";
 import VueApexCharts from "vue3-apexcharts";
+import { APIRequests } from "src/utility/api.handler";
 
 interface ProbabilityData {
   category: string;
@@ -53,21 +54,15 @@ export default {
     ApexChart: VueApexCharts,
   },
   setup() {
+    const $q = useQuasar();
+
     // Reactive data
     const loading = ref(false);
     const chartReady = ref(false);
     const chartKey = ref(0);
 
-    // Probability data based on the provided screenshot
-    const probabilityData = ref<ProbabilityData[]>([
-      { category: "Unknown", count: 3, color: "#D32F2F" },
-      { category: "A", count: 31, color: "#2f40c4" },
-      { category: "B", count: 17, color: "#615FF6" },
-      { category: "C", count: 22, color: "#2f40c4" },
-      { category: "D", count: 18, color: "#615FF6" },
-      { category: "E", count: 16, color: "#615FF6" },
-      { category: "F", count: 10, color: "#615FF6" },
-    ]);
+    // Probability data - will be populated from API
+    const probabilityData = ref<ProbabilityData[]>([]);
 
     // Chart configuration
     const chartOptions = computed(() => {
@@ -181,12 +176,12 @@ export default {
       try {
         loading.value = true;
 
-        // Simulate API call - replace with actual service call
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Fetch probability data from API
+        const response = await APIRequests.getSalesProbabilitySummary($q);
 
-        // In production, you would fetch data from your API here:
-        // const data = await LeadService.getSalesProbability();
-        // probabilityData.value = data;
+        if (Array.isArray(response)) {
+          probabilityData.value = response as ProbabilityData[];
+        }
 
         // Force chart refresh
         chartKey.value++;

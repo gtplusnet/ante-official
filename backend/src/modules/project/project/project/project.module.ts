@@ -10,9 +10,10 @@ import { TopicService } from '@modules/communication/topic/topic/topic.service';
 import { WarehouseService } from '@modules/inventory/warehouse/warehouse/warehouse.service';
 import { CommonModule } from '@common/common.module';
 import { LocationService } from '@modules/location/location/location/location.service';
+import { CRMActivityModule } from '@modules/crm/crm-activity/crm-activity/crm-activity.module';
 
 @Module({
-  imports: [CommonModule],
+  imports: [CommonModule, CRMActivityModule],
   controllers: [ProjectController],
   providers: [
     ProjectService,
