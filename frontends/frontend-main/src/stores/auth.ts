@@ -131,47 +131,24 @@ export const useAuthStore = defineStore('auth', {
      * Store Supabase tokens and initialize session
      */
     async storeSupabaseTokens(accessToken?: string, refreshToken?: string) {
-      console.log('🔐 storeSupabaseTokens - Starting with tokens:', {
-        hasAccessToken: !!accessToken,
-        hasRefreshToken: !!refreshToken,
-        accessTokenLength: accessToken?.length,
-        refreshTokenLength: refreshToken?.length,
-        accessTokenPrefix: accessToken?.substring(0, 20) + '...'
-      });
-
       if (!accessToken) {
-        console.log('🔐 storeSupabaseTokens - No Supabase access token received from backend');
         this.supabaseInitialized = true; // Mark as initialized even without tokens
         return;
       }
 
       try {
-        console.log('🔐 storeSupabaseTokens - Calling supabaseService.setSession...');
         const { data, error } = await supabaseService.setSession(accessToken, refreshToken);
-        
-        console.log('🔐 storeSupabaseTokens - setSession response:', {
-          hasData: !!data,
-          hasError: !!error,
-          hasSession: !!data?.session,
-          errorMessage: error
-        });
-        
+
         if (error) {
           console.error('🔐 storeSupabaseTokens - Failed to set Supabase session:', error);
           this.supabaseSession = null;
         } else {
           this.supabaseSession = data!.session;
-          console.log('🔐 storeSupabaseTokens - Supabase session initialized successfully:', {
-            userId: data?.session?.user?.id,
-            email: data?.session?.user?.email,
-            accessToken: data?.session?.access_token?.substring(0, 20) + '...'
-          });
         }
       } catch (error) {
         console.error('🔐 storeSupabaseTokens - Error initializing Supabase session:', error);
       } finally {
         this.supabaseInitialized = true;
-        console.log('🔐 storeSupabaseTokens - Marked as initialized');
       }
     },
 
@@ -180,23 +157,14 @@ export const useAuthStore = defineStore('auth', {
      */
     async initializeSupabaseSession() {
       try {
-        console.log('🔐 initializeSupabaseSession - Checking for existing session...');
-
         // Check if we have an existing Supabase session (from localStorage)
         const { data } = await supabaseService.getSession();
 
         if (data?.session) {
           this.supabaseSession = data.session;
           this.supabaseInitialized = true;
-          console.log('🔐 initializeSupabaseSession - Session restored:', {
-            hasUser: !!data.session.user,
-            userId: data.session.user?.id,
-            companyId: data.session.user?.user_metadata?.companyId,
-            tokenPrefix: data.session.access_token?.substring(0, 20) + '...'
-          });
         } else {
           this.supabaseInitialized = true;
-          console.log('🔐 initializeSupabaseSession - No existing session found');
         }
       } catch (error) {
         console.error('🔐 initializeSupabaseSession - Error:', error);
