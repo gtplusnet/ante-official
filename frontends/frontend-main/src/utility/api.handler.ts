@@ -34,6 +34,7 @@ export const APIRequests = {
   moveLead: (quasar: QVueGlobals, projectId: string, boardKey: string) => apiRequest<unknown>(quasar, 'PATCH', '/lead/move', { projectId, boardKey }),
   convertLeadToProject: (quasar: QVueGlobals, id: string) => apiRequest<ProjectDataResponse>(quasar, 'POST', `/lead/${id}/convert`, {}),
   getDealTypesSummary: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'GET', '/lead/deal-types-summary', {}, {}),
+  getClosingDatesSummary: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'GET', '/lead/closing-dates-summary', {}, {}),
 
   // Item API methods
   deleteItem: (quasar: QVueGlobals, id: string) => apiRequest<ItemDataResponse>(quasar, 'DELETE', `/items/${id}`, {}, {}),

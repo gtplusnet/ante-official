@@ -1113,4 +1113,72 @@ export class LeadService {
 
     return result;
   }
+
+  async getClosingDatesSummary() {
+    const companyId = this.utilityService.companyId;
+
+    // Get all active deals with closing dates
+    const activeDeals = await this.prisma.leadDeal.findMany({
+      where: {
+        companyId,
+        isDeleted: false,
+        status: {
+          notIn: [LeadDealStatus.WIN, LeadDealStatus.LOST],
+        },
+      },
+      select: {
+        closeDate: true,
+      },
+    });
+
+    // Group by month and count
+    const closingDateCounts = activeDeals.reduce((acc, deal) => {
+      const closeDate = new Date(deal.closeDate);
+
+      // Check if the date is valid
+      if (isNaN(closeDate.getTime())) {
+        // Count as Unknown
+        if (!acc['Unknown']) {
+          acc['Unknown'] = 0;
+        }
+        acc['Unknown']++;
+      } else {
+        // Format as "Mon YYYY" (e.g., "May 2025")
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthKey = `${monthNames[closeDate.getMonth()]} ${closeDate.getFullYear()}`;
+
+        if (!acc[monthKey]) {
+          acc[monthKey] = 0;
+        }
+        acc[monthKey]++;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Convert to array format with sorting data
+    const result = Object.entries(closingDateCounts).map(([month, count]) => {
+      // Parse month for sorting
+      let sortDate: Date;
+      if (month === 'Unknown') {
+        sortDate = new Date(0); // Put Unknown first
+      } else {
+        const [monthStr, yearStr] = month.split(' ');
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthIndex = monthNames.indexOf(monthStr);
+        sortDate = new Date(parseInt(yearStr), monthIndex);
+      }
+
+      return {
+        month,
+        count,
+        sortDate,
+      };
+    });
+
+    // Sort by date
+    result.sort((a, b) => a.sortDate.getTime() - b.sortDate.getTime());
+
+    // Remove sortDate from final result
+    return result.map(({ month, count }) => ({ month, count }));
+  }
 }

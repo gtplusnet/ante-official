@@ -159,4 +159,12 @@ export class LeadController {
       response,
     );
   }
+
+  @Get('closing-dates-summary')
+  async getClosingDatesSummary(@NestResponse() response: Response) {
+    return this.utilityService.responseHandler(
+      this.leadService.getClosingDatesSummary(),
+      response,
+    );
+  }
 }
