@@ -8,7 +8,6 @@ export default boot(async ({ store }) => {
   if (authStore.isAuthenticated) {
     try {
       await authStore.initializeSupabaseSession();
-      console.log('Supabase session initialized on app boot');
     } catch (error) {
       console.error('Failed to initialize Supabase session on boot:', error);
     }

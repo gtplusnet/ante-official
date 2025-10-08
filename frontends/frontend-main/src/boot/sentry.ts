@@ -10,8 +10,6 @@ export default boot(({ app, router }) => {
   const isMonitoringEnvironment = isProduction && process.env.VITE_SENTRY_DSN;
 
   if (isMonitoringEnvironment) {
-    console.log(`[SENTRY] Initializing Sentry for environment: ${environment}`);
-    
     Sentry.init({
       app,
       dsn: process.env.VITE_SENTRY_DSN,
@@ -130,11 +128,7 @@ export default boot(({ app, router }) => {
     
     // Make setUser available globally
     app.config.globalProperties.$sentrySetUser = setUser;
-    
-    console.log(`[SENTRY] Sentry initialized successfully for ${environment} environment`);
   } else {
-    console.log(`[SENTRY] Sentry disabled (only enabled in production for performance)`);
-
     // Provide noop functions in development
     app.config.globalProperties.$sentrySetUser = () => {};
   }

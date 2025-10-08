@@ -16,7 +16,6 @@ export const useTaskPhaseStore = defineStore('taskPhase', () => {
   const getCompanyId = () => {
     const authStore = useAuthStore();
     const companyId = authStore.companyData?.id || authStore.accountInformation?.companyId;
-    console.log('Company ID from auth store:', companyId);
     return companyId || null;
   };
 
@@ -75,8 +74,6 @@ export const useTaskPhaseStore = defineStore('taskPhase', () => {
           filter: `projectId=eq.${projectId}`
         },
         async (payload) => {
-          console.log('TaskPhase realtime event:', payload);
-
           // Handle different event types
           switch (payload.eventType) {
             case 'INSERT': {

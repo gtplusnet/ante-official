@@ -154,22 +154,6 @@ export function useSupabaseTable<T = any>(options: UseSupabaseTableOptions): Use
 
   // Fetch data
   const fetchData = async () => {
-    console.log('📊 useSupabaseTable - fetchData called for table:', table);
-    
-    // Check session state
-    try {
-      const { data: sessionData } = await supabaseService.getSession();
-      console.log('📊 useSupabaseTable - Session state:', {
-        table,
-        hasSession: !!sessionData?.session,
-        hasUser: !!sessionData?.session?.user,
-        userId: sessionData?.session?.user?.id,
-        email: sessionData?.session?.user?.email
-      });
-    } catch (error) {
-      console.error('📊 useSupabaseTable - Failed to check session:', error);
-    }
-    
     try {
       loading.value = true;
       error.value = null;
@@ -177,7 +161,6 @@ export function useSupabaseTable<T = any>(options: UseSupabaseTableOptions): Use
       // Check cache first
       const cached = checkCache();
       if (cached) {
-        console.log('📊 useSupabaseTable - Using cached data for table:', table);
         data.value = cached.data;
         totalCount.value = cached.count || 0;
         loading.value = false;
@@ -340,11 +323,9 @@ export function useSupabaseTable<T = any>(options: UseSupabaseTableOptions): Use
 
   // Navigation methods
   const refetch = async () => {
-    console.log('[DEBUG] useSupabaseTable: refetch method called for table:', table);
     // Clear cache before fetching to ensure fresh data
     const key = getCacheKey();
     tableCache.delete(key);
-    console.log('[DEBUG] useSupabaseTable: Cache cleared for key:', key);
     await fetchData();
   };
 
