@@ -1238,4 +1238,71 @@ export class LeadService {
 
     return probabilityCounts;
   }
+
+  async getAverageDaysStageSummary() {
+    const companyId = this.utilityService.companyId;
+
+    // Get all active deals with their current status
+    const activeDeals = await this.prisma.leadDeal.findMany({
+      where: {
+        companyId,
+        isDeleted: false,
+        status: {
+          notIn: [LeadDealStatus.WIN, LeadDealStatus.LOST],
+        },
+      },
+      select: {
+        status: true,
+        updatedAt: true,
+      },
+    });
+
+    // Define stage mapping with colors (matching the widget display order)
+    const stageMap: Record<LeadDealStatus, { name: string; color: string; order: number }> = {
+      [LeadDealStatus.IN_NEGOTIATION]: { name: 'Negotiations', color: '#615FF6', order: 1 },
+      [LeadDealStatus.TECHNICAL_MEETING]: { name: 'Technical Meeting', color: '#2f40c4', order: 2 },
+      [LeadDealStatus.PROPOSAL]: { name: 'Proposal', color: '#615FF6', order: 3 },
+      [LeadDealStatus.CONTACTED]: { name: 'Initial Meeting', color: '#2f40c4', order: 4 },
+      [LeadDealStatus.OPPORTUNITY]: { name: 'Prospect', color: '#615FF6', order: 5 },
+      [LeadDealStatus.WIN]: { name: 'Won', color: '#615FF6', order: 6 },
+      [LeadDealStatus.LOST]: { name: 'Loss', color: '#2f40c4', order: 7 },
+    };
+
+    // Calculate average days for each status
+    const statusGroups = activeDeals.reduce((acc, deal) => {
+      if (!acc[deal.status]) {
+        acc[deal.status] = [];
+      }
+
+      // Calculate days since last update (days in current stage)
+      const now = new Date();
+      const updatedAt = new Date(deal.updatedAt);
+      const diffMs = now.getTime() - updatedAt.getTime();
+      const days = diffMs / (1000 * 60 * 60 * 24);
+
+      acc[deal.status].push(days);
+      return acc;
+    }, {} as Record<LeadDealStatus, number[]>);
+
+    // Calculate averages and format result - include ALL stages (even empty ones)
+    const result = Object.entries(stageMap).map(([status, stageInfo]) => {
+      const daysArray = statusGroups[status as LeadDealStatus] || [];
+      const average = daysArray.length > 0
+        ? daysArray.reduce((sum, days) => sum + days, 0) / daysArray.length
+        : 0;
+
+      return {
+        stage: stageInfo.name,
+        days: Math.round(average), // Round to whole number, 0 if no leads
+        color: stageInfo.color,
+        order: stageInfo.order,
+      };
+    });
+
+    // Sort by the predefined order
+    result.sort((a, b) => a.order - b.order);
+
+    // Remove order field from final result
+    return result.map(({ stage, days, color }) => ({ stage, days, color }));
+  }
 }

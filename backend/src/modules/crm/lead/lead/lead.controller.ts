@@ -175,4 +175,12 @@ export class LeadController {
       response,
     );
   }
+
+  @Get('average-days-stage-summary')
+  async getAverageDaysStageSummary(@NestResponse() response: Response) {
+    return this.utilityService.responseHandler(
+      this.leadService.getAverageDaysStageSummary(),
+      response,
+    );
+  }
 }

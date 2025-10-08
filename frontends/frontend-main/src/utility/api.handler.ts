@@ -36,6 +36,7 @@ export const APIRequests = {
   getDealTypesSummary: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'GET', '/lead/deal-types-summary', {}, {}),
   getClosingDatesSummary: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'GET', '/lead/closing-dates-summary', {}, {}),
   getSalesProbabilitySummary: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'GET', '/lead/sales-probability-summary', {}, {}),
+  getAverageDaysStageSummary: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'GET', '/lead/average-days-stage-summary', {}, {}),
 
   // Item API methods
   deleteItem: (quasar: QVueGlobals, id: string) => apiRequest<ItemDataResponse>(quasar, 'DELETE', `/items/${id}`, {}, {}),
