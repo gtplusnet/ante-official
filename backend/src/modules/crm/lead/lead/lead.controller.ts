@@ -151,4 +151,12 @@ export class LeadController {
       response,
     );
   }
+
+  @Get('deal-types-summary')
+  async getDealTypesSummary(@NestResponse() response: Response) {
+    return this.utilityService.responseHandler(
+      this.leadService.getDealTypesSummary(),
+      response,
+    );
+  }
 }

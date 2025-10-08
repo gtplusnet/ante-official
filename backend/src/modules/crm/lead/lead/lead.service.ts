@@ -1069,4 +1069,48 @@ export class LeadService {
       initialCostOpportunity: initialCostFormatted.formatCurrency,
     };
   }
+
+  async getDealTypesSummary() {
+    const companyId = this.utilityService.companyId;
+
+    // Get all active deals with their deal types
+    const activeDeals = await this.prisma.leadDeal.findMany({
+      where: {
+        companyId,
+        isDeleted: false,
+        status: {
+          notIn: [LeadDealStatus.WIN, LeadDealStatus.LOST],
+        },
+        dealTypeId: {
+          not: null,
+        },
+      },
+      include: {
+        dealType: true,
+      },
+    });
+
+    // Group by deal type and count
+    const dealTypeCounts = activeDeals.reduce((acc, deal) => {
+      if (deal.dealType) {
+        const typeName = deal.dealType.typeName;
+        if (!acc[typeName]) {
+          acc[typeName] = 0;
+        }
+        acc[typeName]++;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Convert to array format
+    const result = Object.entries(dealTypeCounts).map(([typeName, count]) => ({
+      typeName,
+      count,
+    }));
+
+    // Sort by count descending
+    result.sort((a, b) => b.count - a.count);
+
+    return result;
+  }
 }
