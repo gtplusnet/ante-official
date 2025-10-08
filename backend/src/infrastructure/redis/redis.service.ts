@@ -33,10 +33,16 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     const socketConfig: any = {
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT) || 6379,
-      connectTimeout: 5000, // 5 second connection timeout
+      connectTimeout: 10000, // 10 second connection timeout (TLS handshake needs more time)
+      keepAlive: 30000, // Send keep-alive packets every 30 seconds
+      noDelay: true, // Disable Nagle's algorithm for low latency
       reconnectStrategy: (retries) => {
-        // Exponential backoff with max 3 second delay
-        const delay = Math.min(retries * 100, 3000);
+        if (retries > 10) {
+          this.logger.error(`Redis reconnect failed after ${retries} attempts, giving up`);
+          return false; // Stop reconnecting after 10 attempts
+        }
+        // Exponential backoff with max 5 second delay
+        const delay = Math.min(retries * 500, 5000);
         this.logger.warn(`Main Redis reconnecting (attempt ${retries}) in ${delay}ms`);
         return delay;
       },
@@ -45,6 +51,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     // Add TLS if enabled (must be true, not boolean)
     if (process.env.REDIS_TLS === 'true') {
       socketConfig.tls = true;
+      socketConfig.servername = process.env.REDIS_HOST; // SNI for TLS
     }
 
     // Configuration for both clients
