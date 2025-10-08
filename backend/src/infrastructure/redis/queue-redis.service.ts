@@ -23,6 +23,7 @@ export class QueueRedisService implements OnModuleInit, OnModuleDestroy {
       socket: {
         host: process.env.REDIS_HOST || 'localhost',
         port: parseInt(process.env.REDIS_PORT) || 6379,
+        tls: process.env.REDIS_TLS === 'true', // Enable TLS/SSL for managed Redis/Valkey (rediss://)
         connectTimeout: 10000, // 10 second connection timeout
         reconnectStrategy: (retries) => {
           // Exponential backoff with max 3 second delay
