@@ -100,6 +100,7 @@
       display: flex;
       justify-content: space-between;
       align-items: start;
+      width: 100%;
     }
 
     .task-page-card-footer {
@@ -109,8 +110,18 @@
     }
 
     .task-title {
-      font-weight: 600;
-      line-height: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 300px;
+
+      @media (min-width: 1920px) {
+        max-width: 500px;
+      }
+
+      @media (min-width: 2160px) {
+        max-width: 800px;
+      }
     }
 
     .task-assignee {
@@ -119,7 +130,9 @@
       color: #181d36;
       display: flex;
       align-items: center;
+      justify-content: end;
       white-space: nowrap;
+      width: 25%;
 
       span {
         white-space: nowrap;

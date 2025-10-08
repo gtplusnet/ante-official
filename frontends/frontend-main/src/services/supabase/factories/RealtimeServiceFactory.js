@@ -34,7 +34,6 @@ class RealtimeServiceFactory {
     }
 
     this.serviceRegistry.set(tableName, ServiceClass);
-    console.log(`Registered realtime service for table: ${tableName}`);
   }
 
   /**
@@ -45,14 +44,12 @@ class RealtimeServiceFactory {
    */
   create(tableName, options = {}) {
     const ServiceClass = this.serviceRegistry.get(tableName);
-    
+
     if (!ServiceClass) {
       throw new Error(`No realtime service registered for table: ${tableName}`);
     }
 
     const service = new ServiceClass(options);
-    
-    console.log(`Created realtime service for table: ${tableName}`);
     return service;
   }
 

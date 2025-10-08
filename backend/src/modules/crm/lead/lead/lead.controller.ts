@@ -143,4 +143,44 @@ export class LeadController {
       response,
     );
   }
+
+  @Get('dashboard-counters')
+  async getDashboardCounters(@NestResponse() response: Response) {
+    return this.utilityService.responseHandler(
+      this.leadService.getLeadDashboardCounters(),
+      response,
+    );
+  }
+
+  @Get('deal-types-summary')
+  async getDealTypesSummary(@NestResponse() response: Response) {
+    return this.utilityService.responseHandler(
+      this.leadService.getDealTypesSummary(),
+      response,
+    );
+  }
+
+  @Get('closing-dates-summary')
+  async getClosingDatesSummary(@NestResponse() response: Response) {
+    return this.utilityService.responseHandler(
+      this.leadService.getClosingDatesSummary(),
+      response,
+    );
+  }
+
+  @Get('sales-probability-summary')
+  async getSalesProbabilitySummary(@NestResponse() response: Response) {
+    return this.utilityService.responseHandler(
+      this.leadService.getSalesProbabilitySummary(),
+      response,
+    );
+  }
+
+  @Get('average-days-stage-summary')
+  async getAverageDaysStageSummary(@NestResponse() response: Response) {
+    return this.utilityService.responseHandler(
+      this.leadService.getAverageDaysStageSummary(),
+      response,
+    );
+  }
 }

@@ -265,17 +265,17 @@ export class DashboardService {
     // Get days before cutoff based on employee's payroll group
     const daysBeforeCutoff = await this.getEmployeeDaysBeforeCutoff(accountId);
 
-    // Get leave balances
-    const [sickLeave, vacationLeave] = await Promise.all([
-      this.getEmployeeLeaveBalance(accountId, 'sick'),
-      this.getEmployeeLeaveBalance(accountId, 'vacation'),
-    ]);
+    // Get combined leave balance (SL + VL)
+    const leaveBalance = await this.getCombinedLeaveBalance(accountId);
+
+    // Get all tasks count assigned to the employee
+    const allTasks = await this.getEmployeeTasksCount(accountId);
 
     return {
       outstandingRequests,
       daysBeforeCutoff,
-      sickLeave,
-      vacationLeave,
+      leaveBalance,
+      allTasks,
     };
   }
 
@@ -386,6 +386,59 @@ export class DashboardService {
     } catch (error) {
       console.error(`Error getting ${leaveType} leave balance:`, error);
       return null;
+    }
+  }
+
+  /**
+   * Get combined leave balance (Sick Leave + Vacation Leave)
+   */
+  private async getCombinedLeaveBalance(
+    accountId: string,
+  ): Promise<LeaveBalance | null> {
+    try {
+      const [sickLeave, vacationLeave] = await Promise.all([
+        this.getEmployeeLeaveBalance(accountId, 'sick'),
+        this.getEmployeeLeaveBalance(accountId, 'vacation'),
+      ]);
+
+      // If neither leave type exists, return null
+      if (!sickLeave && !vacationLeave) {
+        return null;
+      }
+
+      // Combine the balances
+      const totalUsed = (sickLeave?.used || 0) + (vacationLeave?.used || 0);
+      const totalCredits = (sickLeave?.total || 0) + (vacationLeave?.total || 0);
+
+      return {
+        used: totalUsed,
+        total: totalCredits,
+      };
+    } catch (error) {
+      console.error('Error getting combined leave balance:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get count of all tasks assigned to the employee
+   */
+  private async getEmployeeTasksCount(accountId: string): Promise<number> {
+    try {
+      const count = await this.prismaService.task.count({
+        where: {
+          OR: [
+            { assignedToId: accountId },
+            { TaskWatcher: { some: { accountId } } },
+          ],
+          isDeleted: false,
+        },
+      });
+
+      return count;
+    } catch (error) {
+      console.error('Error getting employee tasks count:', error);
+      return 0;
     }
   }
 

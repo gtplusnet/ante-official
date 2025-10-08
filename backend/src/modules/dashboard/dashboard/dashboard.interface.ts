@@ -72,8 +72,8 @@ export interface LeaveBalance {
 export interface EmployeeDashboardCounters {
   outstandingRequests: number;
   daysBeforeCutoff: number | null;
-  sickLeave: LeaveBalance | null;
-  vacationLeave: LeaveBalance | null;
+  leaveBalance: LeaveBalance | null;
+  allTasks: number;
 }
 
 export interface EmployeeCutoffDateRange {

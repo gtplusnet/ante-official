@@ -1,15 +1,16 @@
-import { 
-  Controller, 
-  Post, 
-  Get, 
-  Body, 
-  Query, 
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Query,
   Inject,
   HttpStatus,
   BadRequestException,
-  Response as NestResponse
+  Response as NestResponse,
+  Req
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { TimeTrackingService } from './time-tracking.service';
 import { StartTimerDto } from './dto/start-timer.dto';
 import { StopTimerDto } from './dto/stop-timer.dto';
@@ -22,29 +23,50 @@ export class TimeTrackingController {
   @Inject() private readonly timeTrackingService: TimeTrackingService;
   @Inject() private readonly utilityService: UtilityService;
 
+  /**
+   * Extract client IP address from request
+   */
+  private getClientIp(req: Request): string | undefined {
+    const forwarded = req.headers['x-forwarded-for'];
+    if (typeof forwarded === 'string') {
+      return forwarded.split(',')[0].trim();
+    }
+    return req.ip || req.socket.remoteAddress;
+  }
+
   @Post('start')
   async startTimer(
     @Body() dto: StartTimerDto,
+    @Req() req: Request,
     @NestResponse() res: Response,
   ) {
     const accountId = this.utilityService.accountInformation?.id;
     if (!accountId) {
       throw new BadRequestException('User not authenticated');
     }
-    const result = await this.timeTrackingService.startTimer(accountId, dto);
+
+    // Extract TIME-IN IP address
+    const timeInIpAddress = this.getClientIp(req);
+
+    const result = await this.timeTrackingService.startTimer(accountId, dto, timeInIpAddress);
     return this.utilityService.responseHandler(Promise.resolve(result), res);
   }
 
   @Post('stop')
   async stopTimer(
     @Body() dto: StopTimerDto,
+    @Req() req: Request,
     @NestResponse() res: Response,
   ) {
     const accountId = this.utilityService.accountInformation?.id;
     if (!accountId) {
       throw new BadRequestException('User not authenticated');
     }
-    const result = await this.timeTrackingService.stopTimer(accountId, dto);
+
+    // Extract TIME-OUT IP address
+    const timeOutIpAddress = this.getClientIp(req);
+
+    const result = await this.timeTrackingService.stopTimer(accountId, dto, timeOutIpAddress);
     return this.utilityService.responseHandler(Promise.resolve(result), res);
   }
 
@@ -101,13 +123,18 @@ export class TimeTrackingController {
   @Post('create-and-start')
   async createTaskAndStart(
     @Body() dto: CreateTaskAndStartDto,
+    @Req() req: Request,
     @NestResponse() res: Response,
   ) {
     const accountId = this.utilityService.accountInformation?.id;
     if (!accountId) {
       throw new BadRequestException('User not authenticated');
     }
-    const result = await this.timeTrackingService.createTaskAndStart(accountId, dto);
+
+    // Extract TIME-IN IP address
+    const timeInIpAddress = this.getClientIp(req);
+
+    const result = await this.timeTrackingService.createTaskAndStart(accountId, dto, timeInIpAddress);
     return this.utilityService.responseHandler(Promise.resolve(result), res);
   }
 }

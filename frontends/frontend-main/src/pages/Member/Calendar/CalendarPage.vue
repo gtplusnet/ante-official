@@ -1,135 +1,443 @@
 <template>
-  <div>
-    <q-card class="calendar-card">
-      <q-card-section>
-        <div class="row items-center no-wrap">
-          <div class="col">
-            <div class="text-title-large">My Calendar</div>
-          </div>
-        </div>
+  <div class="calendar-page">
+    <!-- Desktop Layout -->
+    <div class="calendar-desktop" v-if="!$q.screen.lt.md">
+      <!-- Top Toolbar -->
+      <CalendarToolbar
+        v-model="currentView"
+        v-model:date="currentDate"
+        @toggle-sidebar="sidebarVisible = !sidebarVisible"
+        @open-settings="openSettings"
+        @create-event="openCreateEventDialog"
+        @search="handleSearch"
+      />
 
-        <div class="row items-start no-wrap">
-          <div class="col-2 q-my-md">
-            <div class="mini-calendar-container q-pa-md">
-              <MiniCalendarView class="full-width" />
-            </div>
+      <div class="calendar-body">
+        <!-- Left Sidebar -->
+        <CalendarSidebar
+          v-if="sidebarVisible"
+          :selected-date="currentDate"
+          :events="events"
+          :show-other-calendars="false"
+          @date-select="handleDateSelect"
+          @create-event="openCreateEventDialog"
+          @category-toggle="handleCategoryToggle"
+          @edit-category="handleEditCategory"
+          @delete-category="handleDeleteCategory"
+          @add-category="openAddCategoryDialog"
+        />
 
-            <div class="checklist">
-              <div class="text-title-medium checklist-title">My Schedule</div>
-              <div class="checklist-items">
-                <q-checkbox v-model="filters.all" label="All" class="text-label-medium" />
-                <q-checkbox
-                  v-model="filters.maintenance"
-                  label="Maintenance"
-                  class="text-label-medium"
-                />
-                <q-checkbox v-model="filters.repair" label="Repair" class="text-label-medium" />
-                <q-checkbox
-                  v-model="filters.transfer"
-                  label="Transfer Location"
-                  class="text-label-medium"
-                />
-              </div>
-            </div>
-          </div>
-          <div class="col-7 q-pa-md">
-            <FullCalenderView :events="events" />
-          </div>
-          <div class="col-3 q-pa-md">
-            <div class="q-mb-lg event-heading text-title-medium">Events</div>
-            <div class="q-mt-md">
-              <EventPartials :events="events"></EventPartials>
-            </div>
-          </div>
+        <!-- Main Calendar Area -->
+        <div class="calendar-main">
+          <GoogleCalendarView
+            ref="calendarViewRef"
+            :view="currentView"
+            :date="currentDate"
+            :events="fullCalendarEvents"
+            :editable="true"
+            @event-click="handleEventClick"
+            @date-click="handleDateClick"
+            @event-drop="handleEventDrop"
+            @event-resize="handleEventResize"
+            @date-select="handleDateRangeSelect"
+          />
         </div>
-      </q-card-section>
-    </q-card>
-    <div class="calendar-mobile-content">
-      <!-- Calendar Widget -->
-      <CalendarWidget class="calendar-widget" />
-      <!-- My Schedules Widget -->
-      <MySchedulesWidget class="my-schedules-widget" />
+      </div>
     </div>
+
+    <!-- Mobile Layout -->
+    <div class="calendar-mobile" v-else>
+      <CalendarWidget />
+      <MySchedulesWidget :events="filteredEvents" />
+    </div>
+
+    <!-- Dialogs (Lazy Loaded) -->
+    <CreateEventDialog
+      v-if="showCreateDialog"
+      v-model="showCreateDialog"
+      :initial-date="selectedDialogDate"
+      :initial-end-date="selectedDialogEndDate"
+      :initial-all-day="selectedAllDay"
+      @created="handleEventCreated"
+    />
+
+    <EventDetailsDialog
+      v-if="showDetailsDialog"
+      v-model="showDetailsDialog"
+      :event="selectedEvent"
+      @updated="handleEventUpdated"
+      @deleted="handleEventDeleted"
+    />
+
+    <CategoryDialog
+      v-if="showCategoryDialog"
+      v-model="showCategoryDialog"
+      :category="selectedCategory"
+      @saved="handleCategorySaved"
+    />
   </div>
 </template>
 
-<style scoped src="./CalendarPage.scss"></style>
-
-<script>
-import FullCalenderView from '../../../components/calendar/FullCalendarView/FullCalenderView.vue';
-import MiniCalendarView from '../../../components/calendar/MiniCalendar/MiniCalendarView.vue';
-import EventPartials from './Partials/EventsPartial/EventPartials.vue';
+<script setup lang="ts">
+import { ref, computed, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue';
+import { useQuasar } from 'quasar';
+import CalendarToolbar from './components/CalendarToolbar.vue';
+import CalendarSidebar from './components/CalendarSidebar.vue';
+import GoogleCalendarView from './components/GoogleCalendarView.vue';
 import CalendarWidget from '../Dashboard/CalendarWidget/CalendarWidget.vue';
 import MySchedulesWidget from '../Dashboard/MySchedulesWidget/MySchedulesWidget.vue';
+import { useCalendarEvents } from 'src/composables/calendar/useCalendarEvents';
+import { useCalendarCategories } from 'src/composables/calendar/useCalendarCategories';
+import { date } from 'quasar';
 
-const dummyData = [
-  {
-    id: 1,
-    title: 'Maintenance for excavator (ZSA-123)',
-    startDateHumanized: 'October 10, 2024',
-    endDateHumanized: 'October 15, 2024',
-    start: '2024-10-10',
-    end: '2024-10-15',
-    tags: ['Maintenance'],
-  },
-  {
-    id: 2,
-    title: 'Warehouse A to Warehouse B transport of yero',
-    startDateHumanized: 'October 20, 2024',
-    endDateHumanized: 'October 25, 2024',
-    start: '2024-10-20',
-    end: '2024-10-25',
-    tags: ['Transport'],
-  },
-  {
-    id: 3,
-    title: 'Repair truck (ZSA-543)',
-    startDateHumanized: 'October 30, 2024',
-    endDateHumanized: 'November 05, 2024',
-    start: '2024-10-30',
-    end: '2024-11-05',
-    tags: ['Repair'],
-  },
-  {
-    id: 4,
-    title: 'Warehouse A to Warehouse B transport of plywood',
-    startDateHumanized: 'November 10, 2024',
-    endDateHumanized: 'November 11, 2024',
-    start: '2024-11-10',
-    end: '2024-11-11',
-    tags: ['Transport'],
-  },
-  {
-    id: 5,
-    title: 'Repair L300 for small furniture transport (ZSA-000)',
-    startDateHumanized: 'November 14, 2024',
-    endDateHumanized: 'November 16, 2024',
-    start: '2024-11-14',
-    end: '2024-11-16',
-    tags: ['Repair'],
-  },
-];
+// Lazy-loaded dialogs (CLAUDE.md - ALL dialogs must be lazy loaded)
+const CreateEventDialog = defineAsyncComponent(() =>
+  import('./dialogs/CreateEventDialog.vue')
+);
 
-export default {
-  name: 'CalendarPage',
-  components: {
-    FullCalenderView,
-    MiniCalendarView,
-    EventPartials,
-    CalendarWidget,
-    MySchedulesWidget,
-  },
-  data() {
-    return {
-      dummyData,
-      events: dummyData,
-      filters: {
-        all: true,
-        maintenance: true,
-        repair: true,
-        transfer: true,
-      },
-    };
-  },
+const EventDetailsDialog = defineAsyncComponent(() =>
+  import('./dialogs/EventDetailsDialog.vue')
+);
+
+const CategoryDialog = defineAsyncComponent(() =>
+  import('./dialogs/CategoryDialog.vue')
+);
+
+// Composables
+const $q = useQuasar();
+const {
+  events,
+  loading: eventsLoading,
+  fetchEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+  subscribeToChanges,
+  getFullCalendarEvents
+} = useCalendarEvents();
+
+const {
+  categories,
+  selectedCategories,
+  loading: categoriesLoading,
+  fetchCategories,
+  deleteCategory: deleteCategoryComposable
+} = useCalendarCategories();
+
+// State
+const currentView = ref('dayGridMonth');
+const currentDate = ref(new Date());
+const sidebarVisible = ref(true);
+const searchQuery = ref('');
+
+// Dialog states
+const showCreateDialog = ref(false);
+const showDetailsDialog = ref(false);
+const showCategoryDialog = ref(false);
+
+// Selected data
+const selectedEvent = ref<any>(null);
+const selectedCategory = ref<any>(null);
+const selectedDialogDate = ref<Date>(new Date());
+const selectedDialogEndDate = ref<Date | null>(null);
+const selectedAllDay = ref(false);
+
+// Refs
+const calendarViewRef = ref<any>(null);
+
+// Real-time subscription
+let realtimeChannel: any = null;
+
+// Computed
+const fullCalendarEvents = computed(() => {
+  const filteredByCategory = events.value.filter(event =>
+    !event.categoryId || selectedCategories.value.includes(event.categoryId)
+  );
+
+  const filteredBySearch = searchQuery.value
+    ? filteredByCategory.filter(event =>
+        event.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        event.description?.toLowerCase().includes(searchQuery.value.toLowerCase())
+      )
+    : filteredByCategory;
+
+  return getFullCalendarEvents.value.filter(fcEvent => {
+    const originalEvent = filteredBySearch.find(e => e.id === fcEvent.id);
+    return !!originalEvent;
+  });
+});
+
+const filteredEvents = computed(() => {
+  return events.value.filter(event =>
+    !event.categoryId || selectedCategories.value.includes(event.categoryId)
+  );
+});
+
+// Methods
+const loadEvents = async () => {
+  const startDate = getStartDateForView();
+  const endDate = getEndDateForView();
+  await fetchEvents(startDate, endDate);
 };
+
+const getStartDateForView = (): Date => {
+  const start = new Date(currentDate.value);
+
+  switch (currentView.value) {
+    case 'dayGridMonth':
+      start.setDate(1);
+      start.setDate(start.getDate() - start.getDay());
+      break;
+    case 'timeGridWeek':
+      start.setDate(start.getDate() - start.getDay());
+      break;
+    case 'timeGridDay':
+      // Use current date
+      break;
+    case 'multiMonthYear':
+      start.setMonth(0, 1);
+      break;
+    default:
+      start.setDate(start.getDate() - 7);
+  }
+
+  return start;
+};
+
+const getEndDateForView = (): Date => {
+  const end = new Date(currentDate.value);
+
+  switch (currentView.value) {
+    case 'dayGridMonth':
+      end.setMonth(end.getMonth() + 1, 0);
+      end.setDate(end.getDate() + (6 - end.getDay()));
+      break;
+    case 'timeGridWeek':
+      end.setDate(end.getDate() + (6 - end.getDay()));
+      break;
+    case 'timeGridDay':
+      end.setDate(end.getDate() + 1);
+      break;
+    case 'multiMonthYear':
+      end.setMonth(11, 31);
+      break;
+    default:
+      end.setDate(end.getDate() + 7);
+  }
+
+  return end;
+};
+
+// Event handlers
+const openCreateEventDialog = (initialDate?: Date, allDay = false) => {
+  selectedDialogDate.value = initialDate || new Date();
+  selectedAllDay.value = allDay;
+  showCreateDialog.value = true;
+};
+
+const handleEventClick = (event: any) => {
+  const originalEvent = events.value.find(e => e.id === event.id);
+  if (originalEvent) {
+    selectedEvent.value = originalEvent;
+    showDetailsDialog.value = true;
+  }
+};
+
+const handleDateClick = (clickedDate: Date, allDay: boolean) => {
+  openCreateEventDialog(clickedDate, allDay);
+};
+
+const handleDateRangeSelect = (start: Date, end: Date, allDay: boolean) => {
+  selectedDialogDate.value = start;
+  selectedDialogEndDate.value = end;
+  selectedAllDay.value = allDay;
+  showCreateDialog.value = true;
+};
+
+const handleEventDrop = async (info: any) => {
+  const { event, revert } = info;
+
+  try {
+    await updateEvent(event.id, {
+      startDateTime: event.start.toISOString(),
+      endDateTime: event.end?.toISOString() || event.start.toISOString(),
+      allDay: event.allDay
+    });
+
+    $q.notify({
+      type: 'positive',
+      message: 'Event moved successfully'
+    });
+  } catch (error) {
+    console.error('Error moving event:', error);
+    revert();
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to move event'
+    });
+  }
+};
+
+const handleEventResize = async (info: any) => {
+  const { event, revert } = info;
+
+  try {
+    await updateEvent(event.id, {
+      endDateTime: event.end?.toISOString() || event.start.toISOString()
+    });
+
+    $q.notify({
+      type: 'positive',
+      message: 'Event resized successfully'
+    });
+  } catch (error) {
+    console.error('Error resizing event:', error);
+    revert();
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to resize event'
+    });
+  }
+};
+
+const handleEventCreated = async (newEvent: any) => {
+  await loadEvents();
+  showCreateDialog.value = false;
+};
+
+const handleEventUpdated = async (updatedEvent: any) => {
+  await loadEvents();
+  showDetailsDialog.value = false;
+};
+
+const handleEventDeleted = async (deletedEventId: string) => {
+  await loadEvents();
+  showDetailsDialog.value = false;
+};
+
+const handleDateSelect = (selectedDate: Date) => {
+  currentDate.value = selectedDate;
+  if (currentView.value !== 'timeGridDay') {
+    currentView.value = 'timeGridDay';
+  }
+};
+
+const handleSearch = (query: string) => {
+  searchQuery.value = query;
+};
+
+const handleCategoryToggle = () => {
+  // Already handled by composable, just refresh if needed
+};
+
+const handleEditCategory = (category: any) => {
+  selectedCategory.value = category;
+  showCategoryDialog.value = true;
+};
+
+const handleDeleteCategory = async (categoryId: number) => {
+  $q.dialog({
+    title: 'Delete Category',
+    message: 'Are you sure you want to delete this category?',
+    cancel: true,
+    persistent: true
+  }).onOk(async () => {
+    await deleteCategoryComposable(categoryId);
+    await loadEvents();
+  });
+};
+
+const openAddCategoryDialog = () => {
+  selectedCategory.value = null;
+  showCategoryDialog.value = true;
+};
+
+const handleCategorySaved = async () => {
+  await fetchCategories();
+  showCategoryDialog.value = false;
+};
+
+const openSettings = () => {
+  $q.notify({
+    type: 'info',
+    message: 'Calendar settings coming soon'
+  });
+};
+
+// Lifecycle
+onMounted(async () => {
+  // Load categories first
+  await fetchCategories();
+
+  // Load events
+  await loadEvents();
+
+  // Subscribe to real-time updates
+  realtimeChannel = subscribeToChanges((payload) => {
+    console.log('Real-time update:', payload);
+    loadEvents();
+  });
+});
+
+onBeforeUnmount(() => {
+  // Unsubscribe from real-time updates
+  if (realtimeChannel) {
+    realtimeChannel.unsubscribe();
+  }
+});
 </script>
+
+<style lang="scss" scoped>
+.calendar-page {
+  height: 100vh;
+  background: #f5f5f5;
+}
+
+// Desktop Layout
+.calendar-desktop {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  .calendar-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+
+    .calendar-main {
+      flex: 1;
+      background: white;
+      overflow: auto;
+    }
+  }
+}
+
+// Mobile Layout
+.calendar-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .calendar-desktop {
+    display: none;
+  }
+
+  .calendar-mobile {
+    display: flex;
+  }
+}
+
+@media (min-width: 769px) {
+  .calendar-desktop {
+    display: flex;
+  }
+
+  .calendar-mobile {
+    display: none;
+  }
+}
+</style>

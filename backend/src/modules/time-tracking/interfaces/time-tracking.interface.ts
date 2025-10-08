@@ -7,6 +7,12 @@ export interface CurrentTimerResponse {
   timeIn: Date;
   elapsedSeconds: number;
   task?: Partial<Task & { project?: Partial<Project> }> | null;
+  // TIME-IN GEOLOCATION
+  timeInLatitude?: number | null;
+  timeInLongitude?: number | null;
+  timeInLocation?: string | null;
+  timeInIpAddress?: string | null;
+  timeInGeolocationEnabled?: boolean | null;
 }
 
 export interface TimeHistoryEntry extends EmployeeTimekeepingRaw {
