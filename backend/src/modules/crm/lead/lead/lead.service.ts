@@ -1181,4 +1181,61 @@ export class LeadService {
     // Remove sortDate from final result
     return result.map(({ month, count }) => ({ month, count }));
   }
+
+  async getSalesProbabilitySummary() {
+    const companyId = this.utilityService.companyId;
+
+    // Get all active deals with their win probabilities
+    const activeDeals = await this.prisma.leadDeal.findMany({
+      where: {
+        companyId,
+        isDeleted: false,
+        status: {
+          notIn: [LeadDealStatus.WIN, LeadDealStatus.LOST],
+        },
+      },
+      select: {
+        winProbability: true,
+      },
+    });
+
+    // Define probability ranges with categories
+    const probabilityRanges = [
+      { category: 'Unknown', min: null, max: null, color: '#D32F2F' },
+      { category: 'A', min: 90, max: 100, color: '#2f40c4' },
+      { category: 'B', min: 70, max: 89, color: '#615FF6' },
+      { category: 'C', min: 50, max: 69, color: '#2f40c4' },
+      { category: 'D', min: 30, max: 49, color: '#615FF6' },
+      { category: 'E', min: 10, max: 29, color: '#615FF6' },
+      { category: 'F', min: 0, max: 9, color: '#615FF6' },
+    ];
+
+    // Group by probability ranges
+    const probabilityCounts = probabilityRanges.map((range) => {
+      let count = 0;
+
+      if (range.category === 'Unknown') {
+        // Count null or 0 probabilities as Unknown
+        count = activeDeals.filter(
+          (deal) => deal.winProbability === null || deal.winProbability === 0,
+        ).length;
+      } else {
+        // Count deals within the range
+        count = activeDeals.filter(
+          (deal) =>
+            deal.winProbability !== null &&
+            deal.winProbability >= range.min &&
+            deal.winProbability <= range.max,
+        ).length;
+      }
+
+      return {
+        category: range.category,
+        count,
+        color: range.color,
+      };
+    });
+
+    return probabilityCounts;
+  }
 }

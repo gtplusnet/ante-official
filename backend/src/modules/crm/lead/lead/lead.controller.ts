@@ -167,4 +167,12 @@ export class LeadController {
       response,
     );
   }
+
+  @Get('sales-probability-summary')
+  async getSalesProbabilitySummary(@NestResponse() response: Response) {
+    return this.utilityService.responseHandler(
+      this.leadService.getSalesProbabilitySummary(),
+      response,
+    );
+  }
 }
