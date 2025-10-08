@@ -9,20 +9,102 @@ jobs:
   detect-changes:
     runs-on: [self-hosted, staging]
     outputs:
-      frontend-main-changed: 'true'
-      gate-app-changed: 'true'
-      guardian-app-changed: 'true'
-      website-multibook-changed: 'true'
-      backend-changed: 'true'
+      frontend-main-changed: ${{ steps.manual.outputs.all == 'true' || steps.first_release.outputs.deploy_all == 'true' || steps.changes.outputs.frontend-main == 'true' }}
+      gate-app-changed: ${{ steps.manual.outputs.all == 'true' || steps.first_release.outputs.deploy_all == 'true' || steps.changes.outputs.gate-app == 'true' }}
+      guardian-app-changed: ${{ steps.manual.outputs.all == 'true' || steps.first_release.outputs.deploy_all == 'true' || steps.changes.outputs.guardian-app == 'true' }}
+      website-multibook-changed: ${{ steps.manual.outputs.all == 'true' || steps.first_release.outputs.deploy_all == 'true' || steps.changes.outputs.website-multibook == 'true' }}
+      backend-changed: ${{ steps.manual.outputs.all == 'true' || steps.first_release.outputs.deploy_all == 'true' || steps.changes.outputs.backend == 'true' }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Production deployment - deploy all components
+      - name: Check if manual trigger
+        id: manual
         run: |
-          echo "Production deployment triggered - all components will be deployed"
-          echo "This ensures consistency across all production services"
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "all=true" >> $GITHUB_OUTPUT
+            echo "Manual trigger detected - will deploy all components"
+          else
+            echo "all=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get previous release tag
+        id: previous_tag
+        if: github.event_name == 'release'
+        run: |
+          CURRENT_TAG="${{ github.event.release.tag_name }}"
+          echo "Current release tag: $CURRENT_TAG"
+
+          # Get previous tag (second most recent)
+          PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -v "^${CURRENT_TAG}$" | head -n 1)
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "No previous tag found - this might be the first release"
+            echo "Will deploy all components"
+            echo "tag=" >> $GITHUB_OUTPUT
+          else
+            echo "Previous release tag: $PREVIOUS_TAG"
+            echo "tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if first release
+        id: first_release
+        if: github.event_name == 'release'
+        run: |
+          if [ -z "${{ steps.previous_tag.outputs.tag }}" ]; then
+            echo "deploy_all=true" >> $GITHUB_OUTPUT
+            echo "First release detected - will deploy all components"
+          else
+            echo "deploy_all=false" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: dorny/paths-filter@v2
+        id: changes
+        if: github.event_name == 'release' && steps.previous_tag.outputs.tag != ''
+        with:
+          base: ${{ steps.previous_tag.outputs.tag }}
+          ref: ${{ github.event.release.tag_name }}
+          filters: |
+            frontend-main:
+              - 'frontends/frontend-main/**'
+              - 'package.json'
+              - 'yarn.lock'
+            gate-app:
+              - 'frontends/frontend-gate-app/**'
+              - 'package.json'
+              - 'yarn.lock'
+            guardian-app:
+              - 'frontends/frontend-guardian-app/**'
+              - 'package.json'
+              - 'yarn.lock'
+            website-multibook:
+              - 'websites/multibook/**'
+              - 'package.json'
+              - 'yarn.lock'
+            backend:
+              - 'backend/**'
+              - 'package.json'
+              - 'yarn.lock'
+
+      - name: Log detected changes
+        run: |
+          echo "🔍 Change Detection Results:"
+          echo "=================================================="
+          if [ "${{ steps.manual.outputs.all }}" == "true" ]; then
+            echo "🚀 Manual trigger - deploying ALL components"
+          elif [ "${{ steps.first_release.outputs.deploy_all }}" == "true" ]; then
+            echo "🆕 First release - deploying ALL components"
+          else
+            echo "📊 Comparing: ${{ steps.previous_tag.outputs.tag }} → ${{ github.event.release.tag_name }}"
+          fi
+          echo "=================================================="
+          echo "Frontend Main: ${{ steps.manual.outputs.all == 'true' || steps.first_release.outputs.deploy_all == 'true' || steps.changes.outputs.frontend-main == 'true' }}"
+          echo "Gate App: ${{ steps.manual.outputs.all == 'true' || steps.first_release.outputs.deploy_all == 'true' || steps.changes.outputs.gate-app == 'true' }}"
+          echo "Guardian App: ${{ steps.manual.outputs.all == 'true' || steps.first_release.outputs.deploy_all == 'true' || steps.changes.outputs.guardian-app == 'true' }}"
+          echo "Website Multibook: ${{ steps.manual.outputs.all == 'true' || steps.first_release.outputs.deploy_all == 'true' || steps.changes.outputs.website-multibook == 'true' }}"
+          echo "Backend: ${{ steps.manual.outputs.all == 'true' || steps.first_release.outputs.deploy_all == 'true' || steps.changes.outputs.backend == 'true' }}"
+          echo "=================================================="
 
   notify-start:
     needs: detect-changes
