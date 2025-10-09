@@ -2,7 +2,7 @@
   <q-dialog v-model="isOpen" persistent>
     <q-card class="company-dialog" style="min-width: 500px">
       <q-card-section class="row items-center q-pb-none">
-        <div class="text-h6">{{ isEditing ? 'Edit Company' : 'New Company' }}</div>
+        <div class="text-h6">{{ viewOnly ? 'View Company' : (isEditing ? 'Edit Company' : 'New Company') }}</div>
         <q-space />
         <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
@@ -14,7 +14,8 @@
             v-model="formData.name"
             label="Company Name *"
             outlined
-            :rules="[val => !!val || 'Company name is required']"
+            :rules="viewOnly ? [] : [val => !!val || 'Company name is required']"
+            :readonly="viewOnly"
             ref="companyNameRef"
           />
 
@@ -25,15 +26,17 @@
             outlined
             type="number"
             min="0"
-            :rules="[val => val >= 0 || 'Must be a positive number']"
+            :rules="viewOnly ? [] : [val => val >= 0 || 'Must be a positive number']"
+            :readonly="viewOnly"
           />
 
         </q-form>
       </q-card-section>
 
       <q-card-actions align="right" class="q-pt-none">
-        <q-btn flat label="Cancel" color="grey-7" v-close-popup />
+        <q-btn flat :label="viewOnly ? 'Close' : 'Cancel'" color="grey-7" v-close-popup />
         <q-btn
+          v-if="!viewOnly"
           unelevated
           :label="isEditing ? 'Update' : 'Create'"
           color="primary"
@@ -66,6 +69,7 @@ const props = defineProps<{
   modelValue: boolean;
   company?: Company | null;
   loading?: boolean;
+  viewOnly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -88,10 +92,12 @@ watch(() => props.modelValue, (newVal) => {
   isOpen.value = newVal;
   if (newVal) {
     resetForm();
-    // Focus on company name field when dialog opens
-    nextTick(() => {
-      companyNameRef.value?.focus();
-    });
+    // Focus on company name field when dialog opens (only if not in view mode)
+    if (!props.viewOnly) {
+      nextTick(() => {
+        companyNameRef.value?.focus();
+      });
+    }
   }
 });
 

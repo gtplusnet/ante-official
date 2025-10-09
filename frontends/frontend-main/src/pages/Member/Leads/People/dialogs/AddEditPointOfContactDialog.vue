@@ -2,8 +2,8 @@
   <q-dialog ref="dialog" @before-show="onDialogShow">
     <q-card class="full-width dialog-card">
       <q-bar class="bg-primary text-white cursor-default" dark>
-        <q-icon :name="isEditMode ? 'edit' : 'person_add'" />
-        <div class="text-title-medium">{{ isEditMode ? 'Edit Point of Contact' : 'Add Point of Contact' }}</div>
+        <q-icon :name="viewOnly ? 'visibility' : (isEditMode ? 'edit' : 'person_add')" />
+        <div class="text-title-medium">{{ viewOnly ? 'View Point of Contact' : (isEditMode ? 'Edit Point of Contact' : 'Add Point of Contact') }}</div>
 
         <q-space />
 
@@ -22,7 +22,8 @@
                 label="Full Name *"
                 outlined
                 dense
-                :rules="[val => !!val || 'Full name is required']"
+                :rules="viewOnly ? [] : [val => !!val || 'Full name is required']"
+                :readonly="viewOnly"
                 class="q-mb-md"
                 ref="firstInput"
               />
@@ -36,10 +37,11 @@
                 type="email"
                 outlined
                 dense
-                :rules="[
+                :rules="viewOnly ? [] : [
                   val => !!val || 'Email is required',
                   val => /.+@.+\..+/.test(val) || 'Please enter a valid email'
                 ]"
+                :readonly="viewOnly"
                 class="q-mb-md"
               />
             </div>
@@ -56,7 +58,8 @@
                 map-options
                 outlined
                 dense
-                :rules="[val => val !== null && val !== undefined || 'Company is required']"
+                :rules="viewOnly ? [] : [val => val !== null && val !== undefined || 'Company is required']"
+                :readonly="viewOnly"
                 class="q-mb-md"
                 :loading="loadingCompanies"
               />
@@ -69,6 +72,7 @@
                 label="Job Title"
                 outlined
                 dense
+                :readonly="viewOnly"
                 class="q-mb-md"
               />
             </div>
@@ -80,6 +84,7 @@
                 label="Phone"
                 outlined
                 dense
+                :readonly="viewOnly"
                 class="q-mb-md"
               />
             </div>
@@ -91,13 +96,14 @@
               no-caps
               class="q-mr-sm text-label-large"
               outline
-              label="Cancel"
+              :label="viewOnly ? 'Close' : 'Cancel'"
               type="button"
               color="primary"
               v-close-popup
               :disable="submitting"
             />
             <q-btn
+              v-if="!viewOnly"
               no-caps
               unelevated
               :label="isEditMode ? 'Update Contact' : 'Create Contact'"
@@ -125,6 +131,7 @@ defineOptions({
 // Props
 const props = defineProps<{
   contactId?: number;
+  viewOnly?: boolean;
 }>();
 
 // Emits
@@ -244,12 +251,14 @@ const onDialogShow = async () => {
     await fetchContactData();
   }
   
-  // Focus on first input after dialog is fully shown
-  nextTick(() => {
-    if (firstInput.value) {
-      firstInput.value.focus();
-    }
-  });
+  // Focus on first input after dialog is fully shown (only if not in view mode)
+  if (!props.viewOnly) {
+    nextTick(() => {
+      if (firstInput.value) {
+        firstInput.value.focus();
+      }
+    });
+  }
 };
 
 const submitContact = async () => {
