@@ -132,18 +132,18 @@
             </div>
           </div>
 
-          <!-- Tag Task Button (only show if no task tagged) -->
-          <div v-if="!currentTimer.taskId" class="row justify-center q-mt-xs">
+          <!-- Change/Tag Task Button (always visible) -->
+          <div class="row justify-center q-mt-xs">
             <q-btn
               flat
               dense
               color="primary"
-              label="Tag Task"
+              :label="currentTimer.taskId ? 'Change Task' : 'Tag Task'"
               icon="assignment"
               size="sm"
               @click="showTaskSelectionDialog = true"
             >
-              <q-tooltip>Tag this time with a task</q-tooltip>
+              <q-tooltip>{{ currentTimer.taskId ? 'Switch to different task' : 'Tag this time with a task' }}</q-tooltip>
             </q-btn>
           </div>
         </div>
@@ -574,39 +574,59 @@ export default defineComponent({
       selectedTask.value = task;
       showTaskSelectionDialog.value = false;
 
-      // If timer is running without a task, tag it with the selected task
-      if (currentTimer.value && !currentTimer.value.taskId) {
+      // If timer is running, switch to the selected task (stops current, starts new)
+      if (currentTimer.value) {
         isLoading.value = true;
         try {
+          // Backend stops current timer and creates new timer for the new task
           const response = await api.post('/time-tracking/tag', {
             taskId: task.id
           });
 
-          // Update current timer with task info
+          // Reset timer state for NEW timer (starts from 0)
+          serverTimeIn.value = new Date(response.data.timeIn);
+          elapsedSeconds.value = 0;
+
+          // Fetch task summary to get total time for this task TODAY (previous sessions)
+          const taskSummaryResponse = await api.get(`/time-tracking/task-summary/${task.id}`);
+          const taskSummary = taskSummaryResponse.data;
+
+          // Set base seconds from previous sessions (excludes current session which is 0)
+          taskBaseSeconds.value = taskSummary.totalSeconds;
+
+          // Update current timer with NEW timer info
           currentTimer.value = {
-            ...currentTimer.value,
+            id: response.data.id, // NEW timer ID
             taskId: response.data.taskId,
             taskTitle: response.data.taskTitle,
+            timeIn: response.data.timeIn, // NEW timeIn
+            elapsedSeconds: 0,
+            taskTotalSeconds: taskSummary.totalSeconds,
             task: response.data.task
           };
 
+          // Restart timer interval with new timestamp
+          stopTimerInterval();
+          startTimerInterval();
+
           instance?.proxy?.$q.notify({
             type: 'positive',
-            message: `Timer tagged with task: ${task.title}`
+            message: `Switched to task: ${task.title}`
           });
 
           // Clear selection
           selectedTask.value = null;
 
-          // Emit events
+          // Emit events and refresh daily summary
           if (bus) {
             bus.emit('timer-tagged');
             bus.emit('reloadTaskList');
           }
+          fetchDailySummary(); // Refresh since previous task was stopped
         } catch (error: any) {
           instance?.proxy?.$q.notify({
             type: 'negative',
-            message: error.response?.data?.message || 'Failed to tag timer with task'
+            message: error.response?.data?.message || 'Failed to switch task'
           });
         } finally {
           isLoading.value = false;
