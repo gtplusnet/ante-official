@@ -1,5 +1,5 @@
 import { ref, Ref } from 'vue';
-import supabaseService from '../services/supabase';
+import { api } from '../boot/axios';
 import { ProjectDataResponse } from '@shared/response';
 import { Notify } from 'quasar';
 
@@ -20,43 +20,11 @@ export function useProjectDetails(): UseProjectDetailsReturn {
     error.value = null;
 
     try {
-      const { data, error: supabaseError } = await supabaseService.getClient()
-        .from('Project')
-        .select(`
-          *,
-          Client (
-            id,
-            name,
-            email,
-            contactNumber
-          ),
-          Location (
-            id,
-            name,
-            street,
-            zipCode
-          ),
-          Company (
-            id,
-            companyName
-          )
-        `)
-        .eq('id', projectId)
-        .eq('isDeleted', false)
-        .single();
+      // Use backend API endpoint (standard responseHandler pattern)
+      const response = await api.get(`/project?id=${projectId}`);
 
-      if (supabaseError) {
-        throw supabaseError;
-      }
-
-      // Format the data to match expected structure
-      // Map uppercase relation names to lowercase for backward compatibility
-      projectData.value = {
-        ...data,
-        client: data.Client,
-        location: data.Location,
-        company: data.Company
-      } as ProjectDataResponse;
+      // Backend returns data directly (not wrapped)
+      projectData.value = response.data as ProjectDataResponse;
     } catch (err) {
       error.value = err as Error;
       console.error('Error fetching project details:', err);

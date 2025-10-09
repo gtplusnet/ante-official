@@ -194,7 +194,7 @@
 import { ref, onMounted, computed, defineAsyncComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import supabaseService from '../../../services/supabase';
+import { api } from '../../../boot/axios';
 import { useCache } from '../../../composables/useCache';
 import { projectCache, CacheTTL } from '../../../utils/cache/implementations';
 import GlobalLoader from "../../../components/shared/common/GlobalLoader.vue";
@@ -249,7 +249,7 @@ const currentPage = ref<number>(1);
 const projectData = ref<ProjectDataResponse | undefined>(undefined);
 const isProjectCreateDialogOpen = ref<boolean>(false);
 
-// Use centralized cache for project grid with Supabase
+// Use centralized cache for project grid with Backend API
 const {
   data: cachedProjectData,
   isCached,
@@ -261,65 +261,40 @@ const {
   projectCache,
   async () => {
     try {
-      // Fetch projects directly from Supabase with relationships including board stage
-      const { data: projects, error } = await supabaseService.getClient()
-        .from('Project')
-        .select(`
-          *,
-          projectBoardStage,
-          Client (
-            id,
-            name,
-            email,
-            contactNumber
-          ),
-          Location (
-            id,
-            name,
-            street,
-            zipCode,
-            landmark,
-            description,
-            contactNumber,
-            contactPerson
-          ),
-          Company (
-            id,
-            companyName,
-            domainPrefix,
-            businessType,
-            email,
-            phone,
-            tinNo,
-            website,
-            address,
-            isActive
-          )
-        `)
-        .eq('isDeleted', false)
-        .eq('isLead', false)
-        .eq('status', 'PROJECT')
-        .order('createdAt', { ascending: false });
+      // Use backend API with table endpoint (PUT /project)
+      // Backend already includes all relations and formatted data
+      const response = await api.put('/project', {
+        // TableBodyDTO
+        filters: [
+          { field: 'isDeleted', operator: '=', value: false },
+          { field: 'isLead', operator: '=', value: false },
+          { field: 'status', operator: '=', value: 'PROJECT' }
+        ],
+        sorts: [{ field: 'createdAt', order: 'desc' }]
+      }, {
+        params: {
+          // TableQueryDTO
+          page: currentPage.value,
+          perPage: 50 // Get more projects for grid view
+        }
+      });
 
-      if (error) {
-        console.error('Error fetching projects:', error);
-        $q.notify({
-          type: 'negative',
-          message: 'Failed to load projects',
-          position: 'top',
-          timeout: 3000
-        });
-        return { projects: [], currentPage: 1, pagination: [] };
-      }
-
+      // Backend returns formatted data with list, pagination, etc.
       return {
-        projects: projects || [],
-        currentPage: 1,
-        pagination: []
+        projects: response.data?.list || [],
+        currentPage: response.data?.currentPage || 1,
+        pagination: response.data?.pagination || [],
+        totalCount: response.data?.totalCount || 0
       };
     } catch (err) {
       console.error('Unexpected error fetching projects:', err);
-      return { projects: [], currentPage: 1, pagination: [] };
+      $q.notify({
+        type: 'negative',
+        message: 'Failed to load projects',
+        position: 'top',
+        timeout: 3000
+      });
+      return { projects: [], currentPage: 1, pagination: [], totalCount: 0 };
     }
   },
   {
@@ -334,63 +309,23 @@ const isLoading = computed(() => isRefreshing.value && !isCached.value);
 const projectList = computed<ProjectDisplayInterface[]>(() => {
   if (!cachedProjectData.value?.projects) return [];
 
-  // Convert Supabase response format to our display interface format
-  return cachedProjectData.value.projects.map((item: any) => {
-    // Format currency
-    const formatCurrency = (amount: number) => {
-      return new Intl.NumberFormat('en-PH', {
-        style: 'currency',
-        currency: 'PHP'
-      }).format(amount || 0);
-    };
-
-    // Format date
-    const formatDate = (dateString: string | Date) => {
-      if (!dateString) return 'No date';
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    };
-
-    return {
-      id: item.id,
-      name: item.name || 'Unnamed Project',
-      description: item.description || '',
-      budget: {
-        formatted: formatCurrency(item.budget),
-        raw: item.budget || 0
-      },
-      isDeleted: item.isDeleted || false,
-      startDate: {
-        formatted: formatDate(item.startDate),
-        raw: item.startDate
-      },
-      endDate: {
-        formatted: formatDate(item.endDate),
-        raw: item.endDate
-      },
-      status: (item.status || 'planning') as ProjectStatus,
-      projectBoardStage: item.projectBoardStage || 'planning',
-      progressPercentage: item.progressPercentage || 0,
-      code: item.code || '',
-      client: item.Client ? {
-        id: item.Client.id,
-        name: item.Client.name,
-        email: item.Client.email,
-        contactNumber: item.Client.contactNumber,
-        companyName: '', // Client table doesn't have companyName field
-        totalCollection: 0,
-        totalPaid: 0,
-        totalBalance: 0,
-        hasInvoice: false
-      } : undefined,
-      clientId: item.clientId,
-      locationId: item.locationId
-    };
-  });
+  // Backend already returns fully formatted data, just map to display interface
+  return cachedProjectData.value.projects.map((item: any) => ({
+    id: item.id,
+    name: item.name || 'Unnamed Project',
+    description: item.description || '',
+    budget: item.budget || { formatted: '₱0.00', raw: 0 }, // Backend formats currency
+    isDeleted: item.isDeleted || false,
+    startDate: item.startDate || { formatted: 'No date', raw: null }, // Backend formats dates
+    endDate: item.endDate || { formatted: 'No date', raw: null },
+    status: item.status as ProjectStatus,
+    projectBoardStage: item.projectBoardStage || 'planning',
+    progressPercentage: item.progressPercentage || 0,
+    code: item.code || '',
+    client: item.client, // Backend includes full client object
+    clientId: item.client?.id,
+    locationId: item.location?.id
+  }));
 });
 
 // Methods

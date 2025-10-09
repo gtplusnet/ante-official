@@ -323,12 +323,13 @@ export class ProjectService {
         ? { leadBoardStage: board.boardKey }
         : { projectBoardStage: board.boardKey };
 
-    await this.prisma.project.update({
+    const updatedProject = await this.prisma.project.update({
       where: { id: Number(params.projectId) },
       data: updateData,
     });
 
-    return boardInformation;
+    // Return the updated project, not the old one
+    return this.formatResponse(updatedProject);
   }
 
   async deleteProject(projectId: number) {
@@ -463,6 +464,9 @@ export class ProjectService {
         new Date(project.startDate),
         new Date(project.endDate),
       ),
+      // Include board stage fields
+      projectBoardStage: project.projectBoardStage,
+      leadBoardStage: project.leadBoardStage,
     };
 
     return response;
