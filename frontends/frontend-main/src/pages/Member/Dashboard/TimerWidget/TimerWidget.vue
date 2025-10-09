@@ -306,6 +306,7 @@ interface CurrentTimer {
   taskTitle: string | null;
   timeIn: string;
   elapsedSeconds: number;
+  taskTotalSeconds?: number; // Total time for this task today
   task?: Task;
 }
 
@@ -335,16 +336,22 @@ export default defineComponent({
     const taskInformation = ref<any | null>(null);
     const elapsedSeconds = ref(0);
     const dailyTotalMinutes = ref(0);
+    const taskBaseSeconds = ref(0); // Base time for current task (previous sessions)
     const serverTimeIn = ref<Date | null>(null);
     let timerInterval: number | null = null;
     let visibilityListener: (() => void) | null = null;
     
     // Computed
     const formattedTime = computed(() => {
-      const seconds = elapsedSeconds.value;
-      const hours = Math.floor(seconds / 3600);
-      const minutes = Math.floor((seconds % 3600) / 60);
-      const secs = seconds % 60;
+      // If task is tagged, show task total + current session
+      // If no task, show current session only
+      const displaySeconds = currentTimer.value?.taskId
+        ? taskBaseSeconds.value + elapsedSeconds.value
+        : elapsedSeconds.value;
+
+      const hours = Math.floor(displaySeconds / 3600);
+      const minutes = Math.floor((displaySeconds % 3600) / 60);
+      const secs = displaySeconds % 60;
 
       return [hours, minutes, secs]
         .map(val => String(val).padStart(2, '0'))
@@ -376,6 +383,15 @@ export default defineComponent({
         if (currentTimer.value) {
           // Store server time-in for accurate calculation
           serverTimeIn.value = new Date(currentTimer.value.timeIn);
+
+          // Extract task base time (previous sessions)
+          if (currentTimer.value.taskTotalSeconds !== undefined) {
+            // taskTotalSeconds includes current session, so subtract it to get base
+            taskBaseSeconds.value = currentTimer.value.taskTotalSeconds - currentTimer.value.elapsedSeconds;
+          } else {
+            taskBaseSeconds.value = 0;
+          }
+
           // Calculate elapsed time from server timestamp
           calculateElapsedTime();
           startTimerInterval();
@@ -383,6 +399,7 @@ export default defineComponent({
           // Clear timer if no current timer
           stopTimerInterval();
           elapsedSeconds.value = 0;
+          taskBaseSeconds.value = 0;
           serverTimeIn.value = null;
         }
       } catch (error) {
