@@ -9,6 +9,7 @@ import {
   Patch,
   Param,
   Put,
+  Delete,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { PointOfContactService } from './point-of-contact.service';
@@ -76,6 +77,15 @@ export class PointOfContactController {
   async archive(@Param('id') id: string, @NestResponse() response: Response) {
     return this.utilityService.responseHandler(
       this.service.archive(parseInt(id)),
+      response,
+    );
+  }
+
+  // Delete point of contact (hard delete)
+  @Delete(':id')
+  async delete(@Param('id') id: string, @NestResponse() response: Response) {
+    return this.utilityService.responseHandler(
+      this.service.delete(parseInt(id)),
       response,
     );
   }

@@ -3213,7 +3213,9 @@ model PointOfContact {
   company     LeadCompany @relation(fields: [companyId], references: [id])
   createdBy   Account     @relation("PointOfContactCreatedBy", fields: [createdById], references: [id])
 
-  @@unique([email, companyId])
+  // Note: Unique constraint handled by partial index in migration (20251009175200)
+  // Only active contacts (isActive = true) must have unique email+companyId
+  // Allows reusing emails for archived/deleted contacts
   @@index([fullName])
   @@index([email])
   @@index([companyId])
@@ -4322,6 +4324,7 @@ enum CRMEntityType {
   CLIENT
   LEAD_COMPANY
   POINT_OF_CONTACT
+  RELATIONSHIP_OWNER
   DEAL_TYPE
   DEAL_SOURCE
 }

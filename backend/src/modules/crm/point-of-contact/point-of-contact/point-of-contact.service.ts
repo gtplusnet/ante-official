@@ -6,6 +6,8 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@common/prisma.service';
 import { UtilityService } from '@common/utility.service';
+import { CRMActivityService } from '../../crm-activity/crm-activity/crm-activity.service';
+import { CRMActivityType, CRMEntityType } from '@prisma/client';
 import {
   CreatePointOfContactDto,
   UpdatePointOfContactDto,
@@ -17,18 +19,18 @@ import {
 export class PointOfContactService {
   @Inject() private prisma: PrismaService;
   @Inject() private utilityService: UtilityService;
+  @Inject() private crmActivityService: CRMActivityService;
 
   // Create single point of contact
   async create(data: CreatePointOfContactDto) {
     const createdById = this.utilityService.accountInformation.id;
 
-    // Check if email already exists for this company
-    const existingContact = await this.prisma.pointOfContact.findUnique({
+    // Check if ACTIVE email already exists for this company (ignore archived)
+    const existingContact = await this.prisma.pointOfContact.findFirst({
       where: {
-        email_companyId: {
-          email: data.email,
-          companyId: data.companyId,
-        },
+        email: data.email,
+        companyId: data.companyId,
+        isActive: true, // Only check active contacts
       },
     });
 
@@ -38,7 +40,7 @@ export class PointOfContactService {
       );
     }
 
-    return await this.prisma.pointOfContact.create({
+    const contact = await this.prisma.pointOfContact.create({
       data: {
         ...data,
         createdById,
@@ -53,6 +55,18 @@ export class PointOfContactService {
         },
       },
     });
+
+    // Log activity
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.CREATE,
+      entityType: CRMEntityType.POINT_OF_CONTACT,
+      entityId: contact.id,
+      entityName: contact.fullName,
+      description: `Created new point of contact "${contact.fullName}"`,
+      performedById: this.utilityService.accountInformation.id,
+    });
+
+    return contact;
   }
 
   // Get single point of contact
@@ -183,17 +197,16 @@ export class PointOfContactService {
   async update(id: number, data: UpdatePointOfContactDto) {
     const existingContact = await this.findOne(id);
 
-    // If email or company is being updated, check for conflicts
+    // If email or company is being updated, check for conflicts with ACTIVE contacts only
     if (data.email || data.companyId) {
       const email = data.email || existingContact.email;
       const companyId = data.companyId || existingContact.companyId;
 
-      const conflictingContact = await this.prisma.pointOfContact.findUnique({
+      const conflictingContact = await this.prisma.pointOfContact.findFirst({
         where: {
-          email_companyId: {
-            email,
-            companyId,
-          },
+          email,
+          companyId,
+          isActive: true, // Only check active contacts
         },
       });
 
@@ -204,7 +217,7 @@ export class PointOfContactService {
       }
     }
 
-    return await this.prisma.pointOfContact.update({
+    const updatedContact = await this.prisma.pointOfContact.update({
       where: { id },
       data,
       include: {
@@ -217,19 +230,68 @@ export class PointOfContactService {
         },
       },
     });
+
+    // Log activity
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.UPDATE,
+      entityType: CRMEntityType.POINT_OF_CONTACT,
+      entityId: updatedContact.id,
+      entityName: updatedContact.fullName,
+      description: `Updated point of contact "${updatedContact.fullName}"`,
+      performedById: this.utilityService.accountInformation.id,
+    });
+
+    return updatedContact;
   }
 
   // Archive point of contact (soft delete)
   async archive(id: number) {
-    await this.findOne(id); // Check if exists and user has access
+    const contact = await this.findOne(id); // Check if exists and user has access
 
-    return await this.prisma.pointOfContact.update({
+    const archivedContact = await this.prisma.pointOfContact.update({
       where: { id },
       data: {
         isActive: false,
         updatedAt: new Date(),
       },
     });
+
+    // Log activity
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.DELETE,
+      entityType: CRMEntityType.POINT_OF_CONTACT,
+      entityId: contact.id,
+      entityName: contact.fullName,
+      description: `Deleted point of contact "${contact.fullName}"`,
+      performedById: this.utilityService.accountInformation.id,
+    });
+
+    return archivedContact;
+  }
+
+  // Delete point of contact (hard delete)
+  async delete(id: number) {
+    const contact = await this.findOne(id); // Check if exists and user has access
+
+    // Log activity before deleting
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.DELETE,
+      entityType: CRMEntityType.POINT_OF_CONTACT,
+      entityId: contact.id,
+      entityName: contact.fullName,
+      description: `Deleted point of contact "${contact.fullName}"`,
+      performedById: this.utilityService.accountInformation.id,
+    });
+
+    // Permanently delete from database
+    await this.prisma.pointOfContact.delete({
+      where: { id },
+    });
+
+    return {
+      message: `Successfully deleted point of contact "${contact.fullName}"`,
+      deletedId: id,
+    };
   }
 
   // Create multiple point of contacts

@@ -68,12 +68,36 @@
     <!-- Data Table -->
     <div class="table-container q-mt-lg">
       <div class="table-wrapper">
-        <!-- Loading State -->
-        <div v-if="loading" class="text-center q-pa-lg">
-          <q-spinner size="50px" color="primary" />
-          <div class="q-mt-sm text-body-small text-grey-7">Loading relationship owners...</div>
-        </div>
-        
+        <!-- Loading Skeleton -->
+        <table v-if="loading" class="owners-table">
+          <thead>
+            <tr>
+              <th>Full Name</th>
+              <th>Email</th>
+              <th>Branch</th>
+              <th>Job Title</th>
+              <th>Phone</th>
+              <th>Date Created</th>
+              <th>Created By</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="n in 5" :key="`skeleton-${n}`">
+              <td><q-skeleton type="text" /></td>
+              <td><q-skeleton type="text" /></td>
+              <td><q-skeleton type="text" /></td>
+              <td><q-skeleton type="text" /></td>
+              <td><q-skeleton type="text" /></td>
+              <td><q-skeleton type="text" /></td>
+              <td><q-skeleton type="text" /></td>
+              <td class="actions-cell">
+                <q-skeleton type="QBtn" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
         <!-- Empty State -->
         <div v-else-if="ownersList.length === 0" class="text-center q-pa-lg">
           <q-icon name="people_alt" size="64px" color="grey-4" />
@@ -82,8 +106,8 @@
             Click "New Record" to add relationship owners
           </div>
         </div>
-        
-        <!-- Data Table -->
+
+        <!-- Actual Data Table -->
         <table v-else class="owners-table">
           <thead>
             <tr>
