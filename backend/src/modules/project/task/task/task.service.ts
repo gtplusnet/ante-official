@@ -179,22 +179,32 @@ export class TaskService {
   async getTaskUsers() {
     let list;
 
+    // Get companyId for filtering (multi-tenant isolation)
+    const companyId = this.utilityService.accountInformation.company?.id;
+
     if (this.utilityService.accountInformation.role.level === 0) {
+      // Admin users - fetch all accounts filtered by company
       list = await this.prisma.account.findMany({
-        where: { isDeleted: false },
+        where: {
+          isDeleted: false,
+          ...(companyId && { companyId })  // Filter by company if available
+        },
       });
     } else {
+      // Non-admin users - fetch child accounts from org hierarchy
       list = await this.userOrgService.getListOfChildAccount(
         this.utilityService.accountInformation.id,
         [],
         new Set(),
       );
+
+      // Additional safety: filter child accounts by company
+      if (companyId) {
+        list = list.filter(account => account.companyId === companyId);
+      }
     }
 
     const response = list.map((account) => this.formatAccountResponse(account));
-
-    // get task and total difficulty per user
-    const companyId = this.utilityService.accountInformation.company?.id;
 
     await Promise.all(
       response.map(async (user) => {
@@ -1255,18 +1265,20 @@ export class TaskService {
   }
 
   async addToTaskWatcher(taskWatcherDto: TaskWatcherDto): Promise<void> {
-    // check if task and account id already exist then remove if already exist
-    await this.prisma.taskWatcher.deleteMany({
-      where: {
-        taskId: taskWatcherDto.taskId,
-        accountId: { in: taskWatcherDto.accountIds },
-      },
-    });
-
+    // Use atomic upsert to prevent race condition duplicates (TASK-BACKEND-API-MIGRATION)
     await Promise.all(
       taskWatcherDto.accountIds.map(async (accountId) => {
-        await this.prisma.taskWatcher.create({
-          data: {
+        await this.prisma.taskWatcher.upsert({
+          where: {
+            taskId_accountId: {
+              taskId: taskWatcherDto.taskId,
+              accountId: accountId,
+            },
+          },
+          update: {
+            watcherType: taskWatcherDto.watcherType,
+          },
+          create: {
             taskId: taskWatcherDto.taskId,
             accountId: accountId,
             watcherType: taskWatcherDto.watcherType,
@@ -2159,45 +2171,11 @@ export class TaskService {
       },
     });
 
-    // If we have custom ordering, use it
-    if (orderContexts.length > 0) {
-      const taskIds = orderContexts.map(ctx => ctx.taskId);
-      const orderMap = new Map(orderContexts.map(ctx => [ctx.taskId, ctx.orderIndex]));
-
-      // Fetch tasks with the custom order
-      const tasks = await this.prisma.task.findMany({
-        where: {
-          ...filter,
-          id: { in: taskIds },
-          ...(companyId && { companyId }),
-        },
-        include: {
-          assignedTo: true,
-          createdBy: true,
-          boardLane: true,
-          project: true,
-          // Add other includes as needed
-        },
-      });
-
-      // Sort tasks according to the order context
-      tasks.sort((a, b) => {
-        const orderA = orderMap.get(a.id) || 999999;
-        const orderB = orderMap.get(b.id) || 999999;
-        return orderA - orderB;
-      });
-
-      return tasks;
-    }
-
-    // Fall back to default ordering by the Task table's order field
-    return await this.prisma.task.findMany({
+    // Fetch ALL tasks matching the filter (including new tasks not in orderContext)
+    const tasks = await this.prisma.task.findMany({
       where: {
         ...filter,
         ...(companyId && { companyId }),
-      },
-      orderBy: {
-        order: 'asc',
       },
       include: {
         assignedTo: true,
@@ -2207,6 +2185,49 @@ export class TaskService {
         // Add other includes as needed
       },
     });
+
+    // If we have custom ordering, apply it
+    if (orderContexts.length > 0) {
+      const orderMap = new Map(orderContexts.map(ctx => [ctx.taskId, ctx.orderIndex]));
+
+      // Sort tasks: ordered tasks first (by orderIndex), then unordered tasks (by createdAt DESC)
+      tasks.sort((a, b) => {
+        const orderA = orderMap.get(a.id);
+        const orderB = orderMap.get(b.id);
+
+        // Both tasks have custom order - compare order indices
+        if (orderA !== undefined && orderB !== undefined) {
+          return orderA - orderB;
+        }
+
+        // Only task A has custom order - it comes after unordered tasks
+        if (orderA !== undefined && orderB === undefined) {
+          return 1;
+        }
+
+        // Only task B has custom order - it comes after unordered tasks
+        if (orderA === undefined && orderB !== undefined) {
+          return -1;
+        }
+
+        // Neither task has custom order - sort by createdAt DESC (newest first)
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+
+      return tasks;
+    }
+
+    // Fall back to default ordering by the Task table's order field, then createdAt DESC
+    tasks.sort((a, b) => {
+      // First sort by order field (if defined)
+      if (a.order !== b.order) {
+        return (a.order || 0) - (b.order || 0);
+      }
+      // Then by createdAt DESC (newest first)
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    return tasks;
   }
 
   /**

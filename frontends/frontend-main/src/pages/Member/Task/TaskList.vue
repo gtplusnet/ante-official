@@ -71,7 +71,7 @@ import { useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { Notify } from 'quasar';
 import { useTaskSearchStore, TaskViewType } from '../../../stores/taskSearch';
-import { useTaskTable, clearTableCache } from 'src/composables/supabase/useTaskTable';
+import { useTaskAPI } from 'src/composables/api/useTaskAPI';
 import { useTaskRealtime } from 'src/composables/realtime/useTaskRealtime';
 import { useTaskStore } from 'src/stores/task';
 import { useTask } from 'src/composables/supabase/useTask';
@@ -1075,192 +1075,100 @@ export default defineComponent({
       } // End of else block for reordering within same section
     };
 
-    // Separate function to persist task order in background using Supabase
+    // Persist task order using backend API (TASK-BACKEND-API-MIGRATION)
+    // Replaces Supabase direct updates to fix RLS blocking issue
     const persistTaskOrder = async (updates: Array<{ id: number; order: number }>) => {
-      // Use the Supabase composable for direct database updates
-      const taskComposable = useTask();
-      await taskComposable.batchUpdateTaskOrders(updates);
+      // Map filter prop to viewType for backend API
+      const viewType = props.filter === 'my' ? 'my' : 'all';
+
+      // Call backend API instead of Supabase direct
+      await updateTaskOrderingAPI({
+        taskOrders: updates,
+        viewType,
+        groupingMode: taskSearchStore.groupingMode,
+        groupingValue: taskSearchStore.currentGroupingValue
+      });
     };
 
-    // Initialize Supabase table composable
-    const taskTableConfig = computed(() => {
-      const config: any = {
-        orderBy: [
-          { column: 'createdAt', ascending: false }, // Secondary: newest first
-          { column: 'order', ascending: true }        // Primary: by order
-        ],
-        pageSize: 5000,
-        includeDeleted: false,
-        autoFetch: true,
-        filters: []
+    // Initialize backend API composable for task fetching
+    const taskAPIFilters = computed(() => {
+      const filters: any = {
+        filter: props.filter, // Pass the view type to useTaskAPI (CRITICAL - determines viewType)
+        isDeleted: props.filter === 'deleted', // Include deleted only for deleted view
       };
 
-      // Apply company filtering for tasks
-      // This ensures users only see tasks from their own company
+      // Add company filter (required for multi-tenant)
       if (currentCompanyId.value) {
-        config.companyId = currentCompanyId.value;
+        filters.companyId = currentCompanyId.value;
       }
 
-      // Apply project filtering when projectId is provided (e.g., from TaskManagementDialog)
+      // Add project filter when provided
       if (props.projectId) {
-        config.filters.push({
-          column: 'projectId',
-          operator: 'eq',
-          value: Number(props.projectId)
-        });
+        filters.projectId = Number(props.projectId);
       }
 
-      // Apply filter based on route
+      // Apply filter based on route - build filters for backend API
       switch (props.filter) {
         case 'my':
-          // My tasks - assigned to current user, exclude completed and approval tasks
+          // My tasks - assigned to current user, exclude completed
           if (currentUserId.value) {
-            config.assignedToId = currentUserId.value;
-          } else {
-            // If no user ID, show no tasks (not unassigned tasks)
-            config.filters.push({
-              column: 'assignedToId',
-              operator: 'eq',
-              value: 'no-user-id' // This will match nothing
-            });
+            filters.assignedToId = currentUserId.value;
           }
-          config.filters.push({
-            column: 'boardLaneId',
-            operator: 'neq',
-            value: 3 // Assuming 3 is DONE lane
-          });
-          config.filters.push({
-            column: 'taskType',
-            operator: 'neq',
-            value: 'APPROVAL' // Exclude approval tasks
-          });
+          // Backend will filter out DONE lane and APPROVAL tasks
           break;
 
         case 'all':
-          // All tasks - exclude completed and approval tasks
-          config.filters.push({
-            column: 'boardLaneId',
-            operator: 'neq',
-            value: 3 // Exclude DONE lane
-          });
-          config.filters.push({
-            column: 'taskType',
-            operator: 'neq',
-            value: 'APPROVAL' // Exclude approval tasks
-          });
+          // All tasks - backend will handle filtering
           break;
 
         case 'approval':
           // Approval tasks only
-          config.filters.push({
-            column: 'taskType',
-            operator: 'eq',
-            value: 'APPROVAL'
-          });
+          filters.taskType = 'APPROVAL';
           break;
 
         case 'due':
-          // Due tasks - tasks due within 3 days, exclude completed and approval tasks
-          const threeDaysFromNow = new Date();
-          threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
-          config.filters.push({
-            column: 'dueDate',
-            operator: 'lte',
-            value: threeDaysFromNow.toISOString()
-          });
-          config.filters.push({
-            column: 'boardLaneId',
-            operator: 'neq',
-            value: 3 // Exclude DONE lane
-          });
-          config.filters.push({
-            column: 'taskType',
-            operator: 'neq',
-            value: 'APPROVAL' // Exclude approval tasks
-          });
+          // Due tasks - backend should handle date filtering
+          // For now, fetch all and filter client-side
           break;
 
         case 'done':
-          // Recently done tasks (last 7 days), exclude approval tasks
-          const sevenDaysAgo = new Date();
-          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-          config.filters.push({
-            column: 'boardLaneId',
-            operator: 'eq',
-            value: 3 // DONE lane
-          });
-          config.filters.push({
-            column: 'updatedAt',
-            operator: 'gte',
-            value: sevenDaysAgo.toISOString()
-          });
-          config.filters.push({
-            column: 'taskType',
-            operator: 'neq',
-            value: 'APPROVAL' // Exclude approval tasks
-          });
+          // Recently done tasks
+          filters.boardLaneId = 3; // DONE lane
           break;
 
         case 'assigned':
-          // Tasks created by current user, exclude completed and approval tasks
+          // Tasks created by current user
           if (currentUserId.value) {
-            config.filters.push({
-              column: 'createdById',
-              operator: 'eq',
-              value: currentUserId.value
-            });
-            config.filters.push({
-              column: 'boardLaneId',
-              operator: 'neq',
-              value: 3 // Exclude DONE lane
-            });
-            config.filters.push({
-              column: 'taskType',
-              operator: 'neq',
-              value: 'APPROVAL' // Exclude approval tasks
-            });
-          } else {
-            // If no user ID, show no tasks
-            config.filters.push({
-              column: 'createdById',
-              operator: 'eq',
-              value: 'no-user-id' // This will match nothing
-            });
+            filters.createdById = currentUserId.value;
           }
           break;
 
         case 'complete':
-          // All completed tasks (archive) - includes approval tasks
-          config.filters.push({
-            column: 'boardLaneId',
-            operator: 'eq',
-            value: 3 // DONE lane
-          });
-          // Note: Complete view shows ALL completed tasks, including approvals
+          // All completed tasks
+          filters.boardLaneId = 3; // DONE lane
           break;
 
         case 'deleted':
-          // Deleted tasks - need to include deleted ones
-          config.includeDeleted = true;
-          config.filters.push({
-            column: 'isDeleted',
-            operator: 'eq',
-            value: true
-          });
+          // Deleted tasks
+          filters.isDeleted = true;
           break;
       }
 
-      return config;
+      return filters;
     });
 
     const {
-      data: supabaseTasks,
-      loading: supabaseLoading,
-      refetch: refetchTasksFromSupabase
-    } = useTaskTable(taskTableConfig.value);
+      data: apiTasks,
+      loading: apiLoading,
+      refetch: refetchTasksFromAPI,
+      updateTaskOrdering: updateTaskOrderingAPI
+    } = useTaskAPI({
+      filters: taskAPIFilters.value,
+      autoFetch: true
+    });
 
     // Assign the actual refetch function
-    refetchTasks = refetchTasksFromSupabase;
+    refetchTasks = refetchTasksFromAPI;
 
     // Set up realtime subscription
     const { isConnected: realtimeConnected } = useTaskRealtime({
@@ -1270,8 +1178,8 @@ export default defineComponent({
 
     // convertTaskData function is already defined earlier
 
-    // Watch for Supabase data changes
-    watch(supabaseTasks, (newTasks) => {
+    // Watch for API data changes
+    watch(apiTasks, (newTasks) => {
       if (newTasks && !isDraggingTask.value) {
         // Only update store if not currently dragging
         // This prevents overwriting our optimistic updates
@@ -1280,12 +1188,12 @@ export default defineComponent({
     }, { immediate: true });
 
     // Watch loading state
-    watch(supabaseLoading, (newLoading) => {
+    watch(apiLoading, (newLoading) => {
       loading.value = newLoading;
     }, { immediate: true });
 
-    // loadTasks is now handled automatically by useTaskTable
-    // Keeping mock data for fallback when Supabase is unavailable
+    // loadTasks is now handled automatically by useTaskAPI
+    // Keeping mock data for reference (can be removed later)
     [
           {
             id: '1',
@@ -1502,18 +1410,15 @@ export default defineComponent({
     });
 
     onMounted(async () => {
-      // Tasks are loaded via Supabase directly through useTaskTable
-      // No need to fetch from backend API anymore
+      // Tasks are loaded via backend API through useTaskAPI
       // Just ensure store has custom sections loaded
       taskStore.loadCustomSections();
     });
 
     // Refetch data when component is re-activated (returning from navigation)
     onActivated(async () => {
-      console.log('[DEBUG] TaskList: Component activated, clearing cache and refetching');
-      // Clear cache for Task table to ensure fresh data
-      clearTableCache('Task');
-      // Trigger refetch of tasks
+      console.log('[DEBUG] TaskList: Component activated, refetching from backend API');
+      // Trigger refetch of tasks from backend API
       await refetchTasks();
     });
 

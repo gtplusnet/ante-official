@@ -242,7 +242,7 @@ class SupabaseService {
         global: {
           headers: {
             'Authorization': `Bearer ${this.customAccessToken}`,
-            'X-Source': 'frontend-main' // For RLS policies
+            'X-Source': 'frontend-main' // For RLS policies (read-only operations only)
           }
         }
       });

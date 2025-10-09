@@ -167,25 +167,26 @@ export class TaskQueueProcessor extends WorkerHost {
       });
     }
 
-    // Remove existing watchers and create new ones
+    // Upsert watchers to avoid race conditions with concurrent processing
     for (const watcher of watchers) {
       try {
-        // Delete existing watcher if any
-        await this.prisma.taskWatcher.deleteMany({
+        // Use upsert for atomic operation (handles duplicates gracefully)
+        await this.prisma.taskWatcher.upsert({
           where: {
-            taskId: watcher.taskId,
-            accountId: watcher.accountId,
+            taskId_accountId: {
+              taskId: watcher.taskId,
+              accountId: watcher.accountId,
+            },
           },
+          update: {
+            watcherType: watcher.watcherType,
+          },
+          create: watcher,
         });
 
-        // Create new watcher
-        await this.prisma.taskWatcher.create({
-          data: watcher,
-        });
-
-        console.log(`✅ Created ${watcher.watcherType} watcher for account ${watcher.accountId}`);
+        console.log(`✅ Created/updated ${watcher.watcherType} watcher for account ${watcher.accountId}`);
       } catch (error) {
-        console.error(`Failed to create watcher for ${watcher.accountId}:`, error);
+        console.error(`Failed to upsert watcher for ${watcher.accountId}:`, error);
       }
     }
   }

@@ -27,7 +27,7 @@ module.exports = configure(function (/* ctx */) {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
-    boot: ['sentry', 'axios', 'supabase', 'auth', 'location-tracker', 'multi-account', 'mixins', 'bus', 'lazy-components', 'theme', 'route-loading', 'google-auth'],
+    boot: ['sentry', 'axios', 'supabase', 'auth', 'location-tracker', 'multi-account', 'mixins', 'bus', 'lazy-components', 'theme', 'google-auth'],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#css
     css: ['app.scss'],
@@ -247,13 +247,7 @@ module.exports = configure(function (/* ctx */) {
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#framework
     framework: {
-      config: {
-        loadingBar: {
-          color: 'primary',
-          size: '3px',
-          position: 'top'
-        }
-      },
+      config: {},
 
       // iconSet: 'material-icons', // Quasar icon set
       // lang: 'en-US', // Quasar language pack
@@ -266,7 +260,7 @@ module.exports = configure(function (/* ctx */) {
       // directives: [],
 
       // Quasar plugins
-      plugins: ['Dialog', 'Notify', 'LocalStorage', 'SessionStorage', 'Loading', 'LoadingBar'],
+      plugins: ['Dialog', 'Notify', 'LocalStorage', 'SessionStorage', 'Loading'],
     },
 
     // animations: 'all', // --- includes all animations
