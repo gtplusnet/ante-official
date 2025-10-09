@@ -444,15 +444,17 @@ export default defineComponent({
     };
     
     const performStartTimer = async () => {
+      // Show loading immediately for instant feedback
+      isLoading.value = true;
+
       // Request TIME-IN geolocation BEFORE starting timer
       const timeInGeoData = await GeolocationService.requestWithWarning();
 
       // User cancelled geolocation warning
       if (timeInGeoData === null) {
+        isLoading.value = false;
         return;
       }
-
-      isLoading.value = true;
       try {
         // Start timer without task (manual time-in)
         const response = await api.post('/time-tracking/start', {
@@ -512,11 +514,12 @@ export default defineComponent({
     const stopTimer = async () => {
       if (!currentTimer.value) return;
 
+      // Show loading immediately for instant feedback
+      isLoading.value = true;
+
       // Capture TIME-OUT geolocation silently (includes reverse geocoding)
       // Non-blocking, no warnings
       const timeOutGeoData = await GeolocationService.getGeolocationSilent();
-
-      isLoading.value = true;
       try {
         await api.post('/time-tracking/stop', {
           timeOutLatitude: timeOutGeoData.latitude || undefined,
