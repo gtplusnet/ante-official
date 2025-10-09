@@ -227,7 +227,8 @@
 import GInput from '../../../../components/shared/form/GInput.vue';
 import WorkflowActionButtons from '../../../../components/workflow/WorkflowActionButtons.vue';
 import { api } from 'src/boot/axios';
-import { useAssigneeList } from 'src/composables/useAssigneeList';
+import { useAssigneeStore } from 'src/stores/assignee';
+import { useProjectStore } from 'src/stores/project';
 import { useAuthStore } from 'src/stores/auth';
 
 export default {
@@ -243,10 +244,13 @@ export default {
     },
   },
   setup() {
-    const { assignees, loading: assigneesLoading } = useAssigneeList();
+    // Get stores
+    const assigneeStore = useAssigneeStore();
+    const projectStore = useProjectStore();
+
     return {
-      assignees,
-      assigneesLoading
+      assigneeStore,
+      projectStore
     };
   },
   data: () => ({
@@ -261,11 +265,17 @@ export default {
   }),
   computed: {
     assigneeOptions() {
-      // Format assignees for GInput select component
-      if (!this.assignees) return [];
-      return this.assignees.map(assignee => ({
+      // Format assignees for GInput select component from store
+      return this.assigneeStore.formattedAssignees.map(assignee => ({
         label: assignee.label || assignee.name,
         value: assignee.value || assignee.id
+      }));
+    },
+    projectOptions() {
+      // Format projects for GInput select component from store
+      return this.projectStore.formattedProjects.map(project => ({
+        label: project.label || project.name,
+        value: project.value || project.id
       }));
     },
     hasWorkflowInstance() {

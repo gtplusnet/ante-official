@@ -34,6 +34,7 @@
         :tasks="filteredTasks"
         :filter="filter"
         :loading="loading"
+        :creatingTask="creatingInlineTask"
         :projectId="projectId"
         :hideProjectGrouping="hideProjectGrouping"
         :compactMode="compactMode"
@@ -76,7 +77,7 @@ import { useTaskRealtime } from 'src/composables/realtime/useTaskRealtime';
 import { useTaskStore } from 'src/stores/task';
 import { useTask } from 'src/composables/supabase/useTask';
 import { useAuthStore } from 'src/stores/auth';
-import { useAssigneeList } from 'src/composables/useAssigneeList';
+import { useAssigneeStore } from 'src/stores/assignee';
 import bus from 'src/bus';
 import TaskListView from './TaskListView.vue';
 import TaskBoardView from './TaskBoardView.vue';
@@ -158,10 +159,12 @@ export default defineComponent({
     const taskSearchStore = useTaskSearchStore();
     const taskStore = useTaskStore();
     const authStore = useAuthStore();
+    const assigneeStore = useAssigneeStore();
     const loading = ref(false);
+    const creatingInlineTask = ref(false); // Loading state for inline task creation
 
-    // Get available users for assignee lookups
-    const { assignees: availableUsers } = useAssigneeList();
+    // Get available users for assignee lookups (from global store - initialized in MainLayout)
+    const availableUsers = computed(() => assigneeStore.formattedAssignees);
 
     // Get tasks from store using storeToRefs for reactivity
     const { tasks: storeTasks } = storeToRefs(taskStore);
@@ -490,6 +493,10 @@ export default defineComponent({
     const addTaskToSection = async (section: string, title?: string, metadata?: any) => {
       // If title is provided, create task directly (inline creation)
       if (title) {
+        // Set loading state at the start of inline creation
+        creatingInlineTask.value = true;
+
+        try {
         // Simple approach: Use -1 for all new tasks to ensure they appear at top
         // Existing tasks typically have positive order values (1000, 2000, etc)
         const newTaskOrder = -1;
@@ -652,6 +659,17 @@ export default defineComponent({
           console.log('[DEBUG] First 3 tasks after refetch:',
             updatedTasks.slice(0, 3).map(t => ({ title: t.title, order: t.order })));
         }, 500);
+        } catch (error) {
+          console.error('[ERROR] Failed to create inline task:', error);
+          Notify.create({
+            type: 'negative',
+            message: 'Failed to create task. Please try again.',
+            position: 'top'
+          });
+        } finally {
+          // Reset loading state after task creation completes (success or error)
+          creatingInlineTask.value = false;
+        }
       } else {
         // No title provided, open dialog (fallback)
         console.log('Add task to section:', section);
@@ -1424,6 +1442,7 @@ export default defineComponent({
 
     return {
       loading,
+      creatingInlineTask,
       pageTitle,
       pageDescription,
       filteredTasks,

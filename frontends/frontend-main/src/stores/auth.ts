@@ -6,6 +6,8 @@ import { AccountDataResponse } from '@shared/response/account.response';
 import { RoleDataResponse } from '@shared/response/role.response';
 import { api } from 'src/boot/axios';
 import supabaseService from 'src/services/supabase';
+import { useProjectStore } from './project';
+import { useAssigneeStore } from './assignee';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -49,6 +51,16 @@ export const useAuthStore = defineStore('auth', {
 
       // Clear IndexedDB cache for GSelect component
       await this.clearSelectCache();
+
+      // Clear global stores (project and assignee data)
+      try {
+        const projectStore = useProjectStore();
+        const assigneeStore = useAssigneeStore();
+        projectStore.clearData();
+        assigneeStore.clearData();
+      } catch (error) {
+        console.error('Error clearing global stores:', error);
+      }
 
       // Emit logout event for cache clearing
       this.emitEvent('logout', { accountId: oldAccountId });

@@ -27,7 +27,7 @@ module.exports = configure(function (/* ctx */) {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
-    boot: ['sentry', 'axios', 'supabase', 'auth', 'location-tracker', 'multi-account', 'mixins', 'bus', 'lazy-components', 'theme', 'google-auth'],
+    boot: ['sentry', 'axios', 'supabase', 'auth', 'global-stores', 'location-tracker', 'multi-account', 'mixins', 'bus', 'lazy-components', 'theme', 'google-auth'],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#css
     css: ['app.scss'],
