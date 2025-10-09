@@ -352,7 +352,7 @@ export default defineComponent({
 
       const hours = Math.floor(displaySeconds / 3600);
       const minutes = Math.floor((displaySeconds % 3600) / 60);
-      const secs = displaySeconds % 60;
+      const secs = Math.floor(displaySeconds % 60);
 
       return [hours, minutes, secs]
         .map(val => String(val).padStart(2, '0'))
@@ -388,7 +388,7 @@ export default defineComponent({
           // Extract task base time (previous sessions)
           if (currentTimer.value.taskTotalSeconds !== undefined) {
             // taskTotalSeconds includes current session, so subtract it to get base
-            taskBaseSeconds.value = currentTimer.value.taskTotalSeconds - currentTimer.value.elapsedSeconds;
+            taskBaseSeconds.value = Math.floor(currentTimer.value.taskTotalSeconds - currentTimer.value.elapsedSeconds);
           } else {
             taskBaseSeconds.value = 0;
           }
@@ -591,7 +591,7 @@ export default defineComponent({
           const taskSummary = taskSummaryResponse.data;
 
           // Set base seconds from previous sessions (excludes current session which is 0)
-          taskBaseSeconds.value = taskSummary.totalSeconds;
+          taskBaseSeconds.value = Math.floor(taskSummary.totalSeconds);
 
           // Update current timer with NEW timer info
           currentTimer.value = {

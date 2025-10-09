@@ -194,10 +194,10 @@ export class TimeTrackingService {
     const now = new Date();
     const elapsedSeconds = Math.floor((now.getTime() - new Date(timer.timeIn).getTime()) / 1000);
 
-    // Calculate task-specific total if task is tagged
+    // Calculate task-specific total if task is tagged (overall time, not just today)
     let taskTotalSeconds = elapsedSeconds; // Default to current session
     if (timer.taskId) {
-      const taskSummary = await this.getTaskSummary(accountId, timer.taskId, undefined, elapsedSeconds);
+      const taskSummary = await this.getTaskSummary(accountId, timer.taskId, null, elapsedSeconds);
       taskTotalSeconds = taskSummary.totalSeconds;
     }
 
@@ -207,7 +207,7 @@ export class TimeTrackingService {
       taskTitle: timer.taskTitle,
       timeIn: timer.timeIn,
       elapsedSeconds,
-      taskTotalSeconds, // Total time for this task today
+      taskTotalSeconds, // Overall time for this task (all time)
       task: timer.task,
       // Include TIME-IN geolocation
       timeInLatitude: timer.timeInLatitude,
@@ -315,7 +315,7 @@ export class TimeTrackingService {
   }
 
   async getTimerTasks(accountId: string) {
-    return this.prisma.task.findMany({
+    const tasks = await this.prisma.task.findMany({
       where: {
         assignedToId: accountId,
         taskType: { not: 'APPROVAL' },
@@ -341,6 +341,33 @@ export class TimeTrackingService {
         { updatedAt: 'desc' },
       ],
     });
+
+    // Calculate overall time spent for each task (all time entries)
+    const tasksWithTime = await Promise.all(
+      tasks.map(async (task) => {
+        // Get all completed time entries for this task
+        const timeEntries = await this.prisma.employeeTimekeepingRaw.findMany({
+          where: {
+            accountId,
+            taskId: task.id,
+            timeSpan: { gt: 0 }, // Only completed entries
+          },
+        });
+
+        const totalMinutes = timeEntries.reduce(
+          (sum, entry) => sum + (entry.timeSpan || 0),
+          0
+        );
+
+        return {
+          ...task,
+          timeSpentMinutes: totalMinutes,
+          timeSpentSeconds: Math.floor(totalMinutes * 60),
+        };
+      })
+    );
+
+    return tasksWithTime;
   }
 
   async createTaskAndStart(
@@ -475,7 +502,7 @@ export class TimeTrackingService {
 
     // Total includes completed + current session
     const totalMinutes = completedMinutes + (sessionSeconds / 60);
-    const totalSeconds = (completedMinutes * 60) + sessionSeconds;
+    const totalSeconds = Math.floor((completedMinutes * 60) + sessionSeconds);
 
     return {
       totalMinutes,
