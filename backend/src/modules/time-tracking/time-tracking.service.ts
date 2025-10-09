@@ -5,6 +5,7 @@ import { StartTimerDto } from './dto/start-timer.dto';
 import { StopTimerDto } from './dto/stop-timer.dto';
 import { GetHistoryDto } from './dto/get-history.dto';
 import { CreateTaskAndStartDto } from './dto/create-task-and-start.dto';
+import { TagTimerDto } from './dto/tag-timer.dto';
 import { 
   CurrentTimerResponse, 
   TimeHistoryResponse, 
@@ -23,21 +24,24 @@ export class TimeTrackingService {
     dto: StartTimerDto,
     timeInIpAddress?: string
   ): Promise<EmployeeTimekeepingRaw> {
-    // Verify task exists and belongs to the user
-    const task = await this.prisma.task.findFirst({
-      where: {
-        id: dto.taskId,
-        assignedToId: accountId,
-        taskType: { not: 'APPROVAL' },
-      },
-      include: {
-        project: true,
-        boardLane: true,
-      },
-    });
+    // If taskId is provided, verify task exists and belongs to the user
+    let task = null;
+    if (dto.taskId) {
+      task = await this.prisma.task.findFirst({
+        where: {
+          id: dto.taskId,
+          assignedToId: accountId,
+          taskType: { not: 'APPROVAL' },
+        },
+        include: {
+          project: true,
+          boardLane: true,
+        },
+      });
 
-    if (!task) {
-      throw new NotFoundException('Task not found or not assigned to you');
+      if (!task) {
+        throw new NotFoundException('Task not found or not assigned to you');
+      }
     }
 
     // Check if there's already a running timer
@@ -48,15 +52,15 @@ export class TimeTrackingService {
       // If there's an existing timer for a different task, stop it first
       if (existingTimer) {
         // If it's the same task, just return error
-        if (existingTimer.taskId === dto.taskId) {
+        if (dto.taskId && existingTimer.taskId === dto.taskId) {
           throw new BadRequestException('Timer is already running for this task');
         }
-        
+
         // Stop the existing timer
         const timeOut = new Date();
         const timeIn = new Date(existingTimer.timeIn);
         const timeSpan = (timeOut.getTime() - timeIn.getTime()) / 1000 / 60; // Convert to minutes
-        
+
         await prisma.employeeTimekeepingRaw.update({
           where: { id: existingTimer.id },
           data: {
@@ -65,8 +69,9 @@ export class TimeTrackingService {
           },
         });
       }
-      // Move task to IN_PROGRESS if not already there
-      if (task.boardLane.key !== BoardLaneKeys.IN_PROGRESS) {
+
+      // Move task to IN_PROGRESS if task is provided and not already there
+      if (task && task.boardLane.key !== BoardLaneKeys.IN_PROGRESS) {
         // Get IN_PROGRESS board lane
         const inProgressLane = await prisma.boardLane.findFirst({
           where: { key: BoardLaneKeys.IN_PROGRESS },
@@ -91,9 +96,9 @@ export class TimeTrackingService {
           timeOut: new Date(), // Will be updated when stopped
           timeSpan: 0,
           source: 'TIMER',
-          taskId: task.id,
-          taskTitle: task.title,
-          projectId: task.projectId,
+          taskId: task?.id || null,
+          taskTitle: task?.title || 'Manual Entry',
+          projectId: task?.projectId || null,
           // TIME-IN GEOLOCATION FIELDS
           timeInLatitude: dto.timeInLatitude,
           timeInLongitude: dto.timeInLongitude,
@@ -425,5 +430,70 @@ export class TimeTrackingService {
     });
 
     return result;
+  }
+
+  async tagTimerWithTask(
+    accountId: string,
+    dto: TagTimerDto
+  ): Promise<EmployeeTimekeepingRaw> {
+    // Get the current running timer
+    const currentTimer = await this.getCurrentTimer(accountId);
+    if (!currentTimer) {
+      throw new NotFoundException('No running timer found');
+    }
+
+    // Verify task exists and belongs to the user
+    const task = await this.prisma.task.findFirst({
+      where: {
+        id: dto.taskId,
+        assignedToId: accountId,
+        taskType: { not: 'APPROVAL' },
+      },
+      include: {
+        project: true,
+        boardLane: true,
+      },
+    });
+
+    if (!task) {
+      throw new NotFoundException('Task not found or not assigned to you');
+    }
+
+    // Use transaction to ensure consistency
+    return this.prisma.$transaction(async (prisma) => {
+      // Move task to IN_PROGRESS if not already there
+      if (task.boardLane.key !== BoardLaneKeys.IN_PROGRESS) {
+        const inProgressLane = await prisma.boardLane.findFirst({
+          where: { key: BoardLaneKeys.IN_PROGRESS },
+        });
+
+        if (!inProgressLane) {
+          throw new BadRequestException('IN_PROGRESS board lane not found');
+        }
+
+        await prisma.task.update({
+          where: { id: task.id },
+          data: { boardLaneId: inProgressLane.id },
+        });
+      }
+
+      // Update the timer with task information
+      return prisma.employeeTimekeepingRaw.update({
+        where: { id: currentTimer.id },
+        data: {
+          taskId: task.id,
+          taskTitle: task.title,
+          projectId: task.projectId,
+        },
+        include: {
+          task: {
+            include: {
+              project: true,
+            },
+          },
+          project: true,
+        },
+      });
+    });
   }
 }
