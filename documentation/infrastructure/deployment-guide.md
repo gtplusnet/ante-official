@@ -8,7 +8,8 @@ The ANTE ERP system uses a modern CI/CD pipeline with GitHub Actions, DigitalOce
 - **Backend Hosting**: DigitalOcean App Platform (Docker containers)
 - **Frontend Hosting**: Vercel
 - **Container Registry**: GitHub Container Registry (GHCR)
-- **CI/CD**: GitHub Actions
+- **CI/CD**: GitHub Actions with self-hosted runners (3 concurrent on local PC)
+- **Cache/Queue**: DigitalOcean Managed Valkey (Redis-compatible, shared cluster)
 - **Notifications**: Telegram
 
 ### Branch Strategy
@@ -59,8 +60,8 @@ The ANTE ERP system uses a modern CI/CD pipeline with GitHub Actions, DigitalOce
 
 **Databases:**
 - PostgreSQL: Supabase (ofnmfmwywkhosrmycltb.supabase.co)
-- MongoDB: `ante-staging` database
-- Redis: Database 1 on staging server (157.230.246.107:16379)
+- MongoDB: Local dev or Atlas (`ante-staging` database)
+- Valkey: DigitalOcean Managed (DB 1, shared with production)
 
 ---
 
@@ -95,8 +96,8 @@ The ANTE ERP system uses a modern CI/CD pipeline with GitHub Actions, DigitalOce
 
 **Databases:**
 - PostgreSQL: Supabase (ccdlrujemqfwclogysjv.supabase.co)
-- MongoDB: `ante-production` database
-- Redis: Database 0 on staging server (157.230.246.107:16379)
+- MongoDB: MongoDB Atlas (`ante-production` database)
+- Valkey: DigitalOcean Managed (DB 0, shared with staging)
 
 ---
 
@@ -154,6 +155,50 @@ gh workflow run deploy-production.yml --ref production
 
 ---
 
+## 🤖 GitHub Actions Runners
+
+### Self-Hosted Runners
+**Location**: Local development PC (jhay-B450M-DS3H-V2)
+**Count**: 3 concurrent runners
+**Labels**: `self-hosted`, `staging`
+
+**Runner Names**:
+- `local-staging-runner`
+- `local-staging-runner-2`
+- `local-staging-runner-3`
+
+**Health Monitoring**:
+- Automated health checks every 5 minutes via systemd timer
+- Auto-restart on failures
+- Telegram alerts for issues and recoveries
+- Status dashboard: `~/projects/ante-official/scripts/check-runner-status.sh`
+
+**Systemd Services**:
+```bash
+# Check runner status
+sudo systemctl status 'actions.runner.gtplusnet-ante-official.local-staging-runner*.service'
+
+# View health monitor timer
+systemctl list-timers runner-health-monitor.timer
+
+# Manual health check
+~/projects/ante-official/scripts/runner-health-check.sh
+
+# View runner status dashboard
+~/projects/ante-official/scripts/check-runner-status.sh
+```
+
+**Features**:
+- ✅ 3 concurrent workflow execution
+- ✅ Automated health monitoring
+- ✅ Auto-recovery on failures
+- ✅ Telegram notifications
+- ✅ Daily health reports
+
+**Note**: All staging and production deployments run on these local runners. Ensure PC is online for deployments to succeed.
+
+---
+
 ## 🔧 Configuration
 
 ### GitHub Secrets
@@ -180,6 +225,48 @@ All secrets configured at: https://github.com/gtplusnet/ante-official/settings/s
 
 **GitHub:**
 - `GITHUB_TOKEN`: Auto-provided by GitHub Actions
+
+---
+
+## 🗄️ Valkey Configuration
+
+### DigitalOcean Managed Valkey
+**Cluster ID**: `4265fffc-c521-4898-8c02-7f04ead68b1b`
+**Plan**: Dev DB (1 GiB RAM, $15/month)
+**Region**: Singapore (sgp1)
+**Version**: Valkey 8.0 (Redis-compatible)
+**TLS**: Enabled (rediss:// protocol)
+
+**Connection Details**:
+- **Host**: `ante-valkey-shared-do-user-6685298-0.e.db.ondigitalocean.com`
+- **Port**: `25061`
+- **TLS**: Required (`rediss://` protocol)
+
+**Database Isolation**:
+- **DB 0**: Production environment
+- **DB 1**: Staging environment
+
+**Environment Variables** (DigitalOcean App Platform):
+
+Staging:
+```env
+REDIS_HOST=ante-valkey-shared-do-user-6685298-0.e.db.ondigitalocean.com
+REDIS_PORT=25061
+REDIS_PASSWORD={valkey_password}
+REDIS_DB=1
+REDIS_TLS=true
+```
+
+Production:
+```env
+REDIS_HOST=ante-valkey-shared-do-user-6685298-0.e.db.ondigitalocean.com
+REDIS_PORT=25061
+REDIS_PASSWORD={valkey_password}
+REDIS_DB=0
+REDIS_TLS=true
+```
+
+**Migration Note**: Migrated from self-hosted Redis (157.230.246.107) on 2025-10-08. Utility server decommissioned.
 
 ---
 

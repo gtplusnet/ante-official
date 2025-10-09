@@ -3,7 +3,9 @@
 ## Overview
 The ANTE ERP system uses a hybrid architecture:
 - **Development**: PM2 manages applications, hosted Supabase for database (via CLI), Docker for Redis/MongoDB
-- **Production/Staging**: Docker manages all services with self-hosted Supabase
+- **Production/Staging**: DigitalOcean App Platform (backend), Vercel (frontends), managed databases (Supabase, Valkey, MongoDB Atlas)
+
+**Last Updated**: 2025-10-08 (Valkey migration, GitHub runners migration)
 
 This guide covers both development and production service architectures.
 
@@ -66,27 +68,40 @@ In production and staging, all services run as Docker containers with orchestrat
 - **⚠️ SHARED DATABASE**: Local and Staging use the same database instance!
 
 #### Staging Environment
-**Status**: Uses same hosted Supabase as local development + Utility Server
+**Status**: Uses same hosted Supabase as local development + DigitalOcean managed services
 - **Backend**: DigitalOcean App Platform at https://ante-backend-staging-q6udd.ondigitalocean.app
+- **Frontends**: Vercel (Preview environment)
+  - Main: https://ante.geertest.com
+  - Gate: https://ante-gate.geertest.com
+  - Guardian: https://ante-guardian.geertest.com
 - **PostgreSQL**: Same as local - https://ofnmfmwywkhosrmycltb.supabase.co
-- **Utility Server**: 157.230.246.107 (Repurposed as shared infrastructure)
-  - **GitHub Runner**: Self-hosted runner for staging workflows
-  - **Redis**: 157.230.246.107:16379 (DB 1 for staging)
-  - **MongoDB**: 157.230.246.107:27017 (ante-staging database)
+- **Valkey**: DigitalOcean Managed (DB 1, shared with production)
+- **MongoDB**: Local dev or MongoDB Atlas (ante-staging database)
+- **GitHub Runners**: 3 concurrent self-hosted runners on local PC
 - **⚠️ SHARED DATABASE**: PostgreSQL uses the same Supabase as local development!
 
 #### Production Environment (DigitalOcean App Platform)
-**Status**: Separate hosted Supabase instance + DigitalOcean App Platform
+**Status**: Separate hosted Supabase instance + DigitalOcean managed services
 - **Supabase Instance**: https://ccdlrujemqfwclogysjv.supabase.co (Ante Production project)
 - **Studio**: https://supabase.com/dashboard/project/ccdlrujemqfwclogysjv
 - **Backend**: https://ante-backend-production-gael2.ondigitalocean.app
+- **Frontends**: Vercel (Production environment)
+  - Main: https://ante.ph
+  - Gate: https://gate.ante.ph
+  - Guardian: https://guardian.ante.ph
 - **Infrastructure**: DigitalOcean App Platform (Docker containers via GHCR)
 - **App ID**: `7d280155-6063-4dbd-b7ac-31f48a4cf97c`
-- **Pooled Connection**: `postgresql://postgres.ccdlrujemqfwclogysjv:[password]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true`
-- **Direct Connection**: `postgresql://postgres.ccdlrujemqfwclogysjv:[password]@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres`
-- **✅ SEPARATE DATABASE**: Production has its own dedicated database
+- **PostgreSQL**:
+  - Pooled: `postgresql://postgres.ccdlrujemqfwclogysjv:[password]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true`
+  - Direct: `postgresql://postgres.ccdlrujemqfwclogysjv:[password]@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres`
+- **Valkey**: DigitalOcean Managed (DB 0, shared with staging)
+- **MongoDB**: MongoDB Atlas (ante-production database)
+- **GitHub Runners**: 3 concurrent self-hosted runners on local PC
+- **✅ SEPARATE DATABASE**: Production has its own dedicated PostgreSQL
 
-**Note**: Old production server (178.128.49.38) has been decommissioned and deleted.
+**Decommissioned Servers**:
+- ❌ Production server (178.128.49.38) - deleted
+- ❌ Utility server (157.230.246.107) - deleted October 15, 2025
 
 ## Service Architecture
 
