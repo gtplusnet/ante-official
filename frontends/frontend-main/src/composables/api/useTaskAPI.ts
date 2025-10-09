@@ -1,4 +1,4 @@
-import { ref, Ref, watch } from 'vue';
+import { ref, Ref, watch, toValue } from 'vue';
 import { api } from 'src/boot/axios';
 
 export interface TaskAPIFilters {
@@ -150,5 +150,118 @@ export function useTaskAPI(options: TaskAPIOptions = {}) {
     refetch,
     fetchTasks,
     updateTaskOrdering
+  };
+}
+
+/**
+ * Dashboard-specific API response with tasks and counts
+ */
+export interface TaskDashboardResponse {
+  tasks: any[];
+  counts: {
+    active: number;
+    assigned: number;
+    approvals: number;
+  };
+}
+
+/**
+ * Options for dashboard API
+ */
+export interface TaskDashboardOptions {
+  tab: 'active' | 'assigned' | 'approvals';
+  search?: string;
+  autoFetch?: boolean;
+}
+
+/**
+ * Composable for TaskWidget dashboard
+ * Fetches tasks for specific tab with counts for badges
+ * Replaces direct Supabase access in TaskWidget.vue
+ *
+ * @param options - Dashboard configuration options
+ * @returns Task data, counts, loading state, and refetch function
+ */
+export function useTaskDashboardAPI(options: TaskDashboardOptions) {
+  const {
+    tab,
+    search,
+    autoFetch = true
+  } = options;
+
+  const tasks = ref<any[]>([]);
+  const counts = ref<TaskDashboardResponse['counts']>({
+    active: 0,
+    assigned: 0,
+    approvals: 0
+  });
+  const loading = ref(false);
+  const error = ref<Error | null>(null);
+
+  /**
+   * Fetch dashboard tasks from backend API
+   * Uses GET /task/dashboard endpoint
+   */
+  const fetchDashboard = async () => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      // Extract values from refs (if refs are passed)
+      const tabValue = toValue(tab);
+      const searchValue = toValue(search);
+
+      console.log('[useTaskDashboardAPI] Fetching dashboard for tab:', tabValue, 'search:', searchValue);
+
+      // Build query parameters
+      const params: any = { tab: tabValue };
+      if (searchValue) {
+        params.search = searchValue;
+      }
+
+      // Call backend API
+      const response = await api.get('/task/dashboard', { params });
+
+      // Extract tasks and counts from response
+      tasks.value = response.data.tasks || [];
+      counts.value = response.data.counts || { active: 0, assigned: 0, approvals: 0 };
+
+      console.log('[useTaskDashboardAPI] Fetched', tasks.value.length, 'tasks');
+      console.log('[useTaskDashboardAPI] Counts:', counts.value);
+    } catch (err: any) {
+      console.error('[useTaskDashboardAPI] Error fetching dashboard:', err);
+      error.value = err;
+      tasks.value = [];
+      counts.value = { active: 0, assigned: 0, approvals: 0 };
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  /**
+   * Refetch dashboard data manually
+   * Used when tab or search changes
+   */
+  const refetch = async () => {
+    await fetchDashboard();
+  };
+
+  // Watch for tab/search changes and refetch
+  watch(() => [toValue(tab), toValue(search)], () => {
+    fetchDashboard();
+  });
+
+  // Auto-fetch on mount if enabled
+  if (autoFetch) {
+    fetchDashboard();
+  }
+
+  return {
+    tasks,
+    counts,
+    loading,
+    error,
+    refetch,
+    fetchDashboard
   };
 }
