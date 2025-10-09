@@ -1,11 +1,14 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@common/prisma.service';
 import { UtilityService } from '@common/utility.service';
+import { CRMActivityService } from '../../crm-activity/crm-activity/crm-activity.service';
+import { CRMActivityType, CRMEntityType } from '@prisma/client';
 
 @Injectable()
 export class LeadRelationshipOwnerService {
   @Inject() private prisma: PrismaService;
   @Inject() private utilityService: UtilityService;
+  @Inject() private crmActivityService: CRMActivityService;
 
   // Upsert multiple owners - create or update (unarchive)
   async upsertMultiple(accountIds: string[]) {
@@ -13,6 +16,16 @@ export class LeadRelationshipOwnerService {
     const results = [];
 
     for (const accountId of accountIds) {
+      // Check if exists first
+      const existingOwner = await this.prisma.leadRelationshipOwner.findUnique({
+        where: { accountId },
+        include: {
+          account: true,
+        },
+      });
+
+      const isNew = !existingOwner;
+
       // Upsert: update if exists, create if not
       const owner = await this.prisma.leadRelationshipOwner.upsert({
         where: { accountId },
@@ -26,7 +39,23 @@ export class LeadRelationshipOwnerService {
           companyId: this.utilityService.companyId,
           isActive: true,
         },
+        include: {
+          account: true,
+        },
       });
+
+      // Log activity only for new owners
+      if (isNew) {
+        const ownerName = `${owner.account.firstName} ${owner.account.lastName}`;
+        await this.crmActivityService.createActivity({
+          activityType: CRMActivityType.CREATE,
+          entityType: CRMEntityType.RELATIONSHIP_OWNER,
+          entityId: owner.id,
+          entityName: ownerName,
+          description: `Added new relationship owner "${ownerName}"`,
+          performedById: this.utilityService.accountInformation.id,
+        });
+      }
 
       results.push(owner);
     }
@@ -133,19 +162,35 @@ export class LeadRelationshipOwnerService {
         id,
         companyId: this.utilityService.companyId,
       },
+      include: {
+        account: true,
+      },
     });
 
     if (!owner) {
       throw new NotFoundException('Lead relationship owner not found');
     }
 
-    return await this.prisma.leadRelationshipOwner.update({
+    const archivedOwner = await this.prisma.leadRelationshipOwner.update({
       where: { id },
       data: {
         isActive: false,
         updatedAt: new Date(),
       },
     });
+
+    // Log activity
+    const ownerName = `${owner.account.firstName} ${owner.account.lastName}`;
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.DELETE,
+      entityType: CRMEntityType.RELATIONSHIP_OWNER,
+      entityId: owner.id,
+      entityName: ownerName,
+      description: `Archived relationship owner "${ownerName}"`,
+      performedById: this.utilityService.accountInformation.id,
+    });
+
+    return archivedOwner;
   }
 
   // Toggle archive status

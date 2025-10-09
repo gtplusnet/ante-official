@@ -6,6 +6,8 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@common/prisma.service';
 import { UtilityService } from '@common/utility.service';
+import { CRMActivityService } from '../../crm-activity/crm-activity/crm-activity.service';
+import { CRMActivityType, CRMEntityType } from '@prisma/client';
 import {
   CreatePointOfContactDto,
   UpdatePointOfContactDto,
@@ -17,6 +19,7 @@ import {
 export class PointOfContactService {
   @Inject() private prisma: PrismaService;
   @Inject() private utilityService: UtilityService;
+  @Inject() private crmActivityService: CRMActivityService;
 
   // Create single point of contact
   async create(data: CreatePointOfContactDto) {
@@ -38,7 +41,7 @@ export class PointOfContactService {
       );
     }
 
-    return await this.prisma.pointOfContact.create({
+    const contact = await this.prisma.pointOfContact.create({
       data: {
         ...data,
         createdById,
@@ -53,6 +56,18 @@ export class PointOfContactService {
         },
       },
     });
+
+    // Log activity
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.CREATE,
+      entityType: CRMEntityType.POINT_OF_CONTACT,
+      entityId: contact.id,
+      entityName: contact.fullName,
+      description: `Created new point of contact "${contact.fullName}"`,
+      performedById: this.utilityService.accountInformation.id,
+    });
+
+    return contact;
   }
 
   // Get single point of contact
@@ -204,7 +219,7 @@ export class PointOfContactService {
       }
     }
 
-    return await this.prisma.pointOfContact.update({
+    const updatedContact = await this.prisma.pointOfContact.update({
       where: { id },
       data,
       include: {
@@ -217,19 +232,43 @@ export class PointOfContactService {
         },
       },
     });
+
+    // Log activity
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.UPDATE,
+      entityType: CRMEntityType.POINT_OF_CONTACT,
+      entityId: updatedContact.id,
+      entityName: updatedContact.fullName,
+      description: `Updated point of contact "${updatedContact.fullName}"`,
+      performedById: this.utilityService.accountInformation.id,
+    });
+
+    return updatedContact;
   }
 
   // Archive point of contact (soft delete)
   async archive(id: number) {
-    await this.findOne(id); // Check if exists and user has access
+    const contact = await this.findOne(id); // Check if exists and user has access
 
-    return await this.prisma.pointOfContact.update({
+    const archivedContact = await this.prisma.pointOfContact.update({
       where: { id },
       data: {
         isActive: false,
         updatedAt: new Date(),
       },
     });
+
+    // Log activity
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.DELETE,
+      entityType: CRMEntityType.POINT_OF_CONTACT,
+      entityId: contact.id,
+      entityName: contact.fullName,
+      description: `Archived point of contact "${contact.fullName}"`,
+      performedById: this.utilityService.accountInformation.id,
+    });
+
+    return archivedContact;
   }
 
   // Create multiple point of contacts
