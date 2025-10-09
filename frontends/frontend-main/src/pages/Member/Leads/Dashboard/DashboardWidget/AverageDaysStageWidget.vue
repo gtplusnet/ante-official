@@ -37,9 +37,10 @@
 
 <script lang="ts">
 import { ref, onMounted, computed, nextTick } from "vue";
-import { Notify } from "quasar";
+import { Notify, useQuasar } from "quasar";
 import GlobalWidgetCard from "src/components/shared/global/GlobalWidgetCard.vue";
 import VueApexCharts from "vue3-apexcharts";
+import { APIRequests } from "src/utility/api.handler";
 
 interface AverageDaysData {
   stage: string;
@@ -54,21 +55,15 @@ export default {
     ApexChart: VueApexCharts,
   },
   setup() {
+    const $q = useQuasar();
+
     // Reactive data
     const loading = ref(false);
     const chartReady = ref(false);
     const chartKey = ref(0);
 
-    // Average days data based on the provided screenshot
-    const averageDaysData = ref<AverageDaysData[]>([
-      { stage: "Negotiations", days: 78, color: "#615FF6" },
-      { stage: "Technical Meeting", days: 80, color: "#2f40c4" },
-      { stage: "Proposal", days: 85, color: "#615FF6" },
-      { stage: "Loss", days: 90, color: "#2f40c4" },
-      { stage: "Won", days: 90, color: "#615FF6" },
-      { stage: "Initial Meeting", days: 95, color: "#2f40c4" },
-      { stage: "Prospect", days: 98, color: "#615FF6" },
-    ]);
+    // Average days data - will be populated from API
+    const averageDaysData = ref<AverageDaysData[]>([]);
 
     // Chart configuration
     const chartOptions = computed(() => {
@@ -132,7 +127,11 @@ export default {
               fontSize: "12px",
             },
           },
-          max: 100,
+          max: (() => {
+            // Calculate dynamic max based on actual data
+            const maxDays = Math.max(...averageDaysData.value.map((d) => d.days), 0);
+            return Math.ceil(maxDays * 1.1); // Add 10% padding
+          })(),
           min: 0,
           tickAmount: 5,
           title: {
@@ -193,12 +192,12 @@ export default {
       try {
         loading.value = true;
 
-        // Simulate API call - replace with actual service call
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Fetch average days data from API
+        const response = await APIRequests.getAverageDaysStageSummary($q);
 
-        // In production, you would fetch data from your API here:
-        // const data = await LeadService.getAverageDaysInStage();
-        // averageDaysData.value = data;
+        if (Array.isArray(response)) {
+          averageDaysData.value = response as AverageDaysData[];
+        }
 
         // Force chart refresh
         chartKey.value++;

@@ -51,6 +51,7 @@ import { PointOfContactModule } from '@modules/crm/point-of-contact/point-of-con
 import { LeadCompanyModule } from '@modules/crm/lead-company/lead-company/lead-company.module';
 import { DealSourceModule } from '@modules/crm/deal-source/deal-source/deal-source.module';
 import { DealTypeModule } from '@modules/crm/deal-type/deal-type/deal-type.module';
+import { CRMActivityModule } from '@modules/crm/crm-activity/crm-activity/crm-activity.module';
 import { NotificationModule } from '@modules/communication/notification/notification/notification.module';
 import { OTPModule } from '@modules/communication/otp/otp/otp.module';
 import { EmailConfigModule } from '@modules/communication/email-config/email-config.module';
@@ -137,6 +138,8 @@ import { PettyCashController } from '@modules/finance/petty-cash/petty-cash/pett
 import { CollectionController } from '@modules/finance/collection/collection/collection.controller';
 import { ProjectAccomplishmentController } from '@modules/project/accomplishment/project-accomplishment/project-accomplishment.controller';
 import { BranchController } from '@modules/location/branch/branch/branch.controller';
+import { CalendarEventController } from '@modules/calendar/calendar-event/calendar-event.controller';
+import { CalendarCategoryController } from '@modules/calendar/calendar-category/calendar-category.controller';
 
 // Listeners
 import { SocketListener } from './listeners/socket.listener';
@@ -170,6 +173,8 @@ import { PettyCashService } from '@modules/finance/petty-cash/petty-cash/petty-c
 import { CollectionService } from '@modules/finance/collection/collection/collection.service';
 import { ProjectAccomplishmentService } from '@modules/project/accomplishment/project-accomplishment/project-accomplishment.service';
 import { BranchService } from '@modules/location/branch/branch/branch.service';
+import { CalendarEventService } from '@modules/calendar/calendar-event/calendar-event.service';
+import { CalendarCategoryService } from '@modules/calendar/calendar-category/calendar-category.service';
 
 const ENV = process.env.NODE_ENV;
 
@@ -245,6 +250,7 @@ const ENV = process.env.NODE_ENV;
     LeadCompanyModule,
     DealSourceModule,
     DealTypeModule,
+    CRMActivityModule,
     NotificationModule,
     OTPModule,
     EmailConfigModule,
@@ -332,6 +338,8 @@ const ENV = process.env.NODE_ENV;
     CollectionController,
     ProjectAccomplishmentController,
     BranchController,
+    CalendarEventController,
+    CalendarCategoryController,
   ],
   providers: [
     // Sentry error filter - only in staging and production
@@ -376,6 +384,8 @@ const ENV = process.env.NODE_ENV;
     CollectionService,
     ProjectAccomplishmentService,
     BranchService,
+    CalendarEventService,
+    CalendarCategoryService,
     // Add RoleGroupService back for UserOrgService dependency
     RoleGroupService,
     // Add PurchaseOrderService back for EquipmentService dependency

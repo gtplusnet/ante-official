@@ -20,6 +20,4 @@ export default boot(({ app }) => {
     delay: 200,
     timeout: 10000,
   }));
-
-  console.log('[BOOT] Lazy components registered (ApexChart, FullCalendar)');
 });

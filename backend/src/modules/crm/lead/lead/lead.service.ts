@@ -9,6 +9,8 @@ import {
   ProjectStatus,
   LeadDealStatus,
   WinProbability,
+  CRMActivityType,
+  CRMEntityType,
 } from '@prisma/client';
 import { PrismaService } from '@common/prisma.service';
 import { UtilityService } from '@common/utility.service';
@@ -24,6 +26,7 @@ import {
 } from '../../../../shared/response';
 import { LocationService } from '@modules/location/location/location/location.service';
 import { CompanyService } from '@modules/company/company/company.service';
+import { CRMActivityService } from '@modules/crm/crm-activity/crm-activity/crm-activity.service';
 import { ProjectDeleteAllDto } from '@modules/project/project/project/project.validator.dto';
 import {
   LeadCreateDto,
@@ -38,6 +41,7 @@ export class LeadService {
   @Inject() private tableHandlerService: TableHandlerService;
   @Inject() private locationService: LocationService;
   @Inject() private companyService: CompanyService;
+  @Inject() private crmActivityService: CRMActivityService;
 
   async createLead(params: LeadCreateDto) {
     const loggedInAccount: AccountDataResponse =
@@ -52,6 +56,12 @@ export class LeadService {
           `Current date: ${startDate.toDateString()}, ` +
           `Close date (end of month): ${closeDate.toDateString()}`,
       );
+    }
+
+    // Map board stage to status if provided, otherwise default to OPPORTUNITY
+    let status: LeadDealStatus = LeadDealStatus.OPPORTUNITY;
+    if (params.leadBoardStage) {
+      status = this.mapBoardStageToStatus(params.leadBoardStage);
     }
 
     // Map LeadCreateDto to LeadDeal creation data
@@ -71,7 +81,7 @@ export class LeadService {
         params.personInChargeId ||
         loggedInAccount.id,
       pointOfContactId: params.clientId || null,
-      status: LeadDealStatus.OPPORTUNITY,
+      status: status,
       companyId: loggedInAccount.company.id,
       createdById: loggedInAccount.id,
       isDeleted: false,
@@ -89,14 +99,51 @@ export class LeadService {
       },
     });
 
-    this.logLeadCreation(leadDeal);
+    await this.logLeadCreation(leadDeal);
     return this.formatLeadDealAsProject(leadDeal);
   }
 
-  private logLeadCreation(lead: any) {
+  private async logLeadCreation(lead: any) {
     this.utilityService.log(
       `Lead "${lead.dealName || lead.name}" has been created by ${this.utilityService.accountInformation.username}.`,
     );
+
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.CREATE,
+      entityType: CRMEntityType.LEAD_DEAL,
+      entityId: lead.id,
+      entityName: lead.dealName,
+      description: `Created new lead "${lead.dealName}"`,
+      performedById: this.utilityService.accountInformation.id,
+    });
+  }
+
+  private mapBoardStageToStatus(boardStage: string): LeadDealStatus {
+    const stageMap: { [key: string]: LeadDealStatus } = {
+      'prospect': LeadDealStatus.OPPORTUNITY,
+      'initial_meeting': LeadDealStatus.CONTACTED,
+      'technical_meeting': LeadDealStatus.TECHNICAL_MEETING,
+      'proposal': LeadDealStatus.PROPOSAL,
+      'in_negotiation': LeadDealStatus.IN_NEGOTIATION,
+      'won': LeadDealStatus.WIN,
+      'loss': LeadDealStatus.LOST,
+    };
+
+    return stageMap[boardStage] || LeadDealStatus.OPPORTUNITY;
+  }
+
+  private getStatusDisplayName(status: LeadDealStatus): string {
+    const statusNameMap: { [key in LeadDealStatus]: string } = {
+      [LeadDealStatus.OPPORTUNITY]: 'Prospect',
+      [LeadDealStatus.CONTACTED]: 'Initial Meeting',
+      [LeadDealStatus.TECHNICAL_MEETING]: 'Technical Meeting',
+      [LeadDealStatus.PROPOSAL]: 'Proposal',
+      [LeadDealStatus.IN_NEGOTIATION]: 'In Negotiation',
+      [LeadDealStatus.WIN]: 'Won',
+      [LeadDealStatus.LOST]: 'Lost',
+    };
+
+    return statusNameMap[status] || status;
   }
 
   async leadBoard() {
@@ -111,40 +158,53 @@ export class LeadService {
     // Define lead board stages based on LeadDealStatus
     const leadBoards = [
       {
-        boardKey: 'opportunity',
-        boardTitle: 'Opportunity',
+        boardKey: 'prospect',
+        boardName: 'Prospect',
         boardType: 'lead',
         status: LeadDealStatus.OPPORTUNITY,
+        boardOrder: 1,
       },
       {
-        boardKey: 'contacted',
-        boardTitle: 'Contacted',
+        boardKey: 'initial_meeting',
+        boardName: 'Initial Meeting',
         boardType: 'lead',
         status: LeadDealStatus.CONTACTED,
+        boardOrder: 2,
+      },
+      {
+        boardKey: 'technical_meeting',
+        boardName: 'Technical Meeting',
+        boardType: 'lead',
+        status: LeadDealStatus.TECHNICAL_MEETING,
+        boardOrder: 3,
       },
       {
         boardKey: 'proposal',
-        boardTitle: 'Proposal',
+        boardName: 'Proposal',
         boardType: 'lead',
         status: LeadDealStatus.PROPOSAL,
+        boardOrder: 4,
       },
       {
         boardKey: 'in_negotiation',
-        boardTitle: 'In Negotiation',
+        boardName: 'In-negotiation',
         boardType: 'lead',
         status: LeadDealStatus.IN_NEGOTIATION,
+        boardOrder: 5,
       },
       {
-        boardKey: 'win',
-        boardTitle: 'Won',
+        boardKey: 'won',
+        boardName: 'Won',
         boardType: 'lead',
         status: LeadDealStatus.WIN,
+        boardOrder: 6,
       },
       {
-        boardKey: 'lost',
-        boardTitle: 'Lost',
+        boardKey: 'loss',
+        boardName: 'Loss',
         boardType: 'lead',
         status: LeadDealStatus.LOST,
+        boardOrder: 7,
       },
     ];
 
@@ -175,8 +235,9 @@ export class LeadService {
 
         return {
           boardKey: board.boardKey,
-          boardTitle: board.boardTitle,
+          boardName: board.boardName,
           boardType: board.boardType,
+          boardOrder: board.boardOrder,
           boardProjects: formattedLeads,
         };
       }),
@@ -337,6 +398,15 @@ export class LeadService {
       },
     });
 
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.UPDATE,
+      entityType: CRMEntityType.LEAD_DEAL,
+      entityId: updatedLead.id,
+      entityName: updatedLead.dealName,
+      description: `Updated lead "${updatedLead.dealName}"`,
+      performedById: this.utilityService.accountInformation.id,
+    });
+
     return this.formatLeadDealAsProject(updatedLead);
   }
 
@@ -366,6 +436,15 @@ export class LeadService {
         pointOfContact: true,
         company: true,
       },
+    });
+
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.DELETE,
+      entityType: CRMEntityType.LEAD_DEAL,
+      entityId: archivedLead.id,
+      entityName: archivedLead.dealName,
+      description: `Deleted lead "${archivedLead.dealName}"`,
+      performedById: this.utilityService.accountInformation.id,
     });
 
     return this.formatLeadDealAsProject(archivedLead);
@@ -416,6 +495,7 @@ export class LeadService {
 
     // Map board stage to LeadDealStatus
     const newStatus = this.mapBoardStageToLeadDealStatus(boardStage);
+    const oldStatus = lead.status;
 
     const updatedLead = await this.prisma.leadDeal.update({
       where: { id: leadId },
@@ -431,6 +511,15 @@ export class LeadService {
         pointOfContact: true,
         company: true,
       },
+    });
+
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.STAGE_CHANGE,
+      entityType: CRMEntityType.LEAD_DEAL,
+      entityId: updatedLead.id,
+      entityName: updatedLead.dealName,
+      description: `Changed stage from "${this.getStatusDisplayName(oldStatus)}" to "${this.getStatusDisplayName(newStatus)}" for lead "${updatedLead.dealName}"`,
+      performedById: this.utilityService.accountInformation.id,
     });
 
     return this.formatLeadDealAsProject(updatedLead);
@@ -881,6 +970,7 @@ export class LeadService {
       isLead: true,
       leadBoardStage: this.mapLeadDealStatusToBoardStage(leadDeal.status),
       createdAt: this.utilityService.formatDate(leadDeal.createdAt),
+      updatedAt: this.utilityService.formatDate(leadDeal.updatedAt),
       locationId: leadDeal.locationId,
       location: leadDeal.location
         ? await this.getLocationInformation(leadDeal.locationId)
@@ -924,25 +1014,27 @@ export class LeadService {
   // Helper to map LeadDealStatus to board stage string
   private mapLeadDealStatusToBoardStage(status: LeadDealStatus): string {
     const statusMap = {
-      [LeadDealStatus.OPPORTUNITY]: 'opportunity',
-      [LeadDealStatus.CONTACTED]: 'contacted',
+      [LeadDealStatus.OPPORTUNITY]: 'prospect',
+      [LeadDealStatus.CONTACTED]: 'initial_meeting',
+      [LeadDealStatus.TECHNICAL_MEETING]: 'technical_meeting',
       [LeadDealStatus.PROPOSAL]: 'proposal',
       [LeadDealStatus.IN_NEGOTIATION]: 'in_negotiation',
-      [LeadDealStatus.WIN]: 'win',
-      [LeadDealStatus.LOST]: 'lost',
+      [LeadDealStatus.WIN]: 'won',
+      [LeadDealStatus.LOST]: 'loss',
     };
-    return statusMap[status] || 'opportunity';
+    return statusMap[status] || 'prospect';
   }
 
   // Helper to map board stage string to LeadDealStatus
   private mapBoardStageToLeadDealStatus(boardStage: string): LeadDealStatus {
     const stageMap = {
-      opportunity: LeadDealStatus.OPPORTUNITY,
-      contacted: LeadDealStatus.CONTACTED,
+      prospect: LeadDealStatus.OPPORTUNITY,
+      initial_meeting: LeadDealStatus.CONTACTED,
+      technical_meeting: LeadDealStatus.TECHNICAL_MEETING,
       proposal: LeadDealStatus.PROPOSAL,
       in_negotiation: LeadDealStatus.IN_NEGOTIATION,
-      win: LeadDealStatus.WIN,
-      lost: LeadDealStatus.LOST,
+      won: LeadDealStatus.WIN,
+      loss: LeadDealStatus.LOST,
     };
     return stageMap[boardStage] || LeadDealStatus.OPPORTUNITY;
   }
@@ -969,5 +1061,303 @@ export class LeadService {
     const month = date.getMonth();
     // Setting day to 0 of next month gives us the last day of current month
     return new Date(year, month + 1, 0, 23, 59, 59, 999);
+  }
+
+  /**
+   * Get dashboard counters for leads/CRM
+   */
+  async getLeadDashboardCounters() {
+    const companyId = this.utilityService.companyId;
+
+    // Base where clause for active deals
+    const activeDealsWhere = {
+      companyId,
+      isDeleted: false,
+      status: {
+        notIn: [LeadDealStatus.WIN, LeadDealStatus.LOST],
+      },
+    };
+
+    // Count active deals in pipeline (excluding WIN and LOST)
+    const activeDealsCount = await this.prisma.leadDeal.count({
+      where: activeDealsWhere,
+    });
+
+    // Count total opportunities
+    const opportunitiesCount = await this.prisma.leadDeal.count({
+      where: {
+        companyId,
+        isDeleted: false,
+        status: LeadDealStatus.OPPORTUNITY,
+      },
+    });
+
+    // Get all active deals for aggregation
+    const activeDeals = await this.prisma.leadDeal.findMany({
+      where: activeDealsWhere,
+      select: {
+        monthlyRecurringRevenue: true,
+        totalContract: true,
+      },
+    });
+
+    // Calculate totals
+    const totalMMR = activeDeals.reduce(
+      (sum, deal) => sum + (deal.monthlyRecurringRevenue || 0),
+      0,
+    );
+
+    const totalInitialCost = activeDeals.reduce(
+      (sum, deal) => sum + (deal.totalContract || 0),
+      0,
+    );
+
+    // Format currency values
+    const mmrFormatted = this.utilityService.formatCurrency(totalMMR);
+    const initialCostFormatted =
+      this.utilityService.formatCurrency(totalInitialCost);
+
+    return {
+      activeDealsInPipeline: activeDealsCount,
+      totalOpportunities: opportunitiesCount,
+      mmrOpportunity: mmrFormatted.formatCurrency,
+      initialCostOpportunity: initialCostFormatted.formatCurrency,
+    };
+  }
+
+  async getDealTypesSummary() {
+    const companyId = this.utilityService.companyId;
+
+    // Get all active deals with their deal types
+    const activeDeals = await this.prisma.leadDeal.findMany({
+      where: {
+        companyId,
+        isDeleted: false,
+        status: {
+          notIn: [LeadDealStatus.WIN, LeadDealStatus.LOST],
+        },
+        dealTypeId: {
+          not: null,
+        },
+      },
+      include: {
+        dealType: true,
+      },
+    });
+
+    // Group by deal type and count
+    const dealTypeCounts = activeDeals.reduce((acc, deal) => {
+      if (deal.dealType) {
+        const typeName = deal.dealType.typeName;
+        if (!acc[typeName]) {
+          acc[typeName] = 0;
+        }
+        acc[typeName]++;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Convert to array format
+    const result = Object.entries(dealTypeCounts).map(([typeName, count]) => ({
+      typeName,
+      count,
+    }));
+
+    // Sort by count descending
+    result.sort((a, b) => b.count - a.count);
+
+    return result;
+  }
+
+  async getClosingDatesSummary() {
+    const companyId = this.utilityService.companyId;
+
+    // Get all active deals with closing dates
+    const activeDeals = await this.prisma.leadDeal.findMany({
+      where: {
+        companyId,
+        isDeleted: false,
+        status: {
+          notIn: [LeadDealStatus.WIN, LeadDealStatus.LOST],
+        },
+      },
+      select: {
+        closeDate: true,
+      },
+    });
+
+    // Group by month and count
+    const closingDateCounts = activeDeals.reduce((acc, deal) => {
+      const closeDate = new Date(deal.closeDate);
+
+      // Check if the date is valid
+      if (isNaN(closeDate.getTime())) {
+        // Count as Unknown
+        if (!acc['Unknown']) {
+          acc['Unknown'] = 0;
+        }
+        acc['Unknown']++;
+      } else {
+        // Format as "Mon YYYY" (e.g., "May 2025")
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthKey = `${monthNames[closeDate.getMonth()]} ${closeDate.getFullYear()}`;
+
+        if (!acc[monthKey]) {
+          acc[monthKey] = 0;
+        }
+        acc[monthKey]++;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Convert to array format with sorting data
+    const result = Object.entries(closingDateCounts).map(([month, count]) => {
+      // Parse month for sorting
+      let sortDate: Date;
+      if (month === 'Unknown') {
+        sortDate = new Date(0); // Put Unknown first
+      } else {
+        const [monthStr, yearStr] = month.split(' ');
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthIndex = monthNames.indexOf(monthStr);
+        sortDate = new Date(parseInt(yearStr), monthIndex);
+      }
+
+      return {
+        month,
+        count,
+        sortDate,
+      };
+    });
+
+    // Sort by date
+    result.sort((a, b) => a.sortDate.getTime() - b.sortDate.getTime());
+
+    // Remove sortDate from final result
+    return result.map(({ month, count }) => ({ month, count }));
+  }
+
+  async getSalesProbabilitySummary() {
+    const companyId = this.utilityService.companyId;
+
+    // Get all active deals with their win probabilities
+    const activeDeals = await this.prisma.leadDeal.findMany({
+      where: {
+        companyId,
+        isDeleted: false,
+        status: {
+          notIn: [LeadDealStatus.WIN, LeadDealStatus.LOST],
+        },
+      },
+      select: {
+        winProbability: true,
+      },
+    });
+
+    // Define probability ranges with categories
+    const probabilityRanges = [
+      { category: 'Unknown', min: null, max: null, color: '#D32F2F' },
+      { category: 'A', min: 90, max: 100, color: '#2f40c4' },
+      { category: 'B', min: 70, max: 89, color: '#615FF6' },
+      { category: 'C', min: 50, max: 69, color: '#2f40c4' },
+      { category: 'D', min: 30, max: 49, color: '#615FF6' },
+      { category: 'E', min: 10, max: 29, color: '#615FF6' },
+      { category: 'F', min: 0, max: 9, color: '#615FF6' },
+    ];
+
+    // Group by probability ranges
+    const probabilityCounts = probabilityRanges.map((range) => {
+      let count = 0;
+
+      if (range.category === 'Unknown') {
+        // Count null or 0 probabilities as Unknown
+        count = activeDeals.filter(
+          (deal) => deal.winProbability === null || deal.winProbability === 0,
+        ).length;
+      } else {
+        // Count deals within the range
+        count = activeDeals.filter(
+          (deal) =>
+            deal.winProbability !== null &&
+            deal.winProbability >= range.min &&
+            deal.winProbability <= range.max,
+        ).length;
+      }
+
+      return {
+        category: range.category,
+        count,
+        color: range.color,
+      };
+    });
+
+    return probabilityCounts;
+  }
+
+  async getAverageDaysStageSummary() {
+    const companyId = this.utilityService.companyId;
+
+    // Get all active deals with their current status
+    const activeDeals = await this.prisma.leadDeal.findMany({
+      where: {
+        companyId,
+        isDeleted: false,
+        status: {
+          notIn: [LeadDealStatus.WIN, LeadDealStatus.LOST],
+        },
+      },
+      select: {
+        status: true,
+        updatedAt: true,
+      },
+    });
+
+    // Define stage mapping with colors (matching the widget display order)
+    const stageMap: Record<LeadDealStatus, { name: string; color: string; order: number }> = {
+      [LeadDealStatus.IN_NEGOTIATION]: { name: 'Negotiations', color: '#615FF6', order: 1 },
+      [LeadDealStatus.TECHNICAL_MEETING]: { name: 'Technical Meeting', color: '#2f40c4', order: 2 },
+      [LeadDealStatus.PROPOSAL]: { name: 'Proposal', color: '#615FF6', order: 3 },
+      [LeadDealStatus.CONTACTED]: { name: 'Initial Meeting', color: '#2f40c4', order: 4 },
+      [LeadDealStatus.OPPORTUNITY]: { name: 'Prospect', color: '#615FF6', order: 5 },
+      [LeadDealStatus.WIN]: { name: 'Won', color: '#615FF6', order: 6 },
+      [LeadDealStatus.LOST]: { name: 'Loss', color: '#2f40c4', order: 7 },
+    };
+
+    // Calculate average days for each status
+    const statusGroups = activeDeals.reduce((acc, deal) => {
+      if (!acc[deal.status]) {
+        acc[deal.status] = [];
+      }
+
+      // Calculate days since last update (days in current stage)
+      const now = new Date();
+      const updatedAt = new Date(deal.updatedAt);
+      const diffMs = now.getTime() - updatedAt.getTime();
+      const days = diffMs / (1000 * 60 * 60 * 24);
+
+      acc[deal.status].push(days);
+      return acc;
+    }, {} as Record<LeadDealStatus, number[]>);
+
+    // Calculate averages and format result - include ALL stages (even empty ones)
+    const result = Object.entries(stageMap).map(([status, stageInfo]) => {
+      const daysArray = statusGroups[status as LeadDealStatus] || [];
+      const average = daysArray.length > 0
+        ? daysArray.reduce((sum, days) => sum + days, 0) / daysArray.length
+        : 0;
+
+      return {
+        stage: stageInfo.name,
+        days: Math.round(average), // Round to whole number, 0 if no leads
+        color: stageInfo.color,
+        order: stageInfo.order,
+      };
+    });
+
+    // Sort by the predefined order
+    result.sort((a, b) => a.order - b.order);
+
+    // Remove order field from final result
+    return result.map(({ stage, days, color }) => ({ stage, days, color }));
   }
 }

@@ -22,11 +22,11 @@
         }}{{ studentData.lastName }}
       </div>
       <div class="student-lrn">{{ studentData.lrn }}</div>
-      <div class="student-grade">
+      <div class="student-grade" :class="{ 'long-grade': hasLongSectionName }">
         {{ studentData.section.gradeLevel.name }}
       </div>
-      <div class="student-section">
-        {{ formattedSectionName }}
+      <div class="student-section" :class="{ 'long-section': hasLongSectionName }">
+        {{ abbreviatedSectionName }}
       </div>
       <div class="student-qr-code">
         <qrcode-vue
@@ -126,23 +126,6 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const formattedSectionName = computed(() => {
-      if (!props.studentData?.section?.name) return "";
-
-      // Remove "STEM - " or any prefix before " - "
-      let sectionName = props.studentData.section.name;
-      if (sectionName.includes(" - ")) {
-        sectionName = sectionName.split(" - ")[1];
-      }
-
-      // Convert to title case (capitalize first letter of each word)
-      return sectionName
-        .toLowerCase()
-        .split(" ")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
-    });
-
     // This is My Last Changes Here - Middle Name Formatter
     const formattedMiddleName = computed(() => {
       if (!props.studentData?.middleName) return "";
@@ -170,6 +153,45 @@ export default defineComponent({
       if (!props.studentData?.firstName) return false;
       const words = props.studentData.firstName.trim().split(/\s+/);
       return words.length >= 3;
+    });
+
+    // Abbreviate course name for COLLEGE level
+    const abbreviatedSectionName = computed(() => {
+      if (!props.studentData?.section) return '';
+
+      const educationLevel = props.studentData.section.gradeLevel.educationLevel;
+      const sectionName = props.studentData.section.name;
+
+      // Only abbreviate for COLLEGE level
+      if (educationLevel !== 'COLLEGE') {
+        return sectionName;
+      }
+
+      // Split by " - " to separate course from section name
+      const parts = sectionName.split(' - ');
+      const courseName = parts[0];
+      const sectionPart = parts.slice(1).join(' - '); // In case there are multiple hyphens
+
+      // Words to skip in abbreviation
+      const skipWords = ['OF', 'IN', 'THE', 'AND'];
+
+      // Split course name into words and create abbreviation
+      const words = courseName.trim().split(/\s+/);
+      const abbreviation = words
+        .filter((word: string) => !skipWords.includes(word.toUpperCase()))
+        .map((word: string) => word.charAt(0).toUpperCase())
+        .join('');
+
+      // Rejoin with section name if present
+      return sectionPart ? `${abbreviation} - ${sectionPart}` : abbreviation;
+    });
+
+    // Check if section name has more than 5 words for smaller font
+    const hasLongSectionName = computed(() => {
+      const sectionName = abbreviatedSectionName.value;
+      if (!sectionName) return false;
+      const words = sectionName.trim().split(/\s+/);
+      return words.length > 3;
     });
 
     // Computed properties for dynamic data
@@ -330,9 +352,10 @@ export default defineComponent({
     };
 
     return {
-      formattedSectionName,
       formattedMiddleName,
       hasLongFirstName,
+      abbreviatedSectionName,
+      hasLongSectionName,
       emergencyContactName,
       emergencyContactAddress,
       emergencyContactMobile,
@@ -461,13 +484,18 @@ export default defineComponent({
     font-size: 14px;
     font-weight: bold;
     color: #fff;
+
+    &.long-grade {
+      font-size: 12px;
+      bottom: 117px;
+    }
   }
 
   .student-section {
     position: absolute;
     width: 40%;
     text-transform: uppercase;
-    bottom: 81px;
+    bottom: 83px;
     left: 31px;
     font-size: 14px;
     font-weight: bold;
@@ -475,6 +503,12 @@ export default defineComponent({
     color: #fff;
     min-height: 34px; // Minimum height for consistent positioning
     display: flex;
+
+    &.long-section {
+      font-size: 12px;
+      line-height: 1.4;
+      bottom: 83px;
+    }
   }
 
   .student-qr-code {

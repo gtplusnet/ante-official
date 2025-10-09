@@ -4,7 +4,7 @@ import {
   ForbiddenException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Prisma, Client, Location } from '@prisma/client';
+import { Prisma, Client, Location, CRMActivityType, CRMEntityType } from '@prisma/client';
 import { PrismaService } from '@common/prisma.service';
 import { CreateClientDTO } from '../../../../dto/client.validator.dto';
 import { UtilityService } from '@common/utility.service';
@@ -12,6 +12,7 @@ import { TableBodyDTO, TableQueryDTO } from '@common/table.dto/table.dto';
 import { TableHandlerService } from '@common/table.handler/table.handler.service';
 import { ClientDataResponse } from '@shared/response/client.response';
 import { EncryptionService } from '@common/encryption.service';
+import { CRMActivityService } from '@modules/crm/crm-activity/crm-activity/crm-activity.service';
 import { randomBytes } from 'crypto';
 
 @Injectable()
@@ -20,6 +21,7 @@ export class ClientService {
   @Inject() public utilityService: UtilityService;
   @Inject() public tableHandlerService: TableHandlerService;
   @Inject() public encryptionService: EncryptionService;
+  @Inject() private crmActivityService: CRMActivityService;
 
   async createClient(clientDto: CreateClientDTO) {
     // check email alrady exist
@@ -52,6 +54,15 @@ export class ClientService {
 
     const createResponse = await this.prisma.client.create({
       data: createClientData,
+    });
+
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.CREATE,
+      entityType: CRMEntityType.CLIENT,
+      entityId: createResponse.id,
+      entityName: createResponse.name,
+      description: `Created new client "${createResponse.name}"`,
+      performedById: this.utilityService.accountInformation.id,
     });
 
     return this.formatResponse(createResponse);
@@ -188,6 +199,15 @@ export class ClientService {
       },
     });
 
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.UPDATE,
+      entityType: CRMEntityType.CLIENT,
+      entityId: updatedClient.id,
+      entityName: updatedClient.name,
+      description: `Updated client "${updatedClient.name}"`,
+      performedById: this.utilityService.accountInformation.id,
+    });
+
     return this.formatResponse(updatedClient);
   }
 
@@ -213,6 +233,15 @@ export class ClientService {
       data: {
         isDeleted: true,
       },
+    });
+
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.DELETE,
+      entityType: CRMEntityType.CLIENT,
+      entityId: deletedClient.id,
+      entityName: deletedClient.name,
+      description: `Deleted client "${deletedClient.name}"`,
+      performedById: this.utilityService.accountInformation.id,
     });
 
     return this.formatResponse(deletedClient);

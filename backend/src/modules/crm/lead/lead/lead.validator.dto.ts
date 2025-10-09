@@ -100,6 +100,10 @@ export class LeadCreateDto {
 
   @IsOptional()
   @IsString()
+  readonly leadBoardStage?: string;
+
+  @IsOptional()
+  @IsString()
   readonly clientEmailAddress?: string;
 }
 

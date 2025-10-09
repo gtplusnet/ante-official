@@ -300,11 +300,11 @@ export default defineComponent({
         }
       } catch (error) {
         console.error('Failed to load cutoff date ranges:', error);
-        $q.notify({
-          type: 'negative',
-          message: 'Failed to load cutoff periods',
-          position: 'top-right',
-        });
+        // $q.notify({
+        //   type: 'negative',
+        //   message: 'Failed to load cutoff periods',
+        //   position: 'top-right',
+        // });
         // Fallback to default date range
         initializeDateRange();
       } finally {

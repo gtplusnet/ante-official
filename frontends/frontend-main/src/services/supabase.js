@@ -43,8 +43,7 @@ class SupabaseService {
           },
         });
         this.isInitialized = true;
-        console.log('🔐 SupabaseService - Client initialized');
-        
+
         // Restore custom session if available
         this._restoreCustomSession();
         
@@ -71,12 +70,6 @@ class SupabaseService {
         // Clear any cached client to force recreation with restored token
         this.customAuthClient = null;
         this.cachedTokenForClient = null;
-
-        console.log('🔐 SupabaseService - Custom session restored from localStorage', {
-          hasUser: !!sessionData.user,
-          userId: sessionData.user?.id,
-          companyId: sessionData.user?.user_metadata?.companyId
-        });
       }
     } catch (error) {
       console.error('🔐 SupabaseService - Error restoring custom session:', error);
@@ -100,8 +93,6 @@ class SupabaseService {
       return { data: null, error: 'Supabase client not initialized' };
     }
 
-    console.log('🔐 SupabaseService - Setting custom JWT session from backend');
-
     try {
       // Parse JWT to extract user information
       let userInfo = null;
@@ -116,12 +107,6 @@ class SupabaseService {
             app_metadata: payload.app_metadata || {},
             role: payload.role
           };
-          console.log('🔐 SupabaseService - Extracted user info from JWT:', {
-            userId: userInfo.id,
-            email: userInfo.email,
-            companyId: userInfo.user_metadata.companyId,
-            roleId: userInfo.user_metadata.roleId
-          });
         }
       } catch (e) {
         console.warn('⚠️ Could not parse JWT payload:', e);
@@ -157,7 +142,6 @@ class SupabaseService {
         }
       };
 
-      console.log('🔐 SupabaseService - Custom JWT session established successfully');
       return { data: sessionData, error: null };
 
     } catch (error) {
@@ -177,7 +161,6 @@ class SupabaseService {
 
     // Return custom session if we have one
     if (this.isCustomSession && this.customAccessToken) {
-      console.log('🔐 SupabaseService - Returning custom session with user metadata');
       const customSessionData = {
         session: {
           access_token: this.customAccessToken,
@@ -220,7 +203,6 @@ class SupabaseService {
         this.customAuthClient = null;
         this.cachedTokenForClient = null;
         localStorage.removeItem('supabase-custom-session');
-        console.log('🔐 SupabaseService - Custom session and cache cleared');
       }
 
       // Also clear native Supabase session
@@ -229,8 +211,7 @@ class SupabaseService {
         console.error('Supabase signOut error:', error);
         return { error: error.message };
       }
-      
-      console.log('🔐 SupabaseService - All sessions cleared');
+
       return { error: null };
     } catch (error) {
       console.error('Error during Supabase signOut:', error);
@@ -249,28 +230,7 @@ class SupabaseService {
     if (this.isCustomSession && this.customAccessToken && client) {
       // Check if we can reuse the cached client
       if (this.customAuthClient && this.cachedTokenForClient === this.customAccessToken) {
-        console.log('🔐 SupabaseService - Reusing cached client with custom JWT');
         return this.customAuthClient;
-      }
-
-      console.log('🔐 SupabaseService - Creating new client with custom JWT authorization');
-      console.log('🔐 SupabaseService - Token preview:', this.customAccessToken.substring(0, 50) + '...');
-
-      // Decode JWT to inspect structure
-      try {
-        const tokenParts = this.customAccessToken.split('.');
-        if (tokenParts.length === 3) {
-          const payload = JSON.parse(atob(tokenParts[1]));
-          console.log('🔐 SupabaseService - JWT payload structure:', {
-            hasUserMetadata: !!payload.user_metadata,
-            userMetadata: payload.user_metadata,
-            sub: payload.sub,
-            role: payload.role,
-            exp: payload.exp
-          });
-        }
-      } catch (e) {
-        console.error('🔐 SupabaseService - Error decoding JWT:', e);
       }
 
       // Create a new client instance with custom headers
@@ -290,24 +250,15 @@ class SupabaseService {
       // Cache the token for which this client was created
       this.cachedTokenForClient = this.customAccessToken;
 
-      // Log the configured headers for debugging
-      console.log('🔐 SupabaseService - Client configured with headers:', {
-        hasAuthorization: true,
-        hasXSource: true,
-        tokenLength: this.customAccessToken.length
-      });
-
       return this.customAuthClient;
     }
 
     // Clear cache if not using custom session
     if (this.customAuthClient) {
-      console.log('🔐 SupabaseService - Clearing custom client cache');
       this.customAuthClient = null;
       this.cachedTokenForClient = null;
     }
 
-    console.log('🔐 SupabaseService - Returning default client');
     return client;
   }
 
@@ -322,7 +273,6 @@ class SupabaseService {
     }
 
     const { data } = client.auth.onAuthStateChange((event, session) => {
-      console.log('Supabase auth event:', event);
       callback(event, session);
     });
 
@@ -362,8 +312,7 @@ class SupabaseService {
         console.error('Failed to refresh Supabase session:', error);
         return { data: { session: null }, error: error.message };
       }
-      
-      console.log('Supabase session refreshed');
+
       return { data, error: null };
     } catch (error) {
       console.error('Error refreshing Supabase session:', error);
