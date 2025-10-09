@@ -210,19 +210,14 @@ export class GeolocationService {
   }
 
   /**
-   * Request geolocation with user-friendly flow
-   * Shows warning if disabled
+   * Request geolocation silently (no warnings)
+   * Automatically continues without location if disabled
    */
   static async requestWithWarning(): Promise<GeolocationData | null> {
     const permission = await this.checkPermission();
 
-    // If explicitly denied, show warning
+    // If explicitly denied or unsupported, continue without location
     if (permission === 'denied' || permission === 'unsupported') {
-      const shouldContinue = await this.showPermissionWarning();
-      if (!shouldContinue) {
-        return null; // User cancelled
-      }
-
       return {
         latitude: 0,
         longitude: 0,
@@ -233,13 +228,8 @@ export class GeolocationService {
     // Try to get geolocation
     const geoData = await this.getGeolocationData();
 
-    // If failed, show warning
+    // If failed, continue without location
     if (!geoData || !geoData.geolocationEnabled) {
-      const shouldContinue = await this.showPermissionWarning();
-      if (!shouldContinue) {
-        return null;
-      }
-
       return {
         latitude: 0,
         longitude: 0,
