@@ -190,9 +190,16 @@ export class TimeTrackingService {
       return null;
     }
 
-    // Calculate elapsed seconds
+    // Calculate elapsed seconds for current session
     const now = new Date();
     const elapsedSeconds = Math.floor((now.getTime() - new Date(timer.timeIn).getTime()) / 1000);
+
+    // Calculate task-specific total if task is tagged
+    let taskTotalSeconds = elapsedSeconds; // Default to current session
+    if (timer.taskId) {
+      const taskSummary = await this.getTaskSummary(accountId, timer.taskId, undefined, elapsedSeconds);
+      taskTotalSeconds = taskSummary.totalSeconds;
+    }
 
     return {
       id: timer.id,
@@ -200,6 +207,7 @@ export class TimeTrackingService {
       taskTitle: timer.taskTitle,
       timeIn: timer.timeIn,
       elapsedSeconds,
+      taskTotalSeconds, // Total time for this task today
       task: timer.task,
       // Include TIME-IN geolocation
       timeInLatitude: timer.timeInLatitude,
