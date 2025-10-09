@@ -186,7 +186,7 @@ export class LeadRelationshipOwnerService {
       entityType: CRMEntityType.RELATIONSHIP_OWNER,
       entityId: owner.id,
       entityName: ownerName,
-      description: `Archived relationship owner "${ownerName}"`,
+      description: `Deleted relationship owner "${ownerName}"`,
       performedById: this.utilityService.accountInformation.id,
     });
 

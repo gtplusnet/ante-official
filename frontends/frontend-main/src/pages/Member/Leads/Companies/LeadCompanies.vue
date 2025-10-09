@@ -36,7 +36,8 @@
 
     <!-- Data Table -->
     <div class="table-container q-mt-lg">
-      <table class="company-table">
+      <!-- Loading Skeleton -->
+      <table v-if="loading" class="company-table">
         <thead>
           <tr class="table-header">
             <th class="text-left">Company Name</th>
@@ -47,6 +48,50 @@
             <th class="text-center">Actions</th>
           </tr>
         </thead>
+        <tbody>
+          <tr v-for="n in 5" :key="`skeleton-${n}`">
+            <td><q-skeleton type="text" /></td>
+            <td><q-skeleton type="text" /></td>
+            <td><q-skeleton type="text" /></td>
+            <td><q-skeleton type="text" /></td>
+            <td><q-skeleton type="text" /></td>
+            <td>
+              <div class="actions-container">
+                <q-skeleton type="QBtn" />
+                <q-skeleton type="QBtn" />
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Empty State -->
+
+      <div
+        v-else-if="filteredCompanies.length === 0"
+        class="text-center q-pa-lg"
+      >
+        <q-icon name="business" size="64px" color="grey-4" />
+        <div class="q-mt-sm text-h6 text-grey-6">No companies found</div>
+
+        <div class="text-body-small text-grey-5 q-mt-xs">
+          Click "New Company" to add companies
+        </div>
+      </div>
+
+      <!-- Actual Data Table -->
+      <table v-else class="company-table">
+        <thead>
+          <tr class="table-header">
+            <th class="text-left">Company Name</th>
+            <th class="text-left">Employees</th>
+            <th class="text-left">Deals</th>
+            <th class="text-left">Date Created</th>
+            <th class="text-left">Created By</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+
         <tbody>
           <tr
             v-for="company in filteredCompanies"
@@ -199,8 +244,8 @@ const archiveCompany = async (company: Company) => {
   if (!$api) return;
 
   $q.dialog({
-    title: "Archive Company",
-    message: `Are you sure you want to archive "${company.name}"?`,
+    title: "Delete Company",
+    message: `Are you sure you want to delete this "${company.name}"?`,
     cancel: true,
     persistent: true,
   }).onOk(async () => {
@@ -211,17 +256,17 @@ const archiveCompany = async (company: Company) => {
 
       $q.notify({
         color: "positive",
-        message: "Company archived successfully",
+        message: "Company deleted successfully",
         icon: "check_circle",
       });
 
       // Refresh the list
       await fetchCompanies();
     } catch (error) {
-      console.error("Error archiving company:", error);
+      console.error("Error deleting company:", error);
       $q.notify({
         color: "negative",
-        message: "Failed to archive company",
+        message: "Failed to delete company",
         icon: "error",
       });
     } finally {
@@ -311,6 +356,23 @@ onMounted(() => {
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  max-height: calc(100vh - 210px);
+  overflow: auto;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #d9d9d9;
+    border-radius: 50px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: #f4f4f4;
+    border-radius: 50px;
+  }
 }
 
 .company-table {

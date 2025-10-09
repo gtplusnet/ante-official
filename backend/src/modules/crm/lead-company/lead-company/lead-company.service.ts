@@ -155,7 +155,7 @@ export class LeadCompanyService {
       entityType: CRMEntityType.LEAD_COMPANY,
       entityId: existingCompany.id,
       entityName: existingCompany.name,
-      description: `Archived company "${existingCompany.name}"`,
+      description: `Deleted company "${existingCompany.name}"`,
       performedById: this.utilityService.accountInformation.id,
     });
 
