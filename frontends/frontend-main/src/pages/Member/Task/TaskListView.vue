@@ -428,6 +428,7 @@ interface Task {
 const props = defineProps<{
   tasks: Task[];
   filter: string;
+  loading?: boolean;
   projectId?: number | string | null;
   hideProjectGrouping?: boolean;
   compactMode?: boolean;
@@ -438,6 +439,9 @@ const emit = defineEmits<{
   'toggle-status': [task: Task];
   'update-status': [task: Task, status: string];
   'update-task': [task: Task, field: string, value: any, extraData?: any];
+  'select-task': [task: Task];
+  'edit-task': [task: Task];
+  'open-menu': [task: Task, event: MouseEvent];
   'add-task': [section: string, title?: string, metadata?: any];
   'reorder-tasks': [data: { sectionKey: string; fromIndex: number; toIndex: number; task: Task }];
   'view-task': [task: Task];
