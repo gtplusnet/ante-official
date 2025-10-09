@@ -289,7 +289,7 @@ import GlobalWidgetCard from '../../../../components/shared/global/GlobalWidgetC
 import TaskSelectionDialog from './dialog/TaskSelectionDialog.vue';
 import TimeHistoryDialog from './dialog/TimeHistoryDialog.vue';
 import TaskInformationDialog from '../../../../components/dialog/TaskInformationDialog/TaskInformationDialog.vue';
-import { GeolocationService } from 'src/services/geolocation.service';
+import { useLocationStore } from 'src/stores/location';
 
 interface Task {
   id: number;
@@ -322,7 +322,8 @@ export default defineComponent({
     const instance = getCurrentInstance();
     const api = instance?.proxy?.$api;
     const bus = instance?.appContext.config.globalProperties.$bus;
-    
+    const locationStore = useLocationStore();
+
     // State
     const isInitialLoading = ref(true);
     const isLoading = ref(false);
@@ -447,22 +448,17 @@ export default defineComponent({
       // Show loading immediately for instant feedback
       isLoading.value = true;
 
-      // Request TIME-IN geolocation BEFORE starting timer
-      const timeInGeoData = await GeolocationService.requestWithWarning();
+      // Get location from store (instant - no waiting!)
+      const location = locationStore.currentLocation;
 
-      // User cancelled geolocation warning
-      if (timeInGeoData === null) {
-        isLoading.value = false;
-        return;
-      }
       try {
         // Start timer without task (manual time-in)
         const response = await api.post('/time-tracking/start', {
           // taskId is optional now - omit it for manual time-in
-          timeInLatitude: timeInGeoData.latitude || undefined,
-          timeInLongitude: timeInGeoData.longitude || undefined,
-          timeInLocation: timeInGeoData.location || undefined,
-          timeInGeolocationEnabled: timeInGeoData.geolocationEnabled,
+          timeInLatitude: location?.latitude || 0,
+          timeInLongitude: location?.longitude || 0,
+          timeInLocation: location?.location || null,
+          timeInGeolocationEnabled: location?.geolocationEnabled || false,
         });
 
         // Stop existing timer interval if running
@@ -487,8 +483,8 @@ export default defineComponent({
 
         // Show success message with location if captured
         let message = 'Timer started';
-        if (timeInGeoData.geolocationEnabled && timeInGeoData.location) {
-          message += ` at ${timeInGeoData.location}`;
+        if (location?.geolocationEnabled && location?.location) {
+          message += ` at ${location.location}`;
         }
 
         instance?.proxy?.$q.notify({
@@ -517,15 +513,15 @@ export default defineComponent({
       // Show loading immediately for instant feedback
       isLoading.value = true;
 
-      // Capture TIME-OUT geolocation silently (includes reverse geocoding)
-      // Non-blocking, no warnings
-      const timeOutGeoData = await GeolocationService.getGeolocationSilent();
+      // Get location from store (instant - no waiting!)
+      const location = locationStore.currentLocation;
+
       try {
         await api.post('/time-tracking/stop', {
-          timeOutLatitude: timeOutGeoData.latitude || undefined,
-          timeOutLongitude: timeOutGeoData.longitude || undefined,
-          timeOutLocation: timeOutGeoData.location || undefined,
-          timeOutGeolocationEnabled: timeOutGeoData.geolocationEnabled,
+          timeOutLatitude: location?.latitude || 0,
+          timeOutLongitude: location?.longitude || 0,
+          timeOutLocation: location?.location || null,
+          timeOutGeolocationEnabled: location?.geolocationEnabled || false,
         });
 
         stopTimerInterval();
@@ -535,8 +531,8 @@ export default defineComponent({
 
         // Show success message with location if captured
         let message = 'Timer stopped successfully';
-        if (timeOutGeoData.geolocationEnabled && timeOutGeoData.location) {
-          message += ` at ${timeOutGeoData.location}`;
+        if (location?.geolocationEnabled && location?.location) {
+          message += ` at ${location.location}`;
         }
 
         instance?.proxy?.$q.notify({
