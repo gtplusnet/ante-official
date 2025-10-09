@@ -529,13 +529,31 @@ export class TimeTrackingService {
         });
       }
 
-      // Update the timer with task information
-      return prisma.employeeTimekeepingRaw.update({
+      // STOP current timer (TIME-OUT)
+      const timeOut = new Date();
+      const timeIn = new Date(currentTimer.timeIn);
+      const timeSpan = (timeOut.getTime() - timeIn.getTime()) / 1000 / 60; // Convert to minutes
+
+      await prisma.employeeTimekeepingRaw.update({
         where: { id: currentTimer.id },
         data: {
+          timeOut,
+          timeSpan,
+        },
+      });
+
+      // START new timer for the new task (TIME-IN)
+      const newTimer = await prisma.employeeTimekeepingRaw.create({
+        data: {
+          accountId,
+          timeIn: new Date(),
+          timeOut: new Date(), // Will be updated when stopped
+          timeSpan: 0,
+          source: 'TIMER',
           taskId: task.id,
           taskTitle: task.title,
           projectId: task.projectId,
+          // Note: No geolocation on task switch (silent transition)
         },
         include: {
           task: {
@@ -546,6 +564,8 @@ export class TimeTrackingService {
           project: true,
         },
       });
+
+      return newTimer;
     });
   }
 }
