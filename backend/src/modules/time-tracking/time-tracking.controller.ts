@@ -151,4 +151,22 @@ export class TimeTrackingController {
     const result = await this.timeTrackingService.tagTimerWithTask(accountId, dto);
     return this.utilityService.responseHandler(Promise.resolve(result), res);
   }
+
+  @Get('task-summary/:taskId')
+  async getTaskSummary(
+    @Query('taskId') taskId: string,
+    @Query('date') date: string,
+    @NestResponse() res: Response,
+  ) {
+    const accountId = this.utilityService.accountInformation?.id;
+    if (!accountId) {
+      throw new BadRequestException('User not authenticated');
+    }
+    const result = await this.timeTrackingService.getTaskSummary(
+      accountId,
+      parseInt(taskId),
+      date
+    );
+    return this.utilityService.responseHandler(Promise.resolve(result), res);
+  }
 }

@@ -432,6 +432,50 @@ export class TimeTrackingService {
     return result;
   }
 
+  async getTaskSummary(
+    accountId: string,
+    taskId: number,
+    date?: string,
+    currentSessionSeconds?: number // Pass current session to avoid recursion
+  ): Promise<{ totalMinutes: number; totalSeconds: number; currentSessionSeconds: number }> {
+    const targetDate = date ? new Date(date) : new Date();
+    targetDate.setHours(0, 0, 0, 0);
+
+    const nextDay = new Date(targetDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    // Get all completed time entries for this task today
+    const completedEntries = await this.prisma.employeeTimekeepingRaw.findMany({
+      where: {
+        accountId,
+        taskId,
+        timeIn: {
+          gte: targetDate,
+          lt: nextDay,
+        },
+        timeSpan: {
+          gt: 0, // Only completed entries
+        },
+      },
+    });
+
+    // Use provided current session seconds (to avoid recursion)
+    const sessionSeconds = currentSessionSeconds || 0;
+
+    // Calculate total minutes from completed entries
+    const completedMinutes = completedEntries.reduce((sum, entry) => sum + (entry.timeSpan || 0), 0);
+
+    // Total includes completed + current session
+    const totalMinutes = completedMinutes + (sessionSeconds / 60);
+    const totalSeconds = (completedMinutes * 60) + sessionSeconds;
+
+    return {
+      totalMinutes,
+      totalSeconds,
+      currentSessionSeconds: sessionSeconds,
+    };
+  }
+
   async tagTimerWithTask(
     accountId: string,
     dto: TagTimerDto
