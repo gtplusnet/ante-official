@@ -169,6 +169,7 @@ export class LeadRelationshipOwnerService {
     // Format for frontend table
     return owners.map((owner) => ({
       id: owner.id,
+      accountId: owner.accountId,  // Add accountId for filtering
       fullName: `${owner.account.firstName} ${owner.account.lastName}`,
       email: owner.account.email,
       branch: owner.account.EmployeeData?.branch?.name || 'N/A',
