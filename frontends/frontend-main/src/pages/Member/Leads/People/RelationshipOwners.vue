@@ -1,204 +1,111 @@
 <template>
   <div class="relationship-owners-page">
     <!-- Header Section -->
-    <div class="page-header">
-      <div class="header-left">
-
-        <div class="page-title text-h5 text-dark q-mt-sm">Relationship Owners</div>
+    <div class="row justify-between items-center">
+      <div class="text-dark text-title-medium-f-[18px] col-2">
+        Relationship Owners
       </div>
-    </div>
 
-    <!-- Filter Section -->
-    <div class="filter-section q-mt-lg">
-      <div class="filter-row">
-        <div class="filters-container">
-          <div class="filter-item">
-            <label class="filter-label">Filter By Branch</label>
-            <q-select
-              v-model="selectedBranch"
-              :options="branchOptions"
-              option-label="label"
-              option-value="value"
-              emit-value
-              map-options
-              outlined
-              dense
-              class="filter-select"
-            />
-          </div>
-          <div class="filter-item">
-            <label class="filter-label">Filter By Company</label>
-            <q-select
-              v-model="selectedCompany"
-              :options="companyOptions"
-              option-label="label"
-              option-value="value"
-              emit-value
-              map-options
-              outlined
-              dense
-              class="filter-select"
-            />
-          </div>
-          <div class="filter-item">
-            <label class="filter-label">Sort By</label>
-            <q-select
-              v-model="sortBy"
-              :options="sortOptions"
-              outlined
-              dense
-              class="filter-select"
-            />
-          </div>
+      <!-- Filter Section -->
+      <div class="row items-center justify-end q-gutter-x-md col-10">
+        <div class="col-4">
+          <q-select v-model="selectedBranch" :options="branchOptions" option-label="label" option-value="value"
+            emit-value map-options outlined dense label="Select by Branch" />
         </div>
-        <div class="action-button-container">
-          <q-btn
-            color="primary"
-            unelevated
-            no-caps
-            icon="add"
-            label="New Record"
-            class="new-record-btn"
-            @click="addNewRecord"
-          />
+        <div class="col-4">
+          <q-select v-model="sortBy" :options="sortOptions" outlined dense label="Sort By" />
         </div>
+        <g-button icon-size="md" icon="add" label="New Record" @click="addNewRecord" />
       </div>
     </div>
 
     <!-- Data Table -->
     <div class="table-container q-mt-lg">
-      <div class="table-wrapper">
-        <!-- Loading Skeleton -->
-        <table v-if="loading" class="owners-table">
-          <thead>
-            <tr>
-              <th>Full Name</th>
-              <th>Email</th>
-              <th>Branch</th>
-              <th>Job Title</th>
-              <th>Phone</th>
-              <th>Date Created</th>
-              <th>Created By</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="n in 5" :key="`skeleton-${n}`">
-              <td><q-skeleton type="text" /></td>
-              <td><q-skeleton type="text" /></td>
-              <td><q-skeleton type="text" /></td>
-              <td><q-skeleton type="text" /></td>
-              <td><q-skeleton type="text" /></td>
-              <td><q-skeleton type="text" /></td>
-              <td><q-skeleton type="text" /></td>
-              <td class="actions-cell">
+      <!-- Loading Skeleton -->
+      <table v-if="loading" class="owners-table">
+        <thead>
+          <tr>
+            <th class="text-left">Full Name</th>
+            <th class="text-left">Email</th>
+            <th class="text-left">Branch</th>
+            <th class="text-left">Job Title</th>
+            <th class="text-left">Phone</th>
+            <th class="text-left">Date Created</th>
+            <th class="text-left">Created By</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="n in 5" :key="`skeleton-${n}`">
+            <td><q-skeleton type="text" /></td>
+            <td><q-skeleton type="text" /></td>
+            <td><q-skeleton type="text" /></td>
+            <td><q-skeleton type="text" /></td>
+            <td><q-skeleton type="text" /></td>
+            <td><q-skeleton type="text" /></td>
+            <td><q-skeleton type="text" /></td>
+            <td>
+              <div class="actions-container">
                 <q-skeleton type="QBtn" />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-        <!-- Empty State -->
-        <div v-else-if="ownersList.length === 0" class="text-center q-pa-lg">
-          <q-icon name="people_alt" size="64px" color="grey-4" />
-          <div class="q-mt-sm text-h6 text-grey-6">No relationship owners found</div>
-          <div class="text-body-small text-grey-5 q-mt-xs">
-            Click "New Record" to add relationship owners
-          </div>
-        </div>
-
-        <!-- Actual Data Table -->
-        <table v-else class="owners-table">
-          <thead>
-            <tr>
-              <th>Full Name</th>
-              <th>Email</th>
-              <th>Branch</th>
-              <th>Job Title</th>
-              <th>Phone</th>
-              <th>Date Created</th>
-              <th>Created By</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr 
-              v-for="owner in ownersList" 
-              :key="owner.id"
-              class="table-row"
-            >
-              <td class="name-cell">{{ owner.fullName }}</td>
-              <td class="email-cell">{{ owner.email }}</td>
-              <td class="branch-cell">{{ owner.branch }}</td>
-              <td class="job-title-cell">{{ owner.jobTitle }}</td>
-              <td class="phone-cell">{{ owner.phone }}</td>
-              <td class="date-cell">{{ owner.dateCreated }}</td>
-              <td class="created-by-cell">{{ owner.createdBy }}</td>
-              <td class="actions-cell">
-                <q-btn 
-                  flat 
-                  round 
-                  dense 
-                  size="sm" 
-                  icon="more_vert" 
-                  @click.stop
-                  class="action-btn"
-                >
-                  <q-menu anchor="bottom right" self="top right" auto-close>
-                    <div class="q-pa-sm">
-                      <div clickable @click="deleteOwner(owner)" class="row q-pa-xs cursor-pointer">
-                        <div><q-icon name="delete" color="grey" size="20px" /></div>
-                        <div class="text-blue q-pa-xs text-label-medium">Archive</div>
-                      </div>
-                    </div>
-                  </q-menu>
-                </q-btn>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination -->
-      <div class="pagination-section" v-if="ownersList.length > 0">
-        <div class="pagination-info">
-          <span class="text-body-small text-grey-7">
-            {{ ownersList.length > 0 ? '1' : '0' }} - {{ ownersList.length }} of {{ totalCount }}
-          </span>
-        </div>
-        <div class="pagination-controls">
-          <q-btn
-            flat
-            round
-            icon="chevron_left"
-            size="sm"
-            color="grey-6"
-            disabled
-          />
-          <q-btn
-            flat
-            round
-            icon="chevron_right"
-            size="sm"
-            color="grey-6"
-            disabled
-          />
+      <!-- Empty State -->
+      <div v-else-if="ownersList.length === 0" class="text-center q-pa-lg">
+        <q-icon name="people_alt" size="64px" color="grey-4" />
+        <div class="q-mt-sm text-h6 text-grey-6">No relationship owners found</div>
+        <div class="text-body-small text-grey-5 q-mt-xs">
+          Click "New Record" to add relationship owners
         </div>
       </div>
+
+      <!-- Actual Data Table -->
+      <table v-else class="owners-table">
+        <thead>
+          <tr>
+            <th class="text-left">Full Name</th>
+            <th class="text-left">Email</th>
+            <th class="text-left">Branch</th>
+            <th class="text-left">Job Title</th>
+            <th class="text-left">Phone</th>
+            <th class="text-left">Date Created</th>
+            <th class="text-left">Created By</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="owner in ownersList" :key="owner.id">
+            <td>{{ owner.fullName }}</td>
+            <td>{{ owner.email }}</td>
+            <td>{{ owner.branch }}</td>
+            <td>{{ owner.jobTitle }}</td>
+            <td>{{ owner.phone }}</td>
+            <td>{{ owner.dateCreated }}</td>
+            <td>{{ owner.createdBy }}</td>
+            <td>
+              <div class="actions-container">
+                <q-btn flat round dense size="sm" icon="o_delete" color="grey-6" @click="deleteOwner(owner)"
+                  class="action-btn" />
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- Select Multiple Employee Dialog -->
-    <ManpowerSelectMultipleEmployeeDialog
-      v-model="isChooseUserDialogOpen"
-      :selectMultipleEmployee="selectMultipleEmployee"
-      @add-selected-employees="handleSelectedEmployees"
-    />
+    <ManpowerSelectMultipleEmployeeDialog v-model="isChooseUserDialogOpen"
+      :selectMultipleEmployee="selectMultipleEmployee" @add-selected-employees="handleSelectedEmployees" />
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref, onMounted, getCurrentInstance, watch, defineAsyncComponent } from 'vue';
 import { useQuasar, date } from 'quasar';
+import GButton from 'src/components/shared/buttons/GButton.vue';
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
 const ManpowerSelectMultipleEmployeeDialog = defineAsyncComponent(() =>
@@ -221,11 +128,9 @@ const selectMultipleEmployee = ref({
 
 // Loading state
 const loading = ref(false);
-const totalCount = ref(0);
 
 // Filter options
 const selectedBranch = ref('all'); // Backend returns 'all' for All Branches
-const selectedCompany = ref('All');
 const sortBy = ref('Date Created');
 
 interface FilterOption {
@@ -234,7 +139,6 @@ interface FilterOption {
 }
 
 const branchOptions = ref<FilterOption[]>([{ label: 'All', value: 'All' }]);
-const companyOptions = ref<FilterOption[]>([{ label: 'All', value: 'All' }]);
 
 const sortOptions = [
   'Date Created',
@@ -264,7 +168,7 @@ const ownersList = ref<RelationshipOwner[]>([]);
 
 const fetchBranchOptions = async () => {
   if (!$api) return;
-  
+
   try {
     const response = await $api.get('/select-box/branch-list');
     const list = response.data?.list || response.data || [];
@@ -280,53 +184,33 @@ const fetchBranchOptions = async () => {
   }
 };
 
-const fetchCompanyOptions = async () => {
-  if (!$api) return;
-  
-  try {
-    const response = await $api.get('/select-box/company-list');
-    const list = response.data?.list || response.data || [];
-    if (Array.isArray(list)) {
-      const mappedCompanies = list.map((company: any) => ({
-        label: company.label || company.companyName || company.name || company,
-        value: company.value || company.id || company.label || company.companyName || company.name || company
-      }));
-      companyOptions.value = [{ label: 'All', value: 'All' }, ...mappedCompanies];
-    }
-  } catch (error) {
-    console.error('Error fetching company options:', error);
-  }
-};
-
 const fetchRelationshipOwners = async () => {
   if (!$api) return;
-  
+
   loading.value = true;
   try {
     const params = new URLSearchParams();
-    
+
     // Add branch filter if not "All"
     if (selectedBranch.value && selectedBranch.value !== 'All' && selectedBranch.value !== 'all') {
       params.append('branch', selectedBranch.value.toString());
     }
-    
-    // Add company filter if not "All"
-    if (selectedCompany.value && selectedCompany.value !== 'All' && selectedCompany.value !== 'all') {
-      params.append('company', selectedCompany.value.toString());
+
+    // Add sort parameter
+    if (sortBy.value) {
+      params.append('sortBy', sortBy.value);
     }
-    
+
     // Only show active (non-archived) owners
     params.append('showArchived', 'false');
-    
+
     const response = await $api.get(`/lead-relationship-owner/list?${params.toString()}`);
-    
+
     // Format the dates for display
     ownersList.value = response.data.map((owner: any) => ({
       ...owner,
       dateCreated: date.formatDate(owner.dateCreated, 'MMM DD, YYYY')
     }));
-    
-    totalCount.value = response.data.length;
   } catch (error) {
     console.error('Error fetching relationship owners:', error);
     $q.notify({
@@ -346,31 +230,31 @@ const addNewRecord = () => {
 
 const deleteOwner = async (owner: RelationshipOwner) => {
   if (!$api) return;
-  
+
   $q.dialog({
-    title: 'Archive Relationship Owner',
-    message: `Are you sure you want to archive ${owner.fullName}?`,
+    title: 'Delete Relationship Owner',
+    message: `Are you sure you want to Delete ${owner.fullName}?`,
     cancel: true,
     persistent: true
   }).onOk(async () => {
     try {
       loading.value = true;
-      
+
       await $api.patch(`/lead-relationship-owner/${owner.id}/archive`);
-      
+
       $q.notify({
         color: 'positive',
-        message: 'Relationship owner archived successfully',
+        message: 'Relationship owner deleted successfully',
         icon: 'check_circle'
       });
-      
+
       // Refresh the list
       await fetchRelationshipOwners();
     } catch (error) {
-      console.error('Error archiving owner:', error);
+      console.error('Error deleting owner:', error);
       $q.notify({
         color: 'negative',
-        message: 'Failed to archive relationship owner',
+        message: 'Failed to delete relationship owner',
         icon: 'error'
       });
     } finally {
@@ -381,23 +265,23 @@ const deleteOwner = async (owner: RelationshipOwner) => {
 
 const handleSelectedEmployees = async (selectedEmployeeIds: string[]) => {
   if (!$api) return;
-  
+
   try {
     loading.value = true;
-    
+
     const response = await $api.post('/lead-relationship-owner/multiple', {
       accountIds: selectedEmployeeIds
     });
-    
+
     $q.notify({
       color: 'positive',
       message: `Successfully added ${response.data.count} relationship owner(s)`,
       icon: 'check_circle'
     });
-    
+
     // Refresh the list
     await fetchRelationshipOwners();
-    
+
     // Close the dialog
     isChooseUserDialogOpen.value = false;
   } catch (error) {
@@ -417,260 +301,98 @@ onMounted(async () => {
   // Fetch all initial data in parallel
   await Promise.all([
     fetchBranchOptions(),
-    fetchCompanyOptions(),
     fetchRelationshipOwners()
   ]);
 });
 
 // Watch for filter changes
-watch([selectedBranch, selectedCompany], () => {
+watch([selectedBranch, sortBy], () => {
   fetchRelationshipOwners();
 });
 </script>
 
 <style scoped>
 .relationship-owners-page {
-  background-color: #f5f5f5;
-  min-height: 100vh;
+  background-color: #fff;
+  border-radius: 24px;
+  min-height: calc(100vh - 95px);
   padding: 24px;
 }
 
-.page-header {
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
-  background-color: transparent;
-}
-
-.header-left .welcome-message {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-
-.page-title {
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.filter-section {
-  background-color: transparent;
-}
-
-.filter-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: end;
-  gap: 24px;
-}
-
-.filters-container {
-  display: flex;
-  gap: 24px;
-  align-items: end;
-}
-
-.action-button-container {
-  display: flex;
-  align-items: end;
-}
-
-.new-record-btn {
-  font-size: 14px;
-  font-weight: 500;
-  padding: 8px 16px;
-  border-radius: 6px;
-  height: 38px;
-}
-
-.filter-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 200px;
-}
-
-.filter-label {
-  font-size: 13px;
-  color: #666;
-  font-weight: 500;
-}
-
-.filter-select {
-  width: 200px;
-}
-
-.filter-select :deep(.q-field__control) {
-  height: 38px;
-  background-color: white;
-  border-radius: 4px;
-}
-
-.filter-select :deep(.q-field__native) {
-  font-size: 13px;
-  color: #333;
-  padding: 0 12px;
-}
-
 .table-container {
-  background-color: white;
   border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-}
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  max-height: calc(100vh - 210px);
+  overflow: auto;
 
-.table-wrapper {
-  overflow-x: auto;
+  &::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #d9d9d9;
+    border-radius: 50px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: #f4f4f4;
+    border-radius: 50px;
+  }
 }
 
 .owners-table {
   width: 100%;
   border-collapse: collapse;
-  background-color: white;
-}
+  border-spacing: 0;
+  border: 1px solid #ddd;
+  overflow: hidden;
+  border-radius: 8px;
 
-.owners-table thead {
-  background-color: #fafafa;
-  border-bottom: 1px solid #e0e0e0;
-}
+  thead {
+    tr {
+      th {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        font-weight: bold;
+        color: #333 !important;
+      }
+    }
+  }
 
-.owners-table th {
-  padding: 16px 20px;
-  text-align: left;
-  font-size: 13px;
-  font-weight: 600;
-  color: #555;
-  border-right: 1px solid #f0f0f0;
-}
+  tbody {
+    &.loading {
+      opacity: 0.5;
+    }
 
-.owners-table th:last-child {
-  border-right: none;
-}
-
-.table-row {
-  border-bottom: 1px solid #f0f0f0;
-  transition: background-color 0.2s ease;
-}
-
-.table-row:hover {
-  background-color: #f8f9fa;
-}
-
-.table-row:last-child {
-  border-bottom: none;
-}
-
-.owners-table td {
-  padding: 16px 20px;
-  font-size: 13px;
-  color: #333;
-  border-right: 1px solid #f5f5f5;
-}
-
-.owners-table td:last-child {
-  border-right: none;
-}
-
-.name-cell {
-  font-weight: 500;
-  color: #1a1a1a;
-}
-
-.email-cell {
-  color: #666;
-}
-
-.branch-cell {
-  color: #333;
-  font-weight: 500;
-}
-
-.job-title-cell {
-  color: #555;
-}
-
-.phone-cell {
-  color: #666;
-}
-
-.date-cell {
-  color: #666;
-  font-size: 13px;
-}
-
-.created-by-cell {
-  color: #555;
+    tr {
+      td {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        text-align: left;
+      }
+    }
+  }
 }
 
 .actions-cell {
   text-align: center;
 }
 
-.action-btn {
-  color: #666;
-}
-
-.pagination-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  background-color: white;
-  border-top: 1px solid #f0f0f0;
-}
-
-.pagination-info {
-  color: #666;
-}
-
-.pagination-controls {
+.actions-container {
   display: flex;
   gap: 4px;
+  justify-content: center;
+}
+
+.action-btn {
+  color: #666;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .relationship-owners-page {
     padding: 16px;
-  }
-  
-  .page-header {
-    flex-direction: column;
-    gap: 16px;
-    align-items: stretch;
-  }
-  
-  .filter-row {
-    flex-direction: column;
-    gap: 16px;
-    align-items: stretch;
-  }
-  
-  .filters-container {
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .action-button-container {
-    align-items: stretch;
-  }
-  
-  .filter-item {
-    min-width: auto;
-  }
-  
-  .filter-select {
-    width: 100%;
-  }
-  
-  .owners-table {
-    font-size: 12px;
-  }
-  
-  .owners-table th,
-  .owners-table td {
-    padding: 12px 8px;
   }
 }
 </style>

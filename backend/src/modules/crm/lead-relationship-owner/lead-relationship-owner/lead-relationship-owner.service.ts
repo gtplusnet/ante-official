@@ -44,8 +44,8 @@ export class LeadRelationshipOwnerService {
         },
       });
 
-      // Log activity only for new owners
-      if (isNew) {
+      // Log activity for new owners OR when re-activating archived owners
+      if (isNew || (existingOwner && !existingOwner.isActive)) {
         const ownerName = `${owner.account.firstName} ${owner.account.lastName}`;
         await this.crmActivityService.createActivity({
           activityType: CRMActivityType.CREATE,
@@ -123,6 +123,31 @@ export class LeadRelationshipOwnerService {
       delete where.isActive;
     }
 
+    // Handle sorting
+    let orderBy: any = { createdAt: 'desc' }; // Default sort
+
+    if (query?.sortBy) {
+      switch (query.sortBy) {
+        case 'Name (A-Z)':
+          orderBy = { account: { firstName: 'asc' } };
+          break;
+        case 'Name (Z-A)':
+          orderBy = { account: { firstName: 'desc' } };
+          break;
+        case 'Job Title':
+          orderBy = { account: { role: { name: 'asc' } } };
+          break;
+        case 'Branch':
+          orderBy = { account: { EmployeeData: { branch: { name: 'asc' } } } };
+          break;
+        case 'Recent Activity':
+          orderBy = { updatedAt: 'desc' };
+          break;
+        default:
+          orderBy = { createdAt: 'desc' };
+      }
+    }
+
     const owners = await this.prisma.leadRelationshipOwner.findMany({
       where,
       include: {
@@ -138,7 +163,7 @@ export class LeadRelationshipOwnerService {
         },
         createdBy: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy,
     });
 
     // Format for frontend table
