@@ -244,6 +244,10 @@ export default {
     },
 
     updateJobDetails() {
+      console.log('[DEBUG] JobDetailsTab: updateJobDetails method called');
+      console.log('[DEBUG] JobDetailsTab: Employee data:', this.employeeData);
+      console.log('[DEBUG] JobDetailsTab: Job details:', this.jobDetails);
+
       this.$q.loading.show();
 
       const params = {
@@ -258,9 +262,12 @@ export default {
         parentAccountId: this.isLevel0Role ? undefined : this.parentAccountId || undefined,
       };
 
+      console.log('[DEBUG] JobDetailsTab: Sending params:', params);
+
       api
         .patch("/hris/employee/update-job-details", params)
         .then(() => {
+          console.log('[DEBUG] JobDetailsTab: API call successful, emitting update event');
           this.$emit("update");
           this.$q.notify({
             type: "positive",
@@ -268,13 +275,14 @@ export default {
           });
         })
         .catch((error) => {
-          console.error("Error updating job details:", error);
+          console.error('[DEBUG] JobDetailsTab: API call failed:', error);
           this.$q.notify({
             type: "negative",
             message: "Failed to update job details",
           });
         })
         .finally(() => {
+          console.log('[DEBUG] JobDetailsTab: Finally block, hiding loading');
           this.$q.loading.hide();
           // Emit a completion event to reset parent's loading state
           this.$emit("update-complete");

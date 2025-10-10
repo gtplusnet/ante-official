@@ -20,6 +20,7 @@ export interface RoleDataResponse {
   updatedAt: DateFormat;
   createdAt: DateFormat;
   scopeList: ScopeList[];
+  department?: string | null;
 }
 
 export interface RoleGroupDataResponse {

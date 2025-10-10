@@ -489,6 +489,7 @@ gh workflow run deploy-production.yml --ref production
 - **Coverage**: 80% minimum for new/modified code
 - **E2E Location**: Must be in `/playwright-testing/` folder
 - **PM2 Logs**: `pm2 logs ante-backend --lines 20 --nostream`
+- **Hash Routing**: Frontend uses hash routing - URLs must include `/#/` (e.g., `http://localhost:9000/#/member/manpower/hris`)
 
 ## 🔐 Security Notes
 - Test credentials in CLAUDE.local.md (not version controlled)

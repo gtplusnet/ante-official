@@ -14,7 +14,6 @@ import {
   RedisService,
   CachedTokenData,
 } from '@infrastructure/redis/redis.service';
-import { SupabaseTokenManagerService } from '@modules/auth/supabase-auth/supabase-token-manager.service';
 import { BenchmarkService } from '@common/benchmark.service';
 import { ClsService } from 'nestjs-cls';
 
@@ -24,7 +23,6 @@ export class AuthMiddleware implements NestMiddleware {
   @Inject() private utility: UtilityService;
   @Inject() private accountService: AccountService;
   @Inject() private redisService: RedisService;
-  @Inject() private supabaseTokenManager: SupabaseTokenManagerService;
   @Inject() private benchmark: BenchmarkService;
   @Inject() private cls: ClsService;
 
@@ -209,184 +207,10 @@ export class AuthMiddleware implements NestMiddleware {
       benchmarkKey
     );
 
-    // Phase 6: Supabase Token Validation
-    try {
-      await this.benchmark.measureAsync(
-        'Supabase Validation',
-        () => this.checkAndRefreshSupabaseToken(accountInformation.id, token, benchmarkKey),
-        benchmarkKey
-      );
-    } catch (error) {
-      this.utility.log(
-        `Supabase token validation failed for account ${accountInformation.id}: ${error.message}`,
-      );
-      this.benchmark.end(benchmarkKey, { error: 'supabase-validation-failed' });
-      this.benchmark.printResults(benchmarkKey, endpoint, method);
-      throw new UnauthorizedException(
-        'Authentication token expired. Please login again.',
-      );
-    }
-
     // Complete benchmark and print results
     this.benchmark.end(benchmarkKey);
     this.benchmark.printResults(benchmarkKey, endpoint, method);
 
     next();
-  }
-
-  /**
-   * Check and validate Supabase tokens - throws error if expired and cannot refresh
-   */
-  private async checkAndRefreshSupabaseToken(
-    accountId: string,
-    anteToken: string,
-    benchmarkKey?: string,
-  ): Promise<void> {
-    try {
-      // Check if we recently validated this token (cache for 5 minutes)
-      const validationCacheKey = `supabase:valid:${accountId}:${anteToken.substring(0, 16)}`;
-
-      // Start nested benchmark for validation cache check
-      if (benchmarkKey) {
-        this.benchmark.startNested(`${benchmarkKey}.Supabase Validation`, 'Validation Cache Check');
-      }
-
-      const isRecentlyValidated = await this.redisService.exists(validationCacheKey);
-
-      if (benchmarkKey) {
-        this.benchmark.endNested(
-          `${benchmarkKey}.Supabase Validation`,
-          'Validation Cache Check',
-          { result: isRecentlyValidated ? 'HIT' : 'MISS' }
-        );
-      }
-
-      if (isRecentlyValidated) {
-        // Token was validated recently, skip expensive checks
-        this.utility.log(
-          `Supabase validation cache hit for account ${accountId}`,
-        );
-        return;
-      }
-
-      // Get the AccountToken record to check for Supabase tokens
-      const accountToken = await (benchmarkKey
-        ? this.benchmark.measureAsync(
-            'Supabase Token DB Query',
-            () => this.prisma.accountToken.findFirst({
-              where: {
-                accountId,
-                token: anteToken,
-                status: 'active',
-              },
-            }),
-            `${benchmarkKey}.Supabase Validation`
-          )
-        : this.prisma.accountToken.findFirst({
-            where: {
-              accountId,
-              token: anteToken,
-              status: 'active',
-            },
-          })
-      );
-
-      // Check if Supabase access token exists
-      if (!accountToken?.supabaseAccessToken) {
-        // No Supabase token stored - this might be an older session
-        // Try to get from cache
-        const cachedToken =
-          await this.redisService.getCachedSupabaseAccessToken(accountId);
-
-        if (!cachedToken) {
-          throw new Error('No Supabase authentication token found');
-        }
-
-        // Validate cached token
-        if (benchmarkKey) {
-          this.benchmark.startNested(`${benchmarkKey}.Supabase Validation`, 'Token Validation');
-        }
-        const validation = this.supabaseTokenManager.validateTokenExpiry(cachedToken.token);
-        if (benchmarkKey) {
-          this.benchmark.endNested(`${benchmarkKey}.Supabase Validation`, 'Token Validation',
-            { valid: validation.valid });
-        }
-        if (!validation.valid) {
-          // Token is expired, try to refresh
-          const newToken = await (benchmarkKey
-            ? this.benchmark.measureAsync(
-                'Token Refresh',
-                () => this.supabaseTokenManager.refreshAccessToken(accountId),
-                `${benchmarkKey}.Supabase Validation`
-              )
-            : this.supabaseTokenManager.refreshAccessToken(accountId)
-          );
-          if (!newToken) {
-            throw new Error('Failed to refresh expired Supabase token');
-          }
-        }
-
-        // Cache validation success for 5 minutes
-        await this.redisService.set(validationCacheKey, '1', 300);
-        return;
-      }
-
-      // Validate the stored Supabase access token
-      if (benchmarkKey) {
-        this.benchmark.startNested(`${benchmarkKey}.Supabase Validation`, 'Token Validation');
-      }
-      const validation = this.supabaseTokenManager.validateTokenExpiry(
-        accountToken.supabaseAccessToken,
-      );
-      if (benchmarkKey) {
-        this.benchmark.endNested(`${benchmarkKey}.Supabase Validation`, 'Token Validation',
-          { valid: validation.valid });
-      }
-
-      if (!validation.valid) {
-        // Token is expired
-        this.utility.log(
-          `Supabase token expired for account ${accountId}, attempting refresh...`,
-        );
-
-        // Try to refresh using refresh token
-        if (accountToken.supabaseRefreshToken) {
-          const newToken = await (benchmarkKey
-            ? this.benchmark.measureAsync(
-                'Token Refresh',
-                () => this.supabaseTokenManager.refreshAccessToken(accountId),
-                `${benchmarkKey}.Supabase Validation`
-              )
-            : this.supabaseTokenManager.refreshAccessToken(accountId)
-          );
-          if (!newToken) {
-            throw new Error('Failed to refresh expired Supabase token');
-          }
-          this.utility.log(
-            `Successfully refreshed Supabase token for account ${accountId}`,
-          );
-        } else {
-          throw new Error('No refresh token available to renew expired access token');
-        }
-      }
-      // REMOVED: Proactive refresh for tokens near expiry
-      // This was causing unnecessary latency even when tokens were still valid
-
-      // Cache validation success for 5 minutes
-      await (benchmarkKey
-        ? this.benchmark.measureAsync(
-            'Cache Validation Result',
-            () => this.redisService.set(validationCacheKey, '1', 300),
-            `${benchmarkKey}.Supabase Validation`
-          )
-        : this.redisService.set(validationCacheKey, '1', 300)
-      );
-      this.utility.log(
-        `Supabase token validated and cached for account ${accountId}`,
-      );
-    } catch (error) {
-      // Re-throw the error to be caught by the calling code
-      throw error;
-    }
   }
 }

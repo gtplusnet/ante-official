@@ -34,7 +34,7 @@
             <job-details-tab ref="jobDetailsTab" v-show="activeTab === 'job_Details'" :employee-data="localEmployeeData" @cancel="hideDialog" @update="onUpdate" @update-complete="isUpdating = false" />
 
             <!-- Government Tab -->
-            <government-tab v-show="activeTab === 'goverment'" :employee-data="localEmployeeData" @cancel="hideDialog" @update="onUpdate" />
+            <government-tab ref="governmentTab" v-show="activeTab === 'goverment'" :employee-data="localEmployeeData" @cancel="hideDialog" @update="onUpdate" />
 
             <!-- Shift Tab -->
             <shift-tab v-show="activeTab === 'shift'" :employee-data="localEmployeeData" @cancel="hideDialog" @update="onUpdate" />
@@ -298,22 +298,35 @@ export default {
     },
 
     updateJobDetails() {
+      console.log('[DEBUG] Parent: updateJobDetails called');
+      console.log('[DEBUG] Parent: $refs.jobDetailsTab:', this.$refs.jobDetailsTab);
+      console.log('[DEBUG] Parent: Has updateJobDetails method?', this.$refs.jobDetailsTab?.updateJobDetails);
+
       // Call the job details tab's update method
       if (this.$refs.jobDetailsTab && this.$refs.jobDetailsTab.updateJobDetails) {
+        console.log('[DEBUG] Parent: Calling child updateJobDetails method');
         this.$refs.jobDetailsTab.updateJobDetails();
       } else {
-        console.error('Job details tab ref not found or updateJobDetails method not available');
+        console.error('[DEBUG] Parent: Job details tab ref not found or updateJobDetails method not available');
+        console.error('[DEBUG] Parent: Available refs:', Object.keys(this.$refs));
         this.isUpdating = false;
       }
     },
 
     updateGovernmentDetails() {
-      // Placeholder - implement when government details update is needed
-      this.isUpdating = false;
-      this.$q.notify({
-        type: 'positive',
-        message: 'Government details updated successfully',
-      });
+      console.log('[DEBUG] Parent: updateGovernmentDetails called');
+      console.log('[DEBUG] Parent: $refs.governmentTab:', this.$refs.governmentTab);
+      console.log('[DEBUG] Parent: Has updateGovernmentDetails method?', this.$refs.governmentTab?.updateGovernmentDetails);
+
+      // Call the government tab's update method
+      if (this.$refs.governmentTab && this.$refs.governmentTab.updateGovernmentDetails) {
+        console.log('[DEBUG] Parent: Calling child updateGovernmentDetails method');
+        this.$refs.governmentTab.updateGovernmentDetails();
+      } else {
+        console.error('[DEBUG] Parent: Government tab ref not found or updateGovernmentDetails method not available');
+        console.error('[DEBUG] Parent: Available refs:', Object.keys(this.$refs));
+        this.isUpdating = false;
+      }
     },
 
     updateShiftDetails() {
@@ -583,8 +596,8 @@ export default {
 
       this.isLoadingEmployee = true;
       try {
-        // Fetch complete employee data using API
-        const response = await api.get(`/hris/employee/info?accountId=${this.employeeId}`);
+        // Fetch complete employee data using optimized API (N+1 query fix)
+        const response = await api.get(`/hris/employee/info-lite?accountId=${this.employeeId}`);
         const data = response.data;
 
         // Transform the data to match expected format
@@ -748,23 +761,19 @@ export default {
     },
     async onUpdate() {
       console.log('[DEBUG] EditCreateEmployee: onUpdate method called');
-      
-      // Show success notification
-      this.$q.notify({
-        type: 'positive',
-        message: 'Employee details updated successfully',
-        position: 'top'
-      });
-      
+
+      // Note: Child tabs already show their own success notifications
+      // No need to show duplicate notification here
+
       // Reset the updating state
       this.isUpdating = false;
-      
-      // Optional: Refresh data from Supabase if needed
-      // await this.fetchEmployeeData();
-      
+
       // Emit saveDone to trigger parent table refresh
       console.log('[DEBUG] EditCreateEmployee: Emitting saveDone event after successful update');
       this.$emit('saveDone');
+
+      // Close the dialog after successful update
+      this.hideDialog();
     },
   },
 };
