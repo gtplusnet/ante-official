@@ -273,11 +273,7 @@
                     </div>
                     <div class="text-grey text-label-medium q-pt-xs">Notes:</div>
                     <div class="text-dark text-label-large q-pb-xs">
-                      {{
-                        truncateFormat(
-                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore."
-                        )
-                      }}
+                      {{ truncateFormat("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore.") }}
                     </div>
                     <div class="row items-center">
                       <q-avatar size="md">
@@ -388,12 +384,6 @@
 
             <div class="text-title-small q-mb-sm" :style="{ color: 'var(--q-text-light-grey)' }">Quick Actions</div>
             <div class="quick-actions column items-center justify-center">
-              <GButton unelevated no-caps color="primary" variant="tonal" icon="edit_document" label="Create Task"
-                class="full-width row items-start" />
-              <GButton unelevated no-caps color="primary" variant="tonal" icon="o_edit_calendar"
-                label="Schedule Meeting" class="full-width row items-start" />
-              <GButton unelevated no-caps color="primary" variant="tonal" icon="forward_to_inbox" label="Send Email"
-                class="full-width row items-start" @click="openEmailCompose" />
               <GButton unelevated no-caps color="primary" variant="tonal" icon="attachment" label="Attachment"
                 class="full-width row items-start" />
               <GButton unelevated no-caps color="primary" variant="tonal" icon="o_note_add" label="Add Note"
@@ -422,10 +412,6 @@
       <!-- Bill of Quantity Dialog -->
       <bill-of-quantity-dialog v-if="isBillOfQuantityDialogOpen" v-model="isBillOfQuantityDialogOpen"
         :projectId="leadInformation.id" />
-
-      <!-- Email Compose Dialog -->
-      <email-compose-dialog v-model="isEmailComposeDialogOpen" :defaultTo="leadInformation.client?.email || ''"
-        :defaultSubject="` ${leadInformation.name}`" @sent="handleEmailSent" />
 
       <!-- Add Note Dialog -->
       <AddNoteDialog v-model="isAddNoteDialogOpen" :noteData="editingNote" @saveDone="handleNoteSaved"
@@ -488,7 +474,6 @@ export default {
     const isBillOfQuantityDialogOpen = ref(false);
     const isManageVersionDialogOpen = ref(false);
     const projectId = ref<number>(0);
-    const isEmailComposeDialogOpen = ref(false);
     const isAddNoteDialogOpen = ref(false);
     const editingNote = ref(null);
 
@@ -517,10 +502,6 @@ export default {
       } finally {
         $q.loading.hide();
       }
-    };
-
-    const openEmailCompose = () => {
-      isEmailComposeDialogOpen.value = true;
     };
 
     const handleEmailSent = () => {
@@ -651,14 +632,12 @@ export default {
       isBillOfQuantityDialogOpen,
       isManageVersionDialogOpen,
       projectId,
-      isEmailComposeDialogOpen,
       isAddNoteDialogOpen,
       editingNote,
       formatWord,
       truncateFormat,
       fetchData,
       openBillOfQuantityDialog,
-      openEmailCompose,
       handleEmailSent,
       openAddNoteDialog,
       handleNoteSaved,
