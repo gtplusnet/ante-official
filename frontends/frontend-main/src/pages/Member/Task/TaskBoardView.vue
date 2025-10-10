@@ -95,7 +95,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import supabaseService from '../../../services/supabase';
+import { api } from '../../../boot/axios';
 import { useCache } from '../../../composables/useCache';
 import { taskCache, CacheTTL } from '../../../utils/cache/implementations';
 
@@ -126,20 +126,16 @@ const boardLanes = ref<any[]>([]);
 // Fetch board lanes from database
 const fetchBoardLanes = async () => {
   try {
-    const { data, error } = await supabaseService.getClient()
-      .from('BoardLane')
-      .select('*')
-      .eq('isDefault', true)
-      .order('order', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching board lanes:', error);
-      return;
-    }
-
-    boardLanes.value = data || [];
+    const response = await api.get('/board-lane');
+    boardLanes.value = response.data || [];
   } catch (err) {
     console.error('Unexpected error fetching board lanes:', err);
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to load board lanes',
+      position: 'top',
+      timeout: 3000
+    });
   }
 };
 
@@ -175,7 +171,7 @@ const draggedTask = ref<TaskDisplayInterface | null>(null);
 const dragOverColumn = ref<string | null>(null);
 const isDragging = ref<boolean>(false);
 
-// Use centralized cache for tasks with Supabase
+// Use centralized cache for tasks with backend API
 const {
   data: cachedTaskData,
   isCached,
@@ -187,46 +183,24 @@ const {
   taskCache,
   async () => {
     try {
-      const { data: tasks, error } = await supabaseService.getClient()
-        .from('Task')
-        .select(`
-          *,
-          assignedTo:Account!Task_assignedToId_fkey (
-            id,
-            firstName,
-            lastName,
-            username
-          ),
-          project:Project (
-            id,
-            name
-          ),
-          boardLane:BoardLane!Task_boardLaneId_fkey (
-            id,
-            name,
-            key,
-            order
-          )
-        `)
-        .eq('isDeleted', false)
-        .order('order', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching tasks:', error);
-        $q.notify({
-          type: 'negative',
-          message: 'Failed to load tasks',
-          position: 'top',
-          timeout: 3000
-        });
-        return { tasks: [] };
-      }
+      const response = await api.get('/task/ordered', {
+        params: {
+          viewType: 'all',
+          groupingMode: 'none'
+        }
+      });
 
       return {
-        tasks: tasks || []
+        tasks: response.data || []
       };
     } catch (err) {
       console.error('Unexpected error fetching tasks:', err);
+      $q.notify({
+        type: 'negative',
+        message: 'Failed to load tasks',
+        position: 'top',
+        timeout: 3000
+      });
       return { tasks: [] };
     }
   },
@@ -347,23 +321,27 @@ const handleDrop = async (event: DragEvent, columnKey: string) => {
         // Update the cache
         cachedTaskData.value.tasks[cacheIndex].boardLaneId = newBoardLaneId;
 
-        // Then update the database
-        const { error } = await supabaseService.getClient()
-          .from('Task')
-          .update({ boardLaneId: newBoardLaneId })
-          .eq('id', taskToMove.id);
-
-        if (error) {
-          // Rollback on error
-          cachedTaskData.value.tasks[cacheIndex].boardLaneId = originalBoardLaneId;
-          throw error;
-        }
+        // Then update via backend API
+        await api.put('/task/move', {
+          taskId: taskToMove.id,
+          boardLaneId: newBoardLaneId,
+          projectId: taskToMove.projectId,
+          order: 0
+        });
       }
     }
 
     // Silent success - no notification needed for smooth UX
   } catch (error) {
     console.error('Error updating task board lane:', error);
+
+    // Rollback on error
+    if (cachedTaskData.value?.tasks) {
+      const cacheIndex = cachedTaskData.value.tasks.findIndex((t: any) => t.id === taskToMove.id);
+      if (cacheIndex !== -1) {
+        cachedTaskData.value.tasks[cacheIndex].boardLaneId = originalBoardLaneId;
+      }
+    }
 
     $q.notify({
       type: 'negative',

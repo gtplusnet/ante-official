@@ -83,14 +83,20 @@
 <script>
 import GInput from "../../../../../../../components/shared/form/GInput.vue";
 import { api } from "src/boot/axios";
-import { useSupabaseBranches } from "src/composables/supabase/useSupabaseBranches";
+// TODO: Migrate to backend API
+// import { useSupabaseBranches } from "src/composables/supabase/useSupabaseBranches";
 import { useAuthStore } from "src/stores/auth";
 
 export default {
   name: "JobDetailsTab",
   setup() {
-    // Initialize Supabase composables
-    const branchesComposable = useSupabaseBranches();
+    // TODO: Migrate to backend API - branches composable deleted
+    // const branchesComposable = useSupabaseBranches();
+    const branchesComposable = {
+      branchOptions: { value: [] },
+      fetchBranchesByCompany: async () => {},
+      fetchBranches: async () => {}
+    };
     const authStore = useAuthStore();
 
     return {

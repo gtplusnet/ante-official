@@ -45,7 +45,6 @@
     "@fullcalendar/vue3": "^6.1.15",
     "@quasar/extras": "^1.16.12",
     "@sentry/vue": "^10.8.0",
-    "@supabase/supabase-js": "^2.57.0",
     "apexcharts": "^3.54.0",
     "axios": "^1.11.0",
     "browser-image-compression": "^2.0.2",

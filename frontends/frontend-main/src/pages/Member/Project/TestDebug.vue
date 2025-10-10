@@ -15,7 +15,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import supabaseService from 'src/services/supabase';
+// TODO: Migrate to backend API
+// import supabaseService from 'src/services/supabase';
 
 const debugInfo = ref('Click buttons to test...');
 

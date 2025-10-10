@@ -75,7 +75,8 @@ import { useTaskSearchStore, TaskViewType } from '../../../stores/taskSearch';
 import { useTaskAPI } from 'src/composables/api/useTaskAPI';
 import { useTaskRealtime } from 'src/composables/realtime/useTaskRealtime';
 import { useTaskStore } from 'src/stores/task';
-import { useTask } from 'src/composables/supabase/useTask';
+// TODO: Migrate to backend API - useTask composable deleted
+// import { useTask } from 'src/composables/supabase/useTask';
 import { useAuthStore } from 'src/stores/auth';
 import { useAssigneeStore } from 'src/stores/assignee';
 import bus from 'src/bus';
@@ -925,11 +926,13 @@ export default defineComponent({
 
         taskStore.setTasks(storeFormatTasks);
 
-        // Batch update orders in Supabase
+        // Batch update orders via backend API
         if (updates.length > 0) {
-          console.log('[DEBUG] Sending batch updates to Supabase:', updates);
-          const taskComposable = useTask();
-          await taskComposable.batchUpdateTaskOrders(updates);
+          console.log('[DEBUG] Sending batch updates to backend API:', updates);
+          // TODO: Migrate to backend API - useTask composable deleted
+          // const taskComposable = useTask();
+          // await taskComposable.batchUpdateTaskOrders(updates);
+          await persistTaskOrder(updates);
           console.log('[DEBUG] Batch update completed');
         }
       } else {

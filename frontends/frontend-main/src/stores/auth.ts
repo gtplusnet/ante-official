@@ -5,17 +5,15 @@ import { openDB } from 'idb';
 import { AccountDataResponse } from '@shared/response/account.response';
 import { RoleDataResponse } from '@shared/response/role.response';
 import { api } from 'src/boot/axios';
-import supabaseService from 'src/services/supabase';
 import { useProjectStore } from './project';
 import { useAssigneeStore } from './assignee';
+import { getCurrentInstance } from 'vue';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: LocalStorage.getItem('token') || '',
     accountInformation: (LocalStorage.getItem('accountInformation') || {}) as AccountDataResponse,
     serverName: LocalStorage.getItem('serverName') || 'DEVELOPMENT',
-    supabaseSession: null as any,
-    supabaseInitialized: false,
   }),
 
   getters: {
@@ -23,8 +21,7 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: (state) => !!state.token,
     isDeveloper: (state) => state.accountInformation.isDeveloper || false,
     getServerName: (state) => state.serverName,
-    hasSupabaseSession: (state) => !!state.supabaseSession,
-    isFullyAuthenticated: (state) => !!state.token && state.supabaseInitialized,
+    isFullyAuthenticated: (state) => !!state.token,
     companyData: (state) => state.accountInformation?.company || null,
   },
 
@@ -35,19 +32,10 @@ export const useAuthStore = defineStore('auth', {
       this.token = '';
       this.accountInformation = {} as AccountDataResponse;
       this.serverName = 'DEVELOPMENT';
-      this.supabaseSession = null;
-      this.supabaseInitialized = false;
 
       LocalStorage.remove('token');
       LocalStorage.remove('accountInformation');
       LocalStorage.remove('serverName');
-
-      // Clear Supabase session
-      try {
-        await supabaseService.signOut();
-      } catch (error) {
-        console.error('Error clearing Supabase session:', error);
-      }
 
       // Clear IndexedDB cache for GSelect component
       await this.clearSelectCache();
@@ -136,71 +124,6 @@ export const useAuthStore = defineStore('auth', {
       if (this.accountInformation && roleData.roleId === this.accountInformation.roleID) {
         this.accountInformation.role = roleData.role;
         LocalStorage.set('accountInformation', this.accountInformation);
-      }
-    },
-
-    /**
-     * Store Supabase tokens and initialize session
-     */
-    async storeSupabaseTokens(accessToken?: string, refreshToken?: string) {
-      if (!accessToken) {
-        this.supabaseInitialized = true; // Mark as initialized even without tokens
-        return;
-      }
-
-      try {
-        const { data, error } = await supabaseService.setSession(accessToken, refreshToken);
-
-        if (error) {
-          console.error('🔐 storeSupabaseTokens - Failed to set Supabase session:', error);
-          this.supabaseSession = null;
-        } else {
-          this.supabaseSession = data!.session;
-        }
-      } catch (error) {
-        console.error('🔐 storeSupabaseTokens - Error initializing Supabase session:', error);
-      } finally {
-        this.supabaseInitialized = true;
-      }
-    },
-
-    /**
-     * Initialize Supabase session from existing tokens
-     */
-    async initializeSupabaseSession() {
-      try {
-        // Check if we have an existing Supabase session (from localStorage)
-        const { data } = await supabaseService.getSession();
-
-        if (data?.session) {
-          this.supabaseSession = data.session;
-          this.supabaseInitialized = true;
-        } else {
-          this.supabaseInitialized = true;
-        }
-      } catch (error) {
-        console.error('🔐 initializeSupabaseSession - Error:', error);
-        this.supabaseInitialized = true;
-      }
-    },
-
-    /**
-     * Refresh Supabase session
-     */
-    async refreshSupabaseSession() {
-      try {
-        const { data, error } = await supabaseService.refreshSession();
-        
-        if (error) {
-          console.error('Failed to refresh Supabase session:', error);
-          return false;
-        }
-        
-        this.supabaseSession = data.session;
-        return true;
-      } catch (error) {
-        console.error('Error refreshing Supabase session:', error);
-        return false;
       }
     },
 

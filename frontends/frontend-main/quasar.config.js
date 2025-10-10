@@ -27,7 +27,7 @@ module.exports = configure(function (/* ctx */) {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
-    boot: ['sentry', 'axios', 'supabase', 'auth', 'global-stores', 'location-tracker', 'multi-account', 'mixins', 'bus', 'lazy-components', 'theme', 'google-auth'],
+    boot: ['sentry', 'axios', 'auth', 'global-stores', 'location-tracker', 'multi-account', 'mixins', 'bus', 'lazy-components', 'theme', 'google-auth'],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#css
     css: ['app.scss'],
@@ -64,7 +64,7 @@ module.exports = configure(function (/* ctx */) {
             // Only include variables that are relevant to the frontend
             if (key.startsWith('VITE_') || key.startsWith('API_') ||
                 key === 'ENVIRONMENT' || key === 'WHITELABEL' ||
-                key === 'SOCKET_URL' || key.includes('SUPABASE')) {
+                key === 'SOCKET_URL') {
               acc[key] = process.env[key];
             }
             return acc;
