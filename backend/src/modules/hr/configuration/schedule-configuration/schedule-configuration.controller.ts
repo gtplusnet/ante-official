@@ -26,6 +26,14 @@ export class ScheduleConfigurationController {
     private readonly utilityService: UtilityService,
   ) {}
 
+  @Get('list')
+  async getScheduleList(@Res() response: Response) {
+    return this.utilityService.responseHandler(
+      this.scheduleConfigurationService.getScheduleList(),
+      response,
+    );
+  }
+
   @Get('info')
   async getScheduleInfo(
     @Query() query: GetScheduleDTO,

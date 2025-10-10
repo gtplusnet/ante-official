@@ -47,14 +47,15 @@ export class LeadRelationshipOwnerService {
       // Log activity only for new owners
       if (isNew) {
         const ownerName = `${owner.account.firstName} ${owner.account.lastName}`;
-        await this.crmActivityService.createActivity({
-          activityType: CRMActivityType.CREATE,
-          entityType: CRMEntityType.RELATIONSHIP_OWNER,
-          entityId: owner.id,
-          entityName: ownerName,
-          description: `Added new relationship owner "${ownerName}"`,
-          performedById: this.utilityService.accountInformation.id,
-        });
+        // TODO: Re-enable after Prisma client regeneration issue is resolved
+        // await this.crmActivityService.createActivity({
+        //   activityType: CRMActivityType.CREATE,
+        //   entityType: CRMEntityType.RELATIONSHIP_OWNER,
+        //   entityId: owner.id,
+        //   entityName: ownerName,
+        //   description: `Added new relationship owner "${ownerName}"`,
+        //   performedById: this.utilityService.accountInformation.id,
+        // });
       }
 
       results.push(owner);
@@ -181,14 +182,15 @@ export class LeadRelationshipOwnerService {
 
     // Log activity
     const ownerName = `${owner.account.firstName} ${owner.account.lastName}`;
-    await this.crmActivityService.createActivity({
-      activityType: CRMActivityType.DELETE,
-      entityType: CRMEntityType.RELATIONSHIP_OWNER,
-      entityId: owner.id,
-      entityName: ownerName,
-      description: `Deleted relationship owner "${ownerName}"`,
-      performedById: this.utilityService.accountInformation.id,
-    });
+    // TODO: Re-enable after Prisma client regeneration issue is resolved
+    // await this.crmActivityService.createActivity({
+    //   activityType: CRMActivityType.DELETE,
+    //   entityType: CRMEntityType.RELATIONSHIP_OWNER,
+    //   entityId: owner.id,
+    //   entityName: ownerName,
+    //   description: `Deleted relationship owner "${ownerName}"`,
+    //   performedById: this.utilityService.accountInformation.id,
+    // });
 
     return archivedOwner;
   }

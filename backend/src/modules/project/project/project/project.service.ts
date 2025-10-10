@@ -140,6 +140,30 @@ export class ProjectService {
     );
   }
 
+  async getProjectList() {
+    const loggedInAccount: AccountDataResponse =
+      this.utilityService.accountInformation;
+
+    const projects = await this.prisma.project.findMany({
+      where: {
+        isDeleted: false,
+        companyId: loggedInAccount.company.id,
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+
+    return projects.map(project => ({
+      label: project.name,
+      value: project.id,
+    }));
+  }
+
   async projectBoard(query: ProjectBoardDto) {
     return query.isLead === 'true'
       ? this.getLeadBoard()

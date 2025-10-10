@@ -25,6 +25,14 @@ export class PayrollGroupConfigurationController {
     private readonly utilityService: UtilityService,
   ) {}
 
+  @Get('list')
+  async getPayrollGroupList(@Res() response: Response) {
+    return this.utilityService.responseHandler(
+      this.payrollGroupConfigurationService.getPayrollGroupList(),
+      response,
+    );
+  }
+
   @Get('info')
   async getPayrollGroupInfo(
     @Query('id') id: number,

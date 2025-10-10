@@ -75,6 +75,14 @@ export class ProjectController {
     );
   }
 
+  @Get('list')
+  async getProjectList(@NestResponse() response: Response) {
+    return this.utilityService.responseHandler(
+      this.projectService.getProjectList(),
+      response,
+    );
+  }
+
   @Get()
   async getProjectInformation(
     @NestResponse() response: Response,
