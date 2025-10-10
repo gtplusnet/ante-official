@@ -63,7 +63,7 @@
               draggable="true"
               @dragstart="handleDragStart($event, task)"
               @dragend="handleDragEnd"
-              @click="viewTask(task.id)"
+              @click="handleTaskClick($event, task.id)"
             >
               <div class="task-card-title">{{ task.title }}</div>
               <div class="task-card-meta">
@@ -126,7 +126,7 @@ const boardLanes = ref<any[]>([]);
 // Fetch board lanes from database
 const fetchBoardLanes = async () => {
   try {
-    const response = await api.get('/board-lane');
+    const response = await api.get('/board-lane/all');
     boardLanes.value = response.data || [];
   } catch (err) {
     console.error('Unexpected error fetching board lanes:', err);
@@ -266,9 +266,13 @@ const handleDragStart = (event: DragEvent, task: TaskDisplayInterface) => {
 const handleDragEnd = (event: DragEvent) => {
   const target = event.target as HTMLElement;
   target.classList.remove('dragging');
-  draggedTask.value = null;
-  dragOverColumn.value = null;
-  isDragging.value = false;
+
+  // Keep isDragging true for a short moment to prevent accidental clicks
+  setTimeout(() => {
+    draggedTask.value = null;
+    dragOverColumn.value = null;
+    isDragging.value = false;
+  }, 200);
 };
 
 const handleDragOver = (columnKey: string) => {
@@ -321,13 +325,20 @@ const handleDrop = async (event: DragEvent, columnKey: string) => {
         // Update the cache
         cachedTaskData.value.tasks[cacheIndex].boardLaneId = newBoardLaneId;
 
-        // Then update via backend API
-        await api.put('/task/move', {
+        // Build request payload - only include projectId if it exists
+        const movePayload: any = {
           taskId: taskToMove.id,
           boardLaneId: newBoardLaneId,
-          projectId: taskToMove.projectId,
           order: 0
-        });
+        };
+
+        // Only add projectId if it's not null
+        if (taskToMove.projectId !== null && taskToMove.projectId !== undefined) {
+          movePayload.projectId = taskToMove.projectId;
+        }
+
+        // Then update via backend API
+        await api.put('/task/move', movePayload);
       }
     }
 
@@ -422,6 +433,28 @@ const formatAssignee = (name: string | null | undefined) => {
 
 const viewTask = (id: number): void => {
   router.push({ name: 'member_task_page', params: { id } });
+};
+
+// Click handler that prevents navigation during drag
+let clickTimeout: NodeJS.Timeout | null = null;
+const handleTaskClick = (event: MouseEvent, taskId: number) => {
+  // Don't navigate if we just finished dragging
+  if (isDragging.value) {
+    event.preventDefault();
+    event.stopPropagation();
+    return;
+  }
+
+  // Use a small delay to detect drag vs click
+  if (clickTimeout) {
+    clearTimeout(clickTimeout);
+  }
+
+  clickTimeout = setTimeout(() => {
+    if (!isDragging.value) {
+      viewTask(taskId);
+    }
+  }, 150);
 };
 
 // Lifecycle
@@ -527,11 +560,12 @@ onMounted(async () => {
   background: #fff;
   border-radius: 8px;
   padding: 12px;
-  cursor: move;
+  cursor: grab;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   transform-origin: center;
   will-change: transform, opacity;
   animation: slideIn 0.3s ease-out;
+  user-select: none;
 }
 
 @keyframes slideIn {

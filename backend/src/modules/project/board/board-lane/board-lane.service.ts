@@ -130,6 +130,19 @@ export class BoardLaneService {
     });
     return boardLane;
   }
+
+  /**
+   * Get all board lanes ordered by their order field
+   * @returns Array of all non-deleted board lanes
+   */
+  async getAllBoardLanes(): Promise<BoardLaneInterface[]> {
+    const boardLanes = await this.prisma.boardLane.findMany({
+      where: { isDeleted: false },
+      orderBy: { order: 'asc' },
+    });
+
+    return boardLanes.map(lane => this.formatBoardLaneResponse(lane));
+  }
   async getBoardLanes(
     projectId: number,
   ): Promise<{ boardLane: BoardLaneInterface; items: TaskInterface[] }[]> {
