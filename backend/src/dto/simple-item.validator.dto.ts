@@ -9,6 +9,16 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateVariantDto } from './variation-item.create.dto';
+
+export class GroupItemDto {
+  @IsNotEmpty()
+  @IsString()
+  itemId: string;
+
+  @IsOptional()
+  @IsNumber()
+  quantity?: number;
+}
 export class CreateSimpleItemDto {
   @IsNotEmpty()
   @IsString()
@@ -50,6 +60,32 @@ export class CreateSimpleItemDto {
 
   @IsNumber()
   maximumStockLevel: number;
+
+  @IsOptional()
+  @IsNumber()
+  categoryId?: number;
+
+  @IsOptional()
+  @IsArray()
+  keywords?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  enabledInPOS?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  branchId?: number;
+
+  @IsOptional()
+  @IsString()
+  itemType?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => GroupItemDto)
+  groupItems?: GroupItemDto[];
 }
 export class UpdateSimpleItemDto {
   @IsNotEmpty()
@@ -113,4 +149,30 @@ export class UpdateSimpleItemDto {
   @IsOptional()
   @IsNumber()
   maximumStockLevel?: number;
+
+  @IsOptional()
+  @IsNumber()
+  categoryId?: number;
+
+  @IsOptional()
+  @IsArray()
+  keywords?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  enabledInPOS?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  branchId?: number;
+
+  @IsOptional()
+  @IsString()
+  itemType?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => GroupItemDto)
+  groupItems?: GroupItemDto[];
 }

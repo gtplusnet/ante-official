@@ -25,6 +25,7 @@
         <SimpleItemTable
           ref="itemTable"
           :emitKey="emitKey"
+          :hideItemGroups="true"
           @select="selectItem"
           tab="select"
         />
@@ -84,6 +85,45 @@
           </q-card-section>
         </q-card>
       </q-dialog>
+
+      <!-- Quantity Dialog -->
+      <q-dialog v-model="isQuantityDialog">
+        <q-card style="max-width: 400px; min-width: 350px">
+          <q-bar class="bg-primary text-white cursor-default" dark>
+            <q-icon name="o_inventory" />
+            <div class="text-title-medium">Set Quantity</div>
+            <q-space />
+            <q-btn dense flat icon="close" @click="isQuantityDialog = false">
+              <q-tooltip class="text-label-small">Close</q-tooltip>
+            </q-btn>
+          </q-bar>
+
+          <q-card-section>
+            <div v-if="selectedItemForQuantity" class="q-mb-md">
+              <div class="text-body-medium">{{ selectedItemForQuantity.name }}</div>
+              <div class="text-caption text-grey">{{ selectedItemForQuantity.sku }}</div>
+            </div>
+
+            <q-input
+              v-model.number="itemQuantity"
+              type="number"
+              label="Quantity"
+              outlined
+              dense
+              :min="1"
+              class="text-body-medium"
+            />
+
+            <q-btn
+              @click="submitItemWithQuantity"
+              color="primary"
+              unelevated
+              class="text-body-medium full-width q-mt-md"
+              label="Add Item"
+            />
+          </q-card-section>
+        </q-card>
+      </q-dialog>
     </q-card>
   </q-dialog>
 </template>
@@ -111,16 +151,23 @@ export default {
       type: String,
       default: '',
     },
+    isItemGroup: {
+      type: Boolean,
+      default: false,
+    },
   },
   components: {
     SimpleItemTable,
   },
   data: () => ({
     isChooseVariantDialog: false,
+    isQuantityDialog: false,
     variationItemInformation: null,
     itemData: null,
     optionValue: [],
     variations: [],
+    selectedItemForQuantity: null,
+    itemQuantity: 1,
   }),
   watch: {
     variations: {
@@ -132,12 +179,21 @@ export default {
   },
   methods: {
     submitVariationItem() {
-      this.variationItemInformation.emitKey = this.emitKey;
       this.isChooseVariantDialog = false;
-      this.$bus.emit('chooseItem', this.variationItemInformation);
-      this.$emit('chooseItem', this.variationItemInformation);
 
-      this.$refs.dialog.hide();
+      if (this.isItemGroup) {
+        // Show quantity dialog for variation item
+        this.variationItemInformation.emitKey = this.emitKey;
+        this.selectedItemForQuantity = this.variationItemInformation;
+        this.itemQuantity = 1;
+        this.isQuantityDialog = true;
+      } else {
+        // Original behavior - direct emit
+        this.variationItemInformation.emitKey = this.emitKey;
+        this.$bus.emit('chooseItem', this.variationItemInformation);
+        this.$emit('chooseItem', this.variationItemInformation);
+        this.$refs.dialog.hide();
+      }
     },
     selectItem(itemData) {
       if (itemData.variationCount > 0) {
@@ -145,9 +201,17 @@ export default {
         this.variations = this.formatVariations(itemData.variations);
         this.isChooseVariantDialog = true;
       } else {
-        this.$bus.emit('chooseItem', itemData);
-        this.$emit('chooseItem', itemData);
-        this.$refs.dialog.hide();
+        // Show quantity dialog if in item group mode
+        if (this.isItemGroup) {
+          this.selectedItemForQuantity = itemData;
+          this.itemQuantity = 1;
+          this.isQuantityDialog = true;
+        } else {
+          // Default behavior - direct emit
+          this.$bus.emit('chooseItem', itemData);
+          this.$emit('chooseItem', itemData);
+          this.$refs.dialog.hide();
+        }
       }
     },
     loadVariant() {
@@ -183,6 +247,18 @@ export default {
       return variations;
     },
     fetchData() {},
+    submitItemWithQuantity() {
+      const itemWithQuantity = {
+        ...this.selectedItemForQuantity,
+        quantity: this.itemQuantity
+      };
+      console.log(itemWithQuantity);
+      this.$bus.emit('chooseItem', itemWithQuantity);
+      this.$emit('chooseItem', itemWithQuantity);
+
+      this.isQuantityDialog = false;
+      this.$refs.dialog.hide();
+    },
   },
 };
 </script>

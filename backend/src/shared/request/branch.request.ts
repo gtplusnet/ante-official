@@ -4,4 +4,5 @@ export interface BranchCreateRequest {
   branchName: string;
   branchLocationId: string;
   parentId?: number;
+  mainWarehouseId?: string;
 }

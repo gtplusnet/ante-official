@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "ItemType" AS ENUM ('INDIVIDUAL_PRODUCT', 'ITEM_GROUP');
+
+-- AlterTable
+ALTER TABLE "Item" ADD COLUMN     "itemType" "ItemType" NOT NULL DEFAULT 'INDIVIDUAL_PRODUCT';
