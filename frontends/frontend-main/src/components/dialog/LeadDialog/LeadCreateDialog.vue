@@ -11,31 +11,29 @@
         <q-form @submit.prevent="saveLead" class="q-px-md q-pb-md">
           <div class="row">
 
+            <div class="text-label-large text-dark">Deal Information</div>
             <!-- Row 1: Deal Name/Opportunity* | Deal Type* -->
-            <div class="row justify-center col-12 q-px-sm">
+            <div class="row justify-center col-12 q-px-sm q-mt-sm">
               <div class="col-6 q-pr-sm">
                 <g-input v-model="form.dealName" label="Deal Name/Opportunity*" type="text" required />
               </div>
               <div class="col-6 q-pl-sm">
-                <g-input
-                  v-model="form.dealType"
-                  label="Deal Type*"
-                  type="select-search-with-add"
-                  apiUrl="/select-box/deal-type-list"
-                  @showAddDialog="showDealTypeAddDialog"
-                  ref="dealTypeSelect"
-                  required
-                />
+                <g-input v-model="form.dealType" label="Deal Type*" type="select-search-with-add"
+                  apiUrl="/select-box/deal-type-list" @showAddDialog="showDealTypeAddDialog" ref="dealTypeSelect"
+                  required />
               </div>
             </div>
 
+            <div class="text-label-large text-dark">Deal Value</div>
             <!-- Row 2: Approved Budget for Contract (ABC) | Monthly Recurring Revenue (MRR) -->
-            <div class="row justify-center col-12 q-px-sm">
+            <div class="row justify-center col-12 q-px-sm q-mt-sm">
               <div class="col-6 q-pr-sm">
-                <g-input v-model="form.approvedBudgetContract" label="Approved Budget for Contract (ABC)" type="number" :min="0" />
+                <g-input v-model="form.approvedBudgetContract" label="Approved Budget for Contract (ABC)" type="number"
+                  :min="0" />
               </div>
               <div class="col-6 q-pl-sm">
-                <g-input v-model="form.monthlyRecurringRevenue" label="Monthly Recurring Revenue (MRR)" type="number" :min="0" />
+                <g-input v-model="form.monthlyRecurringRevenue" label="Monthly Recurring Revenue (MRR)" type="number"
+                  :min="0" />
               </div>
             </div>
 
@@ -49,119 +47,78 @@
               </div>
             </div>
 
+            <div class="text-label-large text-dark">Other Details</div>
             <!-- Row 4: Close Date (Month/Year) | Win Probability -->
-            <div class="row justify-center col-12 q-px-sm">
+            <div class="row justify-center col-12 q-px-sm q-mt-sm">
               <div class="col-6 q-pr-sm">
                 <div class="row q-col-gutter-sm">
                   <div class="col-6">
-                    <g-input
-                      v-model="form.closeMonth"
-                      label="Close Month"
-                      type="select"
-                      :options="monthOptions"
-                      required
-                    />
+                    <g-input v-model="form.closeMonth" label="Close Month" type="select" :options="monthOptions"
+                      required />
                   </div>
                   <div class="col-6">
-                    <g-input
-                      v-model="form.closeYear"
-                      label="Close Year"
-                      type="select"
-                      :options="yearOptions"
-                      required
-                    />
+                    <g-input v-model="form.closeYear" label="Close Year" type="select" :options="yearOptions"
+                      required />
                   </div>
                 </div>
               </div>
               <div class="col-6 q-pl-sm">
-                <g-input
-                  v-model="form.winProbability"
-                  label="Win Probability"
-                  type="number"
-                  :min="0"
-                  :max="100"
-                  suffix="%"
-                />
+                <g-input v-model="form.winProbability" label="Win Probability" type="number" :min="0" :max="100"
+                  suffix="%" />
               </div>
             </div>
 
             <!-- Row 5: Select Location | Select Deal Source -->
             <div class="row justify-center q-mb-md col-12 q-px-sm">
               <div class="col-6 q-pr-sm">
-                <g-input
-                  v-model="form.locationId"
-                  label="Select Location"
-                  type="select-search"
-                  apiUrl="/select-box/location-list"
-                />
+                <g-input v-model="form.locationId" label="Select Location" type="select-search"
+                  apiUrl="/select-box/location-list" />
               </div>
               <div class="col-6 q-pl-sm">
-                <g-input
-                  v-model="form.dealSourceId"
-                  label="Select Deal Source"
-                  type="select-search-with-add"
-                  apiUrl="/select-box/deal-source-list"
-                  @showAddDialog="showDealSourceAddDialog"
-                  ref="dealSourceSelect"
-                />
+                <g-input v-model="form.dealSourceId" label="Select Deal Source" type="select-search-with-add"
+                  apiUrl="/select-box/deal-source-list" @showAddDialog="showDealSourceAddDialog"
+                  ref="dealSourceSelect" />
               </div>
             </div>
 
+            <div class="text-label-large text-dark">People</div>
             <!-- Row 6: Relationship Owner | Point Of Contact -->
-            <div class="row justify-center col-12 q-px-sm">
+            <div class="row justify-center col-12 q-px-sm q-mt-sm">
               <div class="col-6 q-pr-sm">
-                <g-input
-                  v-model="form.relationshipOwnerId"
-                  label="Relationship Owner"
-                  type="select-search"
-                  apiUrl="/select-box/relationship-owner-list"
-                />
+                <g-input v-model="form.relationshipOwnerId" label="Relationship Owner" type="select-search"
+                  apiUrl="/select-box/relationship-owner-list" />
               </div>
               <div class="col-6 q-pl-sm">
-                <g-input
-                  v-model="form.pointOfContactId"
-                  label="Point Of Contact"
-                  type="select-search"
-                  apiUrl="/select-box/point-of-contact-list"
-                />
+                <g-input v-model="form.pointOfContactId" label="Point Of Contact" type="select-search"
+                  apiUrl="/select-box/point-of-contact-list" ref="pointOfContactSelect" />
               </div>
             </div>
           </div>
 
           <!-- Actions -->
-          <div class="text-right q-mt-lg q-pr-sm">
-            <GButton no-caps class="q-mr-sm" variant="tonal" label="Cancel" type="button" color="light-grey" v-close-popup />
-            <GButton
-              no-caps
-              :label="leadData && Object.keys(leadData).length > 0 && leadData.id ? 'Update' : 'Save'"
-              type="submit"
-              color="primary"
-            />
+          <div class="text-right q-mt-md q-pr-sm">
+            <GButton no-caps class="q-mr-sm" variant="tonal" label="Cancel" type="button" color="light-grey"
+              v-close-popup />
+            <GButton no-caps :label="leadData && Object.keys(leadData).length > 0 && leadData.id ? 'Update' : 'Save'"
+              type="submit" color="primary" />
           </div>
         </q-form>
       </template>
     </TemplateDialog>
 
     <!-- Add/Edit Deal Source Dialog -->
-    <add-edit-deal-source-dialog
-      ref="dealSourceDialog"
-      @created="selectNewDealSourceSave"
-    />
+    <add-edit-deal-source-dialog ref="dealSourceDialog" @created="selectNewDealSourceSave" />
 
     <!-- Add/Edit Deal Type Dialog -->
-    <add-edit-deal-type-dialog
-      ref="dealTypeDialog"
-      @created="selectNewDealTypeSave"
-    />
+    <add-edit-deal-type-dialog ref="dealTypeDialog" @created="selectNewDealTypeSave" />
   </q-dialog>
 </template>
 
 <style scoped lang="scss">
-// Custom styles for LeadCreateDialog - TemplateDialog handles most styling
-</style>
+// Custom styles for LeadCreateDialog - TemplateDialog handles most styling</style>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, watch } from "vue";
+import { defineComponent, ref, onMounted, watch, nextTick } from "vue";
 import { QDialog, useQuasar } from "quasar";
 // import { useRouter } from 'vue-router';
 import GInput from "../../shared/form/GInput.vue";
@@ -186,7 +143,7 @@ interface LeadForm {
   locationId: string;
   dealSourceId: string;
   relationshipOwnerId: string;
-  pointOfContactId: number;
+  pointOfContactId: string;
 }
 
 export default defineComponent({
@@ -213,6 +170,7 @@ export default defineComponent({
     const dealSourceDialog = ref<InstanceType<typeof AddEditDealSourceDialog> | null>(null);
     const dealTypeSelect = ref<InstanceType<typeof GInput> | null>(null);
     const dealTypeDialog = ref<InstanceType<typeof AddEditDealTypeDialog> | null>(null);
+    const pointOfContactSelect = ref<InstanceType<typeof GInput> | null>(null);
     const isAddEditClientDialogOpen = ref(false);
     const isAddEditCompanyDialogOpen = ref(false);
 
@@ -251,13 +209,15 @@ export default defineComponent({
       locationId: "",
       dealSourceId: "",
       relationshipOwnerId: "",
-      pointOfContactId: 0,
+      pointOfContactId: "",
     });
 
     const initForm = () => {
       if (props.leadData && Object.keys(props.leadData).length > 0 && props.leadData.id) {
         // Edit mode - populate form with existing data
         const startDate = props.leadData.startDate?.raw ? new Date(props.leadData.startDate.raw) : new Date();
+        const pointOfContactValue = props.leadData.clientId?.toString() || "";
+
         form.value = {
           dealName: props.leadData.name || "",
           dealType: typeof props.leadData.leadType === "string" ? props.leadData.leadType : props.leadData.leadType?.key || "",
@@ -268,15 +228,25 @@ export default defineComponent({
           closeMonth: String(startDate.getMonth() + 1).padStart(2, '0'),
           closeYear: startDate.getFullYear().toString(),
           winProbability: typeof props.leadData.winProbability === "number"
-              ? props.leadData.winProbability
-              : typeof props.leadData.winProbability === "string"
+            ? props.leadData.winProbability
+            : typeof props.leadData.winProbability === "string"
               ? parseInt(props.leadData.winProbability) || 50
               : parseInt(props.leadData.winProbability?.key || "50") || 50,
           locationId: props.leadData.locationId || "",
           dealSourceId: props.leadData.leadSource || "",
           relationshipOwnerId: props.leadData.relationshipOwnerId || "",
-          pointOfContactId: 0, // New field, default to 0 for existing leads
+          pointOfContactId: pointOfContactValue,
         };
+
+        // Reload Point of Contact select to display the selected value
+        nextTick(async () => {
+          if (pointOfContactSelect.value && "reloadGSelect" in pointOfContactSelect.value) {
+            const gInput = pointOfContactSelect.value as unknown as {
+              reloadGSelect: (autoSelect?: number | null) => Promise<void>;
+            };
+            await gInput.reloadGSelect(); // No parameter - just reload options, let v-model handle selection
+          }
+        });
       } else {
         // Create mode - set defaults
         const today = new Date();
@@ -292,13 +262,12 @@ export default defineComponent({
         form.value.locationId = "";
         form.value.dealSourceId = "";
         form.value.relationshipOwnerId = "";
-        form.value.pointOfContactId = 0;
+        form.value.pointOfContactId = "";
       }
     };
 
     const selectNewSave = async (data: LeadDataResponse) => {
       // Handle any new save if needed
-      console.log('New save:', data);
     };
 
     const showClientAddDialog = () => {
@@ -311,7 +280,6 @@ export default defineComponent({
 
     const selectNewCompanySave = async (data: any) => {
       // Handle company save if needed
-      console.log('New company save:', data);
     };
 
     const showDealSourceAddDialog = () => {
@@ -364,7 +332,8 @@ export default defineComponent({
         startDate: startDate,
         endDate: endDate,
         status: "LEAD" as ProjectCreateRequest["status"],
-        clientId: form.value.pointOfContactId, // Using point of contact as client
+        clientId: parseInt(form.value.pointOfContactId) || 0, // Convert string to number for API
+        pointOfContactId: parseInt(form.value.pointOfContactId) || 0, // Add this for backend compatibility
         locationId: form.value.locationId || "", // Using location from form
         downpaymentAmount: 0,
         retentionAmount: 0,
@@ -422,9 +391,8 @@ export default defineComponent({
     watch(
       () => form.value.pointOfContactId,
       async (newContactId) => {
-        if (newContactId && newContactId !== 0) {
+        if (newContactId && newContactId !== "") {
           // Future: Auto-populate additional fields from point of contact if needed
-          console.log("Point of contact selected:", newContactId);
         }
       }
     );
@@ -439,6 +407,7 @@ export default defineComponent({
       dealSourceDialog,
       dealTypeSelect,
       dealTypeDialog,
+      pointOfContactSelect,
       form,
       monthOptions,
       yearOptions,

@@ -5,25 +5,31 @@
 
   <template v-else>
     <div class="board-container q-pa-sm" v-dragscroll.x="!isDragging">
-      <div v-for="column in boardColumns" :key="column.boardKey" class="board-column" :class="{ 'drop-active': dragOverColumn === column.boardKey }" @dragover.prevent="handleDragOver(column.boardKey)" @dragleave="handleDragLeave" @drop="handleDrop($event, column.boardKey)">
+      <div v-for="column in boardColumns" :key="column.boardKey" class="board-column"
+        :class="{ 'drop-active': dragOverColumn === column.boardKey }"
+        @dragover.prevent="handleDragOver(column.boardKey)" @dragleave="handleDragLeave"
+        @drop="handleDrop($event, column.boardKey)">
         <div class="column-header">
           <div class="column-header-top">
             <h6 class="column-title text-title-small">{{ column.boardName }}</h6>
-            <div class="q-badge text-title-small" :class="column.boardProjects?.length === 0 ? 'q-badge-zero' : ''">{{ column.boardProjects?.length || 0 }}</div>
+            <div class="q-badge text-title-small" :class="column.boardProjects?.length === 0 ? 'q-badge-zero' : ''">{{
+              column.boardProjects?.length || 0 }}</div>
           </div>
           <div class="divider q-my-sm"></div>
           <div class="column-total text-title-small">
             {{ formatColumnTotal(column.boardProjects) }}
           </div>
           <div class="q-mt-sm">
-            <g-button icon="add" icon-size="md" class="full-width" color="grey" label="Add Lead" variant="tonal" @click="openLeadCreateDialog(column.boardKey)" />
+            <g-button icon="add" icon-size="md" class="full-width" color="grey" label="Add Lead" variant="tonal"
+              @click="openLeadCreateDialog(column.boardKey)" />
           </div>
         </div>
         <div class="column-content">
           <div v-for="lead in column.boardProjects" :key="lead.id" class="lead-card" :class="{
             'drag-source': draggedLead?.id === lead.id && isDragging,
             'active-card': lead.id === leadViewId
-          }" draggable="true" @dragstart="handleDragStart($event, lead)" @dragend="handleDragEnd" @click="openLead(lead.id, lead.id === leadViewId)">
+          }" draggable="true" @dragstart="handleDragStart($event, lead)" @dragend="handleDragEnd"
+            @click="openLead(lead.id, lead.id === leadViewId)">
             <div class="lead-card-header">
               <div class="lead-name text-title-small">{{ lead.name }}</div>
               <q-btn flat round dense size="sm" icon="more_vert" @click.stop>
@@ -45,21 +51,25 @@
             <div class="lead-card-body text-label-small">
               <div class="deal-badge row items-center">
                 <span class="deal-type row items-center justify-center">{{ lead.leadType?.label }}</span>
-                <span class="deal-status row items-center justify-center">{{ lead.winProbability?.label }}</span>
+                <span class="deal-status row items-center justify-center" :class="getProbabilityClass(lead)">{{
+                  getProbabilityLetter(lead) }}</span>
               </div>
               <div class="avatar-container row items-center">
                 <q-avatar size="md">
                   <img src="/lead-avatar.png">
                 </q-avatar>
-                <div class="text-grey text-label-medium q-ml-sm">{{ lead?.client?.name }}</div>
+                <div class="text-grey text-label-medium q-ml-sm">{{ `${formatWord(lead.personInCharge.firstName)}
+                  ${formatWord(lead.personInCharge.lastName)}` }}
+                </div>
               </div>
-              <div class="abc-item row justify-between" v-if="lead.abc">
+              <div class="abc-item row justify-between" v-if="lead.initialCosting">
                 <div class="row items-center">
                   <div class="row items-center q-mr-sm" :style="{ color: '#747786' }">
                     <q-icon name="payments" size="18px" />
                     <span class="text-label-medium q-ml-xs">Total Contract:</span>
                   </div>
-                  <div class="text-bold text-label-medium" :style="{ color: 'var(--q-text-dark)' }">{{ lead.initialCosting.formatCurrency }}</div>
+                  <div class="text-bold text-label-medium" :style="{ color: 'var(--q-text-dark)' }">{{
+                    lead.initialCosting.formatCurrency }}</div>
                 </div>
               </div>
               <div class="detail-item row justify-between">
@@ -92,7 +102,8 @@
   <!-- Lead Dialog for Create/Edit -->
   <lead-create-dialog v-model="isLeadDialogOpen" :leadData="leadData" @close="handleLeadSaved" />
 
-  <view-lead-dialog v-model="isViewLeadDialogOpen" @close="handleCloseDialog" :leadViewId="leadViewId"></view-lead-dialog>
+  <view-lead-dialog v-model="isViewLeadDialogOpen" @close="handleCloseDialog"
+    :leadViewId="leadViewId"></view-lead-dialog>
 </template>
 
 <style scoped src="../Leads.scss"></style>
@@ -483,6 +494,72 @@ export default defineComponent({
       }
     };
 
+    const getProbabilityClass = (lead: Lead) => {
+      // Extract numeric value from label (e.g., "50%" -> 50)
+      const label = lead.winProbability?.label;
+      if (!label) {
+        return 'probability-unknown';
+      }
+
+      // Parse percentage from label (remove "%" and convert to number)
+      const probability = parseInt(label.replace('%', ''));
+
+      // Return unknown if parsing failed or probability is 0/null
+      if (isNaN(probability) || probability === 0) {
+        return 'probability-unknown';
+      }
+
+      // Map to probability ranges matching Sales Probability Widget
+      if (probability >= 90 && probability <= 100) {
+        return 'probability-a'; // A: 90-100%
+      } else if (probability >= 70 && probability <= 89) {
+        return 'probability-b'; // B: 70-89%
+      } else if (probability >= 50 && probability <= 69) {
+        return 'probability-c'; // C: 50-69%
+      } else if (probability >= 30 && probability <= 49) {
+        return 'probability-d'; // D: 30-49%
+      } else if (probability >= 10 && probability <= 29) {
+        return 'probability-e'; // E: 10-29%
+      } else if (probability >= 0 && probability <= 9) {
+        return 'probability-f'; // F: 0-9%
+      }
+
+      return 'probability-unknown';
+    };
+
+    const getProbabilityLetter = (lead: Lead) => {
+      // Extract numeric value from label (e.g., "50%" -> 50)
+      const label = lead.winProbability?.label;
+      if (!label) {
+        return 'Unknown';
+      }
+
+      // Parse percentage from label (remove "%" and convert to number)
+      const probability = parseInt(label.replace('%', ''));
+
+      // Return unknown if parsing failed or probability is 0/null
+      if (isNaN(probability) || probability === 0) {
+        return 'Unknown';
+      }
+
+      // Map to letter grades matching Sales Probability Widget
+      if (probability >= 90 && probability <= 100) {
+        return 'A'; // A: 90-100%
+      } else if (probability >= 70 && probability <= 89) {
+        return 'B'; // B: 70-89%
+      } else if (probability >= 50 && probability <= 69) {
+        return 'C'; // C: 50-69%
+      } else if (probability >= 30 && probability <= 49) {
+        return 'D'; // D: 30-49%
+      } else if (probability >= 10 && probability <= 29) {
+        return 'E'; // E: 10-29%
+      } else if (probability >= 0 && probability <= 9) {
+        return 'F'; // F: 0-9%
+      }
+
+      return 'Unknown';
+    };
+
     // Watch for filter changes
     watch(
       () => [props.filterRelationshipOwner, props.filterDealType],
@@ -537,6 +614,8 @@ export default defineComponent({
       toggleDropdown,
       formatWord,
       calculateTimeInStage,
+      getProbabilityClass,
+      getProbabilityLetter,
     };
   },
 });
