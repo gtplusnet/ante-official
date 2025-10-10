@@ -10,10 +10,10 @@
       <div class="row items-center justify-end q-gutter-x-md col-10">
         <div class="col-4">
           <q-select v-model="selectedBranch" :options="branchOptions" option-label="label" option-value="value"
-            emit-value map-options outlined dense label="Select by Branch" />
+            emit-value map-options outlined rounded dense label="Select by Branch" />
         </div>
         <div class="col-4">
-          <q-select v-model="sortBy" :options="sortOptions" outlined dense label="Sort By" />
+          <q-select v-model="sortBy" :options="sortOptions" rounded outlined dense label="Sort By" />
         </div>
         <g-button icon-size="md" icon="add" label="New Record" @click="addNewRecord" />
       </div>
