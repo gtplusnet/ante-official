@@ -101,8 +101,6 @@ model Account {
   facebookEmail                          String?                            @db.VarChar(255)
   googleEmail                            String?                            @db.VarChar(255)
   passwordHash                           String?                            @db.VarChar(255)
-  supabaseUserId                         String?                            @unique @db.VarChar(255)
-  supabaseEmail                          String?                            @db.VarChar(255)
   company                                Company?                           @relation(fields: [companyId], references: [id])
   parent                                 Account?                           @relation("AccountHierarchy", fields: [parentAccountId], references: [id], onDelete: Cascade)
   children                               Account[]                          @relation("AccountHierarchy")
@@ -192,22 +190,19 @@ model Account {
   @@index([firstName, lastName])
   @@index([googleId])
   @@index([companyId], map: "idx_account_company")
-  @@index([supabaseUserId], map: "idx_account_supabase_user")
 }
 
 model AccountToken {
-  sessionId            String   @id @unique @default(uuid())
-  accountId            String
-  payload              String
-  userAgent            String
-  token                String   @db.VarChar(100)
-  ipAddress            String   @db.VarChar(200)
-  status               String   @db.VarChar(50)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  supabaseAccessToken  String?
-  supabaseRefreshToken String?
-  account              Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  sessionId String   @id @unique @default(uuid())
+  accountId String
+  payload   String
+  userAgent String
+  token     String   @db.VarChar(100)
+  ipAddress String   @db.VarChar(200)
+  status    String   @db.VarChar(50)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
 
 model EmailConfiguration {

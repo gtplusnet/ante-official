@@ -106,9 +106,6 @@ import { MediaModule } from '@infrastructure/file-upload/media/media.module';
 import { TimeTrackingModule } from '@modules/time-tracking/time-tracking.module';
 import { ManpowerDeviceModule } from '@modules/manpower-device/manpower-device.module';
 
-// Webhook modules
-import { SupabaseWebhookModule } from '@modules/webhooks/supabase-webhook.module';
-
 // App controller
 import { AppController } from './app.controller';
 
@@ -304,9 +301,6 @@ const ENV = process.env.NODE_ENV;
     // Time tracking module
     TimeTrackingModule,
     ManpowerDeviceModule,
-
-    // Webhook module for Supabase integration
-    SupabaseWebhookModule,
   ],
   controllers: [
     // Root app controller

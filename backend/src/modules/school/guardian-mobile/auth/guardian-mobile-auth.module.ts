@@ -12,14 +12,11 @@ import { PrismaService } from '@common/prisma.service';
 import { EncryptionService } from '@common/encryption.service';
 import { UtilityService } from '@common/utility.service';
 import { TelegramService } from '@modules/communication/telegram/telegram/telegram.service';
-import { SupabaseAuthService } from '@modules/auth/supabase-auth/supabase-auth.service';
-import { SupabaseModule } from '@infrastructure/supabase/supabase.module';
 import { winstonConfig } from '@common/logger';
 
 @Module({
   imports: [
     ConfigModule,
-    SupabaseModule,
     WinstonModule.forRoot({
       transports: winstonConfig.transports,
       format: winstonConfig.format,
@@ -51,7 +48,6 @@ import { winstonConfig } from '@common/logger';
     EncryptionService,
     UtilityService,
     TelegramService,
-    SupabaseAuthService,
   ],
   exports: [
     GuardianMobileAuthService,

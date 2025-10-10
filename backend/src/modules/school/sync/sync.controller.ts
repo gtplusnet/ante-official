@@ -8,7 +8,6 @@ import { SyncPullDto, ValidateLicenseResponseDto } from './sync.dto';
 import { DeviceConnectionRequest } from '@shared/request/device-license.request';
 import { SchoolAttendanceBatchDto } from './school-attendance.dto';
 import { AttendancePullRequestDto } from './attendance-pull.dto';
-import { SupabaseAuthService } from '@modules/auth/supabase-auth/supabase-auth.service';
 
 @Controller('auth/school/sync')
 export class SyncController {
@@ -16,8 +15,6 @@ export class SyncController {
     private readonly syncService: SyncService,
     private readonly utilityService: UtilityService,
     private readonly deviceLicenseService: DeviceLicenseService,
-    @Inject(SupabaseAuthService)
-    private readonly supabaseAuthService: SupabaseAuthService,
   ) {}
 
   @Post('connect')
@@ -40,50 +37,6 @@ export class SyncController {
 
   @Post('validate')
   async validateLicense(@Req() req: RequestWithLicense, @Res() res: Response) {
-    // Generate Supabase tokens for the license
-    let supabaseTokens: {
-      supabaseToken?: string;
-      supabaseRefreshToken?: string;
-    } = {};
-
-    try {
-      // Create a pseudo-account for the license to get Supabase tokens
-      const licenseAccount = {
-        id: `license-${req.license?.id}`,
-        email: `license-${req.license?.licenseKey}@gate.local`,
-        firstName: 'Gate',
-        lastName: req.license?.gate?.gateName || 'Device',
-        companyId: req.license?.companyId,
-      };
-
-      console.log(
-        '[SyncController] Creating Supabase user for license:',
-        licenseAccount,
-      );
-
-      const supabaseResult = await this.supabaseAuthService.ensureSupabaseUser(
-        licenseAccount as any,
-      );
-
-      console.log('[SyncController] Supabase result:', supabaseResult);
-
-      if (supabaseResult?.accessToken) {
-        supabaseTokens = {
-          supabaseToken: supabaseResult.accessToken,
-          supabaseRefreshToken: supabaseResult.refreshToken,
-        };
-        console.log('[SyncController] Supabase tokens generated successfully');
-      } else {
-        console.log('[SyncController] No tokens in Supabase result');
-      }
-    } catch (error) {
-      // Log but don't fail validation if Supabase integration fails
-      console.error('[SyncController] Supabase integration error:', error);
-      this.utilityService.log(
-        `Supabase integration failed for license ${req.license?.licenseKey}: ${error.message}`,
-      );
-    }
-
     const response: ValidateLicenseResponseDto = {
       valid: true,
       companyId: req.license?.companyId,
@@ -92,7 +45,6 @@ export class SyncController {
         `Company ${req.license?.companyId}`,
       gateName: req.license?.gate?.gateName || null,
       licenseType: req.license?.licenseType || 'SCHOOL',
-      ...supabaseTokens,
     };
 
     return this.utilityService.responseHandler(Promise.resolve(response), res);

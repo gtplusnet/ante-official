@@ -1,7 +1,6 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRealtimeSubscription } from './useRealtimeSubscription';
-import { useTaskStore } from 'src/stores/task';
-import type { TaskData } from 'src/composables/supabase/useTaskTable';
+import { useTaskStore, type TaskData } from 'src/stores/task';
 
 export interface UseTaskRealtimeOptions {
   /**

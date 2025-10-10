@@ -35,7 +35,6 @@ import {
   RedisService,
   CachedTokenData,
 } from '@infrastructure/redis/redis.service';
-import { SupabaseAuthService } from '../supabase-auth/supabase-auth.service';
 
 @Injectable()
 export class AuthService {
@@ -50,7 +49,6 @@ export class AuthService {
   @Inject() private googleAuthService: GoogleAuthService;
   @Inject() private facebookAuthService: FacebookAuthService;
   @Inject() private redisService: RedisService;
-  @Inject() private supabaseAuthService: SupabaseAuthService;
 
   async login(
     { username, password },
@@ -115,48 +113,11 @@ export class AuthService {
     const accountInformation: AccountDataResponse =
       await this.accountService.getAccountInformation({ id: account.id });
 
-    // Create/link Supabase user (required for login)
-    let supabaseTokens: {
-      supabaseToken?: string;
-      supabaseRefreshToken?: string;
-    } = {};
-    
-    const supabaseResult = await this.supabaseAuthService.ensureSupabaseUser(
-      account,
-      password, // Only used for first-time creation
-    );
-
-    if (!supabaseResult || !supabaseResult.accessToken) {
-      throw new BadRequestException(
-        'Failed to authenticate with Supabase. Please contact support if this issue persists.',
-      );
-    }
-
-    supabaseTokens = {
-      supabaseToken: supabaseResult.accessToken,
-      supabaseRefreshToken: supabaseResult.refreshToken,
-    };
-
-    // Store Supabase tokens in AccountToken
-    const accountTokenRecord = await this.prisma.accountToken.findFirst({
-      where: { token },
-    });
-    if (accountTokenRecord) {
-      await this.prisma.accountToken.update({
-        where: { sessionId: accountTokenRecord.sessionId },
-        data: {
-          supabaseAccessToken: supabaseResult.accessToken,
-          supabaseRefreshToken: supabaseResult.refreshToken,
-        },
-      });
-    }
-
     // create response
     const response: LoginResponse = {
       token: token,
       accountInformation: accountInformation,
       serverName: process.env.SERVER_NAME || 'DEVELOPMENT',
-      ...supabaseTokens,
     };
 
     // log the login activity
@@ -205,68 +166,6 @@ export class AuthService {
     });
     const token = await this.generateToken(account, headers, ip);
 
-    // Create Supabase user for new signups (required)
-    let supabaseTokens: {
-      supabaseToken?: string;
-      supabaseRefreshToken?: string;
-    } = {};
-    
-    const supabaseResult = await this.supabaseAuthService.createSupabaseUser({
-      email: accountInformation.email,
-      password: params.accountInformation.password,
-      metadata: {
-        accountId: accountInformation.id,
-        roleId: accountInformation.roleID,
-        companyId: accountInformation.company?.id,
-        firstName: accountInformation.firstName,
-        lastName: accountInformation.lastName,
-      },
-    });
-
-    if (!supabaseResult || !supabaseResult.accessToken) {
-      // Rollback account creation if Supabase user creation fails
-      await this.prisma.account.delete({
-        where: { id: accountInformation.id },
-      });
-      await this.prisma.company.delete({
-        where: { id: companyInformation.id },
-      });
-      
-      throw new BadRequestException(
-        'Failed to create user account in authentication system. Please try again or contact support.',
-      );
-    }
-
-    supabaseTokens = {
-      supabaseToken: supabaseResult.accessToken,
-      supabaseRefreshToken: supabaseResult.refreshToken,
-    };
-
-    // Update account with Supabase ID
-    await this.prisma.account.update({
-      where: { id: accountInformation.id },
-      data: {
-        supabaseUserId: supabaseResult.userId,
-        supabaseEmail: accountInformation.email,
-      },
-    });
-
-    // Store Supabase tokens in AccountToken
-    if (supabaseResult.accessToken) {
-      const accountTokenRec = await this.prisma.accountToken.findFirst({
-        where: { token },
-      });
-      if (accountTokenRec) {
-        await this.prisma.accountToken.update({
-          where: { sessionId: accountTokenRec.sessionId },
-          data: {
-            supabaseAccessToken: supabaseResult.accessToken,
-            supabaseRefreshToken: supabaseResult.refreshToken,
-          },
-        });
-      }
-    }
-
     // Send verification email
     await this.emailVerificationService.sendVerificationEmail(
       account,
@@ -277,7 +176,6 @@ export class AuthService {
       token: token,
       accountInformation: accountInformation,
       serverName: process.env.SERVER_NAME || 'DEVELOPMENT',
-      ...supabaseTokens,
     };
 
     return loginResponse;
@@ -361,45 +259,10 @@ export class AuthService {
     const accountInformation: AccountDataResponse =
       await this.accountService.getAccountInformation({ id: account.id });
 
-    // Create/link Supabase user for Google login (required)
-    let supabaseTokens: {
-      supabaseToken?: string;
-      supabaseRefreshToken?: string;
-    } = {};
-    
-    const supabaseResult =
-      await this.supabaseAuthService.ensureSupabaseUser(account);
-
-    if (!supabaseResult || !supabaseResult.accessToken) {
-      throw new BadRequestException(
-        'Failed to authenticate with Supabase. Please contact support if this issue persists.',
-      );
-    }
-
-    supabaseTokens = {
-      supabaseToken: supabaseResult.accessToken,
-      supabaseRefreshToken: supabaseResult.refreshToken,
-    };
-
-    // Store Supabase tokens in AccountToken
-    const accountTokenRecord = await this.prisma.accountToken.findFirst({
-      where: { token },
-    });
-    if (accountTokenRecord) {
-      await this.prisma.accountToken.update({
-        where: { sessionId: accountTokenRecord.sessionId },
-        data: {
-          supabaseAccessToken: supabaseResult.accessToken,
-          supabaseRefreshToken: supabaseResult.refreshToken,
-        },
-      });
-    }
-
     const response: LoginResponse = {
       token: token,
       accountInformation: accountInformation,
       serverName: process.env.SERVER_NAME || 'DEVELOPMENT',
-      ...supabaseTokens,
     };
 
     this.utility.log(
@@ -486,45 +349,10 @@ export class AuthService {
     const accountInformation: AccountDataResponse =
       await this.accountService.getAccountInformation({ id: account.id });
 
-    // Create/link Supabase user for Facebook login (required)
-    let supabaseTokens: {
-      supabaseToken?: string;
-      supabaseRefreshToken?: string;
-    } = {};
-    
-    const supabaseResult =
-      await this.supabaseAuthService.ensureSupabaseUser(account);
-
-    if (!supabaseResult || !supabaseResult.accessToken) {
-      throw new BadRequestException(
-        'Failed to authenticate with Supabase. Please contact support if this issue persists.',
-      );
-    }
-
-    supabaseTokens = {
-      supabaseToken: supabaseResult.accessToken,
-      supabaseRefreshToken: supabaseResult.refreshToken,
-    };
-
-    // Store Supabase tokens in AccountToken
-    const accountTokenRecord = await this.prisma.accountToken.findFirst({
-      where: { token },
-    });
-    if (accountTokenRecord) {
-      await this.prisma.accountToken.update({
-        where: { sessionId: accountTokenRecord.sessionId },
-        data: {
-          supabaseAccessToken: supabaseResult.accessToken,
-          supabaseRefreshToken: supabaseResult.refreshToken,
-        },
-      });
-    }
-
     const response: LoginResponse = {
       token: token,
       accountInformation: accountInformation,
       serverName: process.env.SERVER_NAME || 'DEVELOPMENT',
-      ...supabaseTokens,
     };
 
     this.utility.log(

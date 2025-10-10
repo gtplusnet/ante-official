@@ -2,8 +2,29 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { api } from 'src/boot/axios';
 import { Notify } from 'quasar';
-import type { TaskData } from 'src/composables/supabase/useTaskTable';
 import { useAuthStore } from 'src/stores/auth';
+
+// Task data interface (migrated from Supabase composables)
+export interface TaskData {
+  id: number;
+  title: string;
+  description?: string | null;
+  statusId?: number;
+  status?: string;
+  priorityLevel?: number;
+  priority?: string;
+  dueDate?: string | null;
+  assignedToId?: string | null;
+  assignee?: string | null;
+  projectId?: number | null;
+  projectName?: string | null;
+  tags?: string[];
+  boardLane?: any;
+  boardLaneId?: number;
+  order?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 // Keep QuickTaskData interface for compatibility
 export interface QuickTaskData {
