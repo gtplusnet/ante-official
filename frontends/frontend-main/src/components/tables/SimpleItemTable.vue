@@ -1,6 +1,6 @@
 <template>
   <g-table :isRowActionEnabled="true" tableKey="item" apiUrl="/items/simpleView"
-    :apiFilters="[{ deleted: this.tab === 'deleted' }]" ref="table">
+    :apiFilters="apiFilters" ref="table">
     <!-- slot actions -->
     <template v-slot:row-actions="props">
       <q-btn rounded class="q-mr-sm text-label-medium" @click="editItem(props.data)" no-caps color="primary" unelevated>
@@ -82,8 +82,23 @@ export default {
       type: String,
       default: '',
     },
+    hideItemGroups: {
+      type: Boolean,
+      default: false,
+    },
   },
-  computed: {},
+  computed: {
+    apiFilters() {
+      const filters = [{ deleted: this.tab === 'deleted' }];
+
+      // Add isItemGroup filter when hideItemGroups is true
+      if (this.hideItemGroups) {
+        filters.push({ isItemGroup: true });
+      }
+
+      return filters;
+    },
+  },
   data: () => ({
     isItemCreateEditDialogOpen: false,
     isItemInformationDialogOpen: false,

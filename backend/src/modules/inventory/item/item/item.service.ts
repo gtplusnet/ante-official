@@ -80,6 +80,12 @@ export class ItemService {
     await this.createItemTags(item.id, tagIds);
     await this.createItemKeywords(item.id, keywordIds);
 
+    // Save group items if itemType is ITEM_GROUP
+    if (itemDto.itemType === 'ITEM_GROUP' && itemDto.groupItems?.length > 0) {
+      await this.validateGroupItems(itemDto.groupItems);
+      await this.saveGroupItems(item.id, itemDto.groupItems);
+    }
+
     return this.formatResponse(item);
   }
 
@@ -210,6 +216,12 @@ export class ItemService {
     tableQuery.where['isDraft'] = false;
     tableQuery.where['companyId'] = this.utility.companyId;
 
+    // Check if we need to filter out Item Groups
+    const isItemGroupFilter = body.filters?.find(f => f.hasOwnProperty('isItemGroup') && f.isItemGroup === true);
+    if (isItemGroupFilter) {
+      tableQuery.where['itemType'] = { not: 'ITEM_GROUP' };
+    }
+
     const totalCount = await this.prisma.item.count({
       where: tableQuery.where,
     });
@@ -224,6 +236,17 @@ export class ItemService {
         keywords: {
           include: {
             keyword: true,
+          },
+        },
+        groupItems: {
+          include: {
+            item: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+              },
+            },
           },
         },
       },
@@ -381,6 +404,17 @@ export class ItemService {
         keywords: {
           include: {
             keyword: true,
+          },
+        },
+        groupItems: {
+          include: {
+            item: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+              },
+            },
           },
         },
       },
@@ -1064,6 +1098,12 @@ export class ItemService {
     await this.updateItemTags(item.id, tagIds);
     await this.updateItemKeywords(item.id, keywordIds);
 
+    // Update group items if itemType is ITEM_GROUP
+    if (itemDto.itemType === 'ITEM_GROUP' && itemDto.groupItems !== undefined) {
+      await this.validateGroupItems(itemDto.groupItems);
+      await this.updateGroupItems(itemDto.id, itemDto.groupItems);
+    }
+
     return this.formatResponse(item);
   }
 
@@ -1323,12 +1363,114 @@ export class ItemService {
     return totalStock;
   }
 
+  private async validateGroupItems(groupItems: any[]) {
+    if (!groupItems || groupItems.length === 0) return;
+
+    // Get all items to check their types
+    const itemIds = groupItems.map(gi => gi.itemId);
+    const items = await this.prisma.item.findMany({
+      where: { id: { in: itemIds } },
+      select: { id: true, itemType: true, name: true }
+    });
+
+    // Check if any item is ITEM_GROUP
+    const invalidItems = items.filter(item => item.itemType === 'ITEM_GROUP');
+
+    if (invalidItems.length > 0) {
+      const names = invalidItems.map(i => i.name).join(', ');
+      throw new ConflictException(
+        `Cannot add Item Groups to another Item Group. Invalid items: ${names}`
+      );
+    }
+  }
+
+  private async saveGroupItems(groupId: string, groupItems: any[]) {
+    if (!groupItems || groupItems.length === 0) return;
+
+    const data = groupItems.map(gi => ({
+      groupId,
+      itemId: gi.itemId,
+      quantity: gi.quantity || 1,
+    }));
+
+    await this.prisma.itemGroupItem.createMany({ data });
+  }
+
+  private async updateGroupItems(groupId: string, groupItems: any[]) {
+    // Fetch existing group items
+    const existingItems = await this.prisma.itemGroupItem.findMany({
+      where: { groupId },
+      select: { id: true, itemId: true, quantity: true }
+    });
+
+    // Build maps for efficient lookup
+    const existingMap = new Map(existingItems.map(item => [item.itemId, item]));
+    const newMap = new Map((groupItems || []).map(item => [item.itemId, item]));
+
+    // Determine items to delete (exist in DB but not in new array)
+    const itemsToDelete = existingItems
+      .filter(existing => !newMap.has(existing.itemId))
+      .map(item => item.id);
+
+    // Determine items to create (exist in new array but not in DB)
+    const itemsToCreate = (groupItems || [])
+      .filter(newItem => !existingMap.has(newItem.itemId))
+      .map(newItem => ({
+        groupId,
+        itemId: newItem.itemId,
+        quantity: newItem.quantity || 1
+      }));
+
+    // Determine items to update (exist in both but quantity changed)
+    const itemsToUpdate = (groupItems || [])
+      .filter(newItem => {
+        const existing = existingMap.get(newItem.itemId);
+        return existing && existing.quantity !== (newItem.quantity || 1);
+      })
+      .map(newItem => ({
+        id: existingMap.get(newItem.itemId).id,
+        quantity: newItem.quantity || 1
+      }));
+
+    // Execute operations
+    if (itemsToDelete.length > 0) {
+      await this.prisma.itemGroupItem.deleteMany({
+        where: { id: { in: itemsToDelete } }
+      });
+    }
+
+    if (itemsToCreate.length > 0) {
+      await this.prisma.itemGroupItem.createMany({ data: itemsToCreate });
+    }
+
+    for (const item of itemsToUpdate) {
+      await this.prisma.itemGroupItem.update({
+        where: { id: item.id },
+        data: { quantity: item.quantity }
+      });
+    }
+  }
+
   private formatResponse(item: any): any {
     const uomInfo = UnitOfMeasurementReference.find((u) => u.key === item.uom);
 
     // Extract keywords if available
     const keywords = item.keywords
       ? item.keywords.map((kw) => kw.keyword.keywordValue)
+      : [];
+
+    // Extract group items if available
+    const groupItems = item.groupItems
+      ? item.groupItems.map((gi) => ({
+          id: gi.id,
+          itemId: gi.itemId,
+          quantity: gi.quantity,
+          item: gi.item ? {
+            id: gi.item.id,
+            name: gi.item.name,
+            sku: gi.item.sku,
+          } : null
+        }))
       : [];
 
     return {
@@ -1360,6 +1502,8 @@ export class ItemService {
       branchId: item.branchId || null,
       keywords: keywords,
       enabledInPOS: item.enabledInPOS || false,
+      itemType: item.itemType || 'INDIVIDUAL_PRODUCT',
+      groupItems: groupItems,
     };
   }
 

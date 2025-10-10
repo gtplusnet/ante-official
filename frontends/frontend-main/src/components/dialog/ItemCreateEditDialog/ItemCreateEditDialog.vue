@@ -194,7 +194,7 @@ export default {
       const { data, type } = this.data;
 
       if (type === 'simple') {
-        const { itemName: name, sku, description, estimatedBuyingPrice, size, tags, isDraft, uom, tiers, sellingPrice, minimumStockLevel, maximumStockLevel, categoryId, brandId, branchId, keywords, enabledInPOS, itemType } = data;
+        const { itemName: name, sku, description, estimatedBuyingPrice, size, tags, isDraft, uom, tiers, sellingPrice, minimumStockLevel, maximumStockLevel, categoryId, brandId, branchId, keywords, enabledInPOS, itemType, groupItems } = data;
 
         return {
           name,
@@ -215,6 +215,12 @@ export default {
           keywords: keywords || [],
           enabledInPOS: Boolean(enabledInPOS),
           itemType: itemType || 'INDIVIDUAL_PRODUCT',
+          groupItems: itemType === 'ITEM_GROUP'
+            ? (groupItems || []).map(item => ({
+                itemId: item.id,
+                quantity: item.quantity || 1
+              }))
+            : undefined,
         };
       } else if (type === 'variation') {
         const { itemName, description, tags, tiers, variations, isDraft, uom, sellingPrice, minimumStockLevel, maximumStockLevel, categoryId, brandId, branchId, keywords, enabledInPOS } =
