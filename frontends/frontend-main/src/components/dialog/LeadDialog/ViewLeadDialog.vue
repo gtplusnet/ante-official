@@ -389,6 +389,7 @@
                 icon="swap_horiz"
                 label="Convert To Project"
                 class="full-width row items-start"
+                @click="handleConvertToProject"
               />
               <GButton
                 variant="outline"
@@ -559,10 +560,11 @@ import GButton from "src/components/shared/buttons/GButton.vue";
 import GlobalWidgetCardBox from "src/components/shared/global/GlobalWidgetCardBox.vue";
 import { APIRequests } from "src/utility/api.handler";
 import { LeadDataResponse } from "@shared/response";
-import { useQuasar } from "quasar";
+import { useQuasar, Dialog } from "quasar";
 import { ref, computed } from "vue";
 import { defineAsyncComponent } from 'vue';
 import { formatWord } from "src/utility/formatter";
+import { useRouter } from 'vue-router';
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
 const BillOfQuantityDialog = defineAsyncComponent(() =>
@@ -602,6 +604,7 @@ export default {
 
   setup(props, { emit }) {
     const $q = useQuasar();
+    const router = useRouter();
     const notesText = ref("");
     const leadInformation = ref({} as LeadDataResponse);
     const isBillOfQuantityDialogOpen = ref(false);
@@ -682,6 +685,92 @@ export default {
       emit('close');
     };
 
+    const handleConvertToProject = async () => {
+      // Check if lead is in "won" stage
+      if (leadInformation.value?.leadBoardStage !== 'won') {
+        // Show warning dialog
+        const currentStage = getStageDisplayName(leadInformation.value?.leadBoardStage || 'prospect');
+        Dialog.create({
+          title: 'Cannot Convert Lead',
+          message: `Lead must be in "Won" stage to convert to project. Current stage: ${currentStage}`,
+          ok: true,
+          persistent: true
+        });
+        return;
+      }
+
+      // Show confirmation dialog
+      Dialog.create({
+        title: 'Convert to Project',
+        message: 'Are you sure you want to convert this lead to a project?',
+        cancel: true,
+        persistent: true,
+        ok: {
+          label: 'Convert',
+          color: 'primary'
+        },
+        cancel: {
+          label: 'Cancel',
+          color: 'grey'
+        }
+      }).onOk(async () => {
+        try {
+          $q.loading.show({
+            message: 'Converting lead to project...'
+          });
+
+          const projectData = await APIRequests.convertLeadToProject($q, props.leadViewId.toString());
+
+          $q.loading.hide();
+
+          // Show success notification
+          $q.notify({
+            color: 'positive',
+            message: 'Lead successfully converted to project!',
+            icon: 'check',
+            position: 'top'
+          });
+
+          // Close the dialog
+          onHide();
+
+          // Navigate to the new project
+          router.push({
+            name: 'member_project_page',
+            params: { id: projectData.id.toString() }
+          }).catch(() => {
+            // If navigation fails, at least go to projects list
+            router.push({ name: 'member_project' });
+          });
+        } catch (error: any) {
+          $q.loading.hide();
+
+          // Check if the error is from backend validation
+          const errorMessage = error?.response?.data?.message || error?.message || 'Failed to convert lead to project';
+
+          $q.notify({
+            color: 'negative',
+            message: errorMessage,
+            icon: 'report_problem',
+            position: 'top'
+          });
+        }
+      });
+    };
+
+    const getStageDisplayName = (stage: string): string => {
+      const stageMap: Record<string, string> = {
+        'prospect': 'Prospect',
+        'initial_meeting': 'Initial Meeting',
+        'technical_meeting': 'Technical Meeting',
+        'proposal': 'Proposal',
+        'in_negotiation': 'In Negotiation',
+        'won': 'Won',
+        'loss': 'Lost'
+      };
+      return stageMap[stage] || stage;
+    };
+
     return {
       notesText,
       leadInformation,
@@ -702,6 +791,8 @@ export default {
       openAddNoteDialog,
       handleNoteSaved,
       onHide,
+      handleConvertToProject,
+      getStageDisplayName,
     };
   },
 };
