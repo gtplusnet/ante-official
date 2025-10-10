@@ -187,6 +187,7 @@ import { api } from 'src/boot/axios';
 import { APIRequests } from '../utility/api.handler';
 import { useSocketStore } from '../stores/socketStore';
 import { useAuthStore } from '../stores/auth';
+import { initializeGlobalStores } from '../boot/global-stores';
 import bus from 'src/bus';
 import { defineAsyncComponent } from 'vue';
 
@@ -285,6 +286,10 @@ export default {
     // On mobile, drawer should be closed by default
     this.leftDrawerOpen = !this.$q.platform.is.mobile;
 
+    // NOTE: Global stores (Project, Assignee) are initialized in boot/global-stores.ts
+    // No need to initialize here - boot file handles it on app start
+    // For login and account switch, see boot/global-stores.ts
+
     this.initializeSocketConnection();
     this.watchSocketEvent();
     this.getPendingNotificationCount();
@@ -369,6 +374,17 @@ export default {
         console.log('Email verified event received in MainLayout, refreshing account information');
         const refreshed = await this.authMainStore.refreshAccountInformation();
         console.log('MainLayout: Account refreshed after email verification:', refreshed);
+      });
+
+      // Listen for account switch event and reload global stores
+      bus.on('account-switched', async (data) => {
+        console.log('Account switched in MainLayout, reloading global stores', data);
+        try {
+          await initializeGlobalStores();
+          console.log('Global stores reloaded successfully after account switch');
+        } catch (error) {
+          console.error('Failed to reload global stores after account switch:', error);
+        }
       });
 
       // Listen for role updates via event bus

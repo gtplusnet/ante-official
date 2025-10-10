@@ -140,6 +140,30 @@ export class ProjectService {
     );
   }
 
+  async getProjectList() {
+    const loggedInAccount: AccountDataResponse =
+      this.utilityService.accountInformation;
+
+    const projects = await this.prisma.project.findMany({
+      where: {
+        isDeleted: false,
+        companyId: loggedInAccount.company.id,
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+
+    return projects.map(project => ({
+      label: project.name,
+      value: project.id,
+    }));
+  }
+
   async projectBoard(query: ProjectBoardDto) {
     return query.isLead === 'true'
       ? this.getLeadBoard()
@@ -323,12 +347,13 @@ export class ProjectService {
         ? { leadBoardStage: board.boardKey }
         : { projectBoardStage: board.boardKey };
 
-    await this.prisma.project.update({
+    const updatedProject = await this.prisma.project.update({
       where: { id: Number(params.projectId) },
       data: updateData,
     });
 
-    return boardInformation;
+    // Return the updated project, not the old one
+    return this.formatResponse(updatedProject);
   }
 
   async deleteProject(projectId: number) {
@@ -463,6 +488,9 @@ export class ProjectService {
         new Date(project.startDate),
         new Date(project.endDate),
       ),
+      // Include board stage fields
+      projectBoardStage: project.projectBoardStage,
+      leadBoardStage: project.leadBoardStage,
     };
 
     return response;

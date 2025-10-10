@@ -307,8 +307,9 @@
 <script>
 import { defineAsyncComponent } from 'vue';
 import { api } from 'src/boot/axios';
-import { useSupabaseSchedules } from 'src/composables/supabase/useSupabaseSchedules';
-import { useSupabasePayrollGroups } from 'src/composables/supabase/useSupabasePayrollGroups';
+// TODO: Migrate to backend API
+// import { useSupabaseSchedules } from 'src/composables/supabase/useSupabaseSchedules';
+// import { useSupabasePayrollGroups } from 'src/composables/supabase/useSupabasePayrollGroups';
 import { useAuthStore } from 'src/stores/auth';
 import GButton from 'src/components/shared/buttons/GButton.vue';
 
@@ -323,11 +324,22 @@ const AddEditScheduleDialog = defineAsyncComponent(() =>
 export default {
   name: 'EmployeeDetailsTab',
   setup() {
-    // Initialize Supabase composables
-    const schedulesComposable = useSupabaseSchedules();
-    const payrollGroupsComposable = useSupabasePayrollGroups();
+    // TODO: Migrate to backend API - schedules composable deleted
+    // const schedulesComposable = useSupabaseSchedules();
+    const schedulesComposable = {
+      scheduleOptions: { value: [] },
+      fetchSchedulesByCompany: async () => {},
+      fetchSchedules: async () => {}
+    };
+    // TODO: Migrate to backend API - payroll groups composable deleted
+    // const payrollGroupsComposable = useSupabasePayrollGroups();
+    const payrollGroupsComposable = {
+      payrollGroupOptions: { value: [] },
+      fetchPayrollGroupsByCompany: async () => {},
+      fetchPayrollGroups: async () => {}
+    };
     const authStore = useAuthStore();
-    
+
     return {
       schedulesComposable,
       payrollGroupsComposable,

@@ -1,6 +1,8 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@common/prisma.service';
 import { UtilityService } from '@common/utility.service';
+import { CRMActivityService } from '../../crm-activity/crm-activity/crm-activity.service';
+import { CRMActivityType, CRMEntityType } from '@prisma/client';
 import {
   CreateLeadCompanyDto,
   UpdateLeadCompanyDto,
@@ -11,6 +13,7 @@ import {
 export class LeadCompanyService {
   @Inject() private prisma: PrismaService;
   @Inject() private utilityService: UtilityService;
+  @Inject() private crmActivityService: CRMActivityService;
 
   // Create a new lead company
   async create(createLeadCompanyDto: CreateLeadCompanyDto) {
@@ -24,6 +27,16 @@ export class LeadCompanyService {
         createdBy,
         companyId: this.utilityService.companyId,
       },
+    });
+
+    // Log activity
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.CREATE,
+      entityType: CRMEntityType.LEAD_COMPANY,
+      entityId: leadCompany.id,
+      entityName: leadCompany.name,
+      description: `Created new company "${leadCompany.name}"`,
+      performedById: this.utilityService.accountInformation.id,
     });
 
     return this.formatResponse(leadCompany);
@@ -101,6 +114,16 @@ export class LeadCompanyService {
       },
     });
 
+    // Log activity
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.UPDATE,
+      entityType: CRMEntityType.LEAD_COMPANY,
+      entityId: updatedCompany.id,
+      entityName: updatedCompany.name,
+      description: `Updated company "${updatedCompany.name}"`,
+      performedById: this.utilityService.accountInformation.id,
+    });
+
     return this.formatResponse(updatedCompany);
   }
 
@@ -124,6 +147,16 @@ export class LeadCompanyService {
         isActive: false,
         updatedAt: new Date(),
       },
+    });
+
+    // Log activity
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.DELETE,
+      entityType: CRMEntityType.LEAD_COMPANY,
+      entityId: existingCompany.id,
+      entityName: existingCompany.name,
+      description: `Deleted company "${existingCompany.name}"`,
+      performedById: this.utilityService.accountInformation.id,
     });
 
     return { message: 'Lead company successfully deleted' };

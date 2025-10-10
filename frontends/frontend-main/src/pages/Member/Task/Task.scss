@@ -1048,8 +1048,17 @@ $asana-off-track: #fc636b;
           color: $asana-text-primary;
           outline: none;
           padding: 4px;
+          transition: opacity 0.2s ease;
 
           &::placeholder {
+            color: $asana-text-secondary;
+          }
+
+          // Disabled state while creating
+          &:disabled,
+          &.is-creating {
+            opacity: 0.6;
+            cursor: not-allowed;
             color: $asana-text-secondary;
           }
         }
@@ -1092,6 +1101,23 @@ $asana-off-track: #fc636b;
               background: $asana-hover;
             }
           }
+
+          // Disabled state while creating
+          &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+
+            &:hover {
+              background: transparent;
+            }
+          }
+        }
+
+        // Loading spinner
+        .inline-task-spinner {
+          margin-left: 4px;
+          flex-shrink: 0;
         }
       }
     }

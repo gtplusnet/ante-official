@@ -101,7 +101,9 @@
               <input
                 v-model="newTaskTitle"
                 class="inline-task-input"
+                :class="{ 'is-creating': props.creatingTask }"
                 placeholder="Task name"
+                :disabled="props.creatingTask"
                 @keydown.enter="saveInlineTask(section)"
                 @keydown.escape="cancelInlineAdd"
                 @blur="cancelInlineAdd"
@@ -117,12 +119,14 @@
             <div v-if="!projectId && !hideProjectGrouping" class="task-project"></div>
             <div class="task-tags"></div>
             <div class="task-add-section">
-              <button class="save-btn" @mousedown.prevent @click="saveInlineTask(section)">
+              <button class="save-btn" :disabled="props.creatingTask" @mousedown.prevent @click="saveInlineTask(section)">
                 <span class="material-icons">check</span>
               </button>
-              <button class="cancel-btn" @mousedown.prevent @click="cancelInlineAdd">
+              <button class="cancel-btn" :disabled="props.creatingTask" @mousedown.prevent @click="cancelInlineAdd">
                 <span class="material-icons">close</span>
               </button>
+              <!-- Loading spinner -->
+              <q-spinner-dots v-if="props.creatingTask" color="primary" size="20px" class="inline-task-spinner" />
             </div>
           </div>
         </div>
@@ -395,8 +399,8 @@ import { onMounted } from 'vue';
 import { Notify } from 'quasar';
 import { useTaskSearchStore, type TaskGroupingMode } from '../../../stores/taskSearch';
 import { useTaskPhaseStore } from '../../../stores/taskPhase';
-import { useAssigneeList } from 'src/composables/useAssigneeList';
-import { useProjectList } from 'src/composables/useProjectList';
+import { useAssigneeStore } from 'src/stores/assignee';
+import { useProjectStore } from 'src/stores/project';
 import draggable from 'vuedraggable';
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
@@ -428,6 +432,8 @@ interface Task {
 const props = defineProps<{
   tasks: Task[];
   filter: string;
+  loading?: boolean;
+  creatingTask?: boolean; // Loading state for inline task creation
   projectId?: number | string | null;
   hideProjectGrouping?: boolean;
   compactMode?: boolean;
@@ -438,6 +444,9 @@ const emit = defineEmits<{
   'toggle-status': [task: Task];
   'update-status': [task: Task, status: string];
   'update-task': [task: Task, field: string, value: any, extraData?: any];
+  'select-task': [task: Task];
+  'edit-task': [task: Task];
+  'open-menu': [task: Task, event: MouseEvent];
   'add-task': [section: string, title?: string, metadata?: any];
   'reorder-tasks': [data: { sectionKey: string; fromIndex: number; toIndex: number; task: Task }];
   'view-task': [task: Task];
@@ -559,8 +568,12 @@ const draggedIndex = ref<number | null>(null);
 const draggedSection = ref<string | null>(null);
 
 
-// Get available users from centralized assignee list composable
-const { assignees: availableUsers, getInitials, getAvatarColor } = useAssigneeList();
+// Get stores
+const assigneeStore = useAssigneeStore();
+const projectStore = useProjectStore();
+
+// Get available users from centralized assignee store
+const availableUsers = computed(() => assigneeStore.formattedAssignees);
 
 // Filter users based on search query
 const filteredUsers = computed(() => {
@@ -574,10 +587,8 @@ const filteredUsers = computed(() => {
   });
 });
 
-// Get dynamic projects from Supabase
-const {
-  projectsWithNone: availableProjects
-} = useProjectList();
+// Get dynamic projects from centralized project store
+const availableProjects = computed(() => projectStore.projectsWithNone);
 
 // Filter tasks by search query
 const filteredTasks = computed(() => {
@@ -1112,18 +1123,15 @@ const updateProject = (task: Task, projectId: string | number) => {
 };
 
 const getProjectById = (projectId?: string | number) => {
-  if (!projectId) return null;
-  const id = typeof projectId === 'string' ? (projectId === 'none' ? 'none' : Number(projectId)) : projectId;
-  return availableProjects.value.find(p => p.id === id || p.id === String(id));
+  return projectStore.getProjectById(projectId);
 };
 
 const formatProjectName = (projectId?: string | number) => {
-  const project = getProjectById(projectId);
-  return project ? project.name : 'No project';
+  return projectStore.getProjectName(projectId);
 };
 
 const getProjectColor = (projectId?: string | number) => {
-  const project = getProjectById(projectId);
+  const project = projectStore.getProjectById(projectId);
   return project ? project.color : '#6d6e78';
 };
 
@@ -1152,22 +1160,40 @@ const startInlineAdd = (sectionKey: string) => {
 };
 
 const saveInlineTask = (section: any) => {
+  // Don't allow submission if already creating
+  if (props.creatingTask) {
+    return;
+  }
+
   if (!newTaskTitle.value.trim()) {
     cancelInlineAdd();
     return;
   }
 
   // Emit the add-task event with the title and section metadata
+  // Don't call cancelInlineAdd() here - let the parent manage state via creatingTask prop
+  // Input will auto-hide when creatingTask becomes false after successful creation
   emit('add-task', section.key, newTaskTitle.value.trim(), section.metadata);
-
-  // Reset state
-  cancelInlineAdd();
 };
 
 const cancelInlineAdd = () => {
+  // Don't allow canceling while task is being created
+  if (props.creatingTask) {
+    return;
+  }
+
   addingTaskInSection.value = null;
   newTaskTitle.value = '';
 };
+
+// Auto-hide inline input when task creation completes successfully
+// When creatingTask changes from true to false, the task was successfully created
+watch(() => props.creatingTask, (newValue, oldValue) => {
+  // When creation completes (true -> false), auto-hide the input
+  if (oldValue === true && newValue === false && addingTaskInSection.value) {
+    cancelInlineAdd();
+  }
+});
 
 
 // Helper functions for assignee display
@@ -1184,9 +1210,9 @@ const getInitialsFromName = (name: string | null | undefined) => {
   // Fallback to parsing the name
   const parts = name.split(' ').filter(part => part.length > 0);
   if (parts.length >= 2) {
-    return getInitials(parts[0], parts[1]);
+    return assigneeStore.getInitials(parts[0], parts[1]);
   }
-  return getInitials(parts[0], '');
+  return assigneeStore.getInitials(parts[0], '');
 };
 
 const getAvatarColorFromName = (name: string | null | undefined) => {
@@ -1201,9 +1227,9 @@ const getAvatarColorFromName = (name: string | null | undefined) => {
   // Fallback to generating color from name parts
   const parts = name.split(' ').filter(part => part.length > 0);
   if (parts.length >= 2) {
-    return getAvatarColor(parts[0], parts[1]);
+    return assigneeStore.getAvatarColor(parts[0], parts[1]);
   }
-  return getAvatarColor(parts[0], '');
+  return assigneeStore.getAvatarColor(parts[0], '');
 };
 
 const isDatePastDue = (dateString: string) => {

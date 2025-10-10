@@ -1,0 +1,3 @@
+-- AlterEnum
+-- Add RELATIONSHIP_OWNER to the CRMEntityType enum
+ALTER TYPE "CRMEntityType" ADD VALUE 'RELATIONSHIP_OWNER';

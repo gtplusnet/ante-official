@@ -45,6 +45,27 @@ export class ScheduleConfigurationService {
     );
     return shiftInformation;
   }
+  async getScheduleList() {
+    const schedules = await this.prisma.schedule.findMany({
+      where: {
+        isDeleted: false,
+        companyId: this.utilityService.companyId,
+      },
+      select: {
+        id: true,
+        scheduleCode: true,
+      },
+    });
+
+    // Sort case-insensitively in JavaScript
+    return schedules
+      .map(schedule => ({
+        label: schedule.scheduleCode,
+        value: schedule.id,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
+  }
+
   async getScheduleInfo(query: GetScheduleDTO): Promise<ScheduleDataResponse> {
     const scheduleInformation: Schedule = await this.prisma.schedule.findUnique(
       {

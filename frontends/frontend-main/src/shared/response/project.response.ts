@@ -32,4 +32,7 @@ export interface ProjectDataResponse {
   winProbability?: any;
   personInCharge?: any;
   address?: string;
+  // Board stage fields for drag-and-drop functionality
+  projectBoardStage?: string;
+  leadBoardStage?: string;
 }

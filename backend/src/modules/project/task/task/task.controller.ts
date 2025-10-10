@@ -22,6 +22,7 @@ import {
   TaskIdDto,
   TaskUpdateDto,
   AddWatcherDTO,
+  TaskDashboardQueryDto,
 } from '../../../../dto/task.validator.dto';
 
 @Controller('task')
@@ -107,6 +108,17 @@ export class TaskController {
   async getTaskCountByStatus(@NestResponse() response: Response) {
     return this.utilityService.responseHandler(
       this.taskService.getTaskCountByStatus(),
+      response,
+    );
+  }
+
+  @Get('dashboard')
+  async getDashboardTasks(
+    @NestResponse() response: Response,
+    @Query() query: TaskDashboardQueryDto,
+  ) {
+    return this.utilityService.responseHandler(
+      this.taskService.getDashboardTasks(query.tab, query.search),
       response,
     );
   }

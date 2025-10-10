@@ -189,6 +189,12 @@ const routesConfig: RouteRecordRaw[] = [
         meta: { title: 'Project Dashboard' }
       },
       {
+        name: 'member_project_board',
+        path: 'project/board',
+        component: () => import('pages/Member/Project/ProjectBoardView.vue'),
+        meta: { title: 'Project Board' }
+      },
+      {
         name: 'member_project',
         path: 'project',
         component: () => import('pages/Member/Project/Project.vue'),

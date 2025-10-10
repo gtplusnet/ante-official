@@ -212,7 +212,8 @@
 import { defineComponent, ref, onMounted, computed, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useProjectDetails } from '../../../../composables/useProjectDetails';
-import supabaseService from '../../../../services/supabase';
+// TODO: Migrate to backend API
+// import supabaseService from '../../../../services/supabase';
 
 // Global Widget Components
 import GlobalWidgetCard from '../../../../components/shared/global/GlobalWidgetCard.vue';

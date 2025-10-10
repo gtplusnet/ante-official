@@ -3,13 +3,8 @@ import { useAuthStore } from '../stores/auth';
 
 export default boot(async ({ store }) => {
   const authStore = useAuthStore(store);
-  
-  // Only initialize Supabase session if user is already authenticated
-  if (authStore.isAuthenticated) {
-    try {
-      await authStore.initializeSupabaseSession();
-    } catch (error) {
-      console.error('Failed to initialize Supabase session on boot:', error);
-    }
-  }
+
+  // TODO: Migrate to backend API - Supabase session initialization removed
+  // Authentication is now handled by backend JWT tokens
+  // No additional initialization needed on boot
 });
