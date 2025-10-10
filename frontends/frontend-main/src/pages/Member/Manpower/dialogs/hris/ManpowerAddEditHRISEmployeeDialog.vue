@@ -282,9 +282,6 @@ import GButton from "src/components/shared/buttons/GButton.vue";
 import GInput from "../../../../../components/shared/form/GInput.vue";
 import { api } from "src/boot/axios";
 import { handleAxiosError } from "src/utility/axios.error.handler";
-import { useSupabaseSchedules } from "src/composables/supabase/useSupabaseSchedules";
-import { useSupabasePayrollGroups } from "src/composables/supabase/useSupabasePayrollGroups";
-import { useSupabaseBranches } from "src/composables/supabase/useSupabaseBranches";
 import { useAuthStore } from "src/stores/auth";
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
@@ -314,16 +311,9 @@ export default {
     },
   },
   setup() {
-    // Initialize Supabase composables
-    const schedulesComposable = useSupabaseSchedules();
-    const payrollGroupsComposable = useSupabasePayrollGroups();
-    const branchesComposable = useSupabaseBranches();
     const authStore = useAuthStore();
-    
+
     return {
-      schedulesComposable,
-      payrollGroupsComposable,
-      branchesComposable,
       authStore
     };
   },
@@ -631,23 +621,16 @@ export default {
       this.scheduleOption = [];
 
       try {
-        // Fetch schedules using Supabase composable
-        const companyId = this.authStore.getAccountInformation?.companyId || this.authStore.getAccountInformation?.company?.id;
-        if (companyId) {
-          await this.schedulesComposable.fetchSchedulesByCompany(companyId);
-        } else {
-          await this.schedulesComposable.fetchSchedules();
-        }
-        
-        // Update local options from composable (scheduleOptions is a computed ref)
-        this.scheduleOption = this.schedulesComposable.scheduleOptions.value;
-        
+        // Fetch schedules using backend API
+        const response = await api.get('/hr-configuration/schedule/list');
+        this.scheduleOption = response.data || [];
+
         // Set default value if none selected
         if (this.scheduleOption.length > 0 && !this.scheduleId) {
           this.scheduleId = this.scheduleOption[0].value;
         }
       } catch (error) {
-        console.error("Error fetching schedule codes from Supabase:", error);
+        console.error("Error fetching schedule codes:", error);
         this.$q.notify({
           type: "negative",
           message: "Failed to load schedules",
@@ -656,28 +639,22 @@ export default {
         this.isLoading = false;
       }
     },
+
     async fetchPayrolGroupCode() {
       this.isLoading = true;
       this.payrolGroupCode = [];
 
       try {
-        // Fetch payroll groups using Supabase composable
-        const companyId = this.authStore.getAccountInformation?.companyId || this.authStore.getAccountInformation?.company?.id;
-        if (companyId) {
-          await this.payrollGroupsComposable.fetchPayrollGroupsByCompany(companyId);
-        } else {
-          await this.payrollGroupsComposable.fetchPayrollGroups();
-        }
-        
-        // Update local options from composable (payrollGroupOptions is a computed ref)
-        this.payrolGroupCode = this.payrollGroupsComposable.payrollGroupOptions.value;
-        
+        // Fetch payroll groups using backend API
+        const response = await api.get('/hr-configuration/payroll-group/list');
+        this.payrolGroupCode = response.data || [];
+
         // Set default value if none selected
         if (this.payrolGroupCode.length > 0 && !this.payrollGroupId) {
           this.payrollGroupId = this.payrolGroupCode[0].value;
         }
       } catch (error) {
-        console.error("Error fetching payroll groups from Supabase:", error);
+        console.error("Error fetching payroll groups:", error);
         this.$q.notify({
           type: "negative",
           message: "Failed to load payroll groups",
@@ -690,25 +667,18 @@ export default {
     async fetchBranchId() {
       this.isLoading = true;
       this.branchIds = [];
-      
+
       try {
-        // Fetch branches using Supabase composable
-        const companyId = this.authStore.getAccountInformation?.companyId || this.authStore.getAccountInformation?.company?.id;
-        if (companyId) {
-          await this.branchesComposable.fetchBranchesByCompany(companyId);
-        } else {
-          await this.branchesComposable.fetchBranches();
-        }
-        
-        // Update local options from composable (branchOptions is a computed ref)
-        this.branchIds = this.branchesComposable.branchOptions.value;
-        
+        // Fetch branches using backend API
+        const response = await api.get('/project/list');
+        this.branchIds = response.data || [];
+
         // Set default value if none selected and there are branches
         if (this.branchIds.length > 0 && !this.branchId) {
           this.branchId = this.branchIds[0].value;
         }
       } catch (error) {
-        console.error("Error fetching branches from Supabase:", error);
+        console.error("Error fetching branches:", error);
         this.$q.notify({
           type: "negative",
           message: "Failed to load branches",

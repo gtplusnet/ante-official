@@ -55,6 +55,30 @@ export class ShiftConfigurationService {
     return { list: formattedList, pagination, currentPage };
   }
 
+  async getShiftList() {
+    const shifts = await this.prisma.shift.findMany({
+      where: {
+        isDeleted: false,
+        companyId: this.utilityService.companyId,
+        NOT: {
+          purpose: ShiftPurpose.EMPLOYEE_ADJUSTMENT, // Exclude EMPLOYEE_ADJUSTMENT shifts
+        },
+      },
+      select: {
+        id: true,
+        shiftCode: true,
+      },
+      orderBy: {
+        shiftCode: 'asc',
+      },
+    });
+
+    return shifts.map(shift => ({
+      label: shift.shiftCode,
+      value: shift.id,
+    }));
+  }
+
   async getShiftInfo(id: number, raw = true): Promise<ShiftDataResponse> {
     id = Number(id);
     const shiftInformation: Shift = await this.prisma.shift.findUnique({

@@ -97,7 +97,8 @@ import GButton from "src/components/shared/buttons/GButton.vue";
 import { nextTick, Ref, ref, watch } from "vue";
 import { defineAsyncComponent } from 'vue';
 import { ScheduleDataRequest } from "@shared/request/schedule.request";
-import { useSupabaseShifts } from "src/composables/supabase/useSupabaseShifts";
+// TODO: Migrate to backend API
+// import { useSupabaseShifts } from "src/composables/supabase/useSupabaseShifts";
 import { useAuthStore } from "src/stores/auth";
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
@@ -128,9 +129,14 @@ export default {
     const openShiftCodeDialog: Ref<boolean> = ref(false);
     const dayData = ref<string | null>(null);
     const shiftCodeList = ref<{ label: string; value: number }[]>([]);
-    
-    // Initialize Supabase composables
-    const shiftsComposable = useSupabaseShifts();
+
+    // TODO: Migrate to backend API - shifts composable deleted
+    // const shiftsComposable = useSupabaseShifts();
+    const shiftsComposable = {
+      shiftOptions: { value: [] },
+      fetchShiftsByCompany: async () => {},
+      fetchShifts: async () => {}
+    };
     const authStore = useAuthStore();
     const dayColumn = ref([
       { name: "monday", label: "Monday" },

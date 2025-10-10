@@ -101,27 +101,27 @@
                 </div>
 
                 <!-- Budget -->
-                <div class="abc-item row justify-between" v-if="project.budget">
+                <div class="abc-item row justify-between" v-if="project.budget && project.budget.raw > 0">
                   <div class="row items-center">
                     <div class="row items-center q-mr-sm" :style="{ color: '#747786' }">
                       <q-icon name="payments" size="18px" />
                       <span class="text-label-medium">Budget</span>
                     </div>
                     <div class="text-bold text-label-medium" :style="{ color: 'var(--q-text-dark)' }">
-                      {{ project.budget.formatted }}
+                      {{ project.budget.formatCurrency }}
                     </div>
                   </div>
                 </div>
 
                 <!-- Timeline -->
-                <div class="detail-item row justify-between">
+                <div class="detail-item row justify-between" v-if="project.startDate && project.endDate">
                   <div class="row items-center">
                     <div class="row items-center q-mr-sm" :style="{ color: '#747786' }">
                       <q-icon name="schedule" size="18px" />
                       <span class="text-label-medium">Timeline</span>
                     </div>
                     <div class="text-bold text-label-medium" :style="{ color: 'var(--q-text-dark)' }">
-                      {{ project.startDate.formatted }} - {{ project.endDate.formatted }}
+                      {{ project.startDate.date }} - {{ project.endDate.date }}
                     </div>
                   </div>
                 </div>
@@ -388,7 +388,7 @@
 import { ref, computed, onMounted, defineAsyncComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import supabaseService from '../../../services/supabase';
+import { api } from '../../../boot/axios';
 import { useCache } from '../../../composables/useCache';
 import { projectCache, CacheTTL } from '../../../utils/cache/implementations';
 
@@ -423,10 +423,10 @@ type ProjectDisplayInterface = {
   id: number;
   name: string;
   description: string;
-  budget: { formatted: string; raw: number };
+  budget: { formatCurrency: string; raw: number };
   isDeleted: boolean;
-  startDate: { formatted: string; raw: string | Date };
-  endDate: { formatted: string; raw: string | Date };
+  startDate: { date: string; raw: string | Date };
+  endDate: { date: string; raw: string | Date };
   status: ProjectStatus;
   projectBoardStage?: string;
   progressPercentage?: number;
@@ -443,7 +443,7 @@ const projectData = ref<ProjectDataResponse | undefined>(undefined);
 const isProjectCreateDialogOpen = ref<boolean>(false);
 const isDragging = ref<boolean>(false);
 
-// Use centralized cache for projects with Supabase
+// Use centralized cache for projects with Backend API
 const {
   data: cachedProjectData,
   isCached,
@@ -455,50 +455,37 @@ const {
   projectCache,
   async () => {
     try {
-      const { data: projects, error } = await supabaseService.getClient()
-        .from('Project')
-        .select(`
-          *,
-          Client (
-            id,
-            name,
-            email,
-            contactNumber
-          ),
-          Location (
-            id,
-            name,
-            street,
-            zipCode
-          ),
-          Company (
-            id,
-            companyName
-          )
-        `)
-        .eq('isDeleted', false)
-        .eq('isLead', false)
-        .eq('status', 'PROJECT')
-        .order('createdAt', { ascending: false });
+      // Use backend API with table endpoint (PUT /project)
+      const response = await api.put('/project', {
+        // TableBodyDTO
+        filters: [
+          { field: 'isDeleted', operator: '=', value: false },
+          { field: 'isLead', operator: '=', value: false },
+          { field: 'status', operator: '=', value: 'PROJECT' }
+        ],
+        sorts: [{ field: 'createdAt', order: 'desc' }]
+      }, {
+        params: {
+          // TableQueryDTO
+          page: 1,
+          perPage: 100 // Get more for board view
+        }
+      });
 
-      if (error) {
-        console.error('Error fetching projects:', error);
-        $q.notify({
-          type: 'negative',
-          message: 'Failed to load projects',
-          position: 'top',
-          timeout: 3000
-        });
-        return { projects: [], currentPage: 1, pagination: [] };
-      }
-
+      // Backend returns formatted data with list, pagination, etc.
       return {
-        projects: projects || [],
-        currentPage: 1,
-        pagination: []
+        projects: response.data?.list || [],
+        currentPage: response.data?.currentPage || 1,
+        pagination: response.data?.pagination || []
       };
     } catch (err) {
       console.error('Unexpected error fetching projects:', err);
+      $q.notify({
+        type: 'negative',
+        message: 'Failed to load projects',
+        position: 'top',
+        timeout: 3000
+      });
       return { projects: [], currentPage: 1, pagination: [] };
     }
   },
@@ -515,50 +502,23 @@ const isLoading = computed(() => isRefreshing.value && !isCached.value);
 const projectList = computed<ProjectDisplayInterface[]>(() => {
   if (!cachedProjectData.value?.projects) return [];
 
-  return cachedProjectData.value.projects.map((item: any) => {
-    const formatCurrency = (amount: number) => {
-      return new Intl.NumberFormat('en-PH', {
-        style: 'currency',
-        currency: 'PHP'
-      }).format(amount || 0);
-    };
-
-    const formatDate = (dateString: string | Date) => {
-      if (!dateString) return 'No date';
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    };
-
-    return {
-      id: item.id,
-      name: item.name || 'Unnamed Project',
-      description: item.description || '',
-      budget: {
-        formatted: formatCurrency(item.budget),
-        raw: item.budget || 0
-      },
-      isDeleted: item.isDeleted || false,
-      startDate: {
-        formatted: formatDate(item.startDate),
-        raw: item.startDate
-      },
-      endDate: {
-        formatted: formatDate(item.endDate),
-        raw: item.endDate
-      },
-      status: (item.status || 'PROJECT') as ProjectStatus,
-      projectBoardStage: item.projectBoardStage || 'planning',
-      progressPercentage: item.progressPercentage || 0,
-      code: item.code || '',
-      client: item.Client,
-      clientId: item.clientId,
-      locationId: item.locationId
-    };
-  });
+  // Backend already returns fully formatted data, just map to display interface
+  return cachedProjectData.value.projects.map((item: any) => ({
+    id: item.id,
+    name: item.name || 'Unnamed Project',
+    description: item.description || '',
+    budget: item.budget || { formatCurrency: '₱0.00', raw: 0 }, // Backend formats currency
+    isDeleted: item.isDeleted || false,
+    startDate: item.startDate || { date: 'No date', raw: null }, // Backend formats dates
+    endDate: item.endDate || { date: 'No date', raw: null },
+    status: item.status as ProjectStatus,
+    projectBoardStage: item.projectBoardStage || 'planning',
+    progressPercentage: item.progressPercentage || 0,
+    code: item.code || '',
+    client: item.client, // Backend includes full client object
+    clientId: item.client?.id,
+    locationId: item.location?.id
+  }));
 });
 
 // Get projects for a specific column
@@ -645,23 +605,25 @@ const handleDrop = async (event: DragEvent, columnKey: string) => {
         // Update the cache
         cachedProjectData.value.projects[cacheIndex].projectBoardStage = columnKey;
 
-        // Then update the database
-        const { error } = await supabaseService.getClient()
-          .from('Project')
-          .update({ projectBoardStage: columnKey })
-          .eq('id', projectToMove.id);
+        // Then update via backend API (PATCH /project/board-stage)
+        await api.patch('/project/board-stage', {
+          projectId: projectToMove.id.toString(),
+          nowBoardStageKey: columnKey
+        });
 
-        if (error) {
-          // Rollback on error
-          cachedProjectData.value.projects[cacheIndex].projectBoardStage = originalStage;
-          throw error;
-        }
+        // Silent success - no notification needed for smooth UX
       }
     }
-
-    // Silent success - no notification needed for smooth UX
   } catch (error) {
     console.error('Error updating project stage:', error);
+
+    // Rollback on error
+    if (cachedProjectData.value?.projects) {
+      const cacheIndex = cachedProjectData.value.projects.findIndex((p: any) => p.id === projectToMove.id);
+      if (cacheIndex !== -1) {
+        cachedProjectData.value.projects[cacheIndex].projectBoardStage = originalStage;
+      }
+    }
 
     $q.notify({
       type: 'negative',
@@ -709,14 +671,21 @@ const openProject = (id: number): void => {
   router.push({ name: 'member_project_page', params: { id } });
 };
 
-const editProject = (_project: ProjectDisplayInterface): void => {
-  // Similar to grid view edit logic
-  $q.notify({
-    type: 'info',
-    message: 'Edit functionality to be implemented',
-    position: 'top',
-    timeout: 2000
-  });
+const editProject = async (project: ProjectDisplayInterface): void => {
+  try {
+    // Fetch full project data from backend
+    const response = await api.get(`/project?id=${project.id}`);
+    projectData.value = response.data as ProjectDataResponse;
+    isProjectCreateDialogOpen.value = true;
+  } catch (error) {
+    console.error('Error fetching project data:', error);
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to load project data for editing',
+      position: 'top',
+      timeout: 3000
+    });
+  }
 };
 
 const deleteProject = (project: ProjectDisplayInterface): void => {

@@ -26,6 +26,17 @@
       </template>
 
       <template #content>
+        <!-- Daily Summary -->
+        <div v-if="!isInitialLoading" class="daily-summary-header q-mb-sm">
+          <div class="row items-center justify-between">
+            <div class="col">
+              <span class="text-caption text-grey">Today's Total: </span>
+              <span class="text-body-medium text-weight-medium">{{ formattedDailyTotal }}</span>
+            </div>
+            <q-icon name="today" size="18px" color="primary" />
+          </div>
+        </div>
+
         <!-- Loading Skeleton -->
         <div v-if="isInitialLoading" class="timer-container-dense">
           <div class="row items-center">
@@ -41,162 +52,99 @@
 
         <!-- No Active Timer -->
         <div v-else-if="!currentTimer" class="timer-container-dense">
-          <div class="row items-center">
-            <div class="col-2">
+          <div class="row items-center justify-between">
+            <div class="col-auto">
               <div class="timer-icon-wrapper">
                 <q-icon name="timer_off" size="30px" />
               </div>
             </div>
-            <div class="col-10">
-              <div class="timer-info-dense">
+            <div class="col">
+              <div class="timer-info-dense q-ml-sm">
                 <div class="timer-digits-dense">00:00:00</div>
-                <div class="text-caption text-grey">No active timer</div>
+                <div class="text-caption text-grey">Not tracking</div>
               </div>
             </div>
-          </div>
-          
-          <!-- Task Selection/Input -->
-          <div class="task-input-dense q-mt-sm">
-            <!-- If task selected, show it -->
-            <div v-if="selectedTask" class="selected-task-display">
-              <div class="row items-center">
-                <div class="col">
-                  <div class="task-display-field">
-                    <q-icon name="assignment_turned_in" size="14px" color="primary" />
-                    <span>{{ selectedTask.title }}</span>
-                  </div>
-                </div>
-                <div class="col-auto">
-                  <q-btn
-                    flat
-                    dense
-                    round
-                    size="sm"
-                    icon="info"
-                    :loading="isLoadingTaskInfo"
-                    :disable="isLoadingTaskInfo"
-                    @click="viewTaskInfo"
-                  >
-                    <q-tooltip>View task details</q-tooltip>
-                  </q-btn>
-                </div>
-                <div class="col-auto">
-                  <q-btn
-                    flat
-                    dense
-                    round
-                    size="sm"
-                    icon="close"
-                    @click="clearTaskSelection"
-                  >
-                    <q-tooltip>Clear selection</q-tooltip>
-                  </q-btn>
-                </div>
-                <div class="col-auto">
-                  <q-btn
-                    flat
-                    dense
-                    color="primary"
-                    icon="play_arrow"
-                    :loading="isLoading"
-                    :disable="isLoading"
-                    @click="startTimer"
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <!-- If no task selected, show input -->
-            <div v-else>
-              <div class="row q-col-gutter-xs items-center">
-                <div class="col">
-                  <q-input
-                    v-model="newTaskTitle"
-                    dense
-                    outlined
-                    placeholder="What are you working on?"
-                    hide-bottom-space
-                    @keyup.enter="startTimer"
-                  >
-                    <template v-slot:append>
-                      <q-icon 
-                        name="assignment" 
-                        size="16px"
-                        class="cursor-pointer" 
-                        @click="showTaskSelectionDialog = true"
-                      >
-                        <q-tooltip>Select existing task</q-tooltip>
-                      </q-icon>
-                    </template>
-                  </q-input>
-                </div>
-                <div class="col-auto">
-                  <q-btn
-                    flat
-                    dense
-                    color="primary"
-                    icon="play_arrow"
-                    :disable="!newTaskTitle || isLoading"
-                    :loading="isLoading"
-                    @click="startTimer"
-                  >
-                    <q-tooltip>Create task & start timer</q-tooltip>
-                  </q-btn>
-                </div>
-              </div>
+            <div class="col-auto">
+              <q-btn
+                unelevated
+                color="positive"
+                label="TIME-IN"
+                icon="login"
+                size="sm"
+                :loading="isLoading"
+                :disable="isLoading"
+                @click="startTimer"
+              >
+                <q-tooltip>Start time tracking</q-tooltip>
+              </q-btn>
             </div>
           </div>
         </div>
 
         <!-- Active Timer -->
         <div v-else-if="currentTimer" class="timer-container-dense">
-          <div class="row items-center">
-            <div class="col-2">
+          <div class="row items-center justify-between q-mb-sm">
+            <div class="col-auto">
               <div class="timer-icon-wrapper active">
                 <q-icon name="timer" size="30px" />
               </div>
             </div>
-            <div class="col-10">
-              <div class="row items-center justify-between">
-                <div class="timer-info-dense">
-                  <div class="timer-digits-dense active">
-                    {{ formattedTime }}
-                    <q-spinner-dots size="12px" class="q-ml-xs" />
-                  </div>
-                  <div class="text-caption text-grey">
-                    {{ currentTimer?.taskTitle || currentTimer?.task?.title || 'Working...' }}
-                    <span v-if="currentTimer?.task?.project"> • {{ currentTimer.task.project.name }}</span>
-                  </div>
+            <div class="col">
+              <div class="timer-info-dense q-ml-sm">
+                <div class="timer-digits-dense active">
+                  {{ formattedTime }}
+                  <q-spinner-dots size="12px" class="q-ml-xs" />
                 </div>
-                <div class="row q-gutter-xs">
-                  <q-btn
-                    flat
-                    dense
-                    round
-                    size="sm"
-                    icon="info"
-                    :loading="isLoadingTaskInfo"
-                    :disable="isLoadingTaskInfo"
-                    @click="viewCurrentTaskInfo"
-                  >
-                    <q-tooltip>View task details</q-tooltip>
-                  </q-btn>
-                  <q-btn
-                    flat
-                    dense
-                    round
-                    color="negative"
-                    icon="stop"
-                    size="sm"
-                    :loading="isLoading"
-                    :disable="isLoading"
-                    @click="stopTimer"
-                  >
-                    <q-tooltip>Stop timer</q-tooltip>
-                  </q-btn>
+                <div class="text-caption text-grey">
+                  {{ currentTimer?.taskTitle || currentTimer?.task?.title || 'Manual Entry' }}
+                  <span v-if="currentTimer?.task?.project"> • {{ currentTimer.task.project.name }}</span>
                 </div>
               </div>
             </div>
+            <div class="col-auto">
+              <div class="row q-gutter-xs">
+                <q-btn
+                  v-if="currentTimer.taskId"
+                  flat
+                  dense
+                  round
+                  size="sm"
+                  icon="info"
+                  :loading="isLoadingTaskInfo"
+                  :disable="isLoadingTaskInfo"
+                  @click="viewCurrentTaskInfo"
+                >
+                  <q-tooltip>View task details</q-tooltip>
+                </q-btn>
+                <q-btn
+                  unelevated
+                  color="negative"
+                  label="TIME-OUT"
+                  icon="logout"
+                  size="sm"
+                  :loading="isLoading"
+                  :disable="isLoading"
+                  @click="stopTimer"
+                >
+                  <q-tooltip>Stop time tracking</q-tooltip>
+                </q-btn>
+              </div>
+            </div>
+          </div>
+
+          <!-- Change/Tag Task Button (always visible) -->
+          <div class="row justify-center q-mt-xs">
+            <q-btn
+              flat
+              dense
+              color="primary"
+              :label="currentTimer.taskId ? 'Change Task' : 'Tag Task'"
+              icon="assignment"
+              size="sm"
+              @click="showTaskSelectionDialog = true"
+            >
+              <q-tooltip>{{ currentTimer.taskId ? 'Switch to different task' : 'Tag this time with a task' }}</q-tooltip>
+            </q-btn>
           </div>
         </div>
       </template>
@@ -224,6 +172,14 @@
 </template>
 
 <style scoped lang="scss">
+// Daily summary header
+.daily-summary-header {
+  padding: 8px 12px;
+  background: var(--md3-sys-color-surface-variant);
+  border: 1px solid var(--md3-sys-color-outline-variant);
+  border-radius: 8px;
+}
+
 // Dense container with minimal padding
 .timer-container-dense {
   padding: 4px 4px 16px 4px;
@@ -333,7 +289,7 @@ import GlobalWidgetCard from '../../../../components/shared/global/GlobalWidgetC
 import TaskSelectionDialog from './dialog/TaskSelectionDialog.vue';
 import TimeHistoryDialog from './dialog/TimeHistoryDialog.vue';
 import TaskInformationDialog from '../../../../components/dialog/TaskInformationDialog/TaskInformationDialog.vue';
-import { GeolocationService } from 'src/services/geolocation.service';
+import { useLocationStore } from 'src/stores/location';
 
 interface Task {
   id: number;
@@ -350,6 +306,7 @@ interface CurrentTimer {
   taskTitle: string | null;
   timeIn: string;
   elapsedSeconds: number;
+  taskTotalSeconds?: number; // Total time for this task today
   task?: Task;
 }
 
@@ -365,32 +322,52 @@ export default defineComponent({
     const instance = getCurrentInstance();
     const api = instance?.proxy?.$api;
     const bus = instance?.appContext.config.globalProperties.$bus;
-    
+    const locationStore = useLocationStore();
+
     // State
     const isInitialLoading = ref(true);
     const isLoading = ref(false);
     const isLoadingTaskInfo = ref(false);
     const isRefreshing = ref(false);
     const currentTimer = ref<CurrentTimer | null>(null);
-    const newTaskTitle = ref('');
     const selectedTask = ref<Task | null>(null);
     const showTaskSelectionDialog = ref(false);
     const showHistoryDialog = ref(false);
     const isTaskInformationDialogOpen = ref(false);
     const taskInformation = ref<any | null>(null);
     const elapsedSeconds = ref(0);
+    const dailyTotalMinutes = ref(0);
+    const taskBaseSeconds = ref(0); // Base time for current task (previous sessions)
+    const serverTimeIn = ref<Date | null>(null);
     let timerInterval: number | null = null;
+    let visibilityListener: (() => void) | null = null;
     
     // Computed
     const formattedTime = computed(() => {
-      const seconds = elapsedSeconds.value;
-      const hours = Math.floor(seconds / 3600);
-      const minutes = Math.floor((seconds % 3600) / 60);
-      const secs = seconds % 60;
-      
+      // If task is tagged, show task total + current session
+      // If no task, show current session only
+      const displaySeconds = currentTimer.value?.taskId
+        ? taskBaseSeconds.value + elapsedSeconds.value
+        : elapsedSeconds.value;
+
+      const hours = Math.floor(displaySeconds / 3600);
+      const minutes = Math.floor((displaySeconds % 3600) / 60);
+      const secs = Math.floor(displaySeconds % 60);
+
       return [hours, minutes, secs]
         .map(val => String(val).padStart(2, '0'))
         .join(':');
+    });
+
+    const formattedDailyTotal = computed(() => {
+      const totalSeconds = dailyTotalMinutes.value * 60 + elapsedSeconds.value;
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+      if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+      }
+      return `${minutes}m`;
     });
     
     // Methods
@@ -399,18 +376,32 @@ export default defineComponent({
       if (!isInitialLoading.value) {
         isRefreshing.value = true;
       }
-      
+
       try {
         const response = await api.get('/time-tracking/current');
         currentTimer.value = response.data;
-        
+
         if (currentTimer.value) {
-          elapsedSeconds.value = currentTimer.value.elapsedSeconds;
+          // Store server time-in for accurate calculation
+          serverTimeIn.value = new Date(currentTimer.value.timeIn);
+
+          // Extract task base time (previous sessions)
+          if (currentTimer.value.taskTotalSeconds !== undefined) {
+            // taskTotalSeconds includes current session, so subtract it to get base
+            taskBaseSeconds.value = Math.floor(currentTimer.value.taskTotalSeconds - currentTimer.value.elapsedSeconds);
+          } else {
+            taskBaseSeconds.value = 0;
+          }
+
+          // Calculate elapsed time from server timestamp
+          calculateElapsedTime();
           startTimerInterval();
         } else {
           // Clear timer if no current timer
           stopTimerInterval();
           elapsedSeconds.value = 0;
+          taskBaseSeconds.value = 0;
+          serverTimeIn.value = null;
         }
       } catch (error) {
         console.error('Failed to fetch current timer:', error);
@@ -419,97 +410,60 @@ export default defineComponent({
         isRefreshing.value = false;
       }
     };
-    
-    const startTimer = async () => {
-      if (!newTaskTitle.value && !selectedTask.value) return;
-      
-      // Check if there's a timer running for a different task
-      const taskIdToStart = selectedTask.value?.id;
-      const isNewTask = !selectedTask.value;
-      
-      if (currentTimer.value && taskIdToStart && currentTimer.value.taskId !== taskIdToStart) {
-        // Show confirmation dialog for switching timers
-        instance?.proxy?.$q.dialog({
-          title: 'Switch Timer',
-          message: `Timer is currently running for "${currentTimer.value.taskTitle}". Switch to "${selectedTask.value?.title}"?`,
-          cancel: true,
-          persistent: true,
-          ok: {
-            label: 'Switch Timer',
-            color: 'primary',
-            flat: false
-          },
-          cancel: {
-            label: 'Cancel',
-            flat: true
-          }
-        }).onOk(async () => {
-          await performStartTimer(isNewTask, true);
-        });
-      } else if (currentTimer.value && isNewTask) {
-        // Show confirmation dialog for creating new task and switching
-        instance?.proxy?.$q.dialog({
-          title: 'Switch Timer',
-          message: `Timer is currently running for "${currentTimer.value.taskTitle}". Create new task and switch timer?`,
-          cancel: true,
-          persistent: true,
-          ok: {
-            label: 'Create & Switch',
-            color: 'primary',
-            flat: false
-          },
-          cancel: {
-            label: 'Cancel',
-            flat: true
-          }
-        }).onOk(async () => {
-          await performStartTimer(isNewTask, true);
-        });
-      } else {
-        await performStartTimer(isNewTask, false);
+
+    const fetchDailySummary = async () => {
+      try {
+        const response = await api.get('/time-tracking/daily-summary');
+        dailyTotalMinutes.value = response.data?.totalMinutes || 0;
+      } catch (error) {
+        console.error('Failed to fetch daily summary:', error);
       }
     };
-    
-    const performStartTimer = async (isNewTask: boolean, isSwitching: boolean = false) => {
-      // Request TIME-IN geolocation BEFORE starting timer
-      // This will reverse geocode coordinates to location name
-      const timeInGeoData = await GeolocationService.requestWithWarning();
 
-      // User cancelled geolocation warning
-      if (timeInGeoData === null) {
+    const calculateElapsedTime = () => {
+      if (!serverTimeIn.value) return;
+      const now = new Date();
+      const elapsed = Math.floor((now.getTime() - serverTimeIn.value.getTime()) / 1000);
+      elapsedSeconds.value = Math.max(0, elapsed);
+    };
+    
+    const startTimer = async () => {
+      // If already running, show warning
+      if (currentTimer.value) {
+        instance?.proxy?.$q.dialog({
+          title: 'Timer Already Running',
+          message: `Timer is currently running for "${currentTimer.value.taskTitle}". Please stop the current timer first.`,
+          ok: {
+            label: 'OK',
+            flat: true
+          }
+        });
         return;
       }
 
+      await performStartTimer();
+    };
+    
+    const performStartTimer = async () => {
+      // Show loading immediately for instant feedback
       isLoading.value = true;
-      try {
-        let response: any;
 
-        if (selectedTask.value) {
-          // Use existing task with TIME-IN geolocation (includes location name)
-          response = await api.post('/time-tracking/start', {
-            taskId: selectedTask.value.id,
-            timeInLatitude: timeInGeoData.latitude || undefined,
-            timeInLongitude: timeInGeoData.longitude || undefined,
-            timeInLocation: timeInGeoData.location || undefined,
-            timeInGeolocationEnabled: timeInGeoData.geolocationEnabled,
-          });
-        } else {
-          // Create new task and start timer with TIME-IN geolocation
-          response = await api.post('/time-tracking/create-and-start', {
-            title: newTaskTitle.value,
-            description: '',
-            timeInLatitude: timeInGeoData.latitude || undefined,
-            timeInLongitude: timeInGeoData.longitude || undefined,
-            timeInLocation: timeInGeoData.location || undefined,
-            timeInGeolocationEnabled: timeInGeoData.geolocationEnabled,
-          });
-          // Response includes both task and timer
-          response.data = response.data.timer;
-        }
-        
+      // Get location from store (instant - no waiting!)
+      const location = locationStore.currentLocation;
+
+      try {
+        // Start timer without task (manual time-in)
+        const response = await api.post('/time-tracking/start', {
+          // taskId is optional now - omit it for manual time-in
+          timeInLatitude: location?.latitude || 0,
+          timeInLongitude: location?.longitude || 0,
+          timeInLocation: location?.location || null,
+          timeInGeolocationEnabled: location?.geolocationEnabled || false,
+        });
+
         // Stop existing timer interval if running
         stopTimerInterval();
-        
+
         currentTimer.value = {
           id: response.data.id,
           taskId: response.data.taskId,
@@ -518,43 +472,31 @@ export default defineComponent({
           elapsedSeconds: 0,
           task: response.data.task
         };
-        
+
+        // Store server time-in for accurate calculation
+        serverTimeIn.value = new Date(response.data.timeIn);
         elapsedSeconds.value = 0;
         startTimerInterval();
-        
-        // Clear inputs
-        newTaskTitle.value = '';
-        selectedTask.value = null;
-        
-        // Show success message with location if captured
-        let message = '';
-        if (isSwitching) {
-          message = isNewTask ? 'Task created and timer switched' : 'Timer switched successfully';
-        } else {
-          message = isNewTask ? 'Task created and timer started' : 'Timer started';
-        }
 
-        // Append location to message if available
-        if (timeInGeoData.geolocationEnabled && timeInGeoData.location) {
-          message += ` at ${timeInGeoData.location}`;
+        // Clear selection
+        selectedTask.value = null;
+
+        // Show success message with location if captured
+        let message = 'Timer started';
+        if (location?.geolocationEnabled && location?.location) {
+          message += ` at ${location.location}`;
         }
 
         instance?.proxy?.$q.notify({
           type: 'positive',
           message
         });
-        
-        // Emit events
+
+        // Emit events and refresh daily summary
         if (bus) {
-          if (isNewTask) {
-            bus.emit('task-created');
-          }
-          if (isSwitching) {
-            bus.emit('timer-switched');  // Specific event for timer switching
-          }
           bus.emit('timer-started');
-          bus.emit('reloadTaskList');
         }
+        fetchDailySummary();
       } catch (error: any) {
         instance?.proxy?.$q.notify({
           type: 'negative',
@@ -568,33 +510,38 @@ export default defineComponent({
     const stopTimer = async () => {
       if (!currentTimer.value) return;
 
-      // Capture TIME-OUT geolocation silently (includes reverse geocoding)
-      // Non-blocking, no warnings
-      const timeOutGeoData = await GeolocationService.getGeolocationSilent();
-
+      // Show loading immediately for instant feedback
       isLoading.value = true;
+
+      // Get location from store (instant - no waiting!)
+      const location = locationStore.currentLocation;
+
       try {
         await api.post('/time-tracking/stop', {
-          timeOutLatitude: timeOutGeoData.latitude || undefined,
-          timeOutLongitude: timeOutGeoData.longitude || undefined,
-          timeOutLocation: timeOutGeoData.location || undefined,
-          timeOutGeolocationEnabled: timeOutGeoData.geolocationEnabled,
+          timeOutLatitude: location?.latitude || 0,
+          timeOutLongitude: location?.longitude || 0,
+          timeOutLocation: location?.location || null,
+          timeOutGeolocationEnabled: location?.geolocationEnabled || false,
         });
 
         stopTimerInterval();
         currentTimer.value = null;
         elapsedSeconds.value = 0;
+        serverTimeIn.value = null;
 
         // Show success message with location if captured
         let message = 'Timer stopped successfully';
-        if (timeOutGeoData.geolocationEnabled && timeOutGeoData.location) {
-          message += ` at ${timeOutGeoData.location}`;
+        if (location?.geolocationEnabled && location?.location) {
+          message += ` at ${location.location}`;
         }
 
         instance?.proxy?.$q.notify({
           type: 'positive',
           message
         });
+
+        // Refresh daily summary after stopping
+        fetchDailySummary();
       } catch (error: any) {
         instance?.proxy?.$q.notify({
           type: 'negative',
@@ -607,9 +554,11 @@ export default defineComponent({
     
     const startTimerInterval = () => {
       if (timerInterval) return;
-      
+
+      // Use timestamp-based calculation instead of incrementing
+      // This prevents desync when tab is inactive
       timerInterval = window.setInterval(() => {
-        elapsedSeconds.value++;
+        calculateElapsedTime();
       }, 1000);
     };
     
@@ -620,10 +569,68 @@ export default defineComponent({
       }
     };
     
-    const onTaskSelected = (task: Task) => {
+    const onTaskSelected = async (task: Task) => {
       selectedTask.value = task;
-      newTaskTitle.value = '';
       showTaskSelectionDialog.value = false;
+
+      // If timer is running, switch to the selected task (stops current, starts new)
+      if (currentTimer.value) {
+        isLoading.value = true;
+        try {
+          // Backend stops current timer and creates new timer for the new task
+          const response = await api.post('/time-tracking/tag', {
+            taskId: task.id
+          });
+
+          // Reset timer state for NEW timer (starts from 0)
+          serverTimeIn.value = new Date(response.data.timeIn);
+          elapsedSeconds.value = 0;
+
+          // Fetch task summary to get total time for this task TODAY (previous sessions)
+          const taskSummaryResponse = await api.get(`/time-tracking/task-summary/${task.id}`);
+          const taskSummary = taskSummaryResponse.data;
+
+          // Set base seconds from previous sessions (excludes current session which is 0)
+          taskBaseSeconds.value = Math.floor(taskSummary.totalSeconds);
+
+          // Update current timer with NEW timer info
+          currentTimer.value = {
+            id: response.data.id, // NEW timer ID
+            taskId: response.data.taskId,
+            taskTitle: response.data.taskTitle,
+            timeIn: response.data.timeIn, // NEW timeIn
+            elapsedSeconds: 0,
+            taskTotalSeconds: taskSummary.totalSeconds,
+            task: response.data.task
+          };
+
+          // Restart timer interval with new timestamp
+          stopTimerInterval();
+          startTimerInterval();
+
+          instance?.proxy?.$q.notify({
+            type: 'positive',
+            message: `Switched to task: ${task.title}`
+          });
+
+          // Clear selection
+          selectedTask.value = null;
+
+          // Emit events and refresh daily summary
+          if (bus) {
+            bus.emit('timer-tagged');
+            bus.emit('reloadTaskList');
+          }
+          fetchDailySummary(); // Refresh since previous task was stopped
+        } catch (error: any) {
+          instance?.proxy?.$q.notify({
+            type: 'negative',
+            message: error.response?.data?.message || 'Failed to switch task'
+          });
+        } finally {
+          isLoading.value = false;
+        }
+      }
     };
     
     const clearTaskSelection = () => {
@@ -671,23 +678,40 @@ export default defineComponent({
     // Lifecycle
     onMounted(() => {
       fetchCurrentTimer();
-      
+      fetchDailySummary();
+
+      // Add Page Visibility API listener to recalculate when tab becomes visible
+      visibilityListener = () => {
+        if (!document.hidden && currentTimer.value) {
+          // Recalculate elapsed time when page becomes visible
+          calculateElapsedTime();
+        }
+      };
+      document.addEventListener('visibilitychange', visibilityListener);
+
       // Listen for timer events from other components
       if (bus) {
         bus.on('timer-switched', fetchCurrentTimer);
         bus.on('timer-started', fetchCurrentTimer);
         bus.on('timer-stopped', fetchCurrentTimer);
+        bus.on('timer-tagged', fetchCurrentTimer);
       }
     });
-    
+
     onUnmounted(() => {
       stopTimerInterval();
-      
+
+      // Remove Page Visibility API listener
+      if (visibilityListener) {
+        document.removeEventListener('visibilitychange', visibilityListener);
+      }
+
       // Clean up event listeners
       if (bus) {
         bus.off('timer-switched', fetchCurrentTimer);
         bus.off('timer-started', fetchCurrentTimer);
         bus.off('timer-stopped', fetchCurrentTimer);
+        bus.off('timer-tagged', fetchCurrentTimer);
       }
     });
     
@@ -697,17 +721,16 @@ export default defineComponent({
       isLoadingTaskInfo,
       isRefreshing,
       currentTimer,
-      newTaskTitle,
       selectedTask,
       showTaskSelectionDialog,
       showHistoryDialog,
       isTaskInformationDialogOpen,
       taskInformation,
       formattedTime,
+      formattedDailyTotal,
       elapsedSeconds,
       startTimer,
       stopTimer,
-      performStartTimer,
       onTaskSelected,
       clearTaskSelection,
       viewTaskInfo,

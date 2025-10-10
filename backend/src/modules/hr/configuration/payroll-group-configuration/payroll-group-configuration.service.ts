@@ -38,6 +38,27 @@ export class PayrollGroupConfigurationService {
     return OvertimeRateFactorsReference;
   }
 
+  async getPayrollGroupList() {
+    const payrollGroups = await this.prisma.payrollGroup.findMany({
+      where: {
+        isDeleted: false,
+        companyId: this.utilityService.companyId,
+      },
+      select: {
+        id: true,
+        payrollGroupCode: true,
+      },
+    });
+
+    // Sort case-insensitively in JavaScript
+    return payrollGroups
+      .map(group => ({
+        label: group.payrollGroupCode,
+        value: group.id,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
+  }
+
   async getInfo(id: number): Promise<PayrollGroupDataResponse> {
     id = Number(id);
 

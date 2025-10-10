@@ -239,16 +239,48 @@ const { data, load, refresh } = useCache(
 onMounted(() => load());  // Use load() for initial, refresh() for manual
 ```
 
-### Supabase Integration
+### Supabase Usage Policy (CRITICAL)
+**⚠️ IMPORTANT**: Supabase direct access is LIMITED. Most operations MUST use backend API.
+
+**❌ NEVER Use Supabase Direct For**:
+- Task operations (SELECT, INSERT, UPDATE, DELETE)
+- Any write operations requiring business logic
+- Operations needing watchers, notifications, or webhooks
+- Operations requiring audit trails
+
+**✅ Use Backend API Instead**:
+```typescript
+// Task operations - ALWAYS use backend API
+api.get('/task/ordered')           // List tasks
+api.post('/task/create', data)     // Create task
+api.put('/task/update', data)      // Update task
+api.put('/task/update-order', data)// Reorder tasks
+api.delete(`/task/${id}`)          // Delete task
+```
+
+**✅ Supabase Allowed For (Limited Use Cases)**:
 ```typescript
 import { useSupabaseTable } from 'src/composables/supabase/useSupabaseTable';
 
+// ONLY for read-only views with proper RLS policies
 const { data, loading } = useSupabaseTable({
-  table: 'EmployeeData',
+  table: 'EmployeeData',  // ✅ OK: Read-only view
   select: '*, account:Account!inner(firstName, lastName)',
   filters: [{ column: 'isActive', operator: 'eq', value: true }]
 });
+
+// ❌ WRONG: Task table
+useSupabaseTable({ table: 'Task' })  // Use backend API instead!
 ```
+
+**Why Backend API is Required**:
+- ✅ Business logic validation
+- ✅ Audit trail creation
+- ✅ Notification triggers
+- ✅ Task watcher management
+- ✅ Discussion thread creation
+- ✅ WebSocket events
+- ✅ No RLS policy issues
 
 ## 🎨 Material Design 3 Standards
 - **MANDATORY**: Flat design only

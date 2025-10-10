@@ -173,3 +173,12 @@ export class TaskFilterDto {
   @IsOptional()
   descending?: boolean;
 }
+export class TaskDashboardQueryDto {
+  @IsNotEmpty()
+  @IsEnum(['active', 'assigned', 'approvals'])
+  readonly tab: 'active' | 'assigned' | 'approvals';
+
+  @IsOptional()
+  @IsString()
+  readonly search?: string;
+}

@@ -2,6 +2,26 @@
 
 This comprehensive guide covers how to properly integrate and use Supabase in the frontend-main application, including real-world examples from the HRIS system and notification service.
 
+## ⚠️ CRITICAL USAGE POLICY
+
+**IMPORTANT**: Supabase direct access is **SEVERELY LIMITED**. Most operations MUST use backend API.
+
+### ❌ NEVER Use Supabase Direct For:
+- **Task operations** (SELECT, INSERT, UPDATE, DELETE) → Use backend API
+- **Any write operations** requiring business logic → Use backend API
+- **Operations needing**:
+  - Watchers, notifications, or webhooks
+  - Audit trails
+  - Complex validation
+  - Multi-table transactions
+
+### ✅ Supabase Allowed ONLY For:
+- **Read-only views** with proper RLS policies (e.g., EmployeeData)
+- **Non-critical** read operations where direct access is explicitly safe
+- **Realtime subscriptions** for specific approved tables
+
+**When in doubt, use backend API!**
+
 ## Table of Contents
 
 - [Overview & Architecture](#overview--architecture)
@@ -19,33 +39,38 @@ This comprehensive guide covers how to properly integrate and use Supabase in th
 
 ### Integration Architecture
 
-The frontend-main application uses Supabase as a direct database access layer with the following architecture:
+The frontend-main application uses a **HYBRID** architecture:
 
 ```
 ┌─────────────────┐    ┌──────────────┐    ┌─────────────────┐
-│   Vue Components │    │  Composables │    │ Supabase Service │
+│   Vue Components │    │   Backend API │    │  NestJS Backend │
 │                 │    │              │    │                 │
-│ - SupabaseGTable│────│useSupabaseTable│───│  supabaseService│
-│ - HRIS Pages    │    │useHRISEmployees│   │                 │
-│ - Notifications │    │useNotification │   │                 │
+│ - Task Pages    │────│ api.get()    │────│ TaskController  │
+│ - Task Dialogs  │    │ api.post()   │    │ TaskService     │
+│ - Task Lists    │    │ api.put()    │    │                 │
 └─────────────────┘    └──────────────┘    └─────────────────┘
-                                                    │
-                                           ┌─────────────────┐
-                                           │ Supabase Client │
-                                           │                 │
-                                           │ - Authentication│
-                                           │ - Database      │
-                                           │ - Realtime      │
-                                           └─────────────────┘
+        │                                           │
+        │ (LIMITED USE)                             │
+        │                                           ▼
+        │                              ┌─────────────────────┐
+        │                              │   PostgreSQL DB     │
+        ▼                              │                     │
+┌─────────────────┐                   │ - Task table        │
+│ Supabase Client │                   │ - Employee views    │
+│                 │───────────────────│ - Other tables      │
+│ - Read-only views│                  └─────────────────────┘
+│ - HRIS data     │
+│ - Realtime      │
+└─────────────────┘
 ```
 
 ### Key Principles
 
-1. **Singleton Service**: One `supabaseService` instance across the app
-2. **Read-Only Access**: Frontend only reads data, backend handles writes via API
+1. **Backend API First**: All task operations go through backend API
+2. **Limited Supabase**: Only for approved read-only views
 3. **Session Management**: Automatic session persistence and refresh
-4. **RLS Security**: Row Level Security policies with X-Source header
-5. **Composable Pattern**: Reusable composables for different data entities
+4. **RLS Security**: Row Level Security policies for allowed tables only
+5. **Business Logic**: Always in backend, never in frontend
 
 ## Configuration & Setup
 

@@ -20,6 +20,7 @@ import {
   ProjectIdDto,
   ProjectUpdateDto,
   ProjectDeleteAllDto,
+  ProjectMoveDto,
 } from '@modules/project/project/project/project.validator.dto';
 import { ProjectDataResponse } from '../../../../shared/response';
 
@@ -51,6 +52,17 @@ export class ProjectController {
     );
   }
 
+  @Patch('board-stage')
+  async updateProjectBoardStage(
+    @Body() projectMoveDto: ProjectMoveDto,
+    @NestResponse() response: Response,
+  ) {
+    return this.utilityService.responseHandler(
+      this.projectService.updateProjectBoard(projectMoveDto),
+      response,
+    );
+  }
+
   @Put()
   async table(
     @NestResponse() response: Response,
@@ -59,6 +71,14 @@ export class ProjectController {
   ) {
     return this.utilityService.responseHandler(
       this.projectService.projectTable(query, body),
+      response,
+    );
+  }
+
+  @Get('list')
+  async getProjectList(@NestResponse() response: Response) {
+    return this.utilityService.responseHandler(
+      this.projectService.getProjectList(),
       response,
     );
   }

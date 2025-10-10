@@ -6,6 +6,7 @@ export interface CurrentTimerResponse {
   taskTitle?: string | null;
   timeIn: Date;
   elapsedSeconds: number;
+  taskTotalSeconds?: number; // Total time for this task today (if task tagged)
   task?: Partial<Task & { project?: Partial<Project> }> | null;
   // TIME-IN GEOLOCATION
   timeInLatitude?: number | null;

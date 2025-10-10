@@ -1,6 +1,6 @@
-import { computed } from 'vue';
-import { useSupabaseTable } from './supabase/useSupabaseTable';
+import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from 'src/stores/auth';
+import { api } from 'src/boot/axios';
 
 export interface Assignee {
   id: string;
@@ -16,37 +16,37 @@ export interface Assignee {
 export function useAssigneeList() {
   // Get the current user's company ID from auth store
   const authStore = useAuthStore();
-  const userCompanyId = authStore.accountInformation?.company?.id;
   const currentUserId = authStore.accountInformation?.id;
   const currentUserInfo = authStore.accountInformation;
 
-  // Build filters array - only show active users from same company
-  const filters: any[] = [
-    { column: 'isDeleted', operator: 'eq', value: false }
-  ];
+  // State
+  const accounts = ref<Assignee[]>([]);
+  const loading = ref(false);
+  const error = ref<Error | null>(null);
 
-  // Add company filter if user has a company
-  // This ensures users only see assignees from their own company
-  if (userCompanyId) {
-    filters.push({ column: 'companyId', operator: 'eq', value: userCompanyId });
-  }
+  // Fetch task users from backend API (bypasses RLS restrictions)
+  const fetchTaskUsers = async () => {
+    loading.value = true;
+    error.value = null;
 
-  // Use Supabase to fetch accounts
-  const {
-    data: accounts,
-    loading,
-    error,
-    refetch
-  } = useSupabaseTable({
-    table: 'Account',
-    select: 'id, firstName, lastName, username, email, image, companyId',
-    filters,
-    orderBy: [
-      { column: 'firstName', ascending: true },
-      { column: 'lastName', ascending: true }
-    ],
-    pageSize: 100,
-    autoFetch: true
+    try {
+      const response = await api.get('/task/users');
+
+      // Backend returns { items: [...], total: N, timestamp: ... }
+      const items = response.data?.items || response.data || [];
+      accounts.value = items;
+    } catch (err) {
+      console.error('Failed to fetch task users:', err);
+      error.value = err as Error;
+      accounts.value = [];
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // Auto-fetch on mount
+  onMounted(() => {
+    fetchTaskUsers();
   });
 
   // Helper function to capitalize first letter of each word
@@ -116,7 +116,7 @@ export function useAssigneeList() {
         lastName: currentUserInfo.lastName || '',
         username: currentUserInfo.username || '',
         email: currentUserInfo.email || '',
-        companyId: userCompanyId,
+        companyId: currentUserInfo.company?.id,  // Get from auth store
       };
 
       // Add current user at the beginning of the list
@@ -211,6 +211,6 @@ export function useAssigneeList() {
     formatAssigneeName,
 
     // Refresh function
-    refetch
+    refetch: fetchTaskUsers
   };
 }

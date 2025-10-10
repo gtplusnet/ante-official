@@ -115,6 +115,20 @@ export class BoardLaneController {
       );
     }
   }
+  @Get('all')
+  async getAllBoardLanes(@NestResponse() response: Response) {
+    try {
+      const boardLanes = await this.boardLaneService.getAllBoardLanes();
+      return response.status(HttpStatus.OK).json(boardLanes);
+    } catch (error) {
+      return this.utilityService.errorResponse(
+        response,
+        error,
+        'Failed to fetch board lanes',
+      );
+    }
+  }
+
   @Get()
   async getProjectInformation(
     @NestResponse() response: Response,

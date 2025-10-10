@@ -156,8 +156,8 @@ interface ExtendedTaskCountByStatusResponseInterface {
 }
 import GlobalWidgetTab from '../../../../components/shared/global/GlobalWidgetTab.vue';
 import { useAuthStore } from '../../../../stores/auth';
-// Import Supabase composable for direct database access
-import { useTaskTable } from 'src/composables/supabase/useTaskTable';
+// Import backend API composable (replaces direct Supabase access)
+import { useTaskDashboardAPI } from 'src/composables/api/useTaskAPI';
 // Import task references for transforming numeric values
 import taskPriorityReference from 'src/references/task-priority.reference';
 import taskDifficultyReference from 'src/references/task-difficulty.reference';
@@ -252,73 +252,7 @@ export default defineComponent({
       rowsPerPage: 5,
     });
 
-    // Simple configurations for each tab - separating normal tasks from approval tasks
-    // Active tasks - assigned to current user, not done, NORMAL tasks only
-    const activeTasksConfig = {
-      assignedToId: currentUserId.value,
-      companyId: currentCompanyId.value,
-      filters: [
-        { column: 'boardLaneId', operator: 'neq', value: 3 }, // Not DONE (3 is DONE lane ID)
-        { column: 'taskType', operator: 'eq', value: 'NORMAL' } // Normal tasks only
-      ],
-      orderBy: [
-        { column: 'createdAt', ascending: false }
-      ],
-      pageSize: 1000, // Fetch all tasks (up to 1000), paginate client-side
-      autoFetch: true // Auto-load on mount
-    };
-
-    // Assigned tasks - created by current user, not self-assigned, still open, NORMAL tasks only
-    const assignedTasksConfig = {
-      filters: [
-        { column: 'createdById', operator: 'eq', value: currentUserId.value },
-        { column: 'isSelfAssigned', operator: 'eq', value: false },
-        { column: 'isOpen', operator: 'eq', value: true },
-        { column: 'taskType', operator: 'eq', value: 'NORMAL' } // Normal tasks only
-      ],
-      companyId: currentCompanyId.value,
-      orderBy: [
-        { column: 'createdAt', ascending: false }
-      ],
-      pageSize: 1000, // Fetch all tasks (up to 1000)
-      autoFetch: false // Load only when tab is selected
-    };
-
-    // Approval tasks - assigned to current user, APPROVAL type only, not done
-    const approvalTasksConfig = {
-      assignedToId: currentUserId.value,
-      companyId: currentCompanyId.value,
-      filters: [
-        { column: 'taskType', operator: 'eq', value: 'APPROVAL' }, // Approval tasks only
-        { column: 'boardLaneId', operator: 'neq', value: 3 } // Not DONE
-      ],
-      orderBy: [
-        { column: 'createdAt', ascending: false }
-      ],
-      pageSize: 1000, // Fetch all tasks (up to 1000)
-      autoFetch: false // Load only when tab is selected
-    };
-
-    // Initialize Supabase table composables - simplified approach
-    const {
-      data: activeTasks,
-      loading: activeLoading,
-      refetch: refetchActiveTasks
-    } = useTaskTable(activeTasksConfig);
-
-    const {
-      data: assignedTasks,
-      loading: assignedLoading,
-      refetch: refetchAssignedTasks
-    } = useTaskTable(assignedTasksConfig);
-
-    const {
-      data: approvalTasks,
-      loading: approvalLoading,
-      refetch: refetchApprovalTasks
-    } = useTaskTable(approvalTasksConfig);
-
-    // Reactive state
+    // Reactive state (must be defined before API composable uses them)
     const isTaskInformationDialogOpen = ref(false);
     const isTaskAccountSummaryDialogOpen = ref(false);
     const isTaskCreateDialogOpen = ref(false);
@@ -338,6 +272,19 @@ export default defineComponent({
     const sortBy = ref('createdAt');
     const descending = ref(false);
     const currentSortOption = ref<'all' | 'project' | 'priority' | 'dueDate' | null>(null);
+
+    // Initialize backend API composable (replaces Supabase direct access)
+    // This single composable handles all three tabs (active, assigned, approvals)
+    const {
+      tasks: apiTasks,
+      counts: apiCounts,
+      loading: apiLoading,
+      refetch: refetchDashboard
+    } = useTaskDashboardAPI({
+      tab: activeTab as any, // Will be reactive
+      search: search as any, // Will be reactive
+      autoFetch: true
+    });
 
     // Tab list
     const tabList = reactive<TabItem[]>([
@@ -674,94 +621,72 @@ export default defineComponent({
     };
 
     // Process tasks for display with UI tags
+    // Backend already returns fully formatted data, we just need to add UI tags
     const processTasksForDisplay = (tasksArray: any[]) => {
       if (!tasksArray || tasksArray.length === 0) return [];
 
       return tasksArray.map((task) => {
-        const transformedTask = transformSupabaseTask(task);
         const tags: TagInfo[] = [];
 
+        // Backend returns pre-formatted objects, just extract for tags
         // Add priority tag
-        if (transformedTask.priorityLevel && typeof transformedTask.priorityLevel === 'object') {
+        if (task.priorityLevel && typeof task.priorityLevel === 'object') {
           tags.push({
-            label: transformedTask.priorityLevel.label,
-            color: transformedTask.priorityLevel.color,
-            textColor: transformedTask.priorityLevel.textColor || 'white',
+            label: task.priorityLevel.label,
+            color: task.priorityLevel.color,
+            textColor: task.priorityLevel.textColor || 'white',
           } as TagInfo);
         }
 
         // Add difficulty tag
-        if (
-          transformedTask.assignedToDifficultySet &&
-          typeof transformedTask.assignedToDifficultySet === 'object'
-        ) {
+        if (task.assignedToDifficultySet && typeof task.assignedToDifficultySet === 'object') {
           tags.push({
-            label: transformedTask.assignedToDifficultySet.label,
-            color: transformedTask.assignedToDifficultySet.color,
-            textColor: transformedTask.assignedToDifficultySet.textColor || 'white',
+            label: task.assignedToDifficultySet.label,
+            color: task.assignedToDifficultySet.color,
+            textColor: task.assignedToDifficultySet.textColor || 'white',
           } as TagInfo);
         }
 
         // Add board lane status tag
-        if (transformedTask.boardLane?.key && typeof transformedTask.boardLane.key === 'object') {
+        if (task.boardLane?.key && typeof task.boardLane.key === 'object') {
           tags.push({
-            label: transformedTask.boardLane.key.label || 'Unknown',
-            color: transformedTask.boardLane.key.color || 'grey',
-            textColor: transformedTask.boardLane.key.textColor || 'white',
+            label: task.boardLane.key.label || 'Unknown',
+            color: task.boardLane.key.color || 'grey',
+            textColor: task.boardLane.key.textColor || 'white',
           } as TagInfo);
         }
 
         return {
-          ...transformedTask,
+          ...task,
           tags,
         } as TaskWithUIProps;
       });
     };
 
-    // Watch for data changes and update task list based on active tab
+    // Watch for API data changes and update task list
+    // Backend already handles tab filtering and search, so we just process for display
     watchEffect(() => {
-      let currentTasks = [];
-
-      // Get the current tab's data
-      if (activeTab.value === 'active' && activeTasks.value) {
-        currentTasks = activeTasks.value;
-      } else if (activeTab.value === 'assigned' && assignedTasks.value) {
-        currentTasks = assignedTasks.value;
-      } else if (activeTab.value === 'approvals' && approvalTasks.value) {
-        currentTasks = approvalTasks.value;
-      }
-
-      // Apply client-side search filter if active
-      if (search.value && searchActive.value) {
-        currentTasks = currentTasks.filter(task =>
-          task.title?.toLowerCase().includes(search.value.toLowerCase()) ||
-          task.description?.toLowerCase().includes(search.value.toLowerCase())
-        );
-      }
-
-      // Process for display
-      taskList.value = processTasksForDisplay(currentTasks);
+      // Backend returns pre-filtered tasks based on tab and search
+      // Just need to process for UI tags
+      taskList.value = processTasksForDisplay(apiTasks.value || []);
     });
 
-    // Calculate task counts from fetched data
+    // Update task counts from API response
     watchEffect(() => {
-      taskCountByStatus.value = {
-        activeTaskCount: activeTasks.value?.length || 0,
-        assignedTaskCount: assignedTasks.value?.length || 0,
-        completedTaskCount: 0, // Not used anymore
-        approvalTaskCount: approvalTasks.value?.length || 0,
-      };
+      if (apiCounts.value) {
+        taskCountByStatus.value = {
+          activeTaskCount: apiCounts.value.active || 0,
+          assignedTaskCount: apiCounts.value.assigned || 0,
+          completedTaskCount: 0, // Not used anymore
+          approvalTaskCount: apiCounts.value.approvals || 0,
+        };
+      }
     });
 
     const loadTaskList = async () => {
-      // Refetch data based on active tab
-      if (activeTab.value === 'active') {
-        await refetchActiveTasks();
-      } else if (activeTab.value === 'assigned') {
-        await refetchAssignedTasks();
-      } else if (activeTab.value === 'approvals') {
-        await refetchApprovalTasks();
-      }
+      // Refetch dashboard data from backend API
+      // The composable watches tab and search, so this will fetch correct data
+      await refetchDashboard();
     };
 
     // Simple client-side pagination
@@ -925,11 +850,8 @@ export default defineComponent({
       try {
         addEventReloadTask();
 
-        // Load assigned and approvals tabs data
-        await Promise.all([
-          refetchAssignedTasks(),
-          refetchApprovalTasks()
-        ]);
+        // API composable auto-fetches on mount (autoFetch: true)
+        // No need to manually fetch here
       } catch (error) {
         console.warn('Error during component initialization:', error);
       }
@@ -956,15 +878,8 @@ export default defineComponent({
       taskInformation,
       activeTab,
       isTaskListLoading: computed(() => {
-        // Show loading based on active tab's loading state
-        if (activeTab.value === 'active') {
-          return activeLoading.value;
-        } else if (activeTab.value === 'assigned') {
-          return assignedLoading.value;
-        } else if (activeTab.value === 'approvals') {
-          return approvalLoading.value;
-        }
-        return false;
+        // Show loading from API composable
+        return apiLoading.value;
       }),
       taskList,
       search,

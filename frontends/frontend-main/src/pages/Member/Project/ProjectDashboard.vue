@@ -157,7 +157,7 @@ import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import ExpandedNavPageContainer from '../../../components/shared/ExpandedNavPageContainer.vue';
 import GlobalWidgetCounter from '../../../components/shared/global/GlobalWidgetCounter.vue';
-import supabaseService from '../../../services/supabase';
+import { api } from '../../../boot/axios';
 import { useCache } from '../../../composables/useCache';
 import { projectCache, CacheTTL, ProjectCacheData } from '../../../utils/cache/implementations';
 
@@ -193,37 +193,24 @@ export default defineComponent({
     } = useCache<DashboardData>(
       projectCache as any,
       async (): Promise<DashboardData> => {
-        // Fetch projects directly from Supabase
-        const { data: projects, error } = await supabaseService.getClient()
-          .from('Project')
-          .select(`
-            id,
-            name,
-            status,
-            projectBoardStage,
-            budget,
-            startDate,
-            endDate,
-            isDeleted,
-            isLead,
-            createdAt,
-            Client (
-              id,
-              name,
-              email
-            )
-          `)
-          .eq('isDeleted', false)
-          .eq('isLead', false)
-          .eq('status', 'PROJECT')
-          .order('createdAt', { ascending: false });
+        // Use backend API with table endpoint (PUT /project)
+        const response = await api.put('/project', {
+          // TableBodyDTO
+          filters: [
+            { field: 'isDeleted', operator: '=', value: false },
+            { field: 'isLead', operator: '=', value: false },
+            { field: 'status', operator: '=', value: 'PROJECT' }
+          ],
+          sorts: [{ field: 'createdAt', order: 'desc' }]
+        }, {
+          params: {
+            // TableQueryDTO
+            page: 1,
+            perPage: 50
+          }
+        });
 
-        if (error) {
-          console.error('Error fetching projects:', error);
-          throw new Error('Failed to fetch dashboard data');
-        }
-
-        const projectList = projects || [];
+        const projectList = response.data?.list || [];
 
         // Calculate statistics
         const stats = {
@@ -239,17 +226,11 @@ export default defineComponent({
           ).length,
         };
 
-        // Format recent projects
+        // Format recent projects - backend already formats dates
         const recentProjects = projectList.slice(0, 5).map((project: any) => ({
           ...project,
-          client: project.Client,
-          endDate: project.endDate ? {
-            dateFull: new Date(project.endDate).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric'
-            })
-          } : null
+          client: project.client, // Backend returns lowercase 'client'
+          endDate: project.endDate || { dateFull: 'N/A' } // Backend formats dates
         }));
 
         // Return as ProjectCacheData format

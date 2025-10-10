@@ -39,7 +39,8 @@
 import { defineComponent, computed, ref, PropType, onMounted } from 'vue';
 import { ProjectDataResponse } from '@shared/response';
 import GlobalWidgetCounter from '../../../../../components/shared/global/GlobalWidgetCounter.vue';
-import supabaseService from '../../../../../services/supabase';
+// TODO: Migrate to backend API
+// import supabaseService from '../../../../../services/supabase';
 
 export default defineComponent({
   name: 'ProjectMetrics',
@@ -102,49 +103,53 @@ export default defineComponent({
     const fetchTaskStats = async () => {
       if (!props.projectData?.id) return;
 
-      try {
-        // Count tasks by status for this project
-        const { data, error } = await supabaseService.getClient()
-          .from('Task')
-          .select(`
-            id,
-            boardLane:boardLaneId (
-              id,
-              key
-            )
-          `)
-          .eq('projectId', props.projectData.id)
-          .eq('isDeleted', false);
+      // TODO: Migrate to backend API
+      console.warn('fetchTaskStats not implemented - needs backend API');
+      // try {
+      //   // Count tasks by status for this project
+      //   const { data, error } = await supabaseService.getClient()
+      //     .from('Task')
+      //     .select(`
+      //       id,
+      //       boardLane:boardLaneId (
+      //         id,
+      //         key
+      //       )
+      //     `)
+      //     .eq('projectId', props.projectData.id)
+      //     .eq('isDeleted', false);
 
-        if (!error && data) {
-          taskStats.value = {
-            total: data.length,
-            completed: data.filter(task => task.boardLane?.key === 'DONE').length
-          };
-        }
-      } catch (err) {
-        console.error('Error fetching task stats:', err);
-      }
+      //   if (!error && data) {
+      //     taskStats.value = {
+      //       total: data.length,
+      //       completed: data.filter(task => task.boardLane?.key === 'DONE').length
+      //     };
+      //   }
+      // } catch (err) {
+      //   console.error('Error fetching task stats:', err);
+      // }
     };
 
     // Fetch team size
     const fetchTeamSize = async () => {
       if (!props.projectData?.id) return;
 
-      try {
-        // Count employees assigned to this project
-        const { count, error } = await supabaseService.getClient()
-          .from('EmployeeData')
-          .select('accountId', { count: 'exact', head: true })
-          .eq('branchId', props.projectData.id)
-          .eq('isActive', true);
+      // TODO: Migrate to backend API
+      console.warn('fetchTeamSize not implemented - needs backend API');
+      // try {
+      //   // Count employees assigned to this project
+      //   const { count, error } = await supabaseService.getClient()
+      //     .from('EmployeeData')
+      //     .select('accountId', { count: 'exact', head: true })
+      //     .eq('branchId', props.projectData.id)
+      //     .eq('isActive', true);
 
-        if (!error && count !== null) {
-          teamSize.value = count;
-        }
-      } catch (err) {
-        console.error('Error fetching team size:', err);
-      }
+      //   if (!error && count !== null) {
+      //     teamSize.value = count;
+      //   }
+      // } catch (err) {
+      //   console.error('Error fetching team size:', err);
+      // }
     };
 
     onMounted(async () => {

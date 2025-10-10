@@ -1,10 +1,12 @@
 <template>
   <div>
-    <!-- Use Supabase-enabled table for direct database access -->
-    <supabase-g-table 
-    :isRowActionEnabled="true" 
-    tableKey="employeeListTable" 
-    supabaseTab="separated"
+    <!-- Use API-based table -->
+    <!-- TODO: Backend needs to add support for filtering separated employees (contract end date not null) -->
+    <g-table
+    :isRowActionEnabled="true"
+    tableKey="employeeListTable"
+    apiUrl="/hris/employee/table"
+    :apiFilters="[]"
     ref="table">
     <template v-slot:accountDetails="props">
       <div
@@ -55,7 +57,7 @@
       </g-button>
     </template>
     <!------------------------------------------->
-    </supabase-g-table>
+    </g-table>
 
     <EditCreateEmployee
     @saveDone="handleSaveDone"
@@ -75,7 +77,7 @@
 </template>
 
 <script>
-import SupabaseGTable from "../../../../../components/shared/display/SupabaseGTable.vue";
+import GTable from "../../../../../components/shared/display/GTable.vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
 import EditCreateEmployee from './dialog/EditCreateEmployee.vue';
 import ViewCreateEmployee from './dialog/ViewCreateEmployee.vue';
@@ -83,7 +85,7 @@ import ViewCreateEmployee from './dialog/ViewCreateEmployee.vue';
 export default {
   name: 'HRISSeparatedTabPage',
   components: {
-    SupabaseGTable,
+    GTable,
     GButton,
     EditCreateEmployee,
     ViewCreateEmployee,
