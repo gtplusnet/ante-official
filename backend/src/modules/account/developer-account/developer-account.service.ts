@@ -13,7 +13,6 @@ import { EncryptionService } from '@common/encryption.service';
 import { AccountDataResponse } from '../../../shared/response/account.response';
 import { RoleService } from '@modules/role/role/role.service';
 import { CompanyService } from '@modules/company/company/company.service';
-import { SupabaseAuthService } from '../../auth/supabase-auth/supabase-auth.service';
 
 @Injectable()
 export class DeveloperAccountService {
@@ -23,7 +22,6 @@ export class DeveloperAccountService {
   @Inject() public encryption: EncryptionService;
   @Inject() public roleService: RoleService;
   @Inject() public companyService: CompanyService;
-  @Inject() public supabaseAuthService: SupabaseAuthService;
 
   async getDeveloperAccount({ id }): Promise<AccountDataResponse> {
     const account = await this.prisma.account.findFirst({
@@ -372,30 +370,6 @@ export class DeveloperAccountService {
       throw new NotFoundException('Target user not found');
     }
 
-    // Generate Supabase tokens for the target user
-    let supabaseTokens: {
-      supabaseToken?: string;
-      supabaseRefreshToken?: string;
-    } = {};
-
-    try {
-      // Ensure Supabase user exists and get tokens
-      const supabaseResult = await this.supabaseAuthService.ensureSupabaseUser(
-        targetAccount,
-        // Password is not needed for existing users
-      );
-
-      if (supabaseResult && supabaseResult.accessToken) {
-        supabaseTokens = {
-          supabaseToken: supabaseResult.accessToken,
-          supabaseRefreshToken: supabaseResult.refreshToken,
-        };
-      }
-    } catch (error) {
-      console.error('Failed to generate Supabase tokens for login-as:', error);
-      // Continue without Supabase tokens (backward compatibility)
-    }
-
     // Generate a token for the target user
     const token = this.utility.randomString();
     const insertToken: Prisma.AccountTokenCreateInput = {
@@ -406,11 +380,6 @@ export class DeveloperAccountService {
       token: token,
       status: 'active' as const,
       updatedAt: new Date(),
-      // Store Supabase tokens if available
-      ...(supabaseTokens.supabaseToken && {
-        supabaseAccessToken: supabaseTokens.supabaseToken,
-        supabaseRefreshToken: supabaseTokens.supabaseRefreshToken,
-      }),
     };
 
     await this.prisma.accountToken.create({ data: insertToken });
@@ -421,7 +390,6 @@ export class DeveloperAccountService {
     return {
       token,
       accountInformation,
-      ...supabaseTokens, // Include Supabase tokens in response
     };
   }
 }

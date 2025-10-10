@@ -106,12 +106,7 @@ import { MediaModule } from '@infrastructure/file-upload/media/media.module';
 import { TimeTrackingModule } from '@modules/time-tracking/time-tracking.module';
 import { ManpowerDeviceModule } from '@modules/manpower-device/manpower-device.module';
 import { POSDeviceModule } from '@modules/pos-device/pos-device.module';
-
-// Webhook modules
-import { SupabaseWebhookModule } from '@modules/webhooks/supabase-webhook.module';
-
-// App controller
-import { AppController } from './app.controller';
+import { CashierModule } from '@modules/cashier/cashier.module';
 
 // Individual controllers and services that need to be refactored into modules
 import { ScopeController } from '@modules/project/scope/scope/scope.controller';
@@ -306,13 +301,9 @@ const ENV = process.env.NODE_ENV;
     TimeTrackingModule,
     ManpowerDeviceModule,
     POSDeviceModule,
-
-    // Webhook module for Supabase integration
-    SupabaseWebhookModule,
+    CashierModule,
   ],
   controllers: [
-    // Root app controller
-    AppController,
 
     // Controllers that should be moved to their own modules eventually
     ScopeController,
