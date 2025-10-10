@@ -3,7 +3,8 @@
     <template v-if="isLoading == false">
       <div class="lead-grid-view">
         <template v-for="lead in leadList" :key="lead.id">
-          <div class="grid-card" @click="openLead(lead.id, lead.id === leadViewId)" :class="{ 'active-card': lead.id === leadViewId }">
+          <div class="grid-card" @click="openLead(lead.id, lead.id === leadViewId)"
+            :class="{ 'active-card': lead.id === leadViewId }">
             <div class="grid-card-header">
               <div class="lead-name text-title-small">{{ lead.name }}</div>
               <q-btn flat round dense size="sm" icon="more_vert" @click.stop>
@@ -22,35 +23,47 @@
               </q-btn>
             </div>
             <div class="grid-card-body">
-              <div class="text-grey text-label-medium text-italic">{{ formatWord(lead.leadBoardStage || '') }}</div>
               <div class="deal-badge row">
-                <div class="deal-type text-label-small">{{ lead.leadType?.label || 'Deal Type' }}</div>
-                <div class="deal-status text-label-small">Deal Status</div>
+                <div class="deal-type text-label-small">{{ getLeadTypeLabel(lead) }}</div>
+                <div class="deal-status text-label-small" :class="getProbabilityClass(lead)">{{
+                  getProbabilityLetter(lead) }}</div>
               </div>
               <div class="avatar-container row items-center">
                 <q-avatar size="md">
                   <img src="/lead-avatar.png" />
                 </q-avatar>
-                <div class="text-grey text-label-medium q-ml-sm">{{ lead?.client?.name }}</div>
-              </div>
-              <div class="row justify-between q-py-xs" v-if="lead.budget">
-                <div class="row items-center">
-                  <div class="row items-center q-mr-sm" :style="{ color: '#747786' }">
-                    <q-icon name="savings" size="18px" />
-                    <span class="text-label-medium">ABC</span>
-                  </div>
-                  <div class="text-bold text-label-medium" :style="{ color: 'var(--q-text-dark)' }">&#x20B1;{{ formatNumber(0) }} (Static)</div>
+                <div class="text-grey text-label-medium q-ml-sm">{{ `${formatWord(lead.personInCharge.firstName)}
+                  ${formatWord(lead.personInCharge.lastName)}` }}
                 </div>
               </div>
-              <div class="row justify-between" v-if="lead.budget">
+
+              <div class="abc-item row justify-between" v-if="lead.initialCosting">
                 <div class="row items-center">
                   <div class="row items-center q-mr-sm" :style="{ color: '#747786' }">
-                    <q-icon name="bar_chart" size="18px" />
-                    <span class="text-label-medium">MMR</span>
+                    <q-icon name="payments" size="18px" />
+                    <span class="text-label-medium q-ml-xs">Total Contract:</span>
                   </div>
-                  <div class="text-bold text-label-medium" :style="{ color: 'var(--q-text-dark)' }">&#x20B1;{{ formatNumber(lead.budget.raw) }}</div>
+                  <div class="text-bold text-label-medium" :style="{ color: 'var(--q-text-dark)' }">{{
+                    lead.initialCosting.formatCurrency }}</div>
                 </div>
               </div>
+
+              <!-- Stage and Time Stage -->
+              <div class="row justify-between items-center q-mt-sm">
+                <div class="row items-center">
+                  <div class="row items-center q-mr-sm" :style="{ color: '#747786' }">
+                    <q-icon name="view_kanban" size="18px" />
+                    <span class="text-label-medium q-ml-xs">Stage:</span>
+                  </div>
+                  <div class="text-bold text-label-medium" :style="{ color: 'var(--q-text-dark)' }">{{
+                    formatWord(lead.leadBoardStage || '') }}</div>
+                </div>
+                <div class="time-stage row items-center text-label-small text-dark q-mb-xs">
+                  <q-icon name="history" size="16px" />
+                  <span class="q-ml-xs">{{ calculateTimeInStage(lead) }}</span>
+                </div>
+              </div>
+
             </div>
           </div>
         </template>
@@ -79,21 +92,20 @@
     <LeadCreateDialog v-model="isLeadCreateDialogOpen" :leadData="leadData" @close="fetchData"> </LeadCreateDialog>
 
     <!-- View Lead Dialog -->
-    <view-lead-dialog v-model="isViewLeadDialogOpen" @close="handleCloseDialog" :leadViewId="leadViewId"></view-lead-dialog>
+    <view-lead-dialog v-model="isViewLeadDialogOpen" @close="handleCloseDialog"
+      :leadViewId="leadViewId"></view-lead-dialog>
   </div>
 </template>
 
 <style scoped src="../Leads.scss"></style>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, defineAsyncComponent, watch } from 'vue';
+import { defineComponent, ref, onMounted, onBeforeUnmount, defineAsyncComponent, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { APIRequests } from 'src/utility/api.handler';
 import GlobalLoader from 'src/components/shared/common/GlobalLoader.vue';
-import { LeadDataResponse, ClientDataResponse } from '@shared/response';
+import { LeadDataResponse } from '@shared/response';
 import { formatWord } from 'src/utility/formatter';
-import { formatNumber } from 'src/utility/formatter';
-import type { ProjectStatus } from '@shared/response';
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
 const LeadCreateDialog = defineAsyncComponent(() =>
@@ -110,23 +122,8 @@ interface TableResponse<T> {
   pagination: number[];
 }
 
-// Type definition for our internal use that includes partial fields
-interface LeadDisplayInterface {
-  id: number;
-  name: string;
-  description: string;
-  budget: { formatted: string; raw: number };
-  isDeleted: boolean;
-  isLead: boolean;
-  leadBoardStage?: string;
-  startDate: { formatted: string; raw: string | Date };
-  endDate: { formatted: string; raw: string | Date };
-  status: ProjectStatus;
-  client?: ClientDataResponse;
-  clientId?: number;
-  locationId?: number;
-  leadType?: { key: string; label: string };
-}
+// Use complete LeadDataResponse interface (same as Board View)
+type LeadDisplayInterface = LeadDataResponse;
 
 export default defineComponent({
   name: 'LeadsGridView',
@@ -161,6 +158,8 @@ export default defineComponent({
     const isViewLeadDialogOpen = ref(false);
     const leadViewId = ref(0);
     const activeCard = ref(false);
+    const currentTime = ref(new Date());
+    let timeUpdateInterval: NodeJS.Timeout | null = null;
 
     // Methods
     const fetchData = async (): Promise<void> => {
@@ -191,28 +190,8 @@ export default defineComponent({
           currentPage.value = typedResponse.currentPage;
           pagination.value = typedResponse.pagination;
 
-          leadList.value = typedResponse.list.map((item: LeadDataResponse) => ({
-            id: item.id,
-            name: item.name,
-            description: item.description,
-            budget: {
-              formatted: item.budget.formatCurrency,
-              raw: item.budget.raw,
-            },
-            isDeleted: item.isDeleted,
-            isLead: item.isLead,
-            leadBoardStage: item.leadBoardStage,
-            startDate: {
-              formatted: item.startDate.dateFull,
-              raw: item.startDate.raw,
-            },
-            endDate: {
-              formatted: item.endDate.dateFull,
-              raw: item.endDate.raw,
-            },
-            status: item.status as unknown as ProjectStatus,
-            client: item.client,
-          }));
+          // Use complete API response directly (same as Board View)
+          leadList.value = typedResponse.list;
         }
       } catch (error) {
         console.warn('Failed to fetch lead data:', error);
@@ -272,6 +251,110 @@ export default defineComponent({
       });
     };
 
+    const getProbabilityClass = (lead: LeadDisplayInterface) => {
+      // Extract numeric value from label (e.g., "50%" -> 50)
+      const winProb = lead.winProbability;
+      const label = typeof winProb === 'string' ? winProb : winProb?.label;
+      if (!label) {
+        return 'probability-unknown';
+      }
+
+      // Parse percentage from label (remove "%" and convert to number)
+      const probability = parseInt(label.replace('%', ''));
+
+      // Return unknown if parsing failed or probability is 0/null
+      if (isNaN(probability) || probability === 0) {
+        return 'probability-unknown';
+      }
+
+      // Map to probability ranges matching Sales Probability Widget
+      if (probability >= 90 && probability <= 100) {
+        return 'probability-a'; // A: 90-100%
+      } else if (probability >= 70 && probability <= 89) {
+        return 'probability-b'; // B: 70-89%
+      } else if (probability >= 50 && probability <= 69) {
+        return 'probability-c'; // C: 50-69%
+      } else if (probability >= 30 && probability <= 49) {
+        return 'probability-d'; // D: 30-49%
+      } else if (probability >= 10 && probability <= 29) {
+        return 'probability-e'; // E: 10-29%
+      } else if (probability >= 0 && probability <= 9) {
+        return 'probability-f'; // F: 0-9%
+      }
+
+      return 'probability-unknown';
+    };
+
+    const getProbabilityLetter = (lead: LeadDisplayInterface) => {
+      // Extract numeric value from label (e.g., "50%" -> 50)
+      const winProb = lead.winProbability;
+      const label = typeof winProb === 'string' ? winProb : winProb?.label;
+      if (!label) {
+        return 'Unknown';
+      }
+
+      // Parse percentage from label (remove "%" and convert to number)
+      const probability = parseInt(label.replace('%', ''));
+
+      // Return unknown if parsing failed or probability is 0/null
+      if (isNaN(probability) || probability === 0) {
+        return 'Unknown';
+      }
+
+      // Map to letter grades matching Sales Probability Widget
+      if (probability >= 90 && probability <= 100) {
+        return 'A'; // A: 90-100%
+      } else if (probability >= 70 && probability <= 89) {
+        return 'B'; // B: 70-89%
+      } else if (probability >= 50 && probability <= 69) {
+        return 'C'; // C: 50-69%
+      } else if (probability >= 30 && probability <= 49) {
+        return 'D'; // D: 30-49%
+      } else if (probability >= 10 && probability <= 29) {
+        return 'E'; // E: 10-29%
+      } else if (probability >= 0 && probability <= 9) {
+        return 'F'; // F: 0-9%
+      }
+
+      return 'Unknown';
+    };
+
+    const getLeadTypeLabel = (lead: LeadDisplayInterface) => {
+      const leadType = lead.leadType;
+      if (!leadType) return 'Deal Type';
+      return typeof leadType === 'string' ? leadType : leadType.label;
+    };
+
+    const calculateTimeInStage = (lead: LeadDisplayInterface) => {
+      if (!lead.updatedAt?.raw) {
+        return 'Recently added';
+      }
+
+      // Reference currentTime.value to make this reactive
+      const now = currentTime.value;
+      const updatedAt = new Date(lead.updatedAt.raw);
+      const diffInMilliseconds = now.getTime() - updatedAt.getTime();
+      const diffInMinutes = Math.floor(diffInMilliseconds / (1000 * 60));
+      const diffInHours = Math.floor(diffInMilliseconds / (1000 * 60 * 60));
+      const diffInDays = Math.floor(diffInHours / 24);
+      const diffInWeeks = Math.floor(diffInDays / 7);
+      const diffInMonths = Math.floor(diffInDays / 30);
+
+      if (diffInMinutes < 1) {
+        return 'Just now';
+      } else if (diffInMinutes < 60) {
+        return `${diffInMinutes}min${diffInMinutes === 1 ? '' : 's'} ago`;
+      } else if (diffInHours < 24) {
+        return `${diffInHours}hr${diffInHours === 1 ? '' : 's'} ago`;
+      } else if (diffInDays < 7) {
+        return `${diffInDays} ${diffInDays === 1 ? 'day' : 'days'}`;
+      } else if (diffInWeeks < 4) {
+        return `${diffInWeeks} ${diffInWeeks === 1 ? 'week' : 'weeks'}`;
+      } else {
+        return `${diffInMonths} ${diffInMonths === 1 ? 'month' : 'months'}`;
+      }
+    };
+
     // Watch for filter changes
     watch(
       () => [props.filterRelationshipOwner, props.filterDealType, props.filterStage],
@@ -284,8 +367,20 @@ export default defineComponent({
     onMounted(() => {
       try {
         fetchData();
+
+        // Update current time every 30 seconds for real-time time stage updates
+        timeUpdateInterval = setInterval(() => {
+          currentTime.value = new Date();
+        }, 30000); // 30 seconds
       } catch (error) {
         console.error('Error during component initialization:', error);
+      }
+    });
+
+    onBeforeUnmount(() => {
+      // Clean up interval to prevent memory leaks
+      if (timeUpdateInterval) {
+        clearInterval(timeUpdateInterval);
       }
     });
 
@@ -309,7 +404,10 @@ export default defineComponent({
       editLead,
       deleteLead,
       formatWord,
-      formatNumber,
+      getProbabilityClass,
+      getProbabilityLetter,
+      getLeadTypeLabel,
+      calculateTimeInStage,
     };
   },
 });

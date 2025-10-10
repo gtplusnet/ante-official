@@ -606,6 +606,14 @@ export class LeadService {
       throw new NotFoundException('Lead not found');
     }
 
+    // Check if lead status is WIN before allowing conversion
+    if (leadDeal.status !== LeadDealStatus.WIN) {
+      const currentStage = this.getStatusDisplayName(leadDeal.status);
+      throw new BadRequestException(
+        `Lead must be in "Won" stage to convert to project. Current stage: ${currentStage}`,
+      );
+    }
+
     // Create a new Project based on the LeadDeal data
     const projectData: Prisma.ProjectCreateInput = {
       name: leadDeal.dealName,
@@ -644,7 +652,7 @@ export class LeadService {
       },
     });
 
-    // Mark the original lead as converted/won
+    // Mark the original lead as converted (already in WIN status, but update timestamp)
     await this.prisma.leadDeal.update({
       where: { id: leadId },
       data: {
@@ -652,6 +660,20 @@ export class LeadService {
         updatedAt: new Date(),
       },
     });
+
+    // Log the conversion activity
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.STAGE_CHANGE,
+      entityType: CRMEntityType.LEAD_DEAL,
+      entityId: leadId,
+      entityName: leadDeal.dealName,
+      description: `Lead "${leadDeal.dealName}" converted to Project #${convertedProject.id}`,
+      performedById: this.utilityService.accountInformation.id,
+    });
+
+    this.utilityService.log(
+      `Lead "${leadDeal.dealName}" has been converted to Project #${convertedProject.id} by ${this.utilityService.accountInformation.username}.`,
+    );
 
     return this.formatResponse(convertedProject);
   }

@@ -836,6 +836,7 @@ export class SelectBoxService {
     const dealTypes = await this.prisma.dealType.findMany({
       where: {
         isActive: true,
+        companyId: this.utilityService.companyId, // Filter by user's company
       },
       orderBy: { typeName: 'asc' },
     });
@@ -874,6 +875,9 @@ export class SelectBoxService {
   }) {
     const where: any = {
       isActive: true,
+      company: {
+        companyId: this.utilityService.companyId, // Filter by user's company
+      },
     };
 
     if (params?.search) {
@@ -1031,6 +1035,7 @@ export class SelectBoxService {
     const list = await this.prisma.leadRelationshipOwner.findMany({
       where: {
         isActive: true,
+        companyId: this.utilityService.companyId, // Filter by user's company
       },
       include: {
         account: {
