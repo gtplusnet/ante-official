@@ -380,22 +380,10 @@
             <div class="more-actions column items-center justify-center q-mb-lg">
               <GButton variant="outline" no-caps color="primary" icon="swap_horiz" label="Convert To Project"
                 class="full-width row items-start" @click="handleConvertToProject" />
-              <GButton variant="outline" no-caps color="primary" icon="o_collections_bookmark" label="Bill Of Quantity"
-                class="full-width row items-start">
-                <q-menu auto-close anchor="bottom middle" self="top middle" transition-show="jump-down"
-                  transition-hide="jump-up" style="border-radius: 12px;">
-                  <div class="menu">
-                    <div clickable class="menu-item row q-gutter-x-sm cursor-pointer" @click="openBillOfQuantityDialog">
-                      <div class="row items-center text-dark"><q-icon name="visibility" size="20px" /></div>
-                      <div class="text-dark text-label-medium q-pa-xs">View Bill Of Quality</div>
-                    </div>
-                    <div clickable class="menu-item row q-gutter-x-sm cursor-pointer">
-                      <div class="row items-center text-dark"><q-icon name="add" size="20px" /></div>
-                      <div class="text-dark text-label-medium q-pa-xs">Add New Version</div>
-                    </div>
-                  </div>
-                </q-menu>
-              </GButton>
+
+              <GButton variant="outline" no-caps color="primary" icon="o_collections_bookmark"
+                @click="openBillOfQuantityDialog" label="Bill Of Quantity" class="full-width row items-start" />
+
             </div>
 
             <div class="text-title-small q-mb-sm" :style="{ color: 'var(--q-text-light-grey)' }">Quick Actions</div>
