@@ -1,17 +1,9 @@
 <template>
   <div class="q-pt-md">
-    <div class="row q-gutter-sm items-center justify-between ">
-      <div class="text-title-small text-primary q-py-sm">Tiers</div>
-      <div class="q-py-sm">
-        <q-btn
-          dense
-          flat
-          round
-          :ripple="false"
-          color="primary"
-          icon="control_point"
-          @click="addTier"
-        >
+    <div class="row items-center justify-between q-mb-md">
+      <div class="text-title-small text-primary">Tiers</div>
+      <div>
+        <q-btn dense flat round :ripple="false" color="primary" icon="control_point" @click="addTier">
           <q-tooltip class="text-label-small"> Add new tier </q-tooltip>
         </q-btn>
       </div>
@@ -19,17 +11,10 @@
 
     <div v-for="(tier, index) in data" :key="index">
       <!-- Tier Key -->
-      <div class="row q-gutter-sm">
+      <div class="row q-gutter-sm q-mb-sm">
         <div class="col">
-          <GInput
-            required
-            type="text_with_delete"
-            class="text-body-medium"
-            label="Tier Key"
-            v-model="tier.key"
-            @onDelete="onDeleteClicked(index)"
-            @input="onTierKeyUpdated(index, tier.key)"
-          >
+          <GInput required type="text_with_delete" class="text-body-medium" label="Tier Key" v-model="tier.key"
+            @onDelete="onDeleteClicked(index)" @input="onTierKeyUpdated(index, tier.key)">
             <template v-slot:after> test </template>
           </GInput>
         </div>
@@ -38,13 +23,8 @@
       <!-- Tier Attributes -->
       <div class="row q-gutter-sm">
         <div class="col">
-          <tags-partial
-            class="text-body-medium"
-            customTitle="Attributes"
-            :itemInformation="itemInformation"
-            :initialValue="tier.attributes"
-            @onTagUpdate="onTagUpdated(index, $event)"
-          />
+          <tags-partial class="text-body-medium" customTitle="Attributes" :itemInformation="itemInformation"
+            :initialValue="tier.attributes" @onTagUpdate="onTagUpdated(index, $event)" />
         </div>
       </div>
     </div>

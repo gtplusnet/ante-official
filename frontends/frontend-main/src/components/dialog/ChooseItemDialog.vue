@@ -1,147 +1,86 @@
 <template>
   <q-dialog ref="dialog" @before-show="fetchData">
-    <q-card class="full-width dialog-card">
-      <q-bar class="bg-primary text-white cursor-default" dark>
-        <q-icon name="o_inventory" />
-        <div class="text-title-medium">Choose Item</div>
+    <TemplateDialog size="lg" :scrollable="true" :icon="'o_inventory'" :iconColor="'primary'">
+      <!-- Dialog Title -->
+      <template #DialogTitle>
+        Choose Item
+      </template>
 
-        <q-space />
+      <!-- Dialog Content -->
+      <template #DialogContent>
+        <section class="q-pa-md">
+          <div class="text-right q-mb-sm">
+            <GButton label="Add Item" icon="add" variant="filled" color="primary"
+              @click="this.$refs.itemTable.addItem()" />
+          </div>
+          <SimpleItemTable ref="itemTable" :emitKey="emitKey" :hideItemGroups="true" @select="selectItem"
+            tab="select" />
+        </section>
+      </template>
+    </TemplateDialog>
 
-        <q-btn dense flat icon="close" v-close-popup>
-          <q-tooltip class="text-label-small" >Close</q-tooltip>
-        </q-btn>
-      </q-bar>
+    <!-- Choose Variation Dialog -->
+    <q-dialog v-model="isChooseVariantDialog">
+      <TemplateDialog size="md" :scrollable="true" :icon="'o_check'" :iconColor="'primary'">
+        <template #DialogTitle>
+          Choose Variation
+        </template>
 
-      <q-card-section>
-        <div class="text-right q-mb-sm">
-          <q-btn
-            @click="this.$refs.itemTable.addItem()"
-            color="primary"
-            unelevated
-            ><q-icon name="add" size="16px" class="q-mr-xs text-body-medium"></q-icon> Add
-            Item</q-btn
-          >
-        </div>
-        <SimpleItemTable
-          ref="itemTable"
-          :emitKey="emitKey"
-          :hideItemGroups="true"
-          @select="selectItem"
-          tab="select"
-        />
-      </q-card-section>
-
-      <!-- select variation dialog -->
-      <q-dialog v-model="isChooseVariantDialog">
-        <q-card class="full-width dialog-card-variant">
-          <q-bar class="bg-primary text-white cursor-default" dark>
-            <q-icon name="o_check" />
-            <div class="text-title-medium">Choose Variation</div>
-
-            <q-space />
-
-            <q-btn
-              dense
-              flat
-              icon="close"
-              @click="isChooseVariantDialog = false"
-            >
-              <q-tooltip class="text-label-small">Close</q-tooltip>
-            </q-btn>
-          </q-bar>
-
-          <q-card-section>
-            <div v-for="item in variations" :key="item">
-              <div class="q-mb-xs">
-                {{ this.capitalizeFirstLetter(item.name) }}
-              </div>
-              <div class="q-mb-sm">
-                <q-select
-                  v-model="item.value"
-                  dense
-                  outlined
-                  :options="item.itemTierAttribute"
-                  option-label="attributeKey"
-                  option-value="id"
-                  class="text-body-medium"
-                ></q-select>
-              </div>
+        <template #DialogContent>
+          <div v-for="item in variations" :key="item">
+            <div class="q-mb-xs">
+              {{ this.capitalizeFirstLetter(item.name) }}
             </div>
-            <div class="column justify-end q-mt-md">
-              <div v-if="variationItemInformation" class="text-center q-pa-md text-body-medium">
-                {{ variationItemInformation.name }} ({{
-                  variationItemInformation.sku
-                }})
-              </div>
-              <q-btn
-                @click="submitVariationItem"
-                :disabled="!variationItemInformation"
-                unelevated
-                color="primary"
-                class="text-body-medium"
-                label="Submit"
-              />
+            <div class="q-mb-sm">
+              <q-select v-model="item.value" dense outlined :options="item.itemTierAttribute"
+                option-label="attributeKey" option-value="id" class="text-body-medium"></q-select>
             </div>
-          </q-card-section>
-        </q-card>
-      </q-dialog>
+          </div>
+          <div v-if="variationItemInformation" class="text-center q-pa-md text-body-medium">
+            {{ variationItemInformation.name }} ({{
+              variationItemInformation.sku
+            }})
+          </div>
+        </template>
 
-      <!-- Quantity Dialog -->
-      <q-dialog v-model="isQuantityDialog">
-        <q-card style="max-width: 400px; min-width: 350px">
-          <q-bar class="bg-primary text-white cursor-default" dark>
-            <q-icon name="o_inventory" />
-            <div class="text-title-medium">Set Quantity</div>
-            <q-space />
-            <q-btn dense flat icon="close" @click="isQuantityDialog = false">
-              <q-tooltip class="text-label-small">Close</q-tooltip>
-            </q-btn>
-          </q-bar>
+        <template #DialogSubmitActions>
+          <GButton label="Submit" variant="filled" color="primary" :disable="!variationItemInformation"
+            @click="submitVariationItem" />
+        </template>
+      </TemplateDialog>
+    </q-dialog>
 
-          <q-card-section>
-            <div v-if="selectedItemForQuantity" class="q-mb-md">
-              <div class="text-body-medium">{{ selectedItemForQuantity.name }}</div>
-              <div class="text-caption text-grey">{{ selectedItemForQuantity.sku }}</div>
-            </div>
+    <!-- Quantity Dialog -->
+    <q-dialog v-model="isQuantityDialog">
+      <TemplateDialog size="xs" :scrollable="false" :icon="'o_inventory'" :iconColor="'primary'">
+        <template #DialogTitle>
+          Set Quantity
+        </template>
 
-            <q-input
-              v-model.number="itemQuantity"
-              type="number"
-              label="Quantity"
-              outlined
-              dense
-              :min="1"
-              class="text-body-medium"
-            />
+        <template #DialogContent>
+          <div v-if="selectedItemForQuantity" class="q-mb-md">
+            <div class="text-body-medium">{{ selectedItemForQuantity.name }}</div>
+            <div class="text-caption text-grey">{{ selectedItemForQuantity.sku }}</div>
+          </div>
 
-            <q-btn
-              @click="submitItemWithQuantity"
-              color="primary"
-              unelevated
-              class="text-body-medium full-width q-mt-md"
-              label="Add Item"
-            />
-          </q-card-section>
-        </q-card>
-      </q-dialog>
-    </q-card>
+          <q-input v-model.number="itemQuantity" type="number" label="Quantity" outlined dense :min="1"
+            class="text-body-medium" />
+        </template>
+
+        <template #DialogSubmitActions>
+          <GButton label="Add Item" variant="filled" color="primary" @click="submitItemWithQuantity" block />
+        </template>
+      </TemplateDialog>
+    </q-dialog>
   </q-dialog>
 </template>
 
-<style scoped lang="scss">
-.dialog-card {
-  max-width: 1000px;
-  min-height: 600px;
-}
-
-.dialog-card-variant {
-  max-width: 600px;
-  min-height: 300px;
-}
-</style>
+<style scoped lang="scss"></style>
 
 <script>
 import SimpleItemTable from "../../components/tables/SimpleItemTable.vue";
+import TemplateDialog from './TemplateDialog.vue';
+import GButton from '../shared/buttons/GButton.vue';
 import { api } from 'src/boot/axios';
 
 export default {
@@ -158,6 +97,8 @@ export default {
   },
   components: {
     SimpleItemTable,
+    TemplateDialog,
+    GButton,
   },
   data: () => ({
     isChooseVariantDialog: false,
@@ -246,7 +187,7 @@ export default {
 
       return variations;
     },
-    fetchData() {},
+    fetchData() { },
     submitItemWithQuantity() {
       const itemWithQuantity = {
         ...this.selectedItemForQuantity,

@@ -132,3 +132,12 @@ export default {
   },
 };
 </script>
+
+<style scoped lang="scss">
+.example-column-vertical-alignment {
+  max-height: 75vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--q-scroll-background-track) var(--q-scroll-background);
+}
+</style>
