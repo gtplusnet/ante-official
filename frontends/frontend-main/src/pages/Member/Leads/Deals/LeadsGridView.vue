@@ -58,7 +58,6 @@
                   <div class="text-bold text-label-medium" :style="{ color: 'var(--q-text-dark)' }">{{
                     formatWord(lead.leadBoardStage || '') }}</div>
                 </div>
-                <pre>{{ lead }}</pre>
                 <div class="time-stage row items-center text-label-small text-dark q-mb-xs">
                   <q-icon name="history" size="16px" />
                   <span class="q-ml-xs">{{ calculateTimeInStage(lead) }}</span>
