@@ -9,33 +9,13 @@
       <!-- Filter Section -->
       <div class="row items-center justify-end q-gutter-x-md col-10">
         <div class="col-4">
-          <q-select
-            v-model="selectedCompany"
-            :options="companyOptions"
-            option-label="label"
-            option-value="value"
-            emit-value
-            map-options
-            outlined
-            dense
-            label="Select by Company"
-          />
+          <q-select v-model="selectedCompany" :options="companyOptions" option-label="label" option-value="value"
+            emit-value map-options outlined rounded dense label="Select by Company" />
         </div>
         <div class="col-4">
-          <q-select
-            v-model="sortBy"
-            :options="sortOptions"
-            outlined
-            dense
-            label="Sort By"
-          />
+          <q-select v-model="sortBy" :options="sortOptions" outlined dense rounded label="Sort By" />
         </div>
-        <g-button
-          icon-size="md"
-          icon="add"
-          label="New Record"
-          @click="addNewRecord"
-        />
+        <g-button icon-size="md" icon="add" label="New Record" @click="addNewRecord" />
       </div>
     </div>
 
@@ -100,10 +80,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="contact in contactsList"
-            :key="contact.id"
-          >
+          <tr v-for="contact in contactsList" :key="contact.id">
             <td>{{ contact.fullName }}</td>
             <td>{{ contact.email }}</td>
             <td>{{ contact.company }}</td>
@@ -113,26 +90,10 @@
             <td>{{ contact.createdBy }}</td>
             <td>
               <div class="actions-container">
-                <q-btn
-                  flat
-                  round
-                  dense
-                  size="sm"
-                  icon="o_edit"
-                  color="grey-6"
-                  @click="editContact(contact)"
-                  class="action-btn"
-                />
-                <q-btn
-                  flat
-                  round
-                  dense
-                  size="sm"
-                  icon="o_delete"
-                  color="grey-6"
-                  @click="deleteContact(contact)"
-                  class="action-btn"
-                />
+                <q-btn flat round dense size="sm" icon="o_edit" color="grey-6" @click="editContact(contact)"
+                  class="action-btn" />
+                <q-btn flat round dense size="sm" icon="o_delete" color="grey-6" @click="deleteContact(contact)"
+                  class="action-btn" />
               </div>
             </td>
           </tr>
@@ -141,12 +102,8 @@
     </div>
 
     <!-- Add/Edit Point of Contact Dialog -->
-    <AddEditPointOfContactDialog
-      ref="addEditDialog"
-      :contact-id="editingContactId"
-      @created="handleContactCreated"
-      @updated="handleContactUpdated"
-    />
+    <AddEditPointOfContactDialog ref="addEditDialog" :contact-id="editingContactId" @created="handleContactCreated"
+      @updated="handleContactUpdated" />
   </div>
 </template>
 
@@ -335,9 +292,9 @@ const deleteContact = async (contact: PointOfContact) => {
 
       // Show more detailed error message
       const errorMessage = error.response?.data?.message ||
-                          error.response?.data?.error ||
-                          error.message ||
-                          "Failed to delete point of contact";
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to delete point of contact";
 
       $q.notify({
         color: "negative",
@@ -410,10 +367,12 @@ watch([selectedCompany, sortBy], () => {
       }
     }
   }
+
   tbody {
     &.loading {
       opacity: 0.5;
     }
+
     tr {
       td {
         padding: 10px;

@@ -146,6 +146,12 @@ export default {
         ],
       },
       {
+        title: 'Item Categories',
+        key: 'member_asset_item_categories',
+        icon: 'o_category',
+        requiredScope: ['ASSET_ACCESS']
+      },
+      {
         title: 'Equipment',
         key: 'equipment',
         icon: 'o_precision_manufacturing',

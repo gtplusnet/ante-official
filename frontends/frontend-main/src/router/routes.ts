@@ -294,6 +294,12 @@ const routesConfig: RouteRecordRaw[] = [
         path: 'asset/deliveries/canceled',
         component: () => import('pages/Member/Asset/Deliveries/AssetDeliveriesCanceled.vue'),
       },
+      // Item Categories
+      {
+        name: 'member_asset_item_categories',
+        path: 'asset/item-categories',
+        component: () => import('pages/Member/Asset/AssetItemCategories.vue'),
+      },
       // Equipment
       {
         name: 'member_asset_equipment_list',

@@ -117,9 +117,10 @@ export class LeadController {
   async board(
     @NestResponse() response: Response,
     @Query() _query: ProjectBoardDto,
+    @Body() body: TableBodyDTO,
   ) {
     return this.utilityService.responseHandler(
-      this.leadService.leadBoard(),
+      this.leadService.leadBoard(body),
       response,
     );
   }

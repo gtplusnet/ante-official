@@ -66,6 +66,27 @@
                   </div>
 
                   <div class="info-group">
+                    <div class="info-label">Brand</div>
+                    <div class="info-value">
+                      {{ itemInformation.brand ? itemInformation.brand.name : 'No Brand' }}
+                    </div>
+                  </div>
+
+                  <div class="info-group">
+                    <div class="info-label">Category</div>
+                    <div class="info-value">
+                      {{ itemInformation.category ? itemInformation.category.name : 'No Category' }}
+                    </div>
+                  </div>
+
+                  <div class="info-group">
+                    <div class="info-label">Branch</div>
+                    <div class="info-value">
+                      {{ itemInformation.branch ? itemInformation.branch.name : 'No Branch' }}
+                    </div>
+                  </div>
+
+                  <div class="info-group">
                     <div class="info-label">Last Update</div>
                     <div class="info-value">
                       {{ itemInformation.updatedAt.dateFull }} ({{

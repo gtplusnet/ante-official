@@ -39,6 +39,7 @@ import { ProjectModule } from '@modules/project/project/project/project.module';
 // Inventory modules
 import { SupplierModule } from '@modules/inventory/supplier/supplier/supplier.module';
 import { BrandModule } from '@modules/inventory/brand/brand/brand.module';
+import { ItemCategoryModule } from '@modules/inventory/item-category/item-category/item-category.module';
 import { PurchaseOrderModule } from '@modules/finance/purchase-order/purchase-order/purchase-order.module';
 
 // Communication modules
@@ -104,6 +105,9 @@ import { MediaModule } from '@infrastructure/file-upload/media/media.module';
 // Time tracking module
 import { TimeTrackingModule } from '@modules/time-tracking/time-tracking.module';
 import { ManpowerDeviceModule } from '@modules/manpower-device/manpower-device.module';
+
+// App controller
+import { AppController } from './app.controller';
 
 // Individual controllers and services that need to be refactored into modules
 import { ScopeController } from '@modules/project/scope/scope/scope.controller';
@@ -231,6 +235,7 @@ const ENV = process.env.NODE_ENV;
     // Inventory & Finance
     SupplierModule,
     BrandModule,
+    ItemCategoryModule,
     PurchaseOrderModule,
 
     // Communication
@@ -298,6 +303,9 @@ const ENV = process.env.NODE_ENV;
     ManpowerDeviceModule,
   ],
   controllers: [
+    // Root app controller
+    AppController,
+
     // Controllers that should be moved to their own modules eventually
     ScopeController,
     RoleGroupController,

@@ -8,29 +8,16 @@
       <!-- Filter Section -->
       <div class="row items-center justify-end q-gutter-x-md col-10">
         <div class="col-4">
-          <q-input v-model="searchQuery" outlined dense placeholder="Search">
+          <q-input v-model="searchQuery" outlined rounded dense placeholder="Search">
             <template v-slot:prepend>
               <q-icon name="search" color="grey-6" />
             </template>
           </q-input>
         </div>
         <div class="col-4">
-          <q-select
-            v-model="sortBy"
-            :options="sortOptions"
-            label="Sort By"
-            outlined
-            dense
-          />
+          <q-select v-model="sortBy" :options="sortOptions" label="Sort By" outlined rounded dense />
         </div>
-        <GButton
-          unelevated
-          no-caps
-          icon="add"
-          icon-size="md"
-          label="New Company"
-          @click="addNewCompany"
-        />
+        <GButton unelevated no-caps icon="add" icon-size="md" label="New Company" @click="addNewCompany" />
       </div>
     </div>
 
@@ -67,10 +54,7 @@
 
       <!-- Empty State -->
 
-      <div
-        v-else-if="filteredCompanies.length === 0"
-        class="text-center q-pa-lg"
-      >
+      <div v-else-if="filteredCompanies.length === 0" class="text-center q-pa-lg">
         <q-icon name="business" size="64px" color="grey-4" />
         <div class="q-mt-sm text-h6 text-grey-6">No companies found</div>
 
@@ -93,11 +77,7 @@
         </thead>
 
         <tbody>
-          <tr
-            v-for="company in filteredCompanies"
-            :key="company.id"
-            class="table-row"
-          >
+          <tr v-for="company in filteredCompanies" :key="company.id" class="table-row">
             <td>{{ company.name }}</td>
             <td>{{ company.employees }}</td>
             <td>{{ company.deals }}</td>
@@ -105,26 +85,10 @@
             <td>{{ company.createdBy }}</td>
             <td>
               <div class="actions-container">
-                <q-btn
-                  flat
-                  round
-                  dense
-                  size="sm"
-                  icon="o_edit"
-                  color="grey-6"
-                  @click="editCompany(company)"
-                  class="action-btn"
-                />
-                <q-btn
-                  flat
-                  round
-                  dense
-                  size="sm"
-                  icon="o_delete"
-                  color="grey-6"
-                  @click="archiveCompany(company)"
-                  class="action-btn"
-                />
+                <q-btn flat round dense size="sm" icon="o_edit" color="grey-6" @click="editCompany(company)"
+                  class="action-btn" />
+                <q-btn flat round dense size="sm" icon="o_delete" color="grey-6" @click="archiveCompany(company)"
+                  class="action-btn" />
               </div>
             </td>
           </tr>
@@ -133,12 +97,8 @@
     </div>
 
     <!-- Company Dialog -->
-    <LeadCompanyDialog
-      v-model="isDialogOpen"
-      :company="editingCompany"
-      :loading="loading"
-      @submit="handleCompanySubmit"
-    />
+    <LeadCompanyDialog v-model="isDialogOpen" :company="editingCompany" :loading="loading"
+      @submit="handleCompanySubmit" />
   </div>
 </template>
 
@@ -393,10 +353,12 @@ onMounted(() => {
       }
     }
   }
+
   tbody {
     &.loading {
       opacity: 0.5;
     }
+
     tr {
       td {
         padding: 10px;

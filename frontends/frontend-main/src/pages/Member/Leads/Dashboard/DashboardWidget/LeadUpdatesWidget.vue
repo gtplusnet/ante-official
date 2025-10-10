@@ -342,8 +342,7 @@ export default defineComponent({
             break;
 
           case "RELATIONSHIP_OWNER":
-            // Just refresh for relationship owner (no dialog)
-            await loadActivities();
+            // Just mark as read (happens automatically above), no dialog needed
             break;
 
           case "LEAD_DEAL":

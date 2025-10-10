@@ -98,7 +98,7 @@
 <style scoped src="../Leads.scss"></style>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { defineComponent, ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRoute } from 'vue-router';
 import { APIRequests } from 'src/utility/api.handler';
@@ -144,7 +144,21 @@ export default defineComponent({
   directives: {
     dragscroll,
   },
-  setup() {
+  props: {
+    filterRelationshipOwner: {
+      type: String,
+      default: 'all',
+    },
+    filterDealType: {
+      type: String,
+      default: 'all',
+    },
+    filterStage: {
+      type: String,
+      default: 'all',
+    },
+  },
+  setup(props) {
     const $q = useQuasar();
     const route = useRoute();
     const isLoading = ref(true);
@@ -178,7 +192,15 @@ export default defineComponent({
     const fetchBoardData = async () => {
       try {
         isLoading.value = true;
-        const response = await APIRequests.getLeadBoard($q);
+
+        // Prepare filters to send to backend
+        const filters = {
+          relationshipOwnerId: props.filterRelationshipOwner,
+          dealTypeId: props.filterDealType,
+          // Note: Stage filter is not applicable for board view
+        };
+
+        const response = await APIRequests.getLeadBoard($q, filters);
 
         if (Array.isArray(response)) {
           boardColumns.value = response.sort((a, b) => a.boardOrder - b.boardOrder);
@@ -460,6 +482,14 @@ export default defineComponent({
         return `${diffInMonths} ${diffInMonths === 1 ? 'month' : 'months'}`;
       }
     };
+
+    // Watch for filter changes
+    watch(
+      () => [props.filterRelationshipOwner, props.filterDealType],
+      () => {
+        fetchBoardData();
+      }
+    );
 
     onMounted(() => {
       fetchBoardData();
