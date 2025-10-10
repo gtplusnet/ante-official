@@ -66,6 +66,10 @@ export class CreateSimpleItemDto {
   @IsOptional()
   @IsNumber()
   branchId?: number;
+
+  @IsOptional()
+  @IsString()
+  itemType?: string;
 }
 export class UpdateSimpleItemDto {
   @IsNotEmpty()
@@ -145,4 +149,8 @@ export class UpdateSimpleItemDto {
   @IsOptional()
   @IsNumber()
   branchId?: number;
+
+  @IsOptional()
+  @IsString()
+  itemType?: string;
 }

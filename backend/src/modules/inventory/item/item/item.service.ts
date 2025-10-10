@@ -13,7 +13,7 @@ import { PrismaService } from '@common/prisma.service';
 import { TableBodyDTO, TableQueryDTO } from '@common/table.dto/table.dto';
 import { TableHandlerService } from '@common/table.handler/table.handler.service';
 import { UtilityService } from '@common/utility.service';
-import { Prisma, Item } from '@prisma/client';
+import { Prisma, Item, ItemType } from '@prisma/client';
 import UnitOfMeasurementReference from '../../../../reference/uom-list.reference';
 
 export class ItemService {
@@ -69,6 +69,7 @@ export class ItemService {
         minimumStockLevelPrice: itemDto.minimumStockLevel,
         maximumStockLevelPrice: itemDto.maximumStockLevel,
         enabledInPOS: itemDto.enabledInPOS || false,
+        itemType: (itemDto.itemType as ItemType) || ItemType.INDIVIDUAL_PRODUCT,
         company: { connect: { id: this.utility.companyId } },
         ...(itemDto.brandId && { brand: { connect: { id: itemDto.brandId } } }),
         ...(itemDto.categoryId && { category: { connect: { id: itemDto.categoryId } } }),
@@ -527,6 +528,7 @@ export class ItemService {
         minimumStockLevelPrice: itemDto.minimumStockLevel,
         maximumStockLevelPrice: itemDto.maximumStockLevel,
         enabledInPOS: itemDto.enabledInPOS || false,
+        itemType: (itemDto.itemType as ItemType) || ItemType.INDIVIDUAL_PRODUCT,
         company: { connect: { id: this.utility.companyId } },
         ...(itemDto.categoryId && { category: { connect: { id: itemDto.categoryId } } }),
         ...(itemDto.branchId && { branch: { connect: { id: itemDto.branchId } } }),
@@ -924,6 +926,9 @@ export class ItemService {
     if (itemDto.branchId !== undefined) {
       parentItemUpdate.branchId = itemDto.branchId;
     }
+    if (itemDto.itemType !== undefined) {
+      parentItemUpdate.itemType = itemDto.itemType;
+    }
 
     const updatedParentItem = await this.prisma.item.update({
       where: { id: itemId },
@@ -1021,6 +1026,7 @@ export class ItemService {
       ...(itemDto.enabledInPOS !== undefined && { enabledInPOS: itemDto.enabledInPOS }),
       ...(itemDto.categoryId !== undefined && { categoryId: itemDto.categoryId }),
       ...(itemDto.branchId !== undefined && { branchId: itemDto.branchId }),
+      ...(itemDto.itemType !== undefined && { itemType: itemDto.itemType as ItemType }),
     };
 
     if (uomInformation) {

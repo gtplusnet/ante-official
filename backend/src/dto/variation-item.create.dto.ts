@@ -86,6 +86,10 @@ export class CreateItemWithVariantsDto {
   @IsOptional()
   @IsNumber()
   brandId?: number;
+
+  @IsOptional()
+  @IsString()
+  itemType?: string;
 }
 export class UpdateVariantDto {
   @IsNotEmpty()
@@ -178,6 +182,10 @@ export class UpdateItemWithVariantsDto {
   @IsOptional()
   @IsNumber()
   brandId?: number;
+
+  @IsOptional()
+  @IsString()
+  itemType?: string;
 }
 export class CreateVariantDto {
   @IsOptional()

@@ -664,6 +664,7 @@ model Item {
   categoryId               Int?
   branchId                 Int?
   enabledInPOS             Boolean                    @default(false)
+  itemType                 ItemType                   @default(INDIVIDUAL_PRODUCT)
   boqTable                 BillOfQuantityTable[]
   BillOfQuantityTableItems BillOfQuantityTableItems[]
   EquipmentPartsItem       EquipmentPartsItem[]
@@ -678,6 +679,8 @@ model Item {
   ItemTier                 ItemTier[]
   SupplierItems            SupplierItems[]
   SupplierPriceUpdate      SupplierPriceUpdate[]
+  groupItems               ItemGroupItem[]         @relation("GroupParent")
+  belongsToGroups          ItemGroupItem[]         @relation("GroupChild")
 
   @@unique([companyId, sku])
 }
@@ -728,6 +731,21 @@ model Keyword {
   id           String        @id @default(uuid())
   keywordValue String
   items        ItemKeyword[]
+}
+
+model ItemGroupItem {
+  id        String   @id @default(uuid())
+  groupId   String
+  itemId    String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  group     Item     @relation("GroupParent", fields: [groupId], references: [id], onDelete: Cascade)
+  item      Item     @relation("GroupChild", fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, itemId])
+  @@index([groupId])
+  @@index([itemId])
 }
 
 model InventoryItem {
@@ -4370,6 +4388,11 @@ enum CRMEntityType {
   POINT_OF_CONTACT
   DEAL_TYPE
   DEAL_SOURCE
+}
+
+enum ItemType {
+  INDIVIDUAL_PRODUCT
+  ITEM_GROUP
 }
 
 // OAuth 2.0 Models
