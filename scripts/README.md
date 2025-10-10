@@ -4,6 +4,43 @@ This directory contains utility scripts for the ANTE ERP system.
 
 ## Available Scripts
 
+### copy-staging-to-local.sh
+Copies the staging database from Supabase to your local development database.
+
+**Usage:**
+```bash
+# Full copy (dump staging + restore to local)
+./scripts/copy-staging-to-local.sh
+
+# Use existing backup file (skip dump)
+./scripts/copy-staging-to-local.sh --skip-dump backups/staging_backup_20251010_120000.dump
+
+# Show help
+./scripts/copy-staging-to-local.sh --help
+```
+
+**Features:**
+- Dumps staging database from Supabase
+- Restores to local database with confirmation prompt
+- Creates timestamped backups in `backups/` directory
+- Runs Prisma generate and migrate after restore
+- Tests database connections before operations
+- Color-coded output for easy reading
+- Skip dump option to reuse existing backups
+
+**Requirements:**
+- PostgreSQL client tools installed (`pg_dump`, `pg_restore`, `psql`)
+- `.env` file with local database configuration
+- Network access to Supabase staging database
+
+**What it does:**
+1. Connects to staging Supabase database
+2. Creates a compressed backup file (`staging_backup_YYYYMMDD_HHMMSS.dump`)
+3. Drops and recreates local database schema
+4. Restores backup to local database
+5. Generates Prisma client
+6. Applies Prisma migrations
+
 ### restore-backup.sh
 Restores a database backup to your local development database.
 
