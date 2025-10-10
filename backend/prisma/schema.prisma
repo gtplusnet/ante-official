@@ -394,6 +394,7 @@ model Project {
   mmr                           Float?
   relationshipOwnerId           String?
   parentId                      Int?
+  mainWarehouseId               String?
   TaskProjectNotifications      AccountNotifications[]
   boqs                          BillOfQuantity[]
   BranchTimekeepingStatus       BranchTimekeepingStatus[]
@@ -407,6 +408,7 @@ model Project {
   location                      Location                       @relation(fields: [locationId], references: [id], onDelete: Cascade)
   parent                        Project?                       @relation("BranchHierarchy", fields: [parentId], references: [id])
   children                      Project[]                      @relation("BranchHierarchy")
+  mainWarehouse                 Warehouse?                     @relation("BranchMainWarehouse", fields: [mainWarehouseId], references: [id])
   personInCharge                Account?                       @relation("ProjectPersonInCharge", fields: [personInChargeId], references: [id])
   relationshipOwner             Account?                       @relation("ProjectRelationshipOwner", fields: [relationshipOwnerId], references: [id])
   projectAccomplishment         ProjectAccomplishment[]
@@ -417,6 +419,7 @@ model Project {
   warehouse                     Warehouse[]
   EmployeeTimekeepingRaw        EmployeeTimekeepingRaw[]
   ManpowerDevice                ManpowerDevice[]
+  items                         Item[]                         @relation("ItemBranch")
 }
 
 model BoardLane {
@@ -595,6 +598,7 @@ model Warehouse {
   Equipment          Equipment[]
   inventories        InventoryItem[]
   itemReceipt        ItemReceipt[]
+  branchesAsMain     Project[]       @relation("BranchMainWarehouse")
   company            Company?        @relation(fields: [companyId], references: [id])
   location           Location?       @relation(fields: [locationId], references: [id], onDelete: Cascade)
   project            Project?        @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -617,6 +621,26 @@ model Brand {
   @@unique([companyId, code])
 }
 
+model ItemCategory {
+  id          Int            @id @default(autoincrement())
+  name        String
+  code        String
+  description String?
+  isActive    Boolean        @default(true)
+  parentId    Int?
+  companyId   Int
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  company     Company        @relation(fields: [companyId], references: [id])
+  parent      ItemCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    ItemCategory[] @relation("CategoryHierarchy")
+  items       Item[]
+
+  @@unique([companyId, code])
+  @@index([parentId])
+  @@index([companyId])
+}
+
 model Item {
   id                       String                     @id @default(uuid())
   name                     String
@@ -637,17 +661,26 @@ model Item {
   maximumStockLevelPrice   Int                        @default(0)
   minimumStockLevelPrice   Int                        @default(0)
   brandId                  Int?
+  categoryId               Int?
+  branchId                 Int?
+  enabledInPOS             Boolean                    @default(false)
+  itemType                 ItemType                   @default(INDIVIDUAL_PRODUCT)
   boqTable                 BillOfQuantityTable[]
   BillOfQuantityTableItems BillOfQuantityTableItems[]
   EquipmentPartsItem       EquipmentPartsItem[]
   inventories              InventoryItem[]
   brand                    Brand?                     @relation(fields: [brandId], references: [id])
+  branch                   Project?                   @relation("ItemBranch", fields: [branchId], references: [id])
+  category                 ItemCategory?              @relation(fields: [categoryId], references: [id])
   company                  Company?                   @relation(fields: [companyId], references: [id])
   itemReceiptItems         ItemReceiptItems[]
   tags                     ItemTag[]
+  keywords                 ItemKeyword[]
   ItemTier                 ItemTier[]
   SupplierItems            SupplierItems[]
   SupplierPriceUpdate      SupplierPriceUpdate[]
+  groupItems               ItemGroupItem[]         @relation("GroupParent")
+  belongsToGroups          ItemGroupItem[]         @relation("GroupChild")
 
   @@unique([companyId, sku])
 }
@@ -683,6 +716,36 @@ model Tag {
   id     String    @id @default(uuid())
   tagKey String
   items  ItemTag[]
+}
+
+model ItemKeyword {
+  itemId    String
+  keywordId String
+  item      Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  keyword   Keyword @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, keywordId])
+}
+
+model Keyword {
+  id           String        @id @default(uuid())
+  keywordValue String
+  items        ItemKeyword[]
+}
+
+model ItemGroupItem {
+  id        String   @id @default(uuid())
+  groupId   String
+  itemId    String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  group     Item     @relation("GroupParent", fields: [groupId], references: [id], onDelete: Cascade)
+  item      Item     @relation("GroupChild", fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, itemId])
+  @@index([groupId])
+  @@index([itemId])
 }
 
 model InventoryItem {
@@ -2068,6 +2131,7 @@ model Company {
   Guardian                      Guardian[]
   individualScheduleAssignments IndividualScheduleAssignment[]
   Item                          Item[]
+  ItemCategory                  ItemCategory[]
   ItemReceipt                   ItemReceipt[]
   leadCompanies                 LeadCompany[]                  @relation("LeadCompanies")
   leadDeals                     LeadDeal[]
@@ -4327,6 +4391,11 @@ enum CRMEntityType {
   RELATIONSHIP_OWNER
   DEAL_TYPE
   DEAL_SOURCE
+}
+
+enum ItemType {
+  INDIVIDUAL_PRODUCT
+  ITEM_GROUP
 }
 
 // OAuth 2.0 Models

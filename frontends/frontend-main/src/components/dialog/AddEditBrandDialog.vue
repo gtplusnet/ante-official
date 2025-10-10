@@ -72,12 +72,24 @@ export default {
   }),
   methods: {
     submitRequest() {
+      // Use proper brand endpoint
+      // Auto-generate code from brand name (uppercase, spaces to underscores)
+      const brandCode = this.form.brandName.toUpperCase().replace(/\s+/g, '_');
+
       api
-        .post('equipment/save-brand', this.form)
+        .post('brand', {
+          name: this.form.brandName,
+          code: brandCode
+        })
         .then((data) => {
           this.$refs.dialog.hide();
-          const newData = data.data.brand;
+          const newData = data.data;
           this.$emit('saveDone', newData);
+          this.$q.notify({
+            color: 'positive',
+            message: 'Brand added successfully',
+            position: 'top',
+          });
         })
         .catch((error) => {
           this.handleAxiosError(error);

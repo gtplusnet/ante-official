@@ -4,7 +4,7 @@ module.exports = {
       name: 'ante-backend',
       cwd: './backend',
       script: 'bash',
-      args: '-c "npx kill-port 3000 2>/dev/null; npx nest start"',
+      args: '-c "npx kill-port 3000 2>/dev/null; NODE_OPTIONS=\'--max-old-space-size=8192\' npx nest start"',
       // Environment variables will be loaded from .env file
       // Remove hardcoded values to avoid conflicts
       watch: ['src'], // PM2 handles file watching to prevent port conflicts

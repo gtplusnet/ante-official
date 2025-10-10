@@ -1,6 +1,21 @@
 <template>
   <div class="q-pa-md example-column-vertical-alignment" @keydown.f9="fillData">
     <div class="column justify-start">
+      <!-- Type (only shown during creation) -->
+      <div v-if="!itemInformation" class="row q-gutter-sm">
+        <div class="col">
+          <q-select
+            v-model="form.itemType"
+            :options="typeOptions"
+            label="Type"
+            outlined
+            dense
+            class="text-body-small"
+            emit-value
+            map-options
+          />
+        </div>
+      </div>
       <!-- Item name and SKU -->
       <div class="row q-gutter-sm">
         <div class="col">
@@ -50,19 +65,163 @@
           <tags-partial ref="tagsPartial" class="text-body-small" v-model="isTagPartialDisplayed" @onTagUpdate="onTagUpdated" />
         </div>
       </div>
+      <!-- Category & Branch -->
+      <div v-if="!isTagHidden" class="row q-gutter-sm">
+        <div class="col">
+          <q-select
+            v-model="form.categoryId"
+            :options="categoryOptions"
+            option-label="name"
+            option-value="id"
+            label="Category"
+            clearable
+            emit-value
+            map-options
+            outlined
+            dense
+            class="text-body-small"
+            :loading="loadingCategories"
+          />
+        </div>
+        <div class="col">
+          <q-select
+            v-model="form.branchId"
+            :options="branchOptions"
+            option-label="name"
+            option-value="id"
+            label="Branch"
+            clearable
+            emit-value
+            map-options
+            outlined
+            dense
+            class="text-body-small"
+            :loading="loadingBranches"
+          />
+        </div>
+      </div>
+      <!-- Brand -->
+      <div v-if="!isTagHidden" class="row q-gutter-sm">
+        <div class="col">
+          <GInput
+            ref="brandSelect"
+            v-model="form.brandId"
+            type="select-search-with-add"
+            apiUrl="brand/select-box"
+            label="Brand"
+            nullOption="No Brand"
+            class="text-body-small"
+            @showAddDialog="showBrandAddDialog"
+          />
+        </div>
+      </div>
+      <!-- Keywords -->
+      <div v-if="!isTagHidden" class="row q-gutter-sm">
+        <div class="col">
+          <keywords-partial ref="keywordsPartial" class="text-body-small" v-model="isKeywordsPartialDisplayed" @onKeywordUpdate="onKeywordUpdated" />
+        </div>
+      </div>
+      <!-- Enable in POS -->
+      <div v-if="!isTagHidden" class="row q-gutter-sm">
+        <div class="col flex items-center">
+          <q-checkbox v-model="form.enabledInPOS" label="Enable in POS" class="text-body-small" />
+        </div>
+      </div>
+
+      <!-- Item Group Items (shown when Type = Item Group, in both create and edit mode) -->
+      <div v-if="form.itemType === 'ITEM_GROUP'" class="row q-gutter-sm">
+        <div class="col">
+          <div class="text-body-medium q-mb-sm">Group Items</div>
+          <q-card flat bordered>
+            <q-card-section>
+              <div v-if="form.groupItems.length === 0" class="text-center text-grey q-pa-md">
+                No items added to this group
+              </div>
+              <q-list v-else separator>
+                <q-item v-for="(item, index) in form.groupItems" :key="item.id">
+                  <q-item-section>
+                    <q-item-label>{{ item.name }}</q-item-label>
+                    <q-item-label caption>{{ item.sku }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side style="min-width: 100px">
+                    <q-input
+                      v-model.number="item.quantity"
+                      type="number"
+                      label="Qty"
+                      outlined
+                      dense
+                      :min="1"
+                      class="text-body-small"
+                    />
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-btn
+                      flat
+                      dense
+                      round
+                      icon="close"
+                      color="red"
+                      @click="removeGroupItem(index)"
+                    />
+                  </q-item-section>
+                </q-item>
+              </q-list>
+              <div class="q-mt-md">
+                <q-btn
+                  color="primary"
+                  outline
+                  @click="isChooseItemDialogOpen = true"
+                  class="full-width"
+                >
+                  <q-icon name="add" size="20px" class="q-mr-sm" />
+                  Add Items
+                </q-btn>
+              </div>
+            </q-card-section>
+          </q-card>
+        </div>
+      </div>
     </div>
+
+    <!-- Choose Item Dialog -->
+    <ChooseItemDialog
+      v-if="isChooseItemDialogOpen"
+      v-model="isChooseItemDialogOpen"
+      :isItemGroup="true"
+      @choose-item="addGroupItem"
+    />
+
+    <!-- Add Brand Dialog -->
+    <AddEditBrandDialog
+      v-if="isAddBrandDialogOpen"
+      v-model="isAddBrandDialogOpen"
+      @saveDone="selectNewBrand"
+    />
   </div>
 </template>
 <script>
+import { defineAsyncComponent } from 'vue';
 import GInput from "../../../../components/shared/form/GInput.vue";
 import TagsPartial from '../Partials/TagsPartial.vue';
+import KeywordsPartial from '../Partials/KeywordsPartial.vue';
 import { environment } from 'src/boot/axios';
+
+// Lazy-loaded dialog (ALL dialogs must be lazy loaded - CLAUDE.md)
+const AddEditBrandDialog = defineAsyncComponent(() =>
+  import('../../../dialog/AddEditBrandDialog.vue')
+);
+const ChooseItemDialog = defineAsyncComponent(() =>
+  import('../../../dialog/ChooseItemDialog.vue')
+);
 
 export default {
   name: 'SimpleItem',
   components: {
     GInput,
     TagsPartial,
+    KeywordsPartial,
+    AddEditBrandDialog,
+    ChooseItemDialog,
   },
   props: {
     itemInformation: {
@@ -86,8 +245,26 @@ export default {
       sellingPrice: '',
       minimumStockLevel: 0,
       maximumStockLevel: 0,
+      categoryId: null,
+      keywords: [],
+      enabledInPOS: false,
+      branchId: null,
+      brandId: null,
+      itemType: 'INDIVIDUAL_PRODUCT',
+      groupItems: [],
     },
+    typeOptions: [
+      { label: 'Individual Product', value: 'INDIVIDUAL_PRODUCT' },
+      { label: 'Item Group', value: 'ITEM_GROUP' },
+    ],
     isTagPartialDisplayed: true,
+    isKeywordsPartialDisplayed: true,
+    isAddBrandDialogOpen: false,
+    isChooseItemDialogOpen: false,
+    categoryOptions: [],
+    branchOptions: [],
+    loadingCategories: false,
+    loadingBranches: false,
   }),
   watch: {
     form: {
@@ -106,54 +283,113 @@ export default {
         }
       },
     },
+    'form.itemType': {
+      handler(newVal) {
+        // Clear group items when switching away from Item Group
+        if (newVal !== 'ITEM_GROUP') {
+          this.form.groupItems = [];
+        }
+      },
+    },
   },
   mounted() {
     this.isTagHidden = false;
+    this.fetchCategoryOptions();
+    this.fetchBranchOptions();
     this.initialize()
   },
   computed: {},
   methods: {
-    initialize() {
+    async fetchCategoryOptions() {
+      this.loadingCategories = true;
+      try {
+        const response = await this.$api.get('/item-category/select-box');
+        this.categoryOptions = response.data;
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        this.loadingCategories = false;
+      }
+    },
+    async fetchBranchOptions() {
+      this.loadingBranches = true;
+      try {
+        const response = await this.$api.get('/branch/select-box');
+        this.branchOptions = response.data;
+      } catch (error) {
+        console.error('Error fetching branches:', error);
+      } finally {
+        this.loadingBranches = false;
+      }
+    },
+    // Helper function to safely extract raw value from currency objects
+    extractRawValue(value, fallback = 0) {
+      if (value === null || value === undefined) return fallback;
+      if (typeof value === 'object' && value.hasOwnProperty('raw')) return value.raw;
+      return value;
+    },
+    // Helper function to safely extract string value from objects
+    extractStringValue(value, fallback = '') {
+      if (value === null || value === undefined) return fallback;
+      if (typeof value === 'object') {
+        // Check for common object properties that might contain the actual value
+        if (value.hasOwnProperty('raw')) return String(value.raw);
+        if (value.hasOwnProperty('value')) return String(value.value);
+        // If it's an object without known properties, return fallback
+        return fallback;
+      }
+      return String(value);
+    },
+    async initialize() {
       if (this.itemInformation) {
-        this.form.itemName = this.itemInformation.name;
-        this.form.sku = this.itemInformation.sku;
-        this.form.description = this.itemInformation.description;
+        this.form.itemName = this.extractStringValue(this.itemInformation.name);
+        this.form.sku = this.extractStringValue(this.itemInformation.sku);
+        this.form.description = this.extractStringValue(this.itemInformation.description);
 
-        if (this.itemInformation.hasOwnProperty('formattedEstimatedBuyingPrice')) {
-          this.form.estimatedBuyingPrice = this.itemInformation.formattedEstimatedBuyingPrice.raw;
-        }
-        else {
-          this.form.estimatedBuyingPrice = this.itemInformation.estimatedBuyingPrice.raw;
-        }
+        // Safely extract estimatedBuyingPrice from either format
+        const estimatedPrice = this.itemInformation.formattedEstimatedBuyingPrice ||
+                              this.itemInformation.estimatedBuyingPrice;
+        this.form.estimatedBuyingPrice = this.extractRawValue(estimatedPrice, 0);
 
         this.form.size = this.itemInformation.rawSize || 0;
         this.form.unit = this.itemInformation.unit;
         this.form.isAutoGeneratedSku = false;
         this.form.tags = this.itemInformation.tags;
         this.form.uom = this.itemInformation.uom;
-        
-        // Handle sellingPrice consistently with estimatedBuyingPrice
-        if (this.itemInformation.sellingPrice && typeof this.itemInformation.sellingPrice === 'object' && this.itemInformation.sellingPrice.hasOwnProperty('raw')) {
-          this.form.sellingPrice = this.itemInformation.sellingPrice.raw;
-        } else {
-          this.form.sellingPrice = this.itemInformation.sellingPrice || '';
-        }
-        
-        // Handle minimumStockLevel
-        if (this.itemInformation.minimumStockLevel && typeof this.itemInformation.minimumStockLevel === 'object' && this.itemInformation.minimumStockLevel.hasOwnProperty('raw')) {
-          this.form.minimumStockLevel = this.itemInformation.minimumStockLevel.raw;
-        } else {
-          this.form.minimumStockLevel = this.itemInformation.minimumStockLevel || 0;
-        }
-        
-        // Handle maximumStockLevel
-        if (this.itemInformation.maximumStockLevel && typeof this.itemInformation.maximumStockLevel === 'object' && this.itemInformation.maximumStockLevel.hasOwnProperty('raw')) {
-          this.form.maximumStockLevel = this.itemInformation.maximumStockLevel.raw;
-        } else {
-          this.form.maximumStockLevel = this.itemInformation.maximumStockLevel || 0;
-        }
+
+        // Safely extract all price/number fields
+        this.form.sellingPrice = this.extractRawValue(this.itemInformation.sellingPrice, '');
+        this.form.minimumStockLevel = this.extractRawValue(this.itemInformation.minimumStockLevel, 0);
+        this.form.maximumStockLevel = this.extractRawValue(this.itemInformation.maximumStockLevel, 0);
 
         this.$refs.tagsPartial.tags = this.itemInformation.tags;
+        this.$refs.keywordsPartial.keywords = this.itemInformation.keywords || [];
+
+        // Handle new fields
+        this.form.categoryId = this.itemInformation.categoryId || null;
+        this.form.brandId = this.itemInformation.brandId || null;
+        this.form.enabledInPOS = this.itemInformation.enabledInPOS || false;
+        this.form.branchId = this.itemInformation.branchId || null;
+        this.form.itemType = this.itemInformation.itemType || 'INDIVIDUAL_PRODUCT';
+
+        // Load group items if editing an item group
+        if (this.form.itemType === 'ITEM_GROUP') {
+          // Map backend format (nested item) to frontend format (flat)
+          // Normalize all fields to ensure they're primitive values
+          this.form.groupItems = (this.itemInformation.groupItems || []).map(gi => ({
+            id: gi.item?.id || gi.itemId,
+            name: this.extractStringValue(gi.item?.name || ''),
+            sku: this.extractStringValue(gi.item?.sku || ''),
+            quantity: Number(gi.quantity) || 1
+          }));
+        }
+
+        // Set brand after refs are ready
+        await this.$nextTick();
+        if (this.form.brandId && this.$refs.brandSelect) {
+          await this.$refs.brandSelect.setAutoSelect(this.form.brandId);
+        }
+
         if (this.itemInformation.hasOwnProperty('parent') && this.itemInformation.parent) {
           this.isTagHidden = true;
         }
@@ -174,6 +410,9 @@ export default {
     },
     onTagUpdated(val) {
       this.form.tags = val;
+    },
+    onKeywordUpdated(val) {
+      this.form.keywords = val;
     },
     fillData() {
       if (environment === 'development') {
@@ -198,6 +437,48 @@ export default {
           position: 'top',
         });
       }
+    },
+    showBrandAddDialog() {
+      this.isAddBrandDialogOpen = true;
+    },
+    async selectNewBrand(data) {
+      const autoSelect = data.id;
+      await this.$refs.brandSelect.refreshSelectOptions(autoSelect);
+      this.form.brandId = autoSelect;
+    },
+    addGroupItem(item) {
+      // Validate item type - only INDIVIDUAL_PRODUCT items can be added to groups
+      if (item.itemType === 'ITEM_GROUP') {
+        this.$q.notify({
+          color: 'negative',
+          message: 'Cannot add Item Groups to another Item Group. Only Individual Products are allowed.',
+          position: 'top'
+        });
+        return;
+      }
+
+      // Check if item already exists
+      const exists = this.form.groupItems.some(i => i.id === item.id);
+      if (exists) {
+        this.$q.notify({
+          color: 'warning',
+          message: 'This item is already in the group',
+          position: 'top'
+        });
+        return;
+      }
+
+      // Normalize item data to ensure all fields are primitive values
+      // Variation items may have objects for text fields instead of strings
+      this.form.groupItems.push({
+        id: item.id,
+        name: this.extractStringValue(item.name),
+        sku: this.extractStringValue(item.sku),
+        quantity: Number(item.quantity) || 1,
+      });
+    },
+    removeGroupItem(index) {
+      this.form.groupItems.splice(index, 1);
     },
   },
 };

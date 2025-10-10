@@ -411,4 +411,31 @@ export class WarehouseService {
     // Return the updated warehouse
     return this.getWarehouseById(warehouseId);
   }
+
+  /**
+   * Get warehouse options for dropdowns (no pagination)
+   * Returns all company warehouses of type COMPANY_WAREHOUSE
+   */
+  async getWarehouseOptions() {
+    const warehouses = await this.prisma.warehouse.findMany({
+      where: {
+        warehouseType: 'COMPANY_WAREHOUSE',
+        isDeleted: false,
+        companyId: this.utility.companyId,
+      },
+      select: {
+        id: true,
+        name: true,
+        warehouseType: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+
+    return [
+      { id: null, name: 'No Warehouse' },
+      ...warehouses,
+    ];
+  }
 }

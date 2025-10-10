@@ -30,6 +30,7 @@ import inventoryHistory from './table/inventoryHistory.table.reference';
 import inventoryPerWarehouse from './table/inventoryPerWarehouse.table.reference';
 import item from './table/item.table.reference';
 import itemAdvance from './table/itemAdvance.table.reference';
+import itemCategoryManagement from './table/itemCategoryManagement.table.reference';
 import itemReceipt from './table/itemReceipt.table.reference';
 import itemReceiptPurchaseOrder from './table/itemReceiptPurchaseOrder.table.reference';
 import itemReceiptPurchaseOrderTreasury from './table/itemReceiptPurchaseOrderTreasury.table.reference';
@@ -107,6 +108,7 @@ export default {
   inventoryPerWarehouse,
   item,
   itemAdvance,
+  itemCategoryManagement,
   itemReceipt,
   itemReceiptPurchaseOrder,
   itemReceiptPurchaseOrderTreasury,

@@ -105,6 +105,7 @@ export default {
         maximumStockLevel: 0,
       }));
     },
+    
 
     generateCombinations(tiers) {
       return tiers.reduce((acc, tier) => {

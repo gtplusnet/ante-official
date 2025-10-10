@@ -104,6 +104,8 @@ export class CommonModule implements NestModule {
         { path: 'api/guardian/(.*)', method: RequestMethod.ALL },
         { path: 'api/notifications/(.*)', method: RequestMethod.ALL },
         { path: 'api/notifications', method: RequestMethod.ALL },
+        // Add root path as public (redirects to API docs)
+        { path: '', method: RequestMethod.GET },
         // Add health endpoints as public
         { path: 'health', method: RequestMethod.GET },
         { path: 'health/version', method: RequestMethod.GET },

@@ -11,6 +11,7 @@ export interface BranchDataResponse {
   parent?: BranchDataResponse;
   children?: BranchDataResponse[];
   childrenCount?: number;
+  mainWarehouse?: any;
   createdAt: DateFormat;
   updatedAt: DateFormat;
 }

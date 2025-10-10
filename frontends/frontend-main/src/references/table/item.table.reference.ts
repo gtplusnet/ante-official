@@ -12,6 +12,9 @@ const item = {
     { key: 'name', label: 'Item Name', sortable: true, class: 'text-left' },
     { key: 'size', label: 'Size', sortable: true, class: 'text-center' },
     { key: 'uom.label', label: 'UOM', sortable: true, class: 'text-left' },
+    { key: 'brandDisplay', label: 'Brand', sortable: true, class: 'text-left' },
+    { key: 'categoryDisplay', label: 'Category', sortable: true, class: 'text-left' },
+    { key: 'branchDisplay', label: 'Branch', sortable: true, class: 'text-left' },
     {
       key: 'variationCount',
       label: 'Variations',
