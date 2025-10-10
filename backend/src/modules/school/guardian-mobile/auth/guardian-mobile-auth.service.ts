@@ -11,7 +11,6 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@common/prisma.service';
 import { EncryptionService } from '@common/encryption.service';
 import { UtilityService } from '@common/utility.service';
-import { SupabaseAuthService } from '@modules/auth/supabase-auth/supabase-auth.service';
 import * as bcrypt from 'bcrypt';
 import { Guardian } from '@prisma/client';
 import {
@@ -48,8 +47,6 @@ export class GuardianMobileAuthService {
     private readonly configService: ConfigService,
     private readonly encryptionService: EncryptionService,
     private readonly utilityService: UtilityService,
-    @Inject(SupabaseAuthService)
-    private readonly supabaseAuthService: SupabaseAuthService,
   ) {}
 
   async login(
@@ -142,43 +139,6 @@ export class GuardianMobileAuthService {
       },
     });
 
-    // Generate Supabase tokens
-    let supabaseTokens: {
-      supabaseToken?: string;
-      supabaseRefreshToken?: string;
-    } = {};
-
-    try {
-      // Create a pseudo-account for the guardian to get Supabase tokens
-      // Use guardian-specific email format to avoid conflicts with regular accounts
-      const guardianAccount = {
-        id: guardian.id,
-        email: `guardian.${guardian.email}`, // Prefix with 'guardian.' for Guardian App users
-        firstName: guardian.firstName,
-        lastName: guardian.lastName,
-        companyId: guardian.companyId,
-        roleId: 'guardian', // Use 'guardian' as a special roleId for guardians
-        supabaseUserId: null, // Guardians don't have pre-existing Supabase IDs
-      };
-
-      const supabaseResult = await this.supabaseAuthService.ensureSupabaseUser(
-        guardianAccount as any,
-        dto.password, // Only used for first-time creation
-      );
-
-      if (supabaseResult?.accessToken) {
-        supabaseTokens = {
-          supabaseToken: supabaseResult.accessToken,
-          supabaseRefreshToken: supabaseResult.refreshToken,
-        };
-      }
-    } catch (error) {
-      // Log but don't fail login if Supabase integration fails
-      this.utilityService.log(
-        `Supabase integration failed for guardian ${guardian.email}: ${error.message}`,
-      );
-    }
-
     return {
       guardian: {
         id: guardian.id,
@@ -195,7 +155,6 @@ export class GuardianMobileAuthService {
       },
       tokens: {
         ...tokens,
-        ...supabaseTokens,
       },
       company: {
         id: guardian.company.id,
@@ -285,41 +244,6 @@ export class GuardianMobileAuthService {
       where: { id: dto.companyId },
     });
 
-    // Generate Supabase tokens for new registration
-    let supabaseTokens: {
-      supabaseToken?: string;
-      supabaseRefreshToken?: string;
-    } = {};
-
-    try {
-      // Use guardian-specific email format to avoid conflicts with regular accounts
-      const guardianAccount = {
-        id: guardian.id,
-        email: `guardian.${guardian.email}`, // Prefix with 'guardian.' for Guardian App users
-        firstName: guardian.firstName,
-        lastName: guardian.lastName,
-        companyId: guardian.companyId,
-        roleId: 'guardian', // Use 'guardian' as a special roleId for guardians
-        supabaseUserId: null, // Guardians don't have pre-existing Supabase IDs
-      };
-
-      const supabaseResult = await this.supabaseAuthService.ensureSupabaseUser(
-        guardianAccount as any,
-        dto.password,
-      );
-
-      if (supabaseResult?.accessToken) {
-        supabaseTokens = {
-          supabaseToken: supabaseResult.accessToken,
-          supabaseRefreshToken: supabaseResult.refreshToken,
-        };
-      }
-    } catch (error) {
-      this.utilityService.log(
-        `Supabase integration failed for new guardian ${guardian.email}: ${error.message}`,
-      );
-    }
-
     return {
       guardian: {
         id: guardian.id,
@@ -332,7 +256,6 @@ export class GuardianMobileAuthService {
       },
       tokens: {
         ...tokens,
-        ...supabaseTokens,
       },
       company: companyInfo
         ? {

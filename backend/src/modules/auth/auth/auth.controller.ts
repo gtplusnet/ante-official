@@ -33,7 +33,6 @@ import {
 import { UtilityService } from '@common/utility.service';
 import { LoginResponse } from '../../../shared/response/auth.response';
 import { RedisService } from '@infrastructure/redis/redis.service';
-import { SupabaseTokenManagerService } from '../supabase-auth/supabase-token-manager.service';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -43,7 +42,6 @@ export class AuthController {
   @Inject() public inviteService: InviteService;
   @Inject() public utility: UtilityService;
   @Inject() private redisService: RedisService;
-  @Inject() private supabaseTokenManager: SupabaseTokenManagerService;
 
   @Public()
   @ApiOperation({ summary: 'User login with username/password' })
@@ -446,59 +444,4 @@ export class AuthController {
     }
   }
 
-  @ApiOperation({ summary: 'Refresh Supabase access token' })
-  @Post('refresh-supabase-token')
-  async refreshSupabaseToken(@Res() response, @Headers('token') token: string) {
-    try {
-      if (!token) {
-        return response.status(HttpStatus.UNAUTHORIZED).json({
-          statusCode: HttpStatus.UNAUTHORIZED,
-          message: 'No token provided',
-          data: null,
-        });
-      }
-
-      // Get account ID from the utility service's stored account information
-      const accountInfo = this.utility.accountInformation;
-      if (!accountInfo?.id) {
-        return response.status(HttpStatus.UNAUTHORIZED).json({
-          statusCode: HttpStatus.UNAUTHORIZED,
-          message: 'Invalid session',
-          data: null,
-        });
-      }
-
-      // Refresh the Supabase access token
-      const newAccessToken =
-        await this.supabaseTokenManager.getValidAccessToken(accountInfo.id);
-
-      if (!newAccessToken) {
-        return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: 'Failed to refresh Supabase token',
-          data: null,
-        });
-      }
-
-      // Also get the refresh token from cache for the response
-      const cachedRefreshToken =
-        await this.redisService.getCachedSupabaseRefreshToken(accountInfo.id);
-
-      return response.status(HttpStatus.OK).json({
-        statusCode: HttpStatus.OK,
-        message: 'Supabase token refreshed successfully',
-        data: {
-          supabaseToken: newAccessToken,
-          supabaseRefreshToken: cachedRefreshToken?.token || null,
-        },
-      });
-    } catch (error) {
-      this.utility.log(`Error refreshing Supabase token: ${error.message}`);
-      return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: 'Failed to refresh Supabase token',
-        data: null,
-      });
-    }
-  }
 }

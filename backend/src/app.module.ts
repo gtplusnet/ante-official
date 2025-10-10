@@ -105,9 +105,6 @@ import { MediaModule } from '@infrastructure/file-upload/media/media.module';
 import { TimeTrackingModule } from '@modules/time-tracking/time-tracking.module';
 import { ManpowerDeviceModule } from '@modules/manpower-device/manpower-device.module';
 
-// Webhook modules
-import { SupabaseWebhookModule } from '@modules/webhooks/supabase-webhook.module';
-
 // Individual controllers and services that need to be refactored into modules
 import { ScopeController } from '@modules/project/scope/scope/scope.controller';
 import { RoleGroupController } from '@modules/role/role-group/role-group.controller';
@@ -299,9 +296,6 @@ const ENV = process.env.NODE_ENV;
     // Time tracking module
     TimeTrackingModule,
     ManpowerDeviceModule,
-
-    // Webhook module for Supabase integration
-    SupabaseWebhookModule,
   ],
   controllers: [
     // Controllers that should be moved to their own modules eventually
