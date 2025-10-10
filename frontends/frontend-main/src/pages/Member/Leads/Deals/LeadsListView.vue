@@ -32,6 +32,15 @@
           </tr>
         </tbody>
       </table>
+
+      <!-- Empty State -->
+      <div v-if="!leadList.length && !isLoading" class="text-center q-pa-lg">
+        <q-icon name="folder_open" size="64px" color="grey-4" />
+        <div class="q-mt-sm text-h6 text-grey-6">No leads found</div>
+        <div class="text-body-small text-grey-5 q-mt-xs">
+          Click "New Lead" to add your first lead
+        </div>
+      </div>
     </div>
 
     <div v-else class="no-leads-container">
@@ -55,7 +64,7 @@
 
 <style scoped src="../Leads.scss"></style>
 <script lang="ts">
-import { defineComponent, ref, onMounted, defineAsyncComponent } from 'vue';
+import { defineComponent, ref, onMounted, defineAsyncComponent, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { APIRequests } from "src/utility/api.handler";
 import GlobalLoader from "src/components/shared/common/GlobalLoader.vue";
@@ -101,8 +110,21 @@ export default defineComponent({
     GlobalLoader,
     ViewLeadDialog,
   },
-
-  setup() {
+  props: {
+    filterRelationshipOwner: {
+      type: String,
+      default: 'all',
+    },
+    filterDealType: {
+      type: String,
+      default: 'all',
+    },
+    filterStage: {
+      type: String,
+      default: 'all',
+    },
+  },
+  setup(props) {
     const $q = useQuasar();
 
     // State
@@ -159,7 +181,24 @@ export default defineComponent({
     const fetchData = async (): Promise<void> => {
       try {
         isLoading.value = true;
-        const filters = { deleted: false, lead: true };
+        // Build filters based on props
+        const filters: any = { deleted: false, lead: true };
+
+        // Add filter by relationship owner
+        if (props.filterRelationshipOwner !== 'all') {
+          filters.relationshipOwnerId = props.filterRelationshipOwner;
+        }
+
+        // Add filter by deal type
+        if (props.filterDealType !== 'all') {
+          filters.dealTypeId = props.filterDealType;
+        }
+
+        // Add filter by stage
+        if (props.filterStage !== 'all') {
+          filters.leadBoardStage = props.filterStage;
+        }
+
         const response = await APIRequests.getLeadTable($q, filters, {
           perPage: 10,
           page: 1
@@ -255,6 +294,14 @@ export default defineComponent({
         }
       });
     };
+
+    // Watch for filter changes
+    watch(
+      () => [props.filterRelationshipOwner, props.filterDealType, props.filterStage],
+      () => {
+        fetchData();
+      }
+    );
 
     // Lifecycle hooks
     onMounted(() => {

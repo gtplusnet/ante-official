@@ -7,13 +7,8 @@
           All Deals
         </div>
         <div class="button-group">
-          <div
-            @click="setActiveView(view.name)"
-            v-for="view in viewList"
-            :key="view.name"
-            class="button"
-            :class="activeView == view.name ? 'active' : ''"
-          >
+          <div @click="setActiveView(view.name)" v-for="view in viewList" :key="view.name" class="button"
+            :class="activeView == view.name ? 'active' : ''">
             <q-icon :name="view.icon"></q-icon>
           </div>
         </div>
@@ -21,79 +16,38 @@
 
       <!-- filter and action button -->
       <div class="row items-center">
-        <!-- board filter -->
+        <!-- filter -->
         <div class="row items-center">
-          <q-select
-            class="select-box q-mr-sm"
-            rounded
-            outlined
-            dense
-            v-model="filterRelationshipOwner"
-            :options="optionsRelationshipOwner"
-            label="Filter by Relationship Owner"
-            emit-value
-            map-options
-          />
+          <q-select class="select-box q-mr-sm" rounded outlined dense v-model="filterRelationshipOwner"
+            :options="optionsRelationshipOwner" label="Filter by Relationship Owner" emit-value map-options />
           <div class="row items-center">
-            <q-select
-              class="select-box q-mr-xs"
-              rounded
-              outlined
-              dense
-              v-model="filterDealType"
-              :options="optionsDealType"
-              label="Filter by Deal Type"
-              emit-value
-              map-options
-            />
+            <q-select class="select-box q-mr-sm" rounded outlined dense v-model="filterDealType"
+              :options="optionsDealType" label="Filter by Deal Type" emit-value map-options />
           </div>
-          <q-select
-            v-if="activeView == 'grid' || activeView == 'list'"
-            class="select-box q-mr-sm"
-            rounded
-            outlined
-            dense
-            v-model="filterStage"
-            :options="optionsStage"
-            label="Filter by Stage"
-            emit-value
-            map-options
-          />
+          <q-select v-if="activeView == 'grid' || activeView == 'list'" class="select-box q-mr-sm" rounded outlined
+            dense v-model="filterStage" :options="optionsStage" label="Filter by Stage" emit-value map-options />
         </div>
 
         <!-- action button -->
-        <div>
-          <g-button
-            label="Add Deal Type"
-            color="primary"
-            icon="add"
-            icon-size="md"
-            class="q-mr-sm"
-            @click="handleAddDealType"
-          />
-          <GButton
-            class="actions text-label-large"
-            unelevated
-            color="primary"
-            icon="add"
-            icon-size="md"
-            label="New Lead"
-            @click="handleAddLead"
-          />
+        <div class="row items-center">
+          <GButton class="actions text-label-large" unelevated color="primary" icon="add" icon-size="md"
+            label="New Lead" @click="handleAddLead" />
         </div>
       </div>
     </div>
 
     <div class="page-content q-mt-md">
-      <component :is="currentViewComponent" ref="leadsView"></component>
+      <component
+        :is="currentViewComponent"
+        ref="leadsView"
+        :filterRelationshipOwner="filterRelationshipOwner"
+        :filterDealType="filterDealType"
+        :filterStage="filterStage"
+      ></component>
     </div>
 
     <!-- Deal Type Dialog -->
-    <AddEditDealTypeDialog
-      ref="dealTypeDialog"
-      @created="handleDealTypeCreated"
-      @updated="handleDealTypeUpdated"
-    />
+    <AddEditDealTypeDialog ref="dealTypeDialog" @created="handleDealTypeCreated" @updated="handleDealTypeUpdated" />
   </div>
 </template>
 
@@ -148,10 +102,9 @@ interface DealType {
 const { proxy } = getCurrentInstance() as any;
 
 const filterRelationshipOwner = ref("all");
-const optionsRelationshipOwner = [
+const optionsRelationshipOwner = ref([
   { label: "All", value: "all" },
-  { label: "Owner", value: "owner" },
-];
+]);
 
 const filterDealType = ref("all");
 const optionsDealType = ref([{ label: "All", value: "all" }]);
@@ -159,12 +112,13 @@ const optionsDealType = ref([{ label: "All", value: "all" }]);
 const filterStage = ref("all");
 const optionsStage = [
   { label: "All", value: "all" },
-  { label: "Opportunity", value: "opportunity" },
-  { label: "Contacted", value: "contacted" },
+  { label: "Prospect", value: "prospect" },
+  { label: "Initial Meeting", value: "initial_meeting" },
+  { label: "Technical Meeting", value: "technical_meeting" },
   { label: "Proposal", value: "proposal" },
-  { label: "In-Negotiation", value: "in-negotiation" },
-  { label: "Win", value: "win" },
-  { label: "Lost", value: "lost" },
+  { label: "In-negotiation", value: "in_negotiation" },
+  { label: "Won", value: "won" },
+  { label: "Loss", value: "loss" },
 ];
 
 const leadsView = ref<ComponentPublicInstance | null>(null);
@@ -238,8 +192,38 @@ const loadDealTypes = async () => {
   }
 };
 
+const loadRelationshipOwners = async () => {
+  try {
+    // Build query parameters (same approach as Relationship Owners page)
+    const params = new URLSearchParams();
+    params.append('showArchived', 'false');  // Only fetch active relationship owners
+
+    // Use direct API call (same as Relationship Owners page for consistency)
+    const response = await proxy.$api.get(`/lead-relationship-owner/list?${params.toString()}`);
+
+    // Access response.data (same as Relationship Owners page)
+    const owners = response.data || [];
+
+    // Update the options array
+    optionsRelationshipOwner.value = [
+      { label: "All", value: "all" },
+      ...owners.map((owner: any) => ({
+        label: owner.fullName || 'Unknown',  // Use fullName from API response
+        value: owner.accountId.toString(),  // Convert accountId to string for consistent filtering
+      })),
+    ];
+  } catch (error) {
+    console.error("Failed to load relationship owners:", error);
+    // Keep default options on error
+    optionsRelationshipOwner.value = [{ label: "All", value: "all" }];
+  }
+};
+
 onMounted(async () => {
-  // Load deal types on component mount
-  await loadDealTypes();
+  // Load deal types and relationship owners on component mount
+  await Promise.all([
+    loadDealTypes(),
+    loadRelationshipOwners(),
+  ]);
 });
 </script>
