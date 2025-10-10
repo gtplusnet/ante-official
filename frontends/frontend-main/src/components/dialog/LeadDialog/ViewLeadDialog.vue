@@ -589,15 +589,14 @@ export default {
       Dialog.create({
         title: 'Convert to Project',
         message: 'Are you sure you want to convert this lead to a project?',
-        cancel: true,
+        cancel: {
+          label: 'Cancel',
+          color: 'grey'
+        },
         persistent: true,
         ok: {
           label: 'Convert',
           color: 'primary'
-        },
-        cancel: {
-          label: 'Cancel',
-          color: 'grey'
         }
       }).onOk(async () => {
         try {
