@@ -12,12 +12,10 @@
 
         <div class="row items-center q-gutter-x-sm q-mb-md">
           <q-badge class="StageBadge" text-color="white">Current Stage <q-icon name="keyboard_arrow_down" /></q-badge>
-          <q-badge class="ProposalBadge" text-color="white"
-            >Proposal Status <q-icon name="keyboard_arrow_down"
-          /></q-badge>
-          <q-badge class="BiddingBadge" text-color="white"
-            >Bidding Status <q-icon name="keyboard_arrow_down"
-          /></q-badge>
+          <q-badge class="ProposalBadge" text-color="white">Proposal Status <q-icon
+              name="keyboard_arrow_down" /></q-badge>
+          <q-badge class="BiddingBadge" text-color="white">Bidding Status <q-icon
+              name="keyboard_arrow_down" /></q-badge>
         </div>
 
         <div class="row items-start justify-start">
@@ -85,8 +83,8 @@
                     <span class="details-value">{{
                       leadInformation.personInCharge?.firstName
                         ? formatWord(leadInformation.personInCharge?.firstName) +
-                          " " +
-                          formatWord(leadInformation.personInCharge?.lastName)
+                        " " +
+                        formatWord(leadInformation.personInCharge?.lastName)
                         : "N/A"
                     }}</span>
                   </div>
@@ -157,9 +155,8 @@
 
                 <GlobalWidgetCardBox class="task-card-item">
                   <div class="row q-pb-xs">
-                    <span class="details-value"
-                      ><span class="text-grey-light">#034</span> Interior Design Attachment (Static)</span
-                    >
+                    <span class="details-value"><span class="text-grey-light">#034</span> Interior Design Attachment
+                      (Static)</span>
                   </div>
                   <div class="row justify-between items-center">
                     <div class="row q-gutter-x-sm">
@@ -176,9 +173,8 @@
 
                 <GlobalWidgetCardBox class="task-card-item">
                   <div class="row q-pb-xs">
-                    <span class="details-value"
-                      ><span class="text-grey-light">#035</span> Exterior Design Attachment (Static)</span
-                    >
+                    <span class="details-value"><span class="text-grey-light">#035</span> Exterior Design Attachment
+                      (Static)</span>
                   </div>
                   <div class="row justify-between items-center">
                     <div class="row q-gutter-x-sm">
@@ -382,31 +378,12 @@
           <div class="col-4 column q-pl-md">
             <div class="text-title-small q-mb-sm" :style="{ color: 'var(--q-text-light-grey)' }">Main Actions</div>
             <div class="more-actions column items-center justify-center q-mb-lg">
-              <GButton
-                variant="outline"
-                no-caps
-                color="primary"
-                icon="swap_horiz"
-                label="Convert To Project"
-                class="full-width row items-start"
-                @click="handleConvertToProject"
-              />
-              <GButton
-                variant="outline"
-                no-caps
-                color="primary"
-                icon="o_collections_bookmark"
-                label="Bill Of Quantity"
-                class="full-width row items-start"
-              >
-                <q-menu
-                  auto-close
-                  anchor="bottom middle"
-                  self="top middle"
-                  transition-show="jump-down"
-                  transition-hide="jump-up"
-                  style="border-radius: 12px;"
-                >
+              <GButton variant="outline" no-caps color="primary" icon="swap_horiz" label="Convert To Project"
+                class="full-width row items-start" @click="handleConvertToProject" />
+              <GButton variant="outline" no-caps color="primary" icon="o_collections_bookmark" label="Bill Of Quantity"
+                class="full-width row items-start">
+                <q-menu auto-close anchor="bottom middle" self="top middle" transition-show="jump-down"
+                  transition-hide="jump-up" style="border-radius: 12px;">
                   <div class="menu">
                     <div clickable class="menu-item row q-gutter-x-sm cursor-pointer" @click="openBillOfQuantityDialog">
                       <div class="row items-center text-dark"><q-icon name="visibility" size="20px" /></div>
@@ -419,90 +396,20 @@
                   </div>
                 </q-menu>
               </GButton>
-
-              <GButton
-                variant="outline"
-                no-caps
-                color="primary"
-                icon="o_folder_copy"
-                label="Proposal"
-                class="full-width row items-start"
-              >
-                <q-menu
-                  auto-close
-                  anchor="bottom middle"
-                  self="top middle"
-                  transition-show="jump-down"
-                  transition-hide="jump-up"
-                  style="border-radius: 12px;"
-                >
-                  <div class="menu">
-                    <div clickable class="menu-item row q-gutter-x-sm cursor-pointer">
-                      <div class="row items-center text-dark"><q-icon name="visibility" size="20px" /></div>
-                      <div class="text-dark text-label-medium q-pa-xs">View Proposal</div>
-                    </div>
-                    <div clickable class="menu-item row q-gutte-x-sm cursor-pointer">
-                      <div class="row items-center text-dark"><q-icon name="upload" size="20px" /></div>
-                      <div class="text-dark text-label-medium q-pa-xs">Upload Proposal</div>
-                    </div>
-                    <div clickable class="menu-item row q-gutter-x-sm cursor-pointer" @click="openManageVersionDialog()">
-                      <div class="row items-center text-dark"><q-icon name="history" size="20px" /></div>
-                      <div class="text-dark text-label-medium q-pa-xs">Manage Versions</div>
-                    </div>
-                  </div>
-                </q-menu>
-              </GButton>
             </div>
 
             <div class="text-title-small q-mb-sm" :style="{ color: 'var(--q-text-light-grey)' }">Quick Actions</div>
             <div class="quick-actions column items-center justify-center">
-              <GButton
-                unelevated
-                no-caps
-                color="primary"
-                variant="tonal"
-                icon="edit_document"
-                label="Create Task"
-                class="full-width row items-start"
-              />
-              <GButton
-                unelevated
-                no-caps
-                color="primary"
-                variant="tonal"
-                icon="o_edit_calendar"
-                label="Schedule Meeting"
-                class="full-width row items-start"
-              />
-              <GButton
-                unelevated
-                no-caps
-                color="primary"
-                variant="tonal"
-                icon="forward_to_inbox"
-                label="Send Email"
-                class="full-width row items-start"
-                @click="openEmailCompose"
-              />
-              <GButton
-                unelevated
-                no-caps
-                color="primary"
-                variant="tonal"
-                icon="attachment"
-                label="Attachment"
-                class="full-width row items-start"
-              />
-              <GButton
-                unelevated
-                no-caps
-                color="primary"
-                variant="tonal"
-                icon="o_note_add"
-                label="Add Note"
-                class="full-width row items-start"
-                @click="openAddNoteDialog"
-              />
+              <GButton unelevated no-caps color="primary" variant="tonal" icon="edit_document" label="Create Task"
+                class="full-width row items-start" />
+              <GButton unelevated no-caps color="primary" variant="tonal" icon="o_edit_calendar"
+                label="Schedule Meeting" class="full-width row items-start" />
+              <GButton unelevated no-caps color="primary" variant="tonal" icon="forward_to_inbox" label="Send Email"
+                class="full-width row items-start" @click="openEmailCompose" />
+              <GButton unelevated no-caps color="primary" variant="tonal" icon="attachment" label="Attachment"
+                class="full-width row items-start" />
+              <GButton unelevated no-caps color="primary" variant="tonal" icon="o_note_add" label="Add Note"
+                class="full-width row items-start" @click="openAddNoteDialog" />
             </div>
 
             <!-- <div class="text-subtitle2" :style="{ color: 'var(--q-text-light-grey)' }">Notes/ Next Actions:</div>
@@ -525,30 +432,16 @@
       </q-card-section>
 
       <!-- Bill of Quantity Dialog -->
-      <bill-of-quantity-dialog
-        v-if="isBillOfQuantityDialogOpen"
-        v-model="isBillOfQuantityDialogOpen"
-        :projectId="leadInformation.id"
-      />
+      <bill-of-quantity-dialog v-if="isBillOfQuantityDialogOpen" v-model="isBillOfQuantityDialogOpen"
+        :projectId="leadInformation.id" />
 
       <!-- Email Compose Dialog -->
-      <email-compose-dialog
-        v-model="isEmailComposeDialogOpen"
-        :defaultTo="leadInformation.client?.email || ''"
-        :defaultSubject="` ${leadInformation.name}`"
-        @sent="handleEmailSent"
-      />
-
-      <!-- Proposal Manage Version Dialog -->
-      <ProposalManageVersionDialog v-model="isManageVersionDialogOpen" />
+      <email-compose-dialog v-model="isEmailComposeDialogOpen" :defaultTo="leadInformation.client?.email || ''"
+        :defaultSubject="` ${leadInformation.name}`" @sent="handleEmailSent" />
 
       <!-- Add Note Dialog -->
-      <AddNoteDialog 
-        v-model="isAddNoteDialogOpen" 
-        :noteData="editingNote"
-        @saveDone="handleNoteSaved"
-        @close="isAddNoteDialogOpen = false"
-      />
+      <AddNoteDialog v-model="isAddNoteDialogOpen" :noteData="editingNote" @saveDone="handleNoteSaved"
+        @close="isAddNoteDialogOpen = false" />
     </q-card>
   </q-dialog>
 </template>
@@ -573,9 +466,7 @@ const BillOfQuantityDialog = defineAsyncComponent(() =>
 const EmailComposeDialog = defineAsyncComponent(() =>
   import('../EmailComposeDialog.vue')
 );
-const ProposalManageVersionDialog = defineAsyncComponent(() =>
-  import('./ProposalManageVersionDialog.vue')
-);
+
 const AddNoteDialog = defineAsyncComponent(() =>
   import('./AddNoteDialog.vue')
 );
@@ -587,7 +478,6 @@ export default {
     GlobalWidgetCardBox,
     BillOfQuantityDialog,
     EmailComposeDialog,
-    ProposalManageVersionDialog,
     AddNoteDialog,
   },
   props: {
@@ -621,10 +511,6 @@ export default {
 
     const openBillOfQuantityDialog = () => {
       isBillOfQuantityDialogOpen.value = true;
-    };
-
-    const openManageVersionDialog = () => {
-      isManageVersionDialogOpen.value = true;
     };
 
     const fetchData = async () => {
@@ -787,7 +673,6 @@ export default {
       openBillOfQuantityDialog,
       openEmailCompose,
       handleEmailSent,
-      openManageVersionDialog,
       openAddNoteDialog,
       handleNoteSaved,
       onHide,
