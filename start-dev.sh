@@ -2,7 +2,7 @@
 
 set -e
 
-echo "🚀 Starting ANTE development environment with hosted Supabase..."
+echo "🚀 Starting ANTE development environment with local databases..."
 
 # Change to the project root directory
 cd "$(dirname "$0")"
@@ -17,63 +17,30 @@ lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 lsof -ti:4000 | xargs kill -9 2>/dev/null || true
 echo "    ✅ Ports 3000 and 4000 cleared!"
 
-# Start additional services (Redis & MongoDB) via Docker
-echo "🔧 Starting Redis and MongoDB..."
-docker network create ante-network 2>/dev/null || true
-
-# Start Redis
-if docker ps -a | grep -q ante-redis-dev; then
-  echo "  - Redis container exists, starting it..."
-  docker start ante-redis-dev >/dev/null 2>&1
-else
-  echo "  - Creating new Redis container..."
-  docker run -d \
-    --name ante-redis-dev \
-    --network ante-network \
-    -p 6379:6379 \
-    -v redis_data:/data \
-    --health-cmd="redis-cli ping" \
-    --health-interval=10s \
-    --health-timeout=5s \
-    --health-retries=5 \
-    redis:7-alpine
-fi
-
-# Start MongoDB  
-if docker ps -a | grep -q ante-mongodb-dev; then
-  echo "  - MongoDB container exists, starting it..."
-  docker start ante-mongodb-dev >/dev/null 2>&1
-else
-  echo "  - Creating new MongoDB container..."
-  docker run -d \
-    --name ante-mongodb-dev \
-    --network ante-network \
-    -p 27017:27017 \
-    -e MONGO_INITDB_ROOT_USERNAME=jdev \
-    -e MONGO_INITDB_ROOT_PASSWORD=water123 \
-    -e MONGO_INITDB_DATABASE=ante-test \
-    -e TZ=Asia/Manila \
-    -v mongodb_data:/data/db \
-    --health-cmd="echo 'db.runCommand(\"ping\").ok' | mongosh localhost:27017/test --quiet" \
-    --health-interval=10s \
-    --health-timeout=5s \
-    --health-retries=5 \
-    mongo:7
-fi
+# Start database services (PostgreSQL, Redis & MongoDB) via Docker Compose
+echo "🔧 Starting PostgreSQL, Redis and MongoDB via Docker Compose..."
+docker-compose -f docker/docker-compose-databases.yml up -d
 
 # Wait for services to be healthy
 echo "⏳ Waiting for services to be ready..."
 
+# Wait for PostgreSQL
+echo "  - Waiting for PostgreSQL..."
+until docker exec ante-postgres pg_isready -U ante >/dev/null 2>&1; do
+  sleep 1
+done
+echo "    ✅ PostgreSQL is ready!"
+
 # Wait for Redis
 echo "  - Waiting for Redis..."
-until docker exec ante-redis-dev redis-cli ping >/dev/null 2>&1; do
+until docker exec ante-redis redis-cli ping >/dev/null 2>&1; do
   sleep 1
 done
 echo "    ✅ Redis is ready!"
 
 # Wait for MongoDB
 echo "  - Waiting for MongoDB..."
-until docker exec ante-mongodb-dev mongosh --eval "db.adminCommand('ping')" >/dev/null 2>&1; do
+until docker exec ante-mongodb mongosh --eval "db.adminCommand('ping')" >/dev/null 2>&1; do
   sleep 1
 done
 echo "    ✅ MongoDB is ready!"
@@ -93,7 +60,7 @@ echo "  - WebSocket: ws://localhost:4000"
 echo "  - Frontend Main: http://localhost:9000"
 echo ""
 echo "🔗 Database services available at:"
-echo "  - Supabase (Hosted): https://ramamglzyiejlznfnngc.supabase.co"
+echo "  - PostgreSQL: localhost:5432 (ante/ante_password)"
 echo "  - Redis: localhost:6379"
 echo "  - MongoDB: localhost:27017 (jdev/water123)"
 echo ""
