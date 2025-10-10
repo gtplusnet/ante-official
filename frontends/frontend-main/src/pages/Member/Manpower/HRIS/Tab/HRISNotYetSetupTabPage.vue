@@ -5,7 +5,7 @@
     <g-table
     :isRowActionEnabled="true"
     tableKey="notYetSetTabHRIS"
-    apiUrl="/hris/employee/table"
+    apiUrl="/hris/employee/table-lite"
     :apiFilters="[]"
     ref="table">
     <template v-slot:fullName="props">
