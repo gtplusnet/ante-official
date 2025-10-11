@@ -10,6 +10,7 @@ export interface CalendarCategory {
   description?: string;
   isSystem: boolean;
   creatorId?: string;
+  accountId?: string; // Owner of this category (user-specific)
   companyId: number;
   isActive: boolean;
   sortOrder: number;
@@ -17,13 +18,50 @@ export interface CalendarCategory {
   updatedAt?: string;
 }
 
+// ============================================
+// SINGLETON STATE (shared across all components)
+// ============================================
+const categories = ref<CalendarCategory[]>([]);
+const selectedCategories = ref<number[]>([]);
+const loading = ref(false);
+const error = ref<any>(null);
+
+// Predefined colors for category creation
+const predefinedColors = [
+  '#2196F3', // Blue
+  '#4CAF50', // Green
+  '#FF9800', // Orange
+  '#E91E63', // Pink
+  '#9C27B0', // Purple
+  '#00BCD4', // Cyan
+  '#FFC107', // Amber
+  '#795548', // Brown
+  '#607D8B', // Blue Grey
+  '#F44336', // Red
+  '#3F51B5', // Indigo
+  '#009688', // Teal
+  '#CDDC39', // Lime
+  '#FF5722', // Deep Orange
+  '#9E9E9E'  // Grey
+];
+
+// Computed
+const categoryOptions = computed(() => {
+  return categories.value.map(category => ({
+    label: category.name,
+    value: category.id,
+    icon: category.icon,
+    color: category.colorCode
+  }));
+});
+
+const selectedCategoryObjects = computed(() => {
+  return categories.value.filter(c => selectedCategories.value.includes(c.id));
+});
+
+// Export composable function
 export function useCalendarCategories() {
   const $q = useQuasar();
-
-  const categories = ref<CalendarCategory[]>([]);
-  const selectedCategories = ref<number[]>([]);
-  const loading = ref(false);
-  const error = ref<any>(null);
 
   // Fetch all categories
   const fetchCategories = async () => {
@@ -210,40 +248,6 @@ export function useCalendarCategories() {
   const getCategoryById = (categoryId: number) => {
     return categories.value.find(c => c.id === categoryId);
   };
-
-  // Get categories for dropdown
-  const categoryOptions = computed(() => {
-    return categories.value.map(category => ({
-      label: category.name,
-      value: category.id,
-      icon: category.icon,
-      color: category.colorCode
-    }));
-  });
-
-  // Get selected category objects
-  const selectedCategoryObjects = computed(() => {
-    return categories.value.filter(c => selectedCategories.value.includes(c.id));
-  });
-
-  // Predefined colors for category creation
-  const predefinedColors = [
-    '#2196F3', // Blue
-    '#4CAF50', // Green
-    '#FF9800', // Orange
-    '#E91E63', // Pink
-    '#9C27B0', // Purple
-    '#00BCD4', // Cyan
-    '#FFC107', // Amber
-    '#795548', // Brown
-    '#607D8B', // Blue Grey
-    '#F44336', // Red
-    '#3F51B5', // Indigo
-    '#009688', // Teal
-    '#CDDC39', // Lime
-    '#FF5722', // Deep Orange
-    '#9E9E9E'  // Grey
-  ];
 
   return {
     // State
