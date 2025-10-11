@@ -146,15 +146,68 @@
       </div>
     </div>
 
-    <!-- Other Calendars (Optional) -->
-    <div class="sidebar-section other-calendars-section" v-if="showOtherCalendars">
+    <!-- Personal Section -->
+    <div class="sidebar-section personal-section">
       <div class="section-header">
-        <span class="text-subtitle2">Other Calendars</span>
+        <span class="text-subtitle2">Personal</span>
       </div>
-      <div class="other-calendars-list">
-        <!-- Placeholder for team calendars, shared calendars, etc. -->
-        <div class="text-caption text-grey q-pa-sm">
-          No other calendars
+
+      <div class="sources-list">
+        <div
+          v-for="source in personalSources"
+          :key="source.id"
+          class="source-item"
+        >
+          <q-checkbox
+            :model-value="source.enabled"
+            @update:model-value="toggleSource(source.id)"
+            dense
+            size="sm"
+            class="source-checkbox"
+          >
+            <template v-slot:default>
+              <div class="source-content">
+                <div
+                  class="source-color"
+                  :style="{ backgroundColor: source.color }"
+                ></div>
+                <span class="source-label">{{ source.name }}</span>
+              </div>
+            </template>
+          </q-checkbox>
+        </div>
+      </div>
+    </div>
+
+    <!-- Company Section -->
+    <div class="sidebar-section company-section">
+      <div class="section-header">
+        <span class="text-subtitle2">Company</span>
+      </div>
+
+      <div class="sources-list">
+        <div
+          v-for="source in companySources"
+          :key="source.id"
+          class="source-item"
+        >
+          <q-checkbox
+            :model-value="source.enabled"
+            @update:model-value="toggleSource(source.id)"
+            dense
+            size="sm"
+            class="source-checkbox"
+          >
+            <template v-slot:default>
+              <div class="source-content">
+                <div
+                  class="source-color"
+                  :style="{ backgroundColor: source.color }"
+                ></div>
+                <span class="source-label">{{ source.name }}</span>
+              </div>
+            </template>
+          </q-checkbox>
         </div>
       </div>
     </div>
@@ -165,6 +218,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { date } from 'quasar';
 import { useCalendarCategories, type CalendarCategory } from 'src/composables/calendar/useCalendarCategories';
+import { useCalendarIntegration } from 'src/composables/calendar/useCalendarIntegration';
 
 // Props
 interface Props {
@@ -198,6 +252,13 @@ const {
   selectAllCategories,
   deselectAllCategories
 } = useCalendarCategories();
+
+const {
+  calendarSources,
+  personalSources,
+  companySources,
+  toggleSource
+} = useCalendarIntegration();
 
 // Local state
 const miniCalendarDate = ref(new Date());
@@ -532,10 +593,47 @@ watch(() => props.selectedDate, (newDate) => {
     }
   }
 
-  // Other Calendars
-  .other-calendars-section {
-    .other-calendars-list {
-      padding: 8px 0;
+  // Personal and Company Sections
+  .personal-section,
+  .company-section {
+    .sources-list {
+      .source-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 4px 0;
+        transition: background 0.2s;
+        border-radius: 4px;
+
+        &:hover {
+          background: rgba(0, 0, 0, 0.02);
+        }
+
+        .source-checkbox {
+          flex: 1;
+
+          :deep(.q-checkbox__label) {
+            flex: 1;
+          }
+        }
+
+        .source-content {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .source-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+          }
+
+          .source-label {
+            font-size: 0.875rem;
+            color: rgba(0, 0, 0, 0.87);
+          }
+        }
+      }
     }
   }
 }

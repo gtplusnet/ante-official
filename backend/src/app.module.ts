@@ -171,6 +171,7 @@ import { CollectionService } from '@modules/finance/collection/collection/collec
 import { ProjectAccomplishmentService } from '@modules/project/accomplishment/project-accomplishment/project-accomplishment.service';
 import { BranchService } from '@modules/location/branch/branch/branch.service';
 import { CalendarEventService } from '@modules/calendar/calendar-event/calendar-event.service';
+import { CalendarIntegrationService } from '@modules/calendar/calendar-event/calendar-integration.service';
 import { CalendarCategoryService } from '@modules/calendar/calendar-category/calendar-category.service';
 
 const ENV = process.env.NODE_ENV;
@@ -379,6 +380,7 @@ const ENV = process.env.NODE_ENV;
     ProjectAccomplishmentService,
     BranchService,
     CalendarEventService,
+    CalendarIntegrationService,
     CalendarCategoryService,
     // Add RoleGroupService back for UserOrgService dependency
     RoleGroupService,

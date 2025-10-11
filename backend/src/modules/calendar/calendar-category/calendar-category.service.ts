@@ -9,9 +9,10 @@ export class CalendarCategoryService {
   @Inject() private readonly utility: UtilityService;
 
   /**
-   * Get all categories for the current company
+   * Get all categories for the current user
    */
   async getCategories() {
+    const accountId = this.utility.accountInformation.id;
     const companyId = this.utility.accountInformation.company?.id;
 
     if (!companyId) {
@@ -20,6 +21,7 @@ export class CalendarCategoryService {
 
     const categories = await this.prisma.calendarCategory.findMany({
       where: {
+        accountId, // Filter by current user
         companyId,
         isActive: true,
       },
@@ -33,11 +35,13 @@ export class CalendarCategoryService {
    * Get a single category by ID
    */
   async getCategoryById(id: number) {
+    const accountId = this.utility.accountInformation.id;
     const companyId = this.utility.accountInformation.company?.id;
 
     const category = await this.prisma.calendarCategory.findFirst({
       where: {
         id,
+        accountId, // Ensure category belongs to current user
         companyId,
         isActive: true,
       },
@@ -54,6 +58,7 @@ export class CalendarCategoryService {
    * Create a new category
    */
   async createCategory(data: CreateCategoryDto) {
+    const accountId = this.utility.accountInformation.id;
     const companyId = this.utility.accountInformation.company?.id;
     const creatorId = this.utility.accountInformation.id;
 
@@ -61,9 +66,9 @@ export class CalendarCategoryService {
       throw new BadRequestException('Company ID not found');
     }
 
-    // Get the highest sortOrder
+    // Get the highest sortOrder for this user
     const highestOrder = await this.prisma.calendarCategory.findFirst({
-      where: { companyId },
+      where: { accountId, companyId },
       orderBy: { sortOrder: 'desc' },
       select: { sortOrder: true },
     });
@@ -79,6 +84,7 @@ export class CalendarCategoryService {
         sortOrder,
         isSystem: false, // Custom categories are never system categories
         creatorId,
+        accountId, // Set owner to current user
         companyId,
         isActive: true,
       },
@@ -91,11 +97,12 @@ export class CalendarCategoryService {
    * Update a category
    */
   async updateCategory(id: number, data: UpdateCategoryDto) {
+    const accountId = this.utility.accountInformation.id;
     const companyId = this.utility.accountInformation.company?.id;
 
-    // Check if category exists and belongs to company
+    // Check if category exists and belongs to current user
     const existingCategory = await this.prisma.calendarCategory.findFirst({
-      where: { id, companyId, isActive: true },
+      where: { id, accountId, companyId, isActive: true },
     });
 
     if (!existingCategory) {
@@ -126,11 +133,12 @@ export class CalendarCategoryService {
    * Delete a category (soft delete)
    */
   async deleteCategory(id: number) {
+    const accountId = this.utility.accountInformation.id;
     const companyId = this.utility.accountInformation.company?.id;
 
-    // Check if category exists and belongs to company
+    // Check if category exists and belongs to current user
     const existingCategory = await this.prisma.calendarCategory.findFirst({
-      where: { id, companyId, isActive: true },
+      where: { id, accountId, companyId, isActive: true },
     });
 
     if (!existingCategory) {
