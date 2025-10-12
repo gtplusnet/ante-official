@@ -1,41 +1,47 @@
 <template>
   <q-dialog @before-show="fetchData">
-    <q-card class="full-width dialog-card">
-      <q-bar class="bg-primary text-white cursor-default" dark>
-        <q-icon name="o_task" />
-        <div class="text-title-medium">Item Advance List</div>
+    <TemplateDialog size="md" :scrollable="true" :icon="'o_task'" :iconColor="'primary'">
+      <!-- Dialog Title -->
+      <template #DialogTitle>
+        Item Advance List
+      </template>
 
-        <q-space />
-
-        <q-btn dense flat icon="close" v-close-popup>
-          <q-tooltip class="text-label-small">Close</q-tooltip>
-        </q-btn>
-      </q-bar>
-      <q-card-section>
+      <!-- Dialog Content -->
+      <template #DialogContent>
         <!-- advance view -->
-        <g-table tableKey="itemAdvance" apiUrl="/items/advanceView" :apiFilters="[{ parent: parentId }]" ref="table">
-          <!-- slot sku -->
-          <template v-slot:sku="props">
-            <span @click="viewItemInformation(props.data)" class="clickable-code">{{ props.data.sku }}</span>
-          </template>
-        </g-table>
-      </q-card-section>
-    </q-card>
+        <section class="q-pa-md">
+          <g-table tableKey="itemAdvance" apiUrl="/items/advanceView" :apiFilters="[{ parent: parentId }]" ref="table">
+            <!-- slot sku -->
+            <template v-slot:sku="props">
+              <span @click="viewItemInformation(props.data)" class="clickable-code">{{ props.data.sku }}</span>
+            </template>
+          </g-table>
+        </section>
+      </template>
+    </TemplateDialog>
 
-    <item-information-dialog v-model="isItemInformationDialogOpen" :itemId="itemId" @close="isItemInformationDialogOpen = false" @itemInformationUpdated="this.$refs.table.refetch()"> </item-information-dialog>
+    <item-information-dialog v-model="isItemInformationDialogOpen" :itemId="itemId"
+      @close="isItemInformationDialogOpen = false" @itemInformationUpdated="this.$refs.table.refetch()">
+    </item-information-dialog>
   </q-dialog>
 </template>
 
 <style scoped lang="scss">
-.dialog-card {
-  max-width: 800px;
-  min-height: 300px;
+.clickable-code {
+  color: var(--q-primary);
+  cursor: pointer;
+  text-decoration: underline;
+
+  &:hover {
+    opacity: 0.8;
+  }
 }
 </style>
 
 <script>
 import { defineAsyncComponent } from 'vue';
-import GTable from "../../components/shared/display/GTable.vue";
+import GTable from "../shared/display/GTable.vue";
+import TemplateDialog from './TemplateDialog.vue';
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
 const ItemInformationDialog = defineAsyncComponent(() =>
@@ -46,6 +52,7 @@ export default {
   name: 'ItemAdvanceListDialog',
   components: {
     GTable,
+    TemplateDialog,
     ItemInformationDialog,
   },
   props: {
@@ -64,7 +71,7 @@ export default {
       this.itemId = item.id;
       this.isItemInformationDialogOpen = true;
     },
-    fetchData() {},
+    fetchData() { },
   },
 };
 </script>

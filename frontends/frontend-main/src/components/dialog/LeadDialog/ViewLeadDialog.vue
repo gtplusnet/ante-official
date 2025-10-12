@@ -12,12 +12,10 @@
 
         <div class="row items-center q-gutter-x-sm q-mb-md">
           <q-badge class="StageBadge" text-color="white">Current Stage <q-icon name="keyboard_arrow_down" /></q-badge>
-          <q-badge class="ProposalBadge" text-color="white"
-            >Proposal Status <q-icon name="keyboard_arrow_down"
-          /></q-badge>
-          <q-badge class="BiddingBadge" text-color="white"
-            >Bidding Status <q-icon name="keyboard_arrow_down"
-          /></q-badge>
+          <q-badge class="ProposalBadge" text-color="white">Proposal Status <q-icon
+              name="keyboard_arrow_down" /></q-badge>
+          <q-badge class="BiddingBadge" text-color="white">Bidding Status <q-icon
+              name="keyboard_arrow_down" /></q-badge>
         </div>
 
         <div class="row items-start justify-start">
@@ -85,8 +83,8 @@
                     <span class="details-value">{{
                       leadInformation.personInCharge?.firstName
                         ? formatWord(leadInformation.personInCharge?.firstName) +
-                          " " +
-                          formatWord(leadInformation.personInCharge?.lastName)
+                        " " +
+                        formatWord(leadInformation.personInCharge?.lastName)
                         : "N/A"
                     }}</span>
                   </div>
@@ -157,9 +155,8 @@
 
                 <GlobalWidgetCardBox class="task-card-item">
                   <div class="row q-pb-xs">
-                    <span class="details-value"
-                      ><span class="text-grey-light">#034</span> Interior Design Attachment (Static)</span
-                    >
+                    <span class="details-value"><span class="text-grey-light">#034</span> Interior Design Attachment
+                      (Static)</span>
                   </div>
                   <div class="row justify-between items-center">
                     <div class="row q-gutter-x-sm">
@@ -176,9 +173,8 @@
 
                 <GlobalWidgetCardBox class="task-card-item">
                   <div class="row q-pb-xs">
-                    <span class="details-value"
-                      ><span class="text-grey-light">#035</span> Exterior Design Attachment (Static)</span
-                    >
+                    <span class="details-value"><span class="text-grey-light">#035</span> Exterior Design Attachment
+                      (Static)</span>
                   </div>
                   <div class="row justify-between items-center">
                     <div class="row q-gutter-x-sm">
@@ -277,11 +273,7 @@
                     </div>
                     <div class="text-grey text-label-medium q-pt-xs">Notes:</div>
                     <div class="text-dark text-label-large q-pb-xs">
-                      {{
-                        truncateFormat(
-                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore."
-                        )
-                      }}
+                      {{ truncateFormat("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore.") }}
                     </div>
                     <div class="row items-center">
                       <q-avatar size="md">
@@ -382,126 +374,20 @@
           <div class="col-4 column q-pl-md">
             <div class="text-title-small q-mb-sm" :style="{ color: 'var(--q-text-light-grey)' }">Main Actions</div>
             <div class="more-actions column items-center justify-center q-mb-lg">
-              <GButton
-                variant="outline"
-                no-caps
-                color="primary"
-                icon="swap_horiz"
-                label="Convert To Project"
-                class="full-width row items-start"
-              />
-              <GButton
-                variant="outline"
-                no-caps
-                color="primary"
-                icon="o_collections_bookmark"
-                label="Bill Of Quantity"
-                class="full-width row items-start"
-              >
-                <q-menu
-                  auto-close
-                  anchor="bottom middle"
-                  self="top middle"
-                  transition-show="jump-down"
-                  transition-hide="jump-up"
-                  style="border-radius: 12px;"
-                >
-                  <div class="menu">
-                    <div clickable class="menu-item row q-gutter-x-sm cursor-pointer" @click="openBillOfQuantityDialog">
-                      <div class="row items-center text-dark"><q-icon name="visibility" size="20px" /></div>
-                      <div class="text-dark text-label-medium q-pa-xs">View Bill Of Quality</div>
-                    </div>
-                    <div clickable class="menu-item row q-gutter-x-sm cursor-pointer">
-                      <div class="row items-center text-dark"><q-icon name="add" size="20px" /></div>
-                      <div class="text-dark text-label-medium q-pa-xs">Add New Version</div>
-                    </div>
-                  </div>
-                </q-menu>
-              </GButton>
+              <GButton variant="outline" no-caps color="primary" icon="swap_horiz" label="Convert To Project"
+                class="full-width row items-start" @click="handleConvertToProject" />
 
-              <GButton
-                variant="outline"
-                no-caps
-                color="primary"
-                icon="o_folder_copy"
-                label="Proposal"
-                class="full-width row items-start"
-              >
-                <q-menu
-                  auto-close
-                  anchor="bottom middle"
-                  self="top middle"
-                  transition-show="jump-down"
-                  transition-hide="jump-up"
-                  style="border-radius: 12px;"
-                >
-                  <div class="menu">
-                    <div clickable class="menu-item row q-gutter-x-sm cursor-pointer">
-                      <div class="row items-center text-dark"><q-icon name="visibility" size="20px" /></div>
-                      <div class="text-dark text-label-medium q-pa-xs">View Proposal</div>
-                    </div>
-                    <div clickable class="menu-item row q-gutte-x-sm cursor-pointer">
-                      <div class="row items-center text-dark"><q-icon name="upload" size="20px" /></div>
-                      <div class="text-dark text-label-medium q-pa-xs">Upload Proposal</div>
-                    </div>
-                    <div clickable class="menu-item row q-gutter-x-sm cursor-pointer" @click="openManageVersionDialog()">
-                      <div class="row items-center text-dark"><q-icon name="history" size="20px" /></div>
-                      <div class="text-dark text-label-medium q-pa-xs">Manage Versions</div>
-                    </div>
-                  </div>
-                </q-menu>
-              </GButton>
+              <GButton variant="outline" no-caps color="primary" icon="o_collections_bookmark"
+                @click="openBillOfQuantityDialog" label="Bill Of Quantity" class="full-width row items-start" />
+
             </div>
 
             <div class="text-title-small q-mb-sm" :style="{ color: 'var(--q-text-light-grey)' }">Quick Actions</div>
             <div class="quick-actions column items-center justify-center">
-              <GButton
-                unelevated
-                no-caps
-                color="primary"
-                variant="tonal"
-                icon="edit_document"
-                label="Create Task"
-                class="full-width row items-start"
-              />
-              <GButton
-                unelevated
-                no-caps
-                color="primary"
-                variant="tonal"
-                icon="o_edit_calendar"
-                label="Schedule Meeting"
-                class="full-width row items-start"
-              />
-              <GButton
-                unelevated
-                no-caps
-                color="primary"
-                variant="tonal"
-                icon="forward_to_inbox"
-                label="Send Email"
-                class="full-width row items-start"
-                @click="openEmailCompose"
-              />
-              <GButton
-                unelevated
-                no-caps
-                color="primary"
-                variant="tonal"
-                icon="attachment"
-                label="Attachment"
-                class="full-width row items-start"
-              />
-              <GButton
-                unelevated
-                no-caps
-                color="primary"
-                variant="tonal"
-                icon="o_note_add"
-                label="Add Note"
-                class="full-width row items-start"
-                @click="openAddNoteDialog"
-              />
+              <GButton unelevated no-caps color="primary" variant="tonal" icon="attachment" label="Attachment"
+                class="full-width row items-start" />
+              <GButton unelevated no-caps color="primary" variant="tonal" icon="o_note_add" label="Add Note"
+                class="full-width row items-start" @click="openAddNoteDialog" />
             </div>
 
             <!-- <div class="text-subtitle2" :style="{ color: 'var(--q-text-light-grey)' }">Notes/ Next Actions:</div>
@@ -524,30 +410,12 @@
       </q-card-section>
 
       <!-- Bill of Quantity Dialog -->
-      <bill-of-quantity-dialog
-        v-if="isBillOfQuantityDialogOpen"
-        v-model="isBillOfQuantityDialogOpen"
-        :projectId="leadInformation.id"
-      />
-
-      <!-- Email Compose Dialog -->
-      <email-compose-dialog
-        v-model="isEmailComposeDialogOpen"
-        :defaultTo="leadInformation.client?.email || ''"
-        :defaultSubject="` ${leadInformation.name}`"
-        @sent="handleEmailSent"
-      />
-
-      <!-- Proposal Manage Version Dialog -->
-      <ProposalManageVersionDialog v-model="isManageVersionDialogOpen" />
+      <bill-of-quantity-dialog v-if="isBillOfQuantityDialogOpen" v-model="isBillOfQuantityDialogOpen"
+        :projectId="leadInformation.id" />
 
       <!-- Add Note Dialog -->
-      <AddNoteDialog 
-        v-model="isAddNoteDialogOpen" 
-        :noteData="editingNote"
-        @saveDone="handleNoteSaved"
-        @close="isAddNoteDialogOpen = false"
-      />
+      <AddNoteDialog v-model="isAddNoteDialogOpen" :noteData="editingNote" @saveDone="handleNoteSaved"
+        @close="isAddNoteDialogOpen = false" />
     </q-card>
   </q-dialog>
 </template>
@@ -559,10 +427,11 @@ import GButton from "src/components/shared/buttons/GButton.vue";
 import GlobalWidgetCardBox from "src/components/shared/global/GlobalWidgetCardBox.vue";
 import { APIRequests } from "src/utility/api.handler";
 import { LeadDataResponse } from "@shared/response";
-import { useQuasar } from "quasar";
+import { useQuasar, Dialog } from "quasar";
 import { ref, computed } from "vue";
 import { defineAsyncComponent } from 'vue';
 import { formatWord } from "src/utility/formatter";
+import { useRouter } from 'vue-router';
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
 const BillOfQuantityDialog = defineAsyncComponent(() =>
@@ -571,9 +440,7 @@ const BillOfQuantityDialog = defineAsyncComponent(() =>
 const EmailComposeDialog = defineAsyncComponent(() =>
   import('../EmailComposeDialog.vue')
 );
-const ProposalManageVersionDialog = defineAsyncComponent(() =>
-  import('./ProposalManageVersionDialog.vue')
-);
+
 const AddNoteDialog = defineAsyncComponent(() =>
   import('./AddNoteDialog.vue')
 );
@@ -585,7 +452,6 @@ export default {
     GlobalWidgetCardBox,
     BillOfQuantityDialog,
     EmailComposeDialog,
-    ProposalManageVersionDialog,
     AddNoteDialog,
   },
   props: {
@@ -602,12 +468,12 @@ export default {
 
   setup(props, { emit }) {
     const $q = useQuasar();
+    const router = useRouter();
     const notesText = ref("");
     const leadInformation = ref({} as LeadDataResponse);
     const isBillOfQuantityDialogOpen = ref(false);
     const isManageVersionDialogOpen = ref(false);
     const projectId = ref<number>(0);
-    const isEmailComposeDialogOpen = ref(false);
     const isAddNoteDialogOpen = ref(false);
     const editingNote = ref(null);
 
@@ -618,10 +484,6 @@ export default {
 
     const openBillOfQuantityDialog = () => {
       isBillOfQuantityDialogOpen.value = true;
-    };
-
-    const openManageVersionDialog = () => {
-      isManageVersionDialogOpen.value = true;
     };
 
     const fetchData = async () => {
@@ -640,10 +502,6 @@ export default {
       } finally {
         $q.loading.hide();
       }
-    };
-
-    const openEmailCompose = () => {
-      isEmailComposeDialogOpen.value = true;
     };
 
     const handleEmailSent = () => {
@@ -682,6 +540,91 @@ export default {
       emit('close');
     };
 
+    const handleConvertToProject = async () => {
+      // Check if lead is in "won" stage
+      if (leadInformation.value?.leadBoardStage !== 'won') {
+        // Show warning dialog
+        const currentStage = getStageDisplayName(leadInformation.value?.leadBoardStage || 'prospect');
+        Dialog.create({
+          title: 'Cannot Convert Lead',
+          message: `Lead must be in "Won" stage to convert to project. Current stage: ${currentStage}`,
+          ok: true,
+          persistent: true
+        });
+        return;
+      }
+
+      // Show confirmation dialog
+      Dialog.create({
+        title: 'Convert to Project',
+        message: 'Are you sure you want to convert this lead to a project?',
+        cancel: {
+          label: 'Cancel',
+          color: 'grey'
+        },
+        persistent: true,
+        ok: {
+          label: 'Convert',
+          color: 'primary'
+        }
+      }).onOk(async () => {
+        try {
+          $q.loading.show({
+            message: 'Converting lead to project...'
+          });
+
+          const projectData = await APIRequests.convertLeadToProject($q, props.leadViewId.toString());
+
+          $q.loading.hide();
+
+          // Show success notification
+          $q.notify({
+            color: 'positive',
+            message: 'Lead successfully converted to project!',
+            icon: 'check',
+            position: 'top'
+          });
+
+          // Close the dialog
+          onHide();
+
+          // Navigate to the new project
+          router.push({
+            name: 'member_project_page',
+            params: { id: projectData.id.toString() }
+          }).catch(() => {
+            // If navigation fails, at least go to projects list
+            router.push({ name: 'member_project' });
+          });
+        } catch (error: any) {
+          $q.loading.hide();
+
+          // Check if the error is from backend validation
+          const errorMessage = error?.response?.data?.message || error?.message || 'Failed to convert lead to project';
+
+          $q.notify({
+            color: 'negative',
+            message: errorMessage,
+            icon: 'report_problem',
+            position: 'top'
+          });
+        }
+      });
+    };
+
+    const getStageDisplayName = (stage: string): string => {
+      const stageMap: Record<string, string> = {
+        'prospect': 'Prospect',
+        'initial_meeting': 'Initial Meeting',
+        'technical_meeting': 'Technical Meeting',
+        'proposal': 'Proposal',
+        'in_negotiation': 'In Negotiation',
+        'won': 'Won',
+        'loss': 'Lost'
+      };
+      return stageMap[stage] || stage;
+    };
+
     return {
       notesText,
       leadInformation,
@@ -689,19 +632,18 @@ export default {
       isBillOfQuantityDialogOpen,
       isManageVersionDialogOpen,
       projectId,
-      isEmailComposeDialogOpen,
       isAddNoteDialogOpen,
       editingNote,
       formatWord,
       truncateFormat,
       fetchData,
       openBillOfQuantityDialog,
-      openEmailCompose,
       handleEmailSent,
-      openManageVersionDialog,
       openAddNoteDialog,
       handleNoteSaved,
       onHide,
+      handleConvertToProject,
+      getStageDisplayName,
     };
   },
 };
