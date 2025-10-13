@@ -33,7 +33,37 @@
               <span class="text-caption text-grey">Today's Total: </span>
               <span class="text-body-medium text-weight-medium">{{ formattedDailyTotal }}</span>
             </div>
-            <q-icon name="today" size="18px" color="primary" />
+            <!-- Time In Button -->
+            <div v-if="!currentTimer" class="col-auto">
+              <q-btn
+                unelevated
+                color="positive"
+                label="TIME-IN"
+                icon="login"
+                size="sm"
+                :loading="isLoading"
+                :disable="isLoading"
+                @click="startTimer"
+              >
+                <q-tooltip>Start time tracking</q-tooltip>
+              </q-btn>
+            </div>
+
+            <!-- Time Out Button -->
+            <div v-if="currentTimer" class="col-auto">
+              <q-btn
+                  unelevated
+                  color="negative"
+                  label="TIME-OUT"
+                  icon="logout"
+                  size="sm"
+                  :loading="isLoading"
+                  :disable="isLoading"
+                  @click="stopTimer"
+                >
+                  <q-tooltip>Stop time tracking</q-tooltip>
+                </q-btn>
+            </div>
           </div>
         </div>
 
@@ -63,20 +93,6 @@
                 <div class="timer-digits-dense">00:00:00</div>
                 <div class="text-caption text-grey">Not tracking</div>
               </div>
-            </div>
-            <div class="col-auto">
-              <q-btn
-                unelevated
-                color="positive"
-                label="TIME-IN"
-                icon="login"
-                size="sm"
-                :loading="isLoading"
-                :disable="isLoading"
-                @click="startTimer"
-              >
-                <q-tooltip>Start time tracking</q-tooltip>
-              </q-btn>
             </div>
           </div>
         </div>
@@ -115,18 +131,6 @@
                   @click="viewCurrentTaskInfo"
                 >
                   <q-tooltip>View task details</q-tooltip>
-                </q-btn>
-                <q-btn
-                  unelevated
-                  color="negative"
-                  label="TIME-OUT"
-                  icon="logout"
-                  size="sm"
-                  :loading="isLoading"
-                  :disable="isLoading"
-                  @click="stopTimer"
-                >
-                  <q-tooltip>Stop time tracking</q-tooltip>
                 </q-btn>
               </div>
             </div>
