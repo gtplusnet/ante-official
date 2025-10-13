@@ -147,6 +147,7 @@ export default {
         key: 'system',
         icon: 'o_settings',
         child: [
+            { icon: 'o_devices', title: 'Device Management', key: 'member_settings_device_management', requiredScope: ['SETTINGS_DEVICE_MANAGEMENT_ACCESS'] },
             { icon: 'o_code', title: 'Super Admin Promotion', key: 'member_settings_developer_promotion', requiredScope: ['SETTINGS_DEVELOPER_PROMOTION_ACCESS'] },
             { icon: 'o_send', title: 'Sent Emails', key: 'member_settings_system_emails', requiredScope: ['SETTINGS_SYSTEM_EMAILS_ACCESS'] },
             { icon: 'o_info', title: 'About', key: 'member_settings_about' },

@@ -133,6 +133,7 @@ export const routeScopeMap: Record<string, string | string[]> = {
   // System settings - require specific permissions
   'member_settings_developer_promotion': 'SETTINGS_DEVELOPER_PROMOTION_ACCESS',
   'member_settings_system_emails': 'SETTINGS_SYSTEM_EMAILS_ACCESS',
+  'member_settings_device_management': 'SETTINGS_DEVICE_MANAGEMENT_ACCESS',
   // 'member_settings_about': 'SETTINGS_ABOUT_ACCESS', // About page should be accessible to all
 
   // ========== SCHOOL MODULE ==========

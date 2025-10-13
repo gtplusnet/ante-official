@@ -1353,6 +1353,14 @@ const ScopeReference: (ScopeDataResponse & {
     module: SystemModule.SETTINGS,
   },
   {
+    id: ScopeList.SETTINGS_DEVICE_MANAGEMENT_ACCESS,
+    type: ScopeType.SUBPAGE,
+    parentId: 'SETTINGS_SYSTEM' as any,
+    name: 'Device Management',
+    description: 'Allows access to manage POS devices and API keys.',
+    module: SystemModule.SETTINGS,
+  },
+  {
     id: ScopeList.SETTINGS_COMPANY_ACCESS,
     type: ScopeType.SUBPAGE,
     parentId: 'SETTINGS_COMPANY' as any,

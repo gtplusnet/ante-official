@@ -814,6 +814,11 @@ const routesConfig: RouteRecordRaw[] = [
             name: 'member_settings_system_emails',
             component: () => import('pages/Member/Settings/SettingsSystemEmails.vue'),
           },
+          {
+            path: 'device-management',
+            name: 'member_settings_device_management',
+            component: () => import('pages/Member/Settings/SettingsDeviceManagement.vue'),
+          },
         ],
       },
 

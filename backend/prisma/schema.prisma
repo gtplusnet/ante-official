@@ -419,6 +419,7 @@ model Project {
   warehouse                     Warehouse[]
   EmployeeTimekeepingRaw        EmployeeTimekeepingRaw[]
   ManpowerDevice                ManpowerDevice[]
+  POSDevice                     POSDevice[]
   items                         Item[]                         @relation("ItemBranch")
 }
 
@@ -2162,6 +2163,7 @@ model Company {
   Warehouse                     Warehouse[]
   WorkflowTemplate              WorkflowTemplate[]
   ManpowerDevice                ManpowerDevice[]
+  POSDevice                     POSDevice[]
   CalendarEvent                 CalendarEvent[]
   CalendarCategory              CalendarCategory[]
 }
@@ -3677,6 +3679,27 @@ model ManpowerDevice {
   EmployeeTimekeepingRaw  EmployeeTimekeepingRaw[]
 }
 
+model POSDevice {
+  id              String    @id @default(uuid())
+  deviceId        String    @unique
+  name            String
+  location        String    @default("")
+  companyId       Int
+  branchId        Int?      // Optional branch ID
+  apiKey          String    @unique
+  isActive        Boolean   @default(true)
+  lastActivityAt  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  company         Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branch          Project?  @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  @@index([companyId])
+  @@index([branchId])
+  @@index([deviceId])
+}
+
 enum AssigneeType {
   DEPARTMENT
   ROLE
@@ -4315,6 +4338,8 @@ enum ScopeList {
   SCHOOL_GRADING_ACCESS
   SCHOOL_PEOPLE_MANAGEMENT_ACCESS
   SETTINGS_SYSTEM_EMAILS_ACCESS
+  SETTINGS_DEVICE_MANAGEMENT_ACCESS
+  SETTINGS_WORKFLOW_ACCESS
   MANPOWER_TEAM_MANAGEMENT_ACCESS
 }
 
