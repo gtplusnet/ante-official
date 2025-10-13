@@ -41,7 +41,7 @@ import { DiscussionService } from '@modules/communication/discussion/discussion/
 @UseInterceptors(WsResponseInterceptor)
 @UseFilters(WsExceptionFilter)
 @UseGuards(WsAdminGuard)
-@WebSocketGateway({
+@WebSocketGateway(parseInt(process.env.SOCKET_PORT || '4000'), {
   cors: {
     origin: '*', // Allow all origins with explicit wildcard
     credentials: true,
@@ -76,6 +76,15 @@ export class SocketGateway
 
   async handleConnection(client: Socket) {
     this.utilityService.log('Socket connected: ' + client.id);
+
+    // Add a catch-all listener to log all events
+    client.onAny((eventName, ...args) => {
+      this.logger.log(`[SOCKET EVENT] Received event: ${eventName} from client: ${client.id}`);
+      if (eventName === 'ai_chat_message') {
+        this.logger.log(`[SOCKET EVENT] AI Chat message data: ${JSON.stringify(args)}`);
+      }
+    });
+
     await this.socketService.handleConnection(client);
   }
 
@@ -390,17 +399,34 @@ export class SocketGateway
     @MessageBody() dataPayload: payload<AiChatMessagePayload>,
     @ConnectedSocket() client: Socket,
   ) {
+    this.logger.log(`[AI CHAT] Received message from client ${client.id}`);
+    this.logger.log(`[AI CHAT] Payload: ${JSON.stringify(dataPayload)}`);
+
     try {
-      // Get account info from socket (assume utilityService can extract it)
-      const account = await this.utilityService.accountInformation;
-      if (!account) throw new Error('Unauthorized');
+      // Get account info from socket client data (set by WsAdminGuard)
+      const account = client.data?.account;
+      this.logger.log(`[AI CHAT] Account info: ${account ? account.id : 'null'}`);
+
+      if (!account) {
+        this.logger.error('[AI CHAT] No account information found in client data');
+        throw new Error('Unauthorized - account information not available');
+      }
+
+      this.logger.log(`[AI CHAT] Calling AI service...`);
       // Store user message and get AI response
+      // Pass account info to avoid CLS dependency in WebSocket context
       const { userMessage, aiMessage } =
         await this.aiChatService.addMessageForAccount(
           dataPayload.data.role,
           dataPayload.data.content,
           account.id,
+          'gemini', // default provider
+          undefined, // default model
+          account, // pass account info directly
         );
+
+      this.logger.log(`[AI CHAT] Got response from AI service`);
+
       // Emit user message
       this.server.to(client.id).emit('ai_chat_message', {
         message: 'user',
@@ -411,6 +437,7 @@ export class SocketGateway
         },
       });
 
+      this.logger.log(`[AI CHAT] Emitting assistant message`);
       this.server.to(client.id).emit('ai_chat_message', {
         message: 'assistant',
         data: {
@@ -419,7 +446,10 @@ export class SocketGateway
           createdAt: aiMessage.createdAt.toISOString(),
         },
       });
+
+      this.logger.log(`[AI CHAT] Message handling completed successfully`);
     } catch (error) {
+      this.logger.error(`[AI CHAT] Error: ${error.message}`);
       this.utilityService.error(`AI chat error: ${error.stack}`);
       this.server.to(client.id).emit('ai_chat_message', {
         message: 'error',

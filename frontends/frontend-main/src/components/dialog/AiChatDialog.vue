@@ -140,17 +140,28 @@ export default {
         createdAt: new Date().toISOString(),
       };
 
+      console.log('[AI CHAT] Attempting to send message:', message);
+      console.log('[AI CHAT] Socket connected:', this.socketChatStore.isConnected);
+      console.log('[AI CHAT] Socket instance:', this.socketChatStore.socket);
+
       this.messages.push(message);
       this.isTyping = true;
 
       // Send message via socket store
       const sent = this.socketChatStore.sendAiChatMessage(message);
+      console.log('[AI CHAT] Message sent result:', sent);
+
       if (!sent) {
         // If message failed to send, remove from messages and stop typing
         this.messages.pop();
         this.isTyping = false;
         // Show error notification (could be enhanced with Quasar notify)
-        console.error('Failed to send message. Please check your connection.');
+        console.error('[AI CHAT] Failed to send message. Socket not connected.');
+        this.$q.notify({
+          type: 'negative',
+          message: 'Socket not connected. Please refresh the page.',
+          position: 'top'
+        });
       }
 
       this.currentMessage = '';
