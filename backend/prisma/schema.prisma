@@ -182,6 +182,7 @@ model Account {
   createdCalendarEvents                  CalendarEvent[]                    @relation("EventCreator")
   calendarEventAttendee                  CalendarEventAttendee[]            @relation("EventAttendee")
   createdCalendarCategories              CalendarCategory[]                 @relation("CategoryCreator")
+  ownedCalendarCategories                CalendarCategory[]                 @relation("AccountCategories")
   uploadedEventAttachments               CalendarEventAttachment[]          @relation("EventAttachmentUploader")
 
   @@index([firstName])
@@ -4543,6 +4544,7 @@ model CalendarCategory {
   description      String?
   isSystem         Boolean           @default(false)
   creatorId        String?
+  accountId        String?           // Owner of this category (user-specific categories)
   companyId        Int
   isActive         Boolean           @default(true)
   sortOrder        Int               @default(0)
@@ -4551,10 +4553,12 @@ model CalendarCategory {
 
   events           CalendarEvent[]
   creator          Account?          @relation("CategoryCreator", fields: [creatorId], references: [id])
+  account          Account?          @relation("AccountCategories", fields: [accountId], references: [id])
   company          Company           @relation(fields: [companyId], references: [id])
 
-  @@unique([name, companyId])
+  @@unique([name, accountId, companyId])
   @@index([creatorId])
+  @@index([accountId])
   @@index([companyId])
 }
 

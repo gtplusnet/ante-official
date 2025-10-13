@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="text-title-small text-primary">Basic Details</div>
+    <div class="text-title-small text-primary q-mb-md">Basic Details</div>
     <!-- Item name -->
     <div class="row q-gutter-sm">
       <div class="col">
@@ -10,16 +10,18 @@
     <!-- Description -->
     <div class="row q-gutter-sm">
       <div class="col">
-        <GInput required type="textarea" label="Description" v-model="form.description" class="text-body-medium"></GInput>
+        <GInput required type="textarea" label="Description" v-model="form.description" class="text-body-medium">
+        </GInput>
       </div>
     </div>
     <!-- Tags -->
     <div class="row q-gutter-sm">
       <div class="col">
-        <tags-partial ref="tagsPartial" v-model="isTagPartialDisplayed" class="text-body-medium" @onTagUpdate="onTagUpdated" />
+        <tags-partial ref="tagsPartial" v-model="isTagPartialDisplayed" class="text-body-medium"
+          @onTagUpdate="onTagUpdated" />
       </div>
     </div>
-    <div v-if="showMeasurement" class="col">
+    <div v-if="showMeasurement" class="col q-mb-md">
       <GInput required type="select" apiUrl="select-box/unit-of-measurement-list" label="Unit of Measurement"
         v-model="form.uom" class="text-body-medium"></GInput>
     </div>
@@ -36,59 +38,31 @@
       </div>
     </div>
     <!-- Category & Branch -->
-    <div class="row q-gutter-sm">
+    <div class="row q-gutter-sm q-pb-md">
       <div class="col">
-        <q-select
-          v-model="form.categoryId"
-          :options="categoryOptions"
-          option-label="name"
-          option-value="id"
-          label="Category"
-          clearable
-          emit-value
-          map-options
-          outlined
-          dense
-          class="text-body-small"
-          :loading="loadingCategories"
-        />
+        <div class="label">Category</div>
+        <q-select v-model="form.categoryId" :options="categoryOptions" option-label="name" option-value="id" clearable
+          emit-value map-options outlined dense class="text-body-small" :loading="loadingCategories" />
       </div>
       <div class="col">
-        <q-select
-          v-model="form.branchId"
-          :options="branchOptions"
-          option-label="name"
-          option-value="id"
-          label="Branch"
-          clearable
-          emit-value
-          map-options
-          outlined
-          dense
-          class="text-body-small"
-          :loading="loadingBranches"
-        />
+        <div class="label">Branch</div>
+
+        <q-select v-model="form.branchId" :options="branchOptions" option-label="name" option-value="id" clearable
+          emit-value map-options outlined dense class="text-body-small" :loading="loadingBranches" />
       </div>
     </div>
     <!-- Brand -->
-    <div class="row q-gutter-sm">
+    <div class="row q-gutter-sm q-mb-md">
       <div class="col">
-        <GInput
-          ref="brandSelect"
-          v-model="form.brandId"
-          type="select-search-with-add"
-          apiUrl="brand/select-box"
-          label="Brand"
-          nullOption="No Brand"
-          class="text-body-small"
-          @showAddDialog="showBrandAddDialog"
-        />
+        <GInput ref="brandSelect" v-model="form.brandId" type="select-search-with-add" apiUrl="brand/select-box"
+          label="Brand" nullOption="No Brand" class="text-body-small" @showAddDialog="showBrandAddDialog" />
       </div>
     </div>
     <!-- Keywords -->
     <div class="row q-gutter-sm">
       <div class="col">
-        <keywords-partial ref="keywordsPartial" class="text-body-small" v-model="isKeywordsPartialDisplayed" @onKeywordUpdate="onKeywordUpdated" />
+        <keywords-partial ref="keywordsPartial" class="text-body-small" v-model="isKeywordsPartialDisplayed"
+          @onKeywordUpdate="onKeywordUpdated" />
       </div>
     </div>
     <!-- Enable in POS -->
@@ -99,11 +73,7 @@
     </div>
 
     <!-- Add Brand Dialog -->
-    <AddEditBrandDialog
-      v-if="isAddBrandDialogOpen"
-      v-model="isAddBrandDialogOpen"
-      @saveDone="selectNewBrand"
-    />
+    <AddEditBrandDialog v-if="isAddBrandDialogOpen" v-model="isAddBrandDialogOpen" @saveDone="selectNewBrand" />
   </div>
 </template>
 <script>
