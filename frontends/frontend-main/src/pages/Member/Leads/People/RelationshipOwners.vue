@@ -96,20 +96,20 @@
       </table>
     </div>
 
-    <!-- Select Multiple Employee Dialog -->
-    <ManpowerSelectMultipleEmployeeDialog v-model="isChooseUserDialogOpen"
-      :selectMultipleEmployee="selectMultipleEmployee" @add-selected-employees="handleSelectedEmployees" />
+    <!-- Select Multiple Account Dialog -->
+    <SelectMultipleAccountDialog v-model="isChooseUserDialogOpen" :exclude-account-ids="existingOwnerAccountIds"
+      @account-selected="handleSelectedAccounts" />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, getCurrentInstance, watch, defineAsyncComponent } from 'vue';
+import { ref, onMounted, getCurrentInstance, watch, computed, defineAsyncComponent } from 'vue';
 import { useQuasar, date } from 'quasar';
 import GButton from 'src/components/shared/buttons/GButton.vue';
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
-const ManpowerSelectMultipleEmployeeDialog = defineAsyncComponent(() =>
-  import('src/pages/Member/Manpower/dialogs/configuration/ManpowerSelectMultipleEmployeeDialog.vue')
+const SelectMultipleAccountDialog = defineAsyncComponent(() =>
+  import('src/pages/Member/Treasury/dialogs/SelectMultipleAccountDialog.vue')
 );
 
 defineOptions({
@@ -122,9 +122,6 @@ const $api = instance?.appContext.config.globalProperties.$api;
 
 // Dialog state management
 const isChooseUserDialogOpen = ref(false);
-const selectMultipleEmployee = ref({
-  url: '/lead/employee/select-list'
-});
 
 // Loading state
 const loading = ref(false);
@@ -152,6 +149,7 @@ const sortOptions = [
 // Type definitions
 interface RelationshipOwner {
   id: number;
+  accountId: string;
   fullName: string;
   email: string;
   branch: string;
@@ -165,6 +163,13 @@ interface RelationshipOwner {
 // Relationship owners data
 const ownersList = ref<RelationshipOwner[]>([]);
 
+// Computed property to extract existing owner account IDs for exclusion
+const existingOwnerAccountIds = computed(() => {
+  // Extract accountId from each owner to exclude them from selection dialog
+  return ownersList.value
+    .map((owner: RelationshipOwner) => owner.accountId?.toString() || '')
+    .filter(Boolean);
+});
 
 const fetchBranchOptions = async () => {
   if (!$api) return;
@@ -263,14 +268,14 @@ const deleteOwner = async (owner: RelationshipOwner) => {
   });
 };
 
-const handleSelectedEmployees = async (selectedEmployeeIds: string[]) => {
+const handleSelectedAccounts = async (selectedAccountIds: string[]) => {
   if (!$api) return;
 
   try {
     loading.value = true;
 
     const response = await $api.post('/lead-relationship-owner/multiple', {
-      accountIds: selectedEmployeeIds
+      accountIds: selectedAccountIds
     });
 
     $q.notify({

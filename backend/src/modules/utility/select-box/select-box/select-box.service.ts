@@ -166,6 +166,7 @@ export class SelectBoxService {
     search?: string;
     role?: string;
     department?: string;
+    excludeAccountIds?: string;
   }) {
     const where: any = {
       isDeleted: false,
@@ -197,6 +198,20 @@ export class SelectBoxService {
           name: filters.department,
         },
       };
+    }
+
+    // Add exclude account IDs filter
+    if (filters?.excludeAccountIds) {
+      const excludedIds = filters.excludeAccountIds
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+
+      if (excludedIds.length > 0) {
+        where.id = {
+          notIn: excludedIds,
+        };
+      }
     }
 
     const list = await this.prisma.account.findMany({
