@@ -7,7 +7,7 @@
         <div v-if="loading" class="chart-skeleton">
           <q-skeleton type="rect" height="300px" />
         </div>
-        <div v-else-if="closingDates.length > 0 && chartReady">
+        <div v-else-if="hasData && chartReady">
           <ApexChart
             :key="chartKey"
             type="bar"
@@ -60,6 +60,11 @@ export default {
     const chartKey = ref(0);
 
     const closingDates = ref<ClosingDate[]>([]);
+
+    // Check if there's any meaningful data (count > 0)
+    const hasData = computed(() => {
+      return closingDates.value.some(d => d.count > 0);
+    });
 
     const chartOptions = computed(() => {
       return {
@@ -264,6 +269,7 @@ export default {
       chartReady,
       chartKey,
       closingDates,
+      hasData,
       refreshData,
     };
   },

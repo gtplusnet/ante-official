@@ -24,7 +24,7 @@
             </div>
             <div class="grid-card-body">
               <div class="deal-badge row">
-                <div class="deal-type text-label-small">{{ getLeadTypeLabel(lead) }}</div>
+                <span class="deal-type row items-center justify-center">{{ lead.leadType?.label || 'No Deal Type' }}</span>
                 <div class="deal-status text-label-small" :class="getProbabilityClass(lead)">{{
                   getProbabilityLetter(lead) }}</div>
               </div>

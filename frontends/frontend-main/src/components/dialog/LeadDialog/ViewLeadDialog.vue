@@ -5,7 +5,7 @@
         <div class="row items-center justify-between q-pb-xs">
           <span class="text-dark text-title-large-f-[18px]">{{ leadInformation.name }}</span>
           <div class="row q-gutter-x-md">
-            <q-btn class="edit-btn" dense rounded unelevated icon="edit" />
+            <q-btn class="edit-btn" dense rounded unelevated icon="edit" @click="openEditDialog" />
             <q-btn class="close-btn" dense rounded unelevated icon="close" @click="onHide" />
           </div>
         </div>
@@ -416,6 +416,10 @@
       <!-- Add Note Dialog -->
       <AddNoteDialog v-model="isAddNoteDialogOpen" :noteData="editingNote" @saveDone="handleNoteSaved"
         @close="isAddNoteDialogOpen = false" />
+
+      <!-- Lead Edit Dialog -->
+      <lead-create-dialog v-model="isLeadEditDialogOpen" :leadData="leadInformation" @close="handleLeadEdited"
+        @saveDone="handleLeadEdited" />
     </q-card>
   </q-dialog>
 </template>
@@ -445,6 +449,10 @@ const AddNoteDialog = defineAsyncComponent(() =>
   import('./AddNoteDialog.vue')
 );
 
+const LeadCreateDialog = defineAsyncComponent(() =>
+  import('./LeadCreateDialog.vue')
+);
+
 export default {
   name: "ViewLeadDialog",
   components: {
@@ -453,6 +461,7 @@ export default {
     BillOfQuantityDialog,
     EmailComposeDialog,
     AddNoteDialog,
+    LeadCreateDialog,
   },
   props: {
     modelValue: {
@@ -476,6 +485,7 @@ export default {
     const projectId = ref<number>(0);
     const isAddNoteDialogOpen = ref(false);
     const editingNote = ref(null);
+    const isLeadEditDialogOpen = ref(false);
 
     const winProbabilityLabel = computed(() => {
       const prob = leadInformation.value?.winProbability;
@@ -625,6 +635,15 @@ export default {
       return stageMap[stage] || stage;
     };
 
+    const openEditDialog = () => {
+      isLeadEditDialogOpen.value = true;
+    };
+
+    const handleLeadEdited = async () => {
+      await fetchData();
+      isLeadEditDialogOpen.value = false;
+    };
+
     return {
       notesText,
       leadInformation,
@@ -634,6 +653,7 @@ export default {
       projectId,
       isAddNoteDialogOpen,
       editingNote,
+      isLeadEditDialogOpen,
       formatWord,
       truncateFormat,
       fetchData,
@@ -644,6 +664,8 @@ export default {
       onHide,
       handleConvertToProject,
       getStageDisplayName,
+      openEditDialog,
+      handleLeadEdited,
     };
   },
 };
