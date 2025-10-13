@@ -2,8 +2,8 @@
   
   <div>
     <!-- Location -->
-    <g-input ref="selectBox" v-model="selectedLocation" require type="select-search-with-add"
-      apiUrl="select-box/location-list" label="Location" @showAddDialog="showLocationAddDialog"></g-input>
+    <g-input ref="selectBox" v-model="selectedLocation" required type="select-search-with-add"
+      apiUrl="/select-box/location-list" label="Location" @showAddDialog="showLocationAddDialog"></g-input>
 
     <!-- Add/Edit Location Dialog -->
     <add-edit-location-dialog @saveDone="selectNewSave" v-model="isAddLocationDialogOpen" />
@@ -26,6 +26,10 @@ export default {
     AddEditLocationDialog,
   },
   props: {
+    modelValue: {
+      type: [String, Number, Object],
+      default: null,
+    },
     value: {
       type: [String, Number, Object],
       default: null,
@@ -37,13 +41,25 @@ export default {
   }),
   watch: {
     selectedLocation(newVal) {
-      console.log('newVal', newVal);
       this.$emit('update:modelValue', newVal);
+    },
+    modelValue: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal !== this.selectedLocation) {
+          this.selectedLocation = newVal;
+        }
+      },
     },
     value: {
       immediate: true,
       handler(newVal) {
-        this.selectedLocation = newVal;
+        // Fallback for Vue 2 style, only if modelValue is not set
+        if (this.modelValue === null || this.modelValue === undefined) {
+          if (newVal !== this.selectedLocation) {
+            this.selectedLocation = newVal;
+          }
+        }
       },
     },
   },

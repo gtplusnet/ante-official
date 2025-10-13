@@ -50,7 +50,7 @@
 
             <div class="lead-card-body text-label-small">
               <div class="deal-badge row items-center">
-                <span class="deal-type row items-center justify-center">{{ lead.leadType?.label }}</span>
+                <span class="deal-type row items-center justify-center">{{ lead.leadType?.label || 'No Deal Type' }}</span>
                 <span class="deal-status row items-center justify-center" :class="getProbabilityClass(lead)">{{
                   getProbabilityLetter(lead) }}</span>
               </div>
@@ -103,7 +103,7 @@
   <lead-create-dialog v-model="isLeadDialogOpen" :leadData="leadData" @close="handleLeadSaved" />
 
   <view-lead-dialog v-model="isViewLeadDialogOpen" @close="handleCloseDialog"
-    :leadViewId="leadViewId"></view-lead-dialog>
+    @stageChanged="handleStageChanged" :leadViewId="leadViewId"></view-lead-dialog>
 </template>
 
 <style scoped src="../Leads.scss"></style>
@@ -361,6 +361,55 @@ export default defineComponent({
       activeCard.value = false;
     };
 
+    const handleStageChanged = (event: { leadId: number; newStage: string }) => {
+      // Find the lead in the current board columns
+      let leadToMove: Lead | null = null;
+      let sourceColumn: BoardColumn | null = null;
+
+      for (const column of boardColumns.value) {
+        const lead = column.boardProjects?.find((l) => l.id === event.leadId);
+        if (lead) {
+          leadToMove = lead;
+          sourceColumn = column;
+          break;
+        }
+      }
+
+      if (!leadToMove || !sourceColumn) {
+        console.error('Lead not found in board columns');
+        return;
+      }
+
+      // Don't move if already in the target stage
+      if (leadToMove.leadBoardStage === event.newStage) {
+        return;
+      }
+
+      // Find the target column
+      const targetColumn = boardColumns.value.find((col) => col.boardKey === event.newStage);
+      if (!targetColumn) {
+        console.error('Target column not found');
+        return;
+      }
+
+      // Optimistically update the UI
+      // Remove from source column
+      sourceColumn.boardProjects = sourceColumn.boardProjects?.filter((lead) => lead.id !== event.leadId) || [];
+
+      // Update lead stage and timestamp
+      leadToMove.leadBoardStage = event.newStage;
+      leadToMove.updatedAt = {
+        raw: new Date(),
+        timeAgo: 'just now'
+      };
+
+      // Add to target column
+      if (!targetColumn.boardProjects) {
+        targetColumn.boardProjects = [];
+      }
+      targetColumn.boardProjects.push(leadToMove);
+    };
+
     const openLead = (id: number, active: boolean) => {
       leadViewId.value = id;
       isViewLeadDialogOpen.value = true;
@@ -602,6 +651,7 @@ export default defineComponent({
       handleDragLeave,
       handleDrop,
       handleCloseDialog,
+      handleStageChanged,
       openLead,
       editLead,
       deleteLead,
