@@ -13,7 +13,7 @@ import { Server, Socket } from 'socket.io';
 import { GuardianWsAuthGuard } from '../guards/guardian-ws-auth.guard';
 import { PrismaService } from '@common/prisma.service';
 
-@WebSocketGateway(+process.env.SOCKET_PORT || 4000, {
+@WebSocketGateway({
   cors: {
     origin: true, // Allow all origins
     credentials: true,
