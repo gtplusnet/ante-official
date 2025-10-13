@@ -50,7 +50,7 @@
 
             <div class="lead-card-body text-label-small">
               <div class="deal-badge row items-center">
-                <span class="deal-type row items-center justify-center">{{ lead.leadType?.label }}</span>
+                <span class="deal-type row items-center justify-center">{{ lead.leadType?.label || 'No Deal Type' }}</span>
                 <span class="deal-status row items-center justify-center" :class="getProbabilityClass(lead)">{{
                   getProbabilityLetter(lead) }}</span>
               </div>

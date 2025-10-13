@@ -34,10 +34,10 @@ export class LeadCreateDto {
   @IsNotEmpty()
   readonly status: ProjectStatus;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsNumber()
   @Exists('client', 'id')
-  clientId: number;
+  clientId?: number;
 
   @IsNotEmpty()
   readonly isLead: boolean;

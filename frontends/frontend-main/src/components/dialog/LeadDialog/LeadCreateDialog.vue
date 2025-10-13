@@ -71,8 +71,7 @@
             <!-- Row 5: Select Location | Select Deal Source -->
             <div class="row justify-center q-mb-md col-12 q-px-sm">
               <div class="col-6 q-pr-sm">
-                <g-input v-model="form.locationId" label="Select Location" type="select-search"
-                  apiUrl="/select-box/location-list" />
+                <SelectionLocation v-model="form.locationId" />
               </div>
               <div class="col-6 q-pl-sm">
                 <g-input v-model="form.dealSourceId" label="Select Deal Source" type="select-search-with-add"
@@ -129,6 +128,7 @@ import AddEditDealTypeDialog from "../AddEditDealTypeDialog.vue";
 import { APIRequests } from "../../../utility/api.handler";
 import { ProjectCreateRequest } from "@shared/request";
 import { LeadDataResponse } from "@shared/response";
+import SelectionLocation from "src/components/selection/SelectionLocation.vue";
 
 interface LeadForm {
   dealName: string;
@@ -154,6 +154,7 @@ export default defineComponent({
     TemplateDialog,
     AddEditDealSourceDialog,
     AddEditDealTypeDialog,
+    SelectionLocation,
   },
   props: {
     leadData: {
@@ -332,8 +333,10 @@ export default defineComponent({
         startDate: startDate,
         endDate: endDate,
         status: "LEAD" as ProjectCreateRequest["status"],
-        clientId: parseInt(form.value.pointOfContactId) || 0, // Convert string to number for API
-        pointOfContactId: parseInt(form.value.pointOfContactId) || 0, // Add this for backend compatibility
+        ...(form.value.pointOfContactId ? {
+          clientId: parseInt(form.value.pointOfContactId),
+          pointOfContactId: parseInt(form.value.pointOfContactId)
+        } : {}), // Only include clientId/pointOfContactId if Point of Contact is selected
         locationId: form.value.locationId || "", // Using location from form
         downpaymentAmount: 0,
         retentionAmount: 0,

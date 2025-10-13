@@ -20,7 +20,7 @@
             </div>
 
             <!-- Region -->
-            <div class="col-12">
+            <div class="col-12 q-mb-md">
               <GInput
                 type="select-search"
                 nullOption="Select Region"
@@ -33,7 +33,7 @@
             </div>
 
             <!-- Province -->
-            <div v-if="form.regionId" class="col-12">
+            <div v-if="form.regionId" class="col-12 q-mb-md">
               <GInput
                 type="select-search"
                 nullOption="Select Province"
@@ -46,7 +46,7 @@
             </div>
 
             <!-- Municipality -->
-            <div v-if="form.provinceId" class="col-12">
+            <div v-if="form.provinceId" class="col-12 q-mb-md">
               <GInput
                 type="select-search"
                 nullOption="Select Municipality"
@@ -59,7 +59,7 @@
             </div>
 
             <!-- Barangay -->
-            <div v-if="form.municipalityId" class="col-12">
+            <div v-if="form.municipalityId" class="col-12 q-mb-md">
               <GInput
                 type="select-search"
                 nullOption="Select Barangay"
