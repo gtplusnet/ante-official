@@ -122,7 +122,7 @@ import SelectionDealType from "src/components/selection/SelectionDealType.vue";
 
 interface LeadForm {
   dealName: string;
-  dealType: string;
+  dealType: string | number;
   approvedBudgetContract: number;
   monthlyRecurringRevenue: number;
   implementationFee: number;
@@ -131,9 +131,9 @@ interface LeadForm {
   closeYear: string;
   winProbability: number;
   locationId: string;
-  dealSourceId: string;
+  dealSourceId: string | number;
   relationshipOwnerId: string;
-  pointOfContactId: string;
+  pointOfContactId: string | number;
 }
 
 export default defineComponent({
@@ -198,31 +198,31 @@ export default defineComponent({
       pointOfContactId: "",
     });
 
-    const initForm = () => {
+    const initForm = async () => {
       if (props.leadData && Object.keys(props.leadData).length > 0 && props.leadData.id) {
         // Edit mode - populate form with existing data
-        const startDate = props.leadData.startDate?.raw ? new Date(props.leadData.startDate.raw) : new Date();
-        const pointOfContactValue = props.leadData.clientId?.toString() || "";
+        const endDate = props.leadData.endDate?.raw ? new Date(props.leadData.endDate.raw) : new Date();
 
-        form.value = {
-          dealName: props.leadData.name || "",
-          dealType: typeof props.leadData.leadType === "string" ? props.leadData.leadType : props.leadData.leadType?.key || "",
-          approvedBudgetContract: props.leadData.abc?.raw || 0,
-          monthlyRecurringRevenue: props.leadData.mmr?.raw || 0,
-          implementationFee: 0, // New field, default to 0 for existing leads
-          totalContract: props.leadData.initialCosting?.raw || 0,
-          closeMonth: String(startDate.getMonth() + 1).padStart(2, '0'),
-          closeYear: startDate.getFullYear().toString(),
-          winProbability: typeof props.leadData.winProbability === "number"
-            ? props.leadData.winProbability
-            : typeof props.leadData.winProbability === "string"
-              ? parseInt(props.leadData.winProbability) || 50
-              : parseInt(props.leadData.winProbability?.key || "50") || 50,
-          locationId: props.leadData.locationId || "",
-          dealSourceId: props.leadData.leadSource || "",
-          relationshipOwnerId: props.leadData.relationshipOwnerId || "",
-          pointOfContactId: pointOfContactValue,
-        };
+        // Set non-select fields immediately
+        form.value.dealName = props.leadData.name || "";
+        form.value.approvedBudgetContract = props.leadData.abc?.raw || 0;
+        form.value.monthlyRecurringRevenue = props.leadData.mmr?.raw || 0;
+        form.value.implementationFee = 0;
+        form.value.totalContract = props.leadData.initialCosting?.raw || 0;
+        form.value.closeMonth = String(endDate.getMonth() + 1).padStart(2, '0');
+        form.value.closeYear = endDate.getFullYear().toString();
+        form.value.winProbability = typeof props.leadData.winProbability === "number"
+          ? props.leadData.winProbability
+          : typeof props.leadData.winProbability === "string"
+            ? parseInt(props.leadData.winProbability) || 50
+            : parseInt(props.leadData.winProbability?.key || "50") || 50;
+
+        // Now set the select field values
+        form.value.dealType = props.leadData.leadType?.key ? Number(props.leadData.leadType.key) : "";
+        form.value.locationId = props.leadData.locationId || "";
+        form.value.dealSourceId = props.leadData.leadSource ? Number(props.leadData.leadSource) : "";
+        form.value.relationshipOwnerId = props.leadData.relationshipOwnerId || "";
+        form.value.pointOfContactId = props.leadData.clientId ? Number(props.leadData.clientId) : "";
       } else {
         // Create mode - set defaults
         const today = new Date();
@@ -268,7 +268,7 @@ export default defineComponent({
         isLead: true,
         winProbability: form.value.winProbability as unknown as ProjectCreateRequest["winProbability"],
         leadSource: form.value.dealSourceId,
-        leadType: form.value.dealType,
+        leadType: String(form.value.dealType),
         abc: form.value.approvedBudgetContract,
         mmr: form.value.monthlyRecurringRevenue,
         initialCosting: form.value.totalContract,

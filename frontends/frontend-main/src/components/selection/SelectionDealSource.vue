@@ -36,6 +36,10 @@ export default {
     AddEditDealSourceDialog,
   },
   props: {
+    modelValue: {
+      type: [String, Number, Object],
+      default: null,
+    },
     value: {
       type: [String, Number, Object],
       default: null,
@@ -56,10 +60,23 @@ export default {
     selectedDealSourceId(newVal) {
       this.$emit('update:modelValue', newVal);
     },
+    modelValue: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal !== this.selectedDealSourceId) {
+          this.selectedDealSourceId = newVal;
+        }
+      },
+    },
     value: {
       immediate: true,
       handler(newVal) {
-        this.selectedDealSourceId = newVal;
+        // Fallback for Vue 2 style, only if modelValue is not set
+        if (this.modelValue === null || this.modelValue === undefined) {
+          if (newVal !== this.selectedDealSourceId) {
+            this.selectedDealSourceId = newVal;
+          }
+        }
       },
     },
   },

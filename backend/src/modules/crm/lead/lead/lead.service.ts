@@ -445,6 +445,12 @@ export class LeadService {
       updateData.relationshipOwnerId = params.relationshipOwnerId;
     if (params.personInChargeId)
       updateData.relationshipOwnerId = params.personInChargeId;
+    if (params.clientId)
+      updateData.pointOfContactId = params.clientId;
+    if (params.pointOfContactId)
+      updateData.pointOfContactId = params.pointOfContactId;
+    if (params.locationId)
+      updateData.locationId = params.locationId;
 
     const updatedLead = await this.prisma.leadDeal.update({
       where: { id: leadId },

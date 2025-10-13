@@ -507,7 +507,7 @@ export class SelectBoxService {
 
     return list.map((location) => {
       return {
-        key: location.id,
+        value: location.id,
         label: `${location.name} (${location.region.name}, ${location.province.name})`,
       };
     });
@@ -1062,7 +1062,7 @@ export class SelectBoxService {
 
     return list.map((owner) => {
       return {
-        key: owner.account.id,
+        value: owner.account.id,
         label: `${owner.account.firstName} ${owner.account.lastName}`,
         firstName: owner.account.firstName,
         lastName: owner.account.lastName,
@@ -1086,7 +1086,7 @@ export class SelectBoxService {
 
     return list.map((source) => {
       return {
-        key: source.id,
+        value: source.id,
         label: source.sourceName,
         sourceName: source.sourceName,
       };

@@ -26,6 +26,10 @@ export default {
     AddEditLocationDialog,
   },
   props: {
+    modelValue: {
+      type: [String, Number, Object],
+      default: null,
+    },
     value: {
       type: [String, Number, Object],
       default: null,
@@ -39,10 +43,23 @@ export default {
     selectedLocation(newVal) {
       this.$emit('update:modelValue', newVal);
     },
+    modelValue: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal !== this.selectedLocation) {
+          this.selectedLocation = newVal;
+        }
+      },
+    },
     value: {
       immediate: true,
       handler(newVal) {
-        this.selectedLocation = newVal;
+        // Fallback for Vue 2 style, only if modelValue is not set
+        if (this.modelValue === null || this.modelValue === undefined) {
+          if (newVal !== this.selectedLocation) {
+            this.selectedLocation = newVal;
+          }
+        }
       },
     },
   },

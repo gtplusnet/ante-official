@@ -160,6 +160,19 @@ export class LeadUpdateDto {
 
   @IsOptional()
   @IsNumber()
+  @Exists('client', 'id')
+  readonly clientId?: number;
+
+  @IsOptional()
+  @IsNumber()
+  readonly pointOfContactId?: number;
+
+  @IsOptional()
+  @IsString()
+  readonly locationId?: string;
+
+  @IsOptional()
+  @IsNumber()
   readonly abc?: number;
 
   @IsOptional()
