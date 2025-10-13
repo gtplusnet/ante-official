@@ -56,7 +56,7 @@
                     <span class="text-label-medium q-ml-xs">Stage:</span>
                   </div>
                   <div class="text-bold text-label-medium" :style="{ color: 'var(--q-text-dark)' }">{{
-                    formatWord(lead.leadBoardStage || '') }}</div>
+                    formatLeadStage(lead.leadBoardStage || '') }}</div>
                 </div>
                 <div class="time-stage row items-center text-label-small text-dark q-mb-xs">
                   <q-icon name="history" size="16px" />
@@ -93,7 +93,7 @@
 
     <!-- View Lead Dialog -->
     <view-lead-dialog v-model="isViewLeadDialogOpen" @close="handleCloseDialog"
-      :leadViewId="leadViewId"></view-lead-dialog>
+      @stageChanged="handleStageChanged" :leadViewId="leadViewId"></view-lead-dialog>
   </div>
 </template>
 
@@ -105,7 +105,7 @@ import { useQuasar } from 'quasar';
 import { APIRequests } from 'src/utility/api.handler';
 import GlobalLoader from 'src/components/shared/common/GlobalLoader.vue';
 import { LeadDataResponse } from '@shared/response';
-import { formatWord } from 'src/utility/formatter';
+import { formatWord, formatLeadStage } from 'src/utility/formatter';
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
 const LeadCreateDialog = defineAsyncComponent(() =>
@@ -215,6 +215,11 @@ export default defineComponent({
       isViewLeadDialogOpen.value = false;
       leadViewId.value = 0;
       activeCard.value = false;
+    };
+
+    const handleStageChanged = (): void => {
+      // Refresh the grid view to reflect the stage change
+      fetchData();
     };
 
     const editLead = async (lead: LeadDisplayInterface): Promise<void> => {
@@ -401,9 +406,11 @@ export default defineComponent({
       addLead,
       openLead,
       handleCloseDialog,
+      handleStageChanged,
       editLead,
       deleteLead,
       formatWord,
+      formatLeadStage,
       getProbabilityClass,
       getProbabilityLetter,
       getLeadTypeLabel,

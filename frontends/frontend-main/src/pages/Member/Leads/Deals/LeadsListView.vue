@@ -22,7 +22,7 @@
             <td class="text-grey text-label-medium">{{ lead.endDate.formatted }}</td>
             <td>
               <div class="stage-badge text-label-medium text-grey" :class="getStageClass(lead.leadBoardStage)">
-                {{ formatStageName(lead.leadBoardStage) }}
+                {{ formatLeadStage(lead.leadBoardStage) }}
               </div>
             </td>
             <td class="text-center">
@@ -58,6 +58,7 @@
       v-model="isViewLeadDialogOpen"
       :leadViewId="leadViewId"
       @close="handleCloseDialog"
+      @stageChanged="handleStageChanged"
     />
   </div>
 </template>
@@ -70,6 +71,7 @@ import { APIRequests } from "src/utility/api.handler";
 import GlobalLoader from "src/components/shared/common/GlobalLoader.vue";
 import type { ProjectStatus } from "@shared/response";
 import { LeadDataResponse, ClientDataResponse } from "@shared/response";
+import { formatLeadStage } from "src/utility/formatter";
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
 const LeadCreateDialog = defineAsyncComponent(() =>
@@ -136,14 +138,6 @@ export default defineComponent({
     const isViewLeadDialogOpen = ref(false);
 
     // Helper methods
-    const formatStageName = (stage: string | undefined): string => {
-      if (!stage) return 'Unknown';
-      return stage
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-    };
-
     const getStageClass = (stage: string | undefined): string => {
       if (!stage) return 'unknown';
 
@@ -175,6 +169,11 @@ export default defineComponent({
     const handleCloseDialog = () => {
       isViewLeadDialogOpen.value = false;
       leadViewId.value = 0;
+    };
+
+    const handleStageChanged = () => {
+      // Refresh the list view to reflect the stage change
+      fetchData();
     };
 
     // Methods
@@ -318,11 +317,12 @@ export default defineComponent({
       leadViewId,
 
       // Helper methods
-      formatStageName,
+      formatLeadStage,
       getStageClass,
 
       // Methods
       handleCloseDialog,
+      handleStageChanged,
       fetchData,
       addLead,
       editLead,

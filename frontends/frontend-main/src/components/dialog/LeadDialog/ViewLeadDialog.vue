@@ -32,15 +32,47 @@
         </div>
 
         <div class="row items-center q-gutter-x-sm q-mb-md">
-          <q-badge class="StageBadge" text-color="white"
-            >Current Stage <q-icon name="keyboard_arrow_down"
-          /></q-badge>
-          <q-badge class="ProposalBadge" text-color="white"
-            >Proposal Status <q-icon name="keyboard_arrow_down"
-          /></q-badge>
-          <q-badge class="BiddingBadge" text-color="white"
-            >Bidding Status <q-icon name="keyboard_arrow_down"
-          /></q-badge>
+          <!-- Current Stage Badge - Dynamic and Changeable -->
+          <q-badge
+            class="StageBadge cursor-pointer"
+            text-color="white"
+            :style="{ backgroundColor: currentStageColor }"
+          >
+            {{ currentStageDisplay }}
+            <q-icon name="keyboard_arrow_down" class="q-ml-xs stage-arrow" :class="{ 'rotate-arrow': isStageMenuOpen }" />
+            <q-menu auto-close @before-show="isStageMenuOpen = true" @before-hide="isStageMenuOpen = false">
+              <q-list style="min-width: 200px">
+                <q-item
+                  v-for="stage in stageOptions"
+                  :key="stage.key"
+                  clickable
+                  @click="handleStageChange(stage.key)"
+                  :active="leadInformation.leadBoardStage === stage.key"
+                >
+                  <q-item-section avatar>
+                    <q-icon
+                      name="fiber_manual_record"
+                      :style="{ color: stage.color }"
+                      size="12px"
+                    />
+                  </q-item-section>
+                  <q-item-section>{{ stage.label }}</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-badge>
+
+          <!-- Proposal Status Badge - Under Development -->
+          <q-badge class="ProposalBadge cursor-pointer" text-color="white">
+            Proposal Status <q-icon name="keyboard_arrow_down" />
+            <q-tooltip>Under Development</q-tooltip>
+          </q-badge>
+
+          <!-- Bidding Status Badge - Under Development -->
+          <q-badge class="BiddingBadge cursor-pointer" text-color="white">
+            Bidding Status <q-icon name="keyboard_arrow_down" />
+            <q-tooltip>Under Development</q-tooltip>
+          </q-badge>
         </div>
 
         <div class="row items-start justify-start">
@@ -135,7 +167,7 @@
 
                 <div class="row">
                   <q-icon
-                    name="my_location"
+                    name="today"
                     size="16px"
                     :style="{ color: 'var(--q-text-light-grey)' }"
                   />
@@ -151,7 +183,7 @@
 
                 <div class="row">
                   <q-icon
-                    name="my_location"
+                    name="o_flag"
                     size="16px"
                     :style="{ color: 'var(--q-text-light-grey)' }"
                   />
@@ -774,7 +806,7 @@ export default {
       required: true,
     },
   },
-  emits: ["update:modelValue", "close"],
+  emits: ["update:modelValue", "close", "stageChanged"],
 
   setup(props, { emit }) {
     const $q = useQuasar();
@@ -787,11 +819,49 @@ export default {
     const isAddNoteDialogOpen = ref(false);
     const editingNote = ref(null);
     const isLeadEditDialogOpen = ref(false);
+    const isStageMenuOpen = ref(false);
 
     const winProbabilityLabel = computed(() => {
       const prob = leadInformation.value?.winProbability;
       return typeof prob === "string" ? prob : prob?.label;
     });
+
+    // Computed property for current stage display
+    const currentStageDisplay = computed(() => {
+      if (!leadInformation.value?.leadBoardStage) {
+        return "Prospect";
+      }
+      return getStageDisplayName(leadInformation.value.leadBoardStage);
+    });
+
+    // Computed property for current stage color
+    const currentStageColor = computed(() => {
+      const stageColors = {
+        prospect: "#9C27B0",
+        initial_meeting: "#2196F3",
+        technical_meeting: "#00BCD4",
+        proposal: "#FF9800",
+        in_negotiation: "#FFC107",
+        won: "#4CAF50",
+        loss: "#F44336",
+      };
+      return stageColors[leadInformation.value?.leadBoardStage] || "#9C27B0";
+    });
+
+    // Stage options for dropdown
+    const stageOptions = [
+      { key: "prospect", label: "Prospect", color: "#9C27B0" },
+      { key: "initial_meeting", label: "Initial Meeting", color: "#2196F3" },
+      {
+        key: "technical_meeting",
+        label: "Technical Meeting",
+        color: "#00BCD4",
+      },
+      { key: "proposal", label: "Proposal", color: "#FF9800" },
+      { key: "in_negotiation", label: "In Negotiation", color: "#FFC107" },
+      { key: "won", label: "Won", color: "#4CAF50" },
+      { key: "loss", label: "Lost", color: "#F44336" },
+    ];
 
     // Computed property for close date - format as "Month YYYY"
     const closeDate = computed(() => {
@@ -1001,10 +1071,59 @@ export default {
       isLeadEditDialogOpen.value = false;
     };
 
+    const handleStageChange = async (newStage: string) => {
+      // Don't allow changing if already in the same stage
+      if (leadInformation.value.leadBoardStage === newStage) {
+        return;
+      }
+
+      try {
+        $q.loading.show({
+          message: "Updating stage...",
+        });
+
+        // Call the API to move the lead
+        await APIRequests.moveLead(
+          $q,
+          props.leadViewId.toString(),
+          newStage
+        );
+
+        // Update local state immediately for smooth UX
+        leadInformation.value.leadBoardStage = newStage;
+
+        // Emit event to parent components to refresh board/grid/list
+        emit("stageChanged", {
+          leadId: props.leadViewId,
+          newStage: newStage,
+        });
+
+        $q.notify({
+          color: "positive",
+          message: `Stage updated to ${getStageDisplayName(newStage)}`,
+          icon: "check",
+          position: "top",
+        });
+      } catch (error: any) {
+        console.error("Failed to update stage:", error);
+        $q.notify({
+          color: "negative",
+          message: "Failed to update stage",
+          icon: "report_problem",
+          position: "top",
+        });
+      } finally {
+        $q.loading.hide();
+      }
+    };
+
     return {
       notesText,
       leadInformation,
       winProbabilityLabel,
+      currentStageDisplay,
+      currentStageColor,
+      stageOptions,
       closeDate,
       daysInCurrentStage,
       isBillOfQuantityDialogOpen,
@@ -1013,6 +1132,7 @@ export default {
       isAddNoteDialogOpen,
       editingNote,
       isLeadEditDialogOpen,
+      isStageMenuOpen,
       formatWord,
       truncateFormat,
       fetchData,
@@ -1025,6 +1145,7 @@ export default {
       getStageDisplayName,
       openEditDialog,
       handleLeadEdited,
+      handleStageChange,
     };
   },
 };
