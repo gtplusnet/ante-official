@@ -88,6 +88,7 @@ import CalendarWidget from '../Dashboard/CalendarWidget/CalendarWidget.vue';
 import MySchedulesWidget from '../Dashboard/MySchedulesWidget/MySchedulesWidget.vue';
 import { useCalendarEvents } from 'src/composables/calendar/useCalendarEvents';
 import { useCalendarCategories } from 'src/composables/calendar/useCalendarCategories';
+import { useCalendarIntegration } from 'src/composables/calendar/useCalendarIntegration';
 import { date } from 'quasar';
 
 // Lazy-loaded dialogs (CLAUDE.md - ALL dialogs must be lazy loaded)
@@ -124,6 +125,12 @@ const {
   deleteCategory: deleteCategoryComposable
 } = useCalendarCategories();
 
+const {
+  fetchAllIntegratedEvents,
+  getIntegratedFullCalendarEvents,
+  loading: integratedLoading
+} = useCalendarIntegration();
+
 // State
 const currentView = ref('dayGridMonth');
 const currentDate = ref(new Date());
@@ -150,6 +157,7 @@ let realtimeChannel: any = null;
 
 // Computed
 const fullCalendarEvents = computed(() => {
+  // Filter regular calendar events by category
   const filteredByCategory = events.value.filter(event =>
     !event.categoryId || selectedCategories.value.includes(event.categoryId)
   );
@@ -161,10 +169,22 @@ const fullCalendarEvents = computed(() => {
       )
     : filteredByCategory;
 
-  return getFullCalendarEvents.value.filter(fcEvent => {
+  const regularEvents = getFullCalendarEvents.value.filter(fcEvent => {
     const originalEvent = filteredBySearch.find(e => e.id === fcEvent.id);
     return !!originalEvent;
   });
+
+  // Merge with integrated events (tasks, shifts, leaves, projects, holidays)
+  const integratedEvents = getIntegratedFullCalendarEvents.value;
+
+  // Filter integrated events by search query if present
+  const filteredIntegratedEvents = searchQuery.value
+    ? integratedEvents.filter(event =>
+        event.title.toLowerCase().includes(searchQuery.value.toLowerCase())
+      )
+    : integratedEvents;
+
+  return [...regularEvents, ...filteredIntegratedEvents];
 });
 
 const filteredEvents = computed(() => {
@@ -177,7 +197,12 @@ const filteredEvents = computed(() => {
 const loadEvents = async () => {
   const startDate = getStartDateForView();
   const endDate = getEndDateForView();
-  await fetchEvents(startDate, endDate);
+
+  // Load both regular calendar events and integrated events in parallel
+  await Promise.all([
+    fetchEvents(startDate, endDate),
+    fetchAllIntegratedEvents(startDate, endDate)
+  ]);
 };
 
 const getStartDateForView = (): Date => {
@@ -236,6 +261,22 @@ const openCreateEventDialog = (initialDate?: Date, allDay = false) => {
 };
 
 const handleEventClick = (event: any) => {
+  // Check if this is an integrated event (task, shift, leave, project, holiday)
+  if (event.extendedProps?.isIntegrated) {
+    // For integrated events, we'll show a simple info dialog
+    // You can enhance this later with a dedicated integrated event details dialog
+    const sourceType = event.extendedProps.sourceType;
+    const sourceData = event.extendedProps.sourceData;
+
+    $q.dialog({
+      title: event.title,
+      message: `Type: ${sourceType}\n\nThis is a ${sourceType} event. Detailed view coming soon.`,
+      ok: 'Close'
+    });
+    return;
+  }
+
+  // Handle regular calendar events
   const originalEvent = events.value.find(e => e.id === event.id);
   if (originalEvent) {
     selectedEvent.value = originalEvent;
@@ -256,6 +297,16 @@ const handleDateRangeSelect = (start: Date, end: Date, allDay: boolean) => {
 
 const handleEventDrop = async (info: any) => {
   const { event, revert } = info;
+
+  // Prevent moving integrated events (they're read-only)
+  if (event.extendedProps?.isIntegrated) {
+    revert();
+    $q.notify({
+      type: 'warning',
+      message: 'Integrated events cannot be moved'
+    });
+    return;
+  }
 
   try {
     await updateEvent(event.id, {
@@ -280,6 +331,16 @@ const handleEventDrop = async (info: any) => {
 
 const handleEventResize = async (info: any) => {
   const { event, revert } = info;
+
+  // Prevent resizing integrated events (they're read-only)
+  if (event.extendedProps?.isIntegrated) {
+    revert();
+    $q.notify({
+      type: 'warning',
+      message: 'Integrated events cannot be resized'
+    });
+    return;
+  }
 
   try {
     await updateEvent(event.id, {
