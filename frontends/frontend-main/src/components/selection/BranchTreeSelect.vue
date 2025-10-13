@@ -259,6 +259,26 @@ export default defineComponent({
       }
     });
 
+    // Watch for options loading - fixes race condition when modelValue is set before options load
+    watch(() => options.value.length, (newLength, oldLength) => {
+      // Only trigger when options just finished loading (transition from 0 to N)
+      if (oldLength === 0 && newLength > 0) {
+        const branchIds = props.modelValue as (number | string)[];
+        // If there's a modelValue but no selectedBranch set, process it now
+        if (branchIds && branchIds.length > 0 && !selectedBranch.value) {
+          if (branchIds.length === options.value.length - 1) {
+            selectedBranch.value = 'all';
+          } else {
+            const primaryBranch = branchIds.find(id => {
+              const branch = options.value.find(opt => opt.key === id);
+              return branch && (!branch.parentId || !branchIds.includes(branch.parentId));
+            });
+            selectedBranch.value = primaryBranch || branchIds[0];
+          }
+        }
+      }
+    });
+
     onMounted(() => {
       loadBranches();
     });
