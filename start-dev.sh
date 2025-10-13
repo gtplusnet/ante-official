@@ -17,9 +17,13 @@ lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 lsof -ti:4000 | xargs kill -9 2>/dev/null || true
 echo "    ✅ Ports 3000 and 4000 cleared!"
 
+# Stop and remove existing containers (if any)
+echo "🧹 Cleaning up existing Docker containers..."
+docker rm -f ante-postgres ante-redis-dev ante-mongodb-dev 2>/dev/null || true
+
 # Start database services (PostgreSQL, Redis & MongoDB) via Docker Compose
 echo "🔧 Starting PostgreSQL, Redis and MongoDB via Docker Compose..."
-docker-compose -f docker/docker-compose-databases.yml up -d
+docker compose -f docker/docker-compose-databases.yml up -d
 
 # Wait for services to be healthy
 echo "⏳ Waiting for services to be ready..."
