@@ -108,6 +108,9 @@ import { ManpowerDeviceModule } from '@modules/manpower-device/manpower-device.m
 import { POSDeviceModule } from '@modules/pos-device/pos-device.module';
 import { CashierModule } from '@modules/cashier/cashier.module';
 
+// App controller
+import { AppController } from './app.controller';
+
 // Individual controllers and services that need to be refactored into modules
 import { ScopeController } from '@modules/project/scope/scope/scope.controller';
 import { RoleGroupController } from '@modules/role/role-group/role-group.controller';
@@ -305,6 +308,8 @@ const ENV = process.env.NODE_ENV;
     CashierModule,
   ],
   controllers: [
+    // Root app controller
+    AppController,
 
     // Controllers that should be moved to their own modules eventually
     ScopeController,
