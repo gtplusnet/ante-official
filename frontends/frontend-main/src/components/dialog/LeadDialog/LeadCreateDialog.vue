@@ -18,9 +18,7 @@
                 <g-input v-model="form.dealName" label="Deal Name/Opportunity*" type="text" required />
               </div>
               <div class="col-6 q-pl-sm">
-                <g-input v-model="form.dealType" label="Deal Type*" type="select-search-with-add"
-                  apiUrl="/select-box/deal-type-list" @showAddDialog="showDealTypeAddDialog" ref="dealTypeSelect"
-                  required />
+                <SelectionDealType v-model="form.dealType" required />
               </div>
             </div>
 
@@ -74,9 +72,7 @@
                 <SelectionLocation v-model="form.locationId" />
               </div>
               <div class="col-6 q-pl-sm">
-                <g-input v-model="form.dealSourceId" label="Select Deal Source" type="select-search-with-add"
-                  apiUrl="/select-box/deal-source-list" @showAddDialog="showDealSourceAddDialog"
-                  ref="dealSourceSelect" />
+                <SelectionDealSource v-model="form.dealSourceId" />
               </div>
             </div>
 
@@ -84,12 +80,10 @@
             <!-- Row 6: Relationship Owner | Point Of Contact -->
             <div class="row justify-center col-12 q-px-sm q-mt-sm">
               <div class="col-6 q-pr-sm">
-                <g-input v-model="form.relationshipOwnerId" label="Relationship Owner" type="select-search"
-                  apiUrl="/select-box/relationship-owner-list" />
+                <SelectionRelationshipOwner v-model="form.relationshipOwnerId" />
               </div>
               <div class="col-6 q-pl-sm">
-                <g-input v-model="form.pointOfContactId" label="Point Of Contact" type="select-search"
-                  apiUrl="/select-box/point-of-contact-list" ref="pointOfContactSelect" />
+                <SelectionPointOfContact v-model="form.pointOfContactId" />
               </div>
             </div>
           </div>
@@ -104,12 +98,6 @@
         </q-form>
       </template>
     </TemplateDialog>
-
-    <!-- Add/Edit Deal Source Dialog -->
-    <add-edit-deal-source-dialog ref="dealSourceDialog" @created="selectNewDealSourceSave" />
-
-    <!-- Add/Edit Deal Type Dialog -->
-    <add-edit-deal-type-dialog ref="dealTypeDialog" @created="selectNewDealTypeSave" />
   </q-dialog>
 </template>
 
@@ -117,18 +105,20 @@
 // Custom styles for LeadCreateDialog - TemplateDialog handles most styling</style>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, watch, nextTick } from "vue";
+import { defineComponent, ref, onMounted, watch } from "vue";
 import { QDialog, useQuasar } from "quasar";
 // import { useRouter } from 'vue-router';
 import GInput from "../../shared/form/GInput.vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
 import TemplateDialog from "../TemplateDialog.vue";
-import AddEditDealSourceDialog from "../AddEditDealSourceDialog.vue";
-import AddEditDealTypeDialog from "../AddEditDealTypeDialog.vue";
 import { APIRequests } from "../../../utility/api.handler";
 import { ProjectCreateRequest } from "@shared/request";
 import { LeadDataResponse } from "@shared/response";
 import SelectionLocation from "src/components/selection/SelectionLocation.vue";
+import SelectionRelationshipOwner from "src/components/selection/SelectionRelationshipOwner.vue";
+import SelectionPointOfContact from "src/components/selection/SelectionPointOfContact.vue";
+import SelectionDealSource from "src/components/selection/SelectionDealSource.vue";
+import SelectionDealType from "src/components/selection/SelectionDealType.vue";
 
 interface LeadForm {
   dealName: string;
@@ -152,9 +142,11 @@ export default defineComponent({
     GInput,
     GButton,
     TemplateDialog,
-    AddEditDealSourceDialog,
-    AddEditDealTypeDialog,
     SelectionLocation,
+    SelectionRelationshipOwner,
+    SelectionPointOfContact,
+    SelectionDealSource,
+    SelectionDealType,
   },
   props: {
     leadData: {
@@ -167,13 +159,6 @@ export default defineComponent({
     const $q = useQuasar();
     // const router = useRouter();
     const dialog = ref<InstanceType<typeof QDialog>>();
-    const dealSourceSelect = ref<InstanceType<typeof GInput> | null>(null);
-    const dealSourceDialog = ref<InstanceType<typeof AddEditDealSourceDialog> | null>(null);
-    const dealTypeSelect = ref<InstanceType<typeof GInput> | null>(null);
-    const dealTypeDialog = ref<InstanceType<typeof AddEditDealTypeDialog> | null>(null);
-    const pointOfContactSelect = ref<InstanceType<typeof GInput> | null>(null);
-    const isAddEditClientDialogOpen = ref(false);
-    const isAddEditCompanyDialogOpen = ref(false);
 
     // Month and Year options for Close Date
     const monthOptions = [
@@ -238,16 +223,6 @@ export default defineComponent({
           relationshipOwnerId: props.leadData.relationshipOwnerId || "",
           pointOfContactId: pointOfContactValue,
         };
-
-        // Reload Point of Contact select to display the selected value
-        nextTick(async () => {
-          if (pointOfContactSelect.value && "reloadGSelect" in pointOfContactSelect.value) {
-            const gInput = pointOfContactSelect.value as unknown as {
-              reloadGSelect: (autoSelect?: number | null) => Promise<void>;
-            };
-            await gInput.reloadGSelect(); // No parameter - just reload options, let v-model handle selection
-          }
-        });
       } else {
         // Create mode - set defaults
         const today = new Date();
@@ -264,56 +239,6 @@ export default defineComponent({
         form.value.dealSourceId = "";
         form.value.relationshipOwnerId = "";
         form.value.pointOfContactId = "";
-      }
-    };
-
-    const selectNewSave = async (data: LeadDataResponse) => {
-      // Handle any new save if needed
-    };
-
-    const showClientAddDialog = () => {
-      isAddEditClientDialogOpen.value = true;
-    };
-
-    const showCompanyAddDialog = () => {
-      isAddEditCompanyDialogOpen.value = true;
-    };
-
-    const selectNewCompanySave = async (data: any) => {
-      // Handle company save if needed
-    };
-
-    const showDealSourceAddDialog = () => {
-      if (dealSourceDialog.value) {
-        dealSourceDialog.value.show();
-      }
-    };
-
-    const selectNewDealSourceSave = async (data: any) => {
-      // Update the deal source select with the new source
-      const autoSelect = data.id;
-      if (dealSourceSelect.value && "reloadGSelect" in dealSourceSelect.value) {
-        const gInput = dealSourceSelect.value as unknown as {
-          reloadGSelect: (autoSelect?: number | null) => Promise<void>;
-        };
-        await gInput.reloadGSelect(autoSelect);
-      }
-    };
-
-    const showDealTypeAddDialog = () => {
-      if (dealTypeDialog.value) {
-        dealTypeDialog.value.show();
-      }
-    };
-
-    const selectNewDealTypeSave = async (data: any) => {
-      // Update the deal type select with the new type
-      const autoSelect = data.id;
-      if (dealTypeSelect.value && "reloadGSelect" in dealTypeSelect.value) {
-        const gInput = dealTypeSelect.value as unknown as {
-          reloadGSelect: (autoSelect?: number | null) => Promise<void>;
-        };
-        await gInput.reloadGSelect(autoSelect);
       }
     };
 
@@ -406,25 +331,10 @@ export default defineComponent({
 
     return {
       dialog,
-      dealSourceSelect,
-      dealSourceDialog,
-      dealTypeSelect,
-      dealTypeDialog,
-      pointOfContactSelect,
       form,
       monthOptions,
       yearOptions,
-      isAddEditClientDialogOpen,
-      isAddEditCompanyDialogOpen,
       initForm,
-      selectNewSave,
-      selectNewCompanySave,
-      selectNewDealSourceSave,
-      selectNewDealTypeSave,
-      showClientAddDialog,
-      showCompanyAddDialog,
-      showDealSourceAddDialog,
-      showDealTypeAddDialog,
       saveLead,
     };
   },

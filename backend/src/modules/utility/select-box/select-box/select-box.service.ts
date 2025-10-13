@@ -855,16 +855,20 @@ export class SelectBoxService {
   }
 
   async getCompanyList() {
-    const companies = await this.prisma.company.findMany({
+    const companies = await this.prisma.leadCompany.findMany({
+      where: {
+        isActive: true,
+        companyId: this.utilityService.companyId, // Filter by user's company
+      },
       select: {
         id: true,
-        companyName: true,
+        name: true,
       },
-      orderBy: { companyName: 'asc' },
+      orderBy: { name: 'asc' },
     });
 
     return companies.map((company) => ({
-      label: company.companyName,
+      label: company.name,
       value: company.id,
     }));
   }

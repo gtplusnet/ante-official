@@ -66,31 +66,11 @@
           />
 
           <!-- Company Field -->
-          <div>
-            <label class="label">Company *</label>
-            <q-select
-            class="q-mt-xs"
-              v-model="formData.companyId"
-              :options="companyOptions"
-              option-label="label"
-              option-value="value"
-              emit-value
-              map-options
-              outlined
-              dense
-              :rules="
-                viewOnly
-                  ? []
-                  : [
-                      (val) =>
-                        (val !== null && val !== undefined) ||
-                        'Company is required',
-                    ]
-              "
-              :readonly="viewOnly"
-              :loading="loadingCompanies"
-            />
-          </div>
+          <SelectionCompany
+            v-model="formData.companyId"
+            required
+            :disabled="viewOnly"
+          />
 
           <!-- Actions -->
           <div class="text-right q-mt-md">
@@ -128,6 +108,7 @@ import {
 import { useQuasar } from "quasar";
 import GButton from "src/components/shared/buttons/GButton.vue";
 import GInput from "src/components/shared/form/GInput.vue";
+import SelectionCompany from "src/components/selection/SelectionCompany.vue";
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
 const TemplateDialog = defineAsyncComponent(
@@ -183,40 +164,8 @@ const formData = ref<ContactForm>({ ...initialForm });
 
 // State
 const submitting = ref(false);
-const loadingCompanies = ref(false);
-
-interface CompanyOption {
-  label: string;
-  value: number;
-}
-
-const companyOptions = ref<CompanyOption[]>([]);
 
 // Methods
-const fetchCompanies = async () => {
-  if (!$api) return;
-
-  loadingCompanies.value = true;
-  try {
-    const response = await $api.get("/lead-company/list");
-    const companies = response.data.data || response.data || [];
-
-    companyOptions.value = companies.map((company: any) => ({
-      label: company.name || company.label || company.companyName,
-      value: Number(company.id || company.value),
-    }));
-  } catch (error) {
-    console.error("Error fetching companies:", error);
-    $q.notify({
-      color: "negative",
-      message: "Failed to load companies",
-      icon: "error",
-    });
-  } finally {
-    loadingCompanies.value = false;
-  }
-};
-
 const fetchContactData = async () => {
   if (!$api || !props.contactId) return;
 
@@ -225,27 +174,8 @@ const fetchContactData = async () => {
     const response = await $api.get(`/point-of-contact/${props.contactId}`);
     const contact = response.data;
 
-    // Get company ID and ensure it's a number to match options
+    // Get company ID
     const companyId = contact.company?.id || contact.companyId;
-    const companyName = contact.company?.name || contact.companyName;
-
-    // If company exists but not in options, add it
-    if (companyId && companyName) {
-      const companyIdNum = Number(companyId);
-      const existsInOptions = companyOptions.value.some(
-        (opt) => opt.value === companyIdNum
-      );
-
-      if (!existsInOptions) {
-        console.log(
-          `Adding missing company to options: ${companyName} (ID: ${companyIdNum})`
-        );
-        companyOptions.value.unshift({
-          label: companyName,
-          value: companyIdNum,
-        });
-      }
-    }
 
     // Populate form with existing data
     formData.value = {
@@ -277,15 +207,11 @@ const resetForm = () => {
 const onDialogShow = async () => {
   resetForm();
 
-  // Fetch companies first
-  await fetchCompanies();
-
-  // If in edit mode, fetch the contact data after companies are loaded
+  // If in edit mode, fetch the contact data
   if (isEditMode.value) {
     await fetchContactData();
 
     // Debug: Check if company is properly matched
-    console.log("Company Options:", companyOptions.value);
     console.log("Selected Company ID:", formData.value.companyId);
     console.log("Selected Company ID Type:", typeof formData.value.companyId);
   }
@@ -374,10 +300,5 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-label {
-  font-weight: 600;
-  color: #666;
-  margin-bottom: 3px;
-  font-size: 14px;
-}
+/* Component styles handled by child components */
 </style>

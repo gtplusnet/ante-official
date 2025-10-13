@@ -2,8 +2,8 @@
   
   <div>
     <!-- Location -->
-    <g-input ref="selectBox" v-model="selectedLocation" require type="select-search-with-add"
-      apiUrl="select-box/location-list" label="Location" @showAddDialog="showLocationAddDialog"></g-input>
+    <g-input ref="selectBox" v-model="selectedLocation" required type="select-search-with-add"
+      apiUrl="/select-box/location-list" label="Location" @showAddDialog="showLocationAddDialog"></g-input>
 
     <!-- Add/Edit Location Dialog -->
     <add-edit-location-dialog @saveDone="selectNewSave" v-model="isAddLocationDialogOpen" />
@@ -37,7 +37,6 @@ export default {
   }),
   watch: {
     selectedLocation(newVal) {
-      console.log('newVal', newVal);
       this.$emit('update:modelValue', newVal);
     },
     value: {

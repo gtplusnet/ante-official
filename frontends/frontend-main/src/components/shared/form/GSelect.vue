@@ -214,9 +214,14 @@ export default {
         return false;
       }
     },
-    async fetchOptions() {
+    async fetchOptions(autoSelect = null) {
       this.isLoading = true;
       this.error = null;
+
+      // Set the autoSelect value if provided
+      if (autoSelect !== null && autoSelect !== undefined) {
+        this.autoSelect = autoSelect;
+      }
 
       try {
         // If local options are provided, use them instead of fetching from API

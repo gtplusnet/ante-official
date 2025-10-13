@@ -200,11 +200,10 @@ export default {
 
         this.$q.notify({
           color: "positive",
-          message: "Task created successfully",
+          message: "Location created successfully",
           position: "top",
         });
         this.$emit("close");
-        console.log(response.data);
         this.$emit("saveDone", response.data);
         this.$refs.dialog.hide();
         this.initForm();
