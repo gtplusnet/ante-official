@@ -84,6 +84,10 @@ export class LeadCreateDto {
 
   @IsOptional()
   @IsNumber()
+  readonly implementationFee?: number;
+
+  @IsOptional()
+  @IsNumber()
   readonly initialCosting?: number;
 
   @IsOptional()
@@ -178,6 +182,10 @@ export class LeadUpdateDto {
   @IsOptional()
   @IsNumber()
   readonly mmr?: number;
+
+  @IsOptional()
+  @IsNumber()
+  readonly implementationFee?: number;
 
   @IsOptional()
   @IsNumber()

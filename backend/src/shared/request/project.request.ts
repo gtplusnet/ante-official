@@ -19,6 +19,7 @@ export interface ProjectCreateRequest {
   relationshipOwnerId?: string;
   abc?: number;
   mmr?: number;
+  implementationFee?: number;
   initialCosting?: number;
   contactDetails?: string;
   leadSource?: string;
@@ -41,6 +42,7 @@ export interface ProjectEditRequest {
   relationshipOwnerId?: string;
   abc?: number;
   mmr?: number;
+  implementationFee?: number;
   initialCosting?: number;
   contactDetails?: string;
   leadSource?: string;

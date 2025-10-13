@@ -1,55 +1,128 @@
 <template>
-  <q-dialog ref="dialog" :model-value="modelValue" @before-show="fetchData" @hide="onHide">
+  <q-dialog
+    ref="dialog"
+    :model-value="modelValue"
+    @before-show="fetchData"
+    @hide="onHide"
+  >
     <q-card class="view-lead-card">
       <q-card-section class="q-pa-lg">
         <div class="row items-center justify-between q-pb-xs">
-          <span class="text-dark text-title-large-f-[18px]">{{ leadInformation.name }}</span>
+          <span class="text-dark text-title-large-f-[18px]">{{
+            leadInformation.name
+          }}</span>
           <div class="row q-gutter-x-md">
-            <q-btn class="edit-btn" dense rounded unelevated icon="edit" @click="openEditDialog" />
-            <q-btn class="close-btn" dense rounded unelevated icon="close" @click="onHide" />
+            <q-btn
+              class="edit-btn"
+              dense
+              rounded
+              unelevated
+              icon="edit"
+              @click="openEditDialog"
+            />
+            <q-btn
+              class="close-btn"
+              dense
+              rounded
+              unelevated
+              icon="close"
+              @click="onHide"
+            />
           </div>
         </div>
 
         <div class="row items-center q-gutter-x-sm q-mb-md">
-          <q-badge class="StageBadge" text-color="white">Current Stage <q-icon name="keyboard_arrow_down" /></q-badge>
-          <q-badge class="ProposalBadge" text-color="white">Proposal Status <q-icon
-              name="keyboard_arrow_down" /></q-badge>
-          <q-badge class="BiddingBadge" text-color="white">Bidding Status <q-icon
-              name="keyboard_arrow_down" /></q-badge>
+          <q-badge class="StageBadge" text-color="white"
+            >Current Stage <q-icon name="keyboard_arrow_down"
+          /></q-badge>
+          <q-badge class="ProposalBadge" text-color="white"
+            >Proposal Status <q-icon name="keyboard_arrow_down"
+          /></q-badge>
+          <q-badge class="BiddingBadge" text-color="white"
+            >Bidding Status <q-icon name="keyboard_arrow_down"
+          /></q-badge>
         </div>
 
         <div class="row items-start justify-start">
           <div class="col-8">
             <div class="details-container q-pr-sm">
-              <div class="row justify-between q-pb-lg">
-                <div class="detail-three-card column items-center justify-center">
+              <div class="detail-three-card-container q-pb-lg">
+                <div
+                  class="detail-three-card column items-center justify-center"
+                >
                   <div class="icon-div q-pa-sm">
-                    <q-icon name="payments" :style="{ color: 'var(--q-secondary)' }" size="18px" />
+                    <q-icon
+                      name="o_beenhere"
+                      :style="{ color: 'var(--q-secondary)' }"
+                      size="18px"
+                    />
                   </div>
-                  <span class="title">&#x20B1;{{ "0.00" }}(Static)</span>
-                  <span class="subtitle">ABC</span>
+                  <span class="title">{{
+                    leadInformation.abc?.formatCurrency || "₱0.00"
+                  }}</span>
+                  <span class="subtitle">Approved Budget</span>
                 </div>
-                <div class="detail-three-card column items-center justify-center">
+                <div
+                  class="detail-three-card column items-center justify-center"
+                >
                   <div class="icon-div q-pa-sm">
-                    <q-icon name="event" :style="{ color: 'var(--q-secondary)' }" size="18px" />
+                    <q-icon
+                      name="o_payments"
+                      :style="{ color: 'var(--q-secondary)' }"
+                      size="18px"
+                    />
                   </div>
-                  <span class="title">{{ leadInformation.endDate?.dateFull || "N/A" }}</span>
-                  <span class="subtitle">Closing Date</span>
+                  <span class="title">{{
+                    leadInformation.initialCosting?.formatCurrency || "₱0.00"
+                  }}</span>
+                  <span class="subtitle">Initial Contract</span>
                 </div>
-                <div class="detail-three-card column items-center justify-center">
+                <div
+                  class="detail-three-card column items-center justify-center"
+                >
                   <div class="icon-div q-pa-sm">
-                    <q-icon name="pin_drop" :style="{ color: 'var(--q-secondary)' }" size="18px" />
+                    <q-icon
+                      name="business"
+                      :style="{ color: 'var(--q-secondary)' }"
+                      size="18px"
+                    />
                   </div>
-                  <span class="title">{{ leadInformation.location?.name || "No Location" }}</span>
-                  <span class="subtitle">Location</span>
+                  <span class="title">{{
+                    leadInformation.client?.company?.name || "No Company"
+                  }}</span>
+                  <span class="subtitle">Company</span>
+                </div>
+                <div
+                  class="detail-three-card column items-center justify-center"
+                >
+                  <div class="icon-div q-pa-sm">
+                    <q-icon
+                      name="pin_drop"
+                      :style="{ color: 'var(--q-secondary)' }"
+                      size="18px"
+                    />
+                  </div>
+                  <span class="title">{{
+                    formatWord(leadInformation.personInCharge?.firstName) +
+                      " " +
+                      formatWord(leadInformation.personInCharge?.lastName) ||
+                    "No Relationship Owner"
+                  }}</span>
+                  <span class="subtitle">Relationship Owner</span>
                 </div>
               </div>
 
               <!-- Lead Details -->
-              <div class="details-title"><q-icon name="o_info" size="20px" />Lead Details</div>
+              <div class="details-title">
+                <q-icon name="o_info" size="20px" />Lead Details
+              </div>
               <div class="details-card q-pa-md q-mt-sm q-mb-lg">
                 <div class="row">
-                  <q-icon name="card_travel" size="16px" :style="{ color: 'var(--q-text-light-grey)' }" />
+                  <q-icon
+                    name="card_travel"
+                    size="16px"
+                    :style="{ color: 'var(--q-text-light-grey)' }"
+                  />
                   <div class="column q-ml-sm">
                     <span class="subtitle">Deal Type:</span>
                     <span class="details-value">{{
@@ -61,7 +134,42 @@
                 </div>
 
                 <div class="row">
-                  <q-icon name="my_location" size="16px" :style="{ color: 'var(--q-text-light-grey)' }" />
+                  <q-icon
+                    name="my_location"
+                    size="16px"
+                    :style="{ color: 'var(--q-text-light-grey)' }"
+                  />
+                  <div class="column q-ml-sm">
+                    <span class="subtitle"
+                      >Monthly Recurring Revenue (MRR):</span
+                    >
+                    <span class="details-value">{{
+                      leadInformation.mmr?.formatCurrency || "₱0.00"
+                    }}</span>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <q-icon
+                    name="my_location"
+                    size="16px"
+                    :style="{ color: 'var(--q-text-light-grey)' }"
+                  />
+                  <div class="column q-ml-sm">
+                    <span class="subtitle">Implementation Fee:</span>
+                    <span class="details-value">{{
+                      leadInformation.implementationFee?.formatCurrency ||
+                      "₱0.00"
+                    }}</span>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <q-icon
+                    name="my_location"
+                    size="16px"
+                    :style="{ color: 'var(--q-text-light-grey)' }"
+                  />
                   <div class="column q-ml-sm">
                     <span class="subtitle">Probability:</span>
                     <span class="details-value">{{ winProbabilityLabel }}</span>
@@ -69,76 +177,83 @@
                 </div>
 
                 <div class="row">
-                  <q-icon name="o_account_circle" size="16px" :style="{ color: 'var(--q-text-light-grey)' }" />
+                  <q-icon
+                    name="o_group"
+                    size="16px"
+                    :style="{ color: 'var(--q-text-light-grey)' }"
+                  />
                   <div class="column q-ml-sm">
-                    <span class="subtitle">Contact Person:</span>
-                    <span class="details-value">{{ leadInformation.client?.name }}</span>
-                  </div>
-                </div>
-
-                <div class="row">
-                  <q-icon name="o_group" size="16px" :style="{ color: 'var(--q-text-light-grey)' }" />
-                  <div class="column q-ml-sm">
-                    <span class="subtitle">Relationship Owner:</span>
+                    <span class="subtitle">Point of Contact:</span>
                     <span class="details-value">{{
-                      leadInformation.personInCharge?.firstName
-                        ? formatWord(leadInformation.personInCharge?.firstName) +
-                        " " +
-                        formatWord(leadInformation.personInCharge?.lastName)
-                        : "N/A"
+                      leadInformation.client?.name
                     }}</span>
                   </div>
                 </div>
 
                 <div class="row">
-                  <q-icon name="o_topic" size="16px" :style="{ color: 'var(--q-text-light-grey)' }" />
+                  <q-icon
+                    name="o_topic"
+                    size="16px"
+                    :style="{ color: 'var(--q-text-light-grey)' }"
+                  />
                   <div class="column q-ml-sm">
-                    <span class="subtitle">Source:</span>
-                    <span class="details-value">Online (Static)</span>
-                  </div>
-                </div>
-
-                <div class="row">
-                  <q-icon name="o_request_quote" size="16px" :style="{ color: 'var(--q-text-light-grey)' }" />
-                  <div class="column q-ml-sm">
-                    <span class="subtitle">Initial Costing:</span>
-                    <span class="details-value">&#x20B1;80,000.00 (Static)</span>
-                  </div>
-                </div>
-
-                <div class="row">
-                  <q-icon name="o_payments" size="16px" :style="{ color: 'var(--q-text-light-grey)' }" />
-                  <div class="column q-ml-sm">
-                    <span class="subtitle">Payment Terms:</span>
-                    <span class="details-value">Down Payment: 20% Retention: 10% (Static)</span>
+                    <span class="subtitle">Deal Source:</span>
+                    <span class="details-value">{{
+                      leadInformation.dealSource?.label || "N/A"
+                    }}</span>
                   </div>
                 </div>
 
                 <div class="row justify-between q-gutter-x-md">
-                  <div class="col row justify-center q-pa-sm" style="background-color: #f6f8fb; border-radius: 8px">
-                    <q-icon name="event" size="18px" :style="{ color: 'var(--q-text-light-grey)' }" />
+                  <div
+                    class="col row items-center q-pa-sm"
+                    style="background-color: #f6f8fb; border-radius: 8px"
+                  >
                     <div class="column q-ml-sm">
-                      <span class="subtitle">Stage Change:</span>
-                      <span class="details-value">July 16, 2025 (Static)</span>
+                      <span class="subtitle">Close Date:</span>
+                      <div class="row items-center">
+                        <q-icon
+                          name="event"
+                          size="18px"
+                          :style="{ color: 'var(--q-text-light-grey)' }"
+                        />
+                        <span class="details-value q-ml-xs">{{ closeDate }}</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div class="col row justify-center q-pa-sm" style="background-color: #f6f8fb; border-radius: 8px">
-                    <q-icon name="schedule" size="18px" :style="{ color: 'var(--q-text-light-grey)' }" />
+                  <div
+                    class="col row items-center q-pa-sm"
+                    style="background-color: #f6f8fb; border-radius: 8px"
+                  >
                     <div class="column q-ml-sm">
                       <span class="subtitle">Days in current stage:</span>
-                      <span class="details-value">28 (Static)</span>
+                      <div class="row items-center">
+                        <q-icon
+                          name="schedule"
+                          size="18px"
+                          :style="{ color: 'var(--q-text-light-grey)' }"
+                        />
+                        <span class="details-value q-ml-xs">{{
+                          daysInCurrentStage
+                        }}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
               <!-- Lead Tasks -->
-              <div class="details-title"><q-icon name="o_task" size="20px" />Tasks</div>
+              <div class="details-title">
+                <q-icon name="o_task" size="20px" />Tasks
+              </div>
               <div class="lead-card q-pa-md q-mt-sm q-mb-lg">
                 <GlobalWidgetCardBox class="task-card-item">
                   <div class="row q-pb-xs">
-                    <span class="details-value"><span class="text-grey-light">#033</span> Sample Task A (Static)</span>
+                    <span class="details-value"
+                      ><span class="text-grey-light">#033</span> Sample Task A
+                      (Static)</span
+                    >
                   </div>
                   <div class="row justify-between items-center">
                     <div class="row q-gutter-x-sm">
@@ -155,8 +270,10 @@
 
                 <GlobalWidgetCardBox class="task-card-item">
                   <div class="row q-pb-xs">
-                    <span class="details-value"><span class="text-grey-light">#034</span> Interior Design Attachment
-                      (Static)</span>
+                    <span class="details-value"
+                      ><span class="text-grey-light">#034</span> Interior Design
+                      Attachment (Static)</span
+                    >
                   </div>
                   <div class="row justify-between items-center">
                     <div class="row q-gutter-x-sm">
@@ -173,8 +290,10 @@
 
                 <GlobalWidgetCardBox class="task-card-item">
                   <div class="row q-pb-xs">
-                    <span class="details-value"><span class="text-grey-light">#035</span> Exterior Design Attachment
-                      (Static)</span>
+                    <span class="details-value"
+                      ><span class="text-grey-light">#035</span> Exterior Design
+                      Attachment (Static)</span
+                    >
                   </div>
                   <div class="row justify-between items-center">
                     <div class="row q-gutter-x-sm">
@@ -191,12 +310,18 @@
               </div>
 
               <!-- Calendar Events -->
-              <div class="details-title"><q-icon name="event" size="20px" />Calendar Events</div>
+              <div class="details-title">
+                <q-icon name="event" size="20px" />Calendar Events
+              </div>
               <div class="lead-card q-pa-md q-mt-sm q-mb-lg">
                 <GlobalWidgetCardBox class="events-card-item q-pa-md">
                   <div class="column q-pb-xs">
                     <span class="details-value">
-                      <q-icon name="o_today" size="16px" style="color: #00897b" />
+                      <q-icon
+                        name="o_today"
+                        size="16px"
+                        style="color: #00897b"
+                      />
                       Site Inspection (Static)
                     </span>
                   </div>
@@ -209,7 +334,11 @@
                 <GlobalWidgetCardBox class="events-card-item q-pa-md">
                   <div class="column q-pb-xs">
                     <span class="details-value">
-                      <q-icon name="card_travel" size="16px" style="color: #1e88e5" />
+                      <q-icon
+                        name="card_travel"
+                        size="16px"
+                        style="color: #1e88e5"
+                      />
                       Meeting with Investor (Static)
                     </span>
                   </div>
@@ -221,49 +350,95 @@
               </div>
 
               <!-- Notes/ Next Actions -->
-              <div class="details-title"><q-icon name="o_note_add" size="20px" />Notes/ Next Actions</div>
+              <div class="details-title">
+                <q-icon name="o_note_add" size="20px" />Notes/ Next Actions
+              </div>
               <div class="lead-card q-pa-md q-mt-sm q-mb-lg">
-                <div class="notes-card-item row justify-between q-px-md q-py-sm">
+                <div
+                  class="notes-card-item row justify-between q-px-md q-py-sm"
+                >
                   <div class="col">
                     <div>
-                      <q-badge class="noteBadge" :class="{ pinned: true }" text-color="white">
+                      <q-badge
+                        class="noteBadge"
+                        :class="{ pinned: true }"
+                        text-color="white"
+                      >
                         <q-icon name="my_location" class="text-dark" />
                         <div class="text-dark text-label-large">Pinned</div>
                       </q-badge>
                     </div>
-                    <div class="text-grey text-label-medium q-pt-xs">Notes:</div>
-                    <div class="text-dark text-label-large q-pb-xs">Lorem ipsum dolor katarata.</div>
+                    <div class="text-grey text-label-medium q-pt-xs">
+                      Notes:
+                    </div>
+                    <div class="text-dark text-label-large q-pb-xs">
+                      Lorem ipsum dolor katarata.
+                    </div>
                     <div class="row items-center">
                       <q-avatar size="md">
                         <img src="/lead-avatar.png" />
                       </q-avatar>
-                      <div class="text-grey text-label-large q-ml-sm">{{ leadInformation.client?.name }}</div>
+                      <div class="text-grey text-label-large q-ml-sm">
+                        {{ leadInformation.client?.name }}
+                      </div>
                     </div>
                   </div>
                   <div class="menu-time column items-end justify-between">
-                    <q-btn color="grey-7" dense round flat icon="more_vert" class="q-mb-sm">
+                    <q-btn
+                      color="grey-7"
+                      dense
+                      round
+                      flat
+                      icon="more_vert"
+                      class="q-mb-sm"
+                    >
                       <q-menu auto-close anchor="bottom end" self="top end">
                         <div class="q-pa-sm">
-                          <div clickable class="row q-py-xs q-gutter-x-sm cursor-pointer">
-                            <div class="row items-center text-dark"><q-icon name="my_location" size="20px" /></div>
-                            <div class="text-dark text-label-medium q-pa-xs">Unpin</div>
+                          <div
+                            clickable
+                            class="row q-py-xs q-gutter-x-sm cursor-pointer"
+                          >
+                            <div class="row items-center text-dark">
+                              <q-icon name="my_location" size="20px" />
+                            </div>
+                            <div class="text-dark text-label-medium q-pa-xs">
+                              Unpin
+                            </div>
                           </div>
-                          <div clickable class="row q-py-xs q-gutter-x-sm item-center cursor-pointer">
-                            <div class="row items-center text-dark"><q-icon name="edit" size="20px" /></div>
-                            <div class="text-dark text-label-medium q-pa-xs">Edit</div>
+                          <div
+                            clickable
+                            class="row q-py-xs q-gutter-x-sm item-center cursor-pointer"
+                          >
+                            <div class="row items-center text-dark">
+                              <q-icon name="edit" size="20px" />
+                            </div>
+                            <div class="text-dark text-label-medium q-pa-xs">
+                              Edit
+                            </div>
                           </div>
-                          <div clickable class="row q-py-xs q-gutter-x-sm cursor-pointer">
-                            <div class="row items-center text-dark"><q-icon name="delete" size="20px" /></div>
-                            <div class="text-dark text-label-medium">Delete</div>
+                          <div
+                            clickable
+                            class="row q-py-xs q-gutter-x-sm cursor-pointer"
+                          >
+                            <div class="row items-center text-dark">
+                              <q-icon name="delete" size="20px" />
+                            </div>
+                            <div class="text-dark text-label-medium">
+                              Delete
+                            </div>
                           </div>
                         </div>
                       </q-menu>
                     </q-btn>
-                    <div class="text-grey text-label-medium">Time ago (static)</div>
+                    <div class="text-grey text-label-medium">
+                      Time ago (static)
+                    </div>
                   </div>
                 </div>
 
-                <div class="notes-card-item row justify-between q-px-md q-py-sm">
+                <div
+                  class="notes-card-item row justify-between q-px-md q-py-sm"
+                >
                   <div class="col">
                     <div>
                       <!-- <q-badge class="noteBadge" :class="{ pinned: true }" text-color="white">
@@ -271,43 +446,83 @@
                         <div class="text-dark text-label-large">Pinned</div>
                       </q-badge> -->
                     </div>
-                    <div class="text-grey text-label-medium q-pt-xs">Notes:</div>
+                    <div class="text-grey text-label-medium q-pt-xs">
+                      Notes:
+                    </div>
                     <div class="text-dark text-label-large q-pb-xs">
-                      {{ truncateFormat("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore.") }}
+                      {{
+                        truncateFormat(
+                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore."
+                        )
+                      }}
                     </div>
                     <div class="row items-center">
                       <q-avatar size="md">
                         <img src="/lead-avatar.png" />
                       </q-avatar>
-                      <div class="text-grey text-label-large q-ml-sm">{{ leadInformation.client?.name }}</div>
+                      <div class="text-grey text-label-large q-ml-sm">
+                        {{ leadInformation.client?.name }}
+                      </div>
                     </div>
                   </div>
                   <div class="menu-time column items-end justify-between">
-                    <q-btn color="grey-7" dense round flat icon="more_vert" class="q-mb-sm">
+                    <q-btn
+                      color="grey-7"
+                      dense
+                      round
+                      flat
+                      icon="more_vert"
+                      class="q-mb-sm"
+                    >
                       <q-menu auto-close anchor="bottom end" self="top end">
                         <div class="q-pa-sm">
-                          <div clickable class="row q-py-xs q-gutter-x-sm cursor-pointer">
-                            <div class="row items-center text-dark"><q-icon name="my_location" size="20px" /></div>
-                            <div class="text-dark text-label-medium q-pa-xs">Unpin</div>
+                          <div
+                            clickable
+                            class="row q-py-xs q-gutter-x-sm cursor-pointer"
+                          >
+                            <div class="row items-center text-dark">
+                              <q-icon name="my_location" size="20px" />
+                            </div>
+                            <div class="text-dark text-label-medium q-pa-xs">
+                              Unpin
+                            </div>
                           </div>
-                          <div clickable class="row q-py-xs q-gutter-x-sm item-center cursor-pointer">
-                            <div class="row items-center text-dark"><q-icon name="edit" size="20px" /></div>
-                            <div class="text-dark text-label-medium q-pa-xs">Edit</div>
+                          <div
+                            clickable
+                            class="row q-py-xs q-gutter-x-sm item-center cursor-pointer"
+                          >
+                            <div class="row items-center text-dark">
+                              <q-icon name="edit" size="20px" />
+                            </div>
+                            <div class="text-dark text-label-medium q-pa-xs">
+                              Edit
+                            </div>
                           </div>
-                          <div clickable class="row q-py-xs q-gutter-x-sm cursor-pointer">
-                            <div class="row items-center text-dark"><q-icon name="delete" size="20px" /></div>
-                            <div class="text-dark text-label-medium">Delete</div>
+                          <div
+                            clickable
+                            class="row q-py-xs q-gutter-x-sm cursor-pointer"
+                          >
+                            <div class="row items-center text-dark">
+                              <q-icon name="delete" size="20px" />
+                            </div>
+                            <div class="text-dark text-label-medium">
+                              Delete
+                            </div>
                           </div>
                         </div>
                       </q-menu>
                     </q-btn>
-                    <div class="text-grey text-label-medium">Time ago (static)</div>
+                    <div class="text-grey text-label-medium">
+                      Time ago (static)
+                    </div>
                   </div>
                 </div>
               </div>
 
               <!-- Attachments -->
-              <div class="details-title"><q-icon name="attach_file" size="20px" />Attachments</div>
+              <div class="details-title">
+                <q-icon name="attach_file" size="20px" />Attachments
+              </div>
               <div class="lead-card q-pa-md q-mt-sm q-mb-lg">
                 <div class="attachments-card-item">
                   <div class="text-label-medium row items-center">
@@ -318,52 +533,89 @@
               </div>
 
               <!-- Activities Timeline -->
-              <div class="details-title"><q-icon name="event_note" size="20px" />Activities Timeline</div>
+              <div class="details-title">
+                <q-icon name="event_note" size="20px" />Activities Timeline
+              </div>
               <div class="activities-card q-pa-md q-mt-sm q-mb-lg">
                 <div class="activities-card-item row">
-                  <q-icon name="o_bookmark_add" size="18px" :style="{ color: 'var(--q-text-light-grey)' }" />
+                  <q-icon
+                    name="o_bookmark_add"
+                    size="18px"
+                    :style="{ color: 'var(--q-text-light-grey)' }"
+                  />
                   <div class="column q-ml-sm">
                     <span class="subtitle">january 29, 2025</span>
-                    <span class="details-value">Lead was created and added to the pipeline. (Static)</span>
+                    <span class="details-value"
+                      >Lead was created and added to the pipeline.
+                      (Static)</span
+                    >
                     <div>
                       <span class="subtitle">Note/ Next Actions:</span>
-                      <span class="subtitle text-dark">Note/ Next Actions (Static)</span>
+                      <span class="subtitle text-dark"
+                        >Note/ Next Actions (Static)</span
+                      >
                     </div>
                   </div>
                 </div>
 
                 <div class="activities-card-item row">
-                  <q-icon name="content_paste_go" size="18px" :style="{ color: 'var(--q-text-light-grey)' }" />
+                  <q-icon
+                    name="content_paste_go"
+                    size="18px"
+                    :style="{ color: 'var(--q-text-light-grey)' }"
+                  />
                   <div class="column q-ml-sm">
                     <span class="subtitle">February 1, 2025</span>
-                    <span class="details-value">Lead was moved from Opportunity to Initial Meeting. (Static)</span>
+                    <span class="details-value"
+                      >Lead was moved from Opportunity to Initial Meeting.
+                      (Static)</span
+                    >
                     <div>
                       <span class="subtitle">Note/ Next Actions:</span>
-                      <span class="subtitle text-dark">Note/ Next Actions (Static)</span>
+                      <span class="subtitle text-dark"
+                        >Note/ Next Actions (Static)</span
+                      >
                     </div>
                   </div>
                 </div>
 
                 <div class="activities-card-item row">
-                  <q-icon name="content_paste_go" size="18px" :style="{ color: 'var(--q-text-light-grey)' }" />
+                  <q-icon
+                    name="content_paste_go"
+                    size="18px"
+                    :style="{ color: 'var(--q-text-light-grey)' }"
+                  />
                   <div class="column q-ml-sm">
                     <span class="subtitle">February 15, 2025</span>
-                    <span class="details-value">Lead was moved from Initial Meeting to Proposal. (Static)</span>
+                    <span class="details-value"
+                      >Lead was moved from Initial Meeting to Proposal.
+                      (Static)</span
+                    >
                     <div>
                       <span class="subtitle">Note/ Next Actions:</span>
-                      <span class="subtitle text-dark">Note/ Next Actions (Static)</span>
+                      <span class="subtitle text-dark"
+                        >Note/ Next Actions (Static)</span
+                      >
                     </div>
                   </div>
                 </div>
 
                 <div class="activities-card-item row">
-                  <q-icon name="o_border_color" size="18px" :style="{ color: 'var(--q-text-light-grey)' }" />
+                  <q-icon
+                    name="o_border_color"
+                    size="18px"
+                    :style="{ color: 'var(--q-text-light-grey)' }"
+                  />
                   <div class="column q-ml-sm">
                     <span class="subtitle">March 1, 2025 </span>
-                    <span class="details-value">Lead note was updated. (Static)</span>
+                    <span class="details-value"
+                      >Lead note was updated. (Static)</span
+                    >
                     <div>
                       <span class="subtitle">Note/ Next Actions:</span>
-                      <span class="subtitle text-dark">Note/ Next Actions (Static)</span>
+                      <span class="subtitle text-dark"
+                        >Note/ Next Actions (Static)</span
+                      >
                     </div>
                   </div>
                 </div>
@@ -372,22 +624,62 @@
           </div>
 
           <div class="col-4 column q-pl-md">
-            <div class="text-title-small q-mb-sm" :style="{ color: 'var(--q-text-light-grey)' }">Main Actions</div>
-            <div class="more-actions column items-center justify-center q-mb-lg">
-              <GButton variant="outline" no-caps color="primary" icon="swap_horiz" label="Convert To Project"
-                class="full-width row items-start" @click="handleConvertToProject" />
+            <div
+              class="text-title-small q-mb-sm"
+              :style="{ color: 'var(--q-text-light-grey)' }"
+            >
+              Main Actions
+            </div>
+            <div
+              class="more-actions column items-center justify-center q-mb-lg"
+            >
+              <GButton
+                variant="outline"
+                no-caps
+                color="primary"
+                icon="swap_horiz"
+                label="Convert To Project"
+                class="full-width row items-start"
+                @click="handleConvertToProject"
+              />
 
-              <GButton variant="outline" no-caps color="primary" icon="o_collections_bookmark"
-                @click="openBillOfQuantityDialog" label="Bill Of Quantity" class="full-width row items-start" />
-
+              <GButton
+                variant="outline"
+                no-caps
+                color="primary"
+                icon="o_collections_bookmark"
+                @click="openBillOfQuantityDialog"
+                label="Bill Of Quantity"
+                class="full-width row items-start"
+              />
             </div>
 
-            <div class="text-title-small q-mb-sm" :style="{ color: 'var(--q-text-light-grey)' }">Quick Actions</div>
+            <div
+              class="text-title-small q-mb-sm"
+              :style="{ color: 'var(--q-text-light-grey)' }"
+            >
+              Quick Actions
+            </div>
             <div class="quick-actions column items-center justify-center">
-              <GButton unelevated no-caps color="primary" variant="tonal" icon="attachment" label="Attachment"
-                class="full-width row items-start" />
-              <GButton unelevated no-caps color="primary" variant="tonal" icon="o_note_add" label="Add Note"
-                class="full-width row items-start" @click="openAddNoteDialog" />
+              <GButton
+                unelevated
+                no-caps
+                color="primary"
+                variant="tonal"
+                icon="attachment"
+                label="Attachment"
+                class="full-width row items-start"
+              />
+              <GButton
+                unelevated
+                no-caps
+                color="primary"
+                variant="tonal"
+                icon="o_note_add"
+                label="Add Note"
+                class="full-width row items-start"
+                @click="openAddNoteDialog"
+              />
             </div>
 
             <!-- <div class="text-subtitle2" :style="{ color: 'var(--q-text-light-grey)' }">Notes/ Next Actions:</div>
@@ -410,16 +702,27 @@
       </q-card-section>
 
       <!-- Bill of Quantity Dialog -->
-      <bill-of-quantity-dialog v-if="isBillOfQuantityDialogOpen" v-model="isBillOfQuantityDialogOpen"
-        :projectId="leadInformation.id" />
+      <bill-of-quantity-dialog
+        v-if="isBillOfQuantityDialogOpen"
+        v-model="isBillOfQuantityDialogOpen"
+        :projectId="leadInformation.id"
+      />
 
       <!-- Add Note Dialog -->
-      <AddNoteDialog v-model="isAddNoteDialogOpen" :noteData="editingNote" @saveDone="handleNoteSaved"
-        @close="isAddNoteDialogOpen = false" />
+      <AddNoteDialog
+        v-model="isAddNoteDialogOpen"
+        :noteData="editingNote"
+        @saveDone="handleNoteSaved"
+        @close="isAddNoteDialogOpen = false"
+      />
 
       <!-- Lead Edit Dialog -->
-      <lead-create-dialog v-model="isLeadEditDialogOpen" :leadData="leadInformation" @close="handleLeadEdited"
-        @saveDone="handleLeadEdited" />
+      <lead-create-dialog
+        v-model="isLeadEditDialogOpen"
+        :leadData="leadInformation"
+        @close="handleLeadEdited"
+        @saveDone="handleLeadEdited"
+      />
     </q-card>
   </q-dialog>
 </template>
@@ -433,24 +736,22 @@ import { APIRequests } from "src/utility/api.handler";
 import { LeadDataResponse } from "@shared/response";
 import { useQuasar, Dialog } from "quasar";
 import { ref, computed } from "vue";
-import { defineAsyncComponent } from 'vue';
+import { defineAsyncComponent } from "vue";
 import { formatWord } from "src/utility/formatter";
-import { useRouter } from 'vue-router';
+import { useRouter } from "vue-router";
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
-const BillOfQuantityDialog = defineAsyncComponent(() =>
-  import('../BillOfQuantity/BillOfQuantityDialog.vue')
+const BillOfQuantityDialog = defineAsyncComponent(
+  () => import("../BillOfQuantity/BillOfQuantityDialog.vue")
 );
-const EmailComposeDialog = defineAsyncComponent(() =>
-  import('../EmailComposeDialog.vue')
-);
-
-const AddNoteDialog = defineAsyncComponent(() =>
-  import('./AddNoteDialog.vue')
+const EmailComposeDialog = defineAsyncComponent(
+  () => import("../EmailComposeDialog.vue")
 );
 
-const LeadCreateDialog = defineAsyncComponent(() =>
-  import('./LeadCreateDialog.vue')
+const AddNoteDialog = defineAsyncComponent(() => import("./AddNoteDialog.vue"));
+
+const LeadCreateDialog = defineAsyncComponent(
+  () => import("./LeadCreateDialog.vue")
 );
 
 export default {
@@ -473,7 +774,7 @@ export default {
       required: true,
     },
   },
-  emits: ['update:modelValue', 'close'],
+  emits: ["update:modelValue", "close"],
 
   setup(props, { emit }) {
     const $q = useQuasar();
@@ -490,6 +791,52 @@ export default {
     const winProbabilityLabel = computed(() => {
       const prob = leadInformation.value?.winProbability;
       return typeof prob === "string" ? prob : prob?.label;
+    });
+
+    // Computed property for close date - format as "Month YYYY"
+    const closeDate = computed(() => {
+      if (!leadInformation.value?.endDate?.raw) {
+        return "N/A";
+      }
+      const date = new Date(leadInformation.value.endDate.raw);
+      const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+      const month = monthNames[date.getMonth()];
+      const year = date.getFullYear();
+      return `${month} ${year}`;
+    });
+
+    // Computed property for days in current stage (same as lead card time-stage)
+    const daysInCurrentStage = computed(() => {
+      if (!leadInformation.value?.updatedAt?.raw) {
+        return "0 days";
+      }
+      const updatedAt = new Date(leadInformation.value.updatedAt.raw);
+      const now = new Date();
+      const diffMs = now.getTime() - updatedAt.getTime();
+      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const weeks = Math.floor(days / 7);
+      const months = Math.floor(days / 30);
+
+      if (days < 7) {
+        return days === 1 ? "1 day" : `${days} days`;
+      } else if (weeks < 4) {
+        return weeks === 1 ? "1 week" : `${weeks} weeks`;
+      } else {
+        return months === 1 ? "1 month" : `${months} months`;
+      }
     });
 
     const openBillOfQuantityDialog = () => {
@@ -546,77 +893,87 @@ export default {
     };
 
     const onHide = () => {
-      emit('update:modelValue', false);
-      emit('close');
+      emit("update:modelValue", false);
+      emit("close");
     };
 
     const handleConvertToProject = async () => {
       // Check if lead is in "won" stage
-      if (leadInformation.value?.leadBoardStage !== 'won') {
+      if (leadInformation.value?.leadBoardStage !== "won") {
         // Show warning dialog
-        const currentStage = getStageDisplayName(leadInformation.value?.leadBoardStage || 'prospect');
+        const currentStage = getStageDisplayName(
+          leadInformation.value?.leadBoardStage || "prospect"
+        );
         Dialog.create({
-          title: 'Cannot Convert Lead',
+          title: "Cannot Convert Lead",
           message: `Lead must be in "Won" stage to convert to project. Current stage: ${currentStage}`,
           ok: true,
-          persistent: true
+          persistent: true,
         });
         return;
       }
 
       // Show confirmation dialog
       Dialog.create({
-        title: 'Convert to Project',
-        message: 'Are you sure you want to convert this lead to a project?',
+        title: "Convert to Project",
+        message: "Are you sure you want to convert this lead to a project?",
         cancel: {
-          label: 'Cancel',
-          color: 'grey'
+          label: "Cancel",
+          color: "grey",
         },
         persistent: true,
         ok: {
-          label: 'Convert',
-          color: 'primary'
-        }
+          label: "Convert",
+          color: "primary",
+        },
       }).onOk(async () => {
         try {
           $q.loading.show({
-            message: 'Converting lead to project...'
+            message: "Converting lead to project...",
           });
 
-          const projectData = await APIRequests.convertLeadToProject($q, props.leadViewId.toString());
+          const projectData = await APIRequests.convertLeadToProject(
+            $q,
+            props.leadViewId.toString()
+          );
 
           $q.loading.hide();
 
           // Show success notification
           $q.notify({
-            color: 'positive',
-            message: 'Lead successfully converted to project!',
-            icon: 'check',
-            position: 'top'
+            color: "positive",
+            message: "Lead successfully converted to project!",
+            icon: "check",
+            position: "top",
           });
 
           // Close the dialog
           onHide();
 
           // Navigate to the new project
-          router.push({
-            name: 'member_project_page',
-            params: { id: projectData.id.toString() }
-          }).catch(() => {
-            // If navigation fails, at least go to projects list
-            router.push({ name: 'member_project' });
-          });
+          router
+            .push({
+              name: "member_project_page",
+              params: { id: projectData.id.toString() },
+            })
+            .catch(() => {
+              // If navigation fails, at least go to projects list
+              router.push({ name: "member_project" });
+            });
         } catch (error: any) {
           $q.loading.hide();
 
           // Check if the error is from backend validation
-          const errorMessage = error?.response?.data?.message || error?.message || 'Failed to convert lead to project';
+          const errorMessage =
+            error?.response?.data?.message ||
+            error?.message ||
+            "Failed to convert lead to project";
 
           $q.notify({
-            color: 'negative',
+            color: "negative",
             message: errorMessage,
-            icon: 'report_problem',
-            position: 'top'
+            icon: "report_problem",
+            position: "top",
           });
         }
       });
@@ -624,13 +981,13 @@ export default {
 
     const getStageDisplayName = (stage: string): string => {
       const stageMap: Record<string, string> = {
-        'prospect': 'Prospect',
-        'initial_meeting': 'Initial Meeting',
-        'technical_meeting': 'Technical Meeting',
-        'proposal': 'Proposal',
-        'in_negotiation': 'In Negotiation',
-        'won': 'Won',
-        'loss': 'Lost'
+        prospect: "Prospect",
+        initial_meeting: "Initial Meeting",
+        technical_meeting: "Technical Meeting",
+        proposal: "Proposal",
+        in_negotiation: "In Negotiation",
+        won: "Won",
+        loss: "Lost",
       };
       return stageMap[stage] || stage;
     };
@@ -648,6 +1005,8 @@ export default {
       notesText,
       leadInformation,
       winProbabilityLabel,
+      closeDate,
+      daysInCurrentStage,
       isBillOfQuantityDialogOpen,
       isManageVersionDialogOpen,
       projectId,

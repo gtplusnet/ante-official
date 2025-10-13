@@ -207,7 +207,7 @@ export default defineComponent({
         form.value.dealName = props.leadData.name || "";
         form.value.approvedBudgetContract = props.leadData.abc?.raw || 0;
         form.value.monthlyRecurringRevenue = props.leadData.mmr?.raw || 0;
-        form.value.implementationFee = 0;
+        form.value.implementationFee = props.leadData.implementationFee?.raw || 0;
         form.value.totalContract = props.leadData.initialCosting?.raw || 0;
         form.value.closeMonth = String(endDate.getMonth() + 1).padStart(2, '0');
         form.value.closeYear = endDate.getFullYear().toString();
@@ -271,6 +271,7 @@ export default defineComponent({
         leadType: String(form.value.dealType),
         abc: form.value.approvedBudgetContract,
         mmr: form.value.monthlyRecurringRevenue,
+        implementationFee: form.value.implementationFee,
         initialCosting: form.value.totalContract,
         contactDetails: "", // Not capturing this in new form
         relationshipOwnerId: form.value.relationshipOwnerId,
