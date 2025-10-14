@@ -51,14 +51,13 @@
         />
       </div>
       <q-btn
-        @click.stop="emit('show-add-dialog')"
+        @click.stop="showAddDialog"
         class="add-button"
         color="dark"
         outline
         style="border-width: 0.5px !important;"
       >
         <q-icon size="16px" name="add"></q-icon>
-        <q-tooltip>{{ addButtonTooltip }}</q-tooltip>
       </q-btn>
     </div>
 
@@ -169,12 +168,23 @@
     </teleport>
 
     <q-linear-progress v-if="loading" indeterminate color="primary" class="loading-bar" />
+
+    <!-- Add Category Dialog -->
+    <AssetAddEditItemCategoryDialog
+      v-if="showAddButton"
+      v-model="showCategoryDialog"
+      @saveDone="handleCategorySaved"
+    />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, onUnmounted, computed, watch, getCurrentInstance } from 'vue';
+import { defineComponent, defineAsyncComponent, ref, onMounted, onUnmounted, computed, watch, getCurrentInstance } from 'vue';
 import type { ComponentInternalInstance, PropType } from 'vue';
+
+const AssetAddEditItemCategoryDialog = defineAsyncComponent(() =>
+  import('../../../pages/Member/Asset/dialogs/AssetAddEditItemCategoryDialog.vue')
+);
 
 interface CategoryOption {
   key: number | string;
@@ -188,6 +198,9 @@ interface CategoryOption {
 
 export default defineComponent({
   name: 'CustomCategoryTreeSelect',
+  components: {
+    AssetAddEditItemCategoryDialog,
+  },
   props: {
     modelValue: {
       type: Array,
@@ -243,7 +256,7 @@ export default defineComponent({
       default: 'Add Category',
     },
   },
-  emits: ['update:modelValue', 'show-add-dialog'],
+  emits: ['update:modelValue'],
   setup(props, { emit }) {
     const loading = ref(false);
     const options = ref<CategoryOption[]>([]);
@@ -252,6 +265,7 @@ export default defineComponent({
     const showDropdown = ref(false);
     const isFocused = ref(false);
     const dropdownPosition = ref({ top: 0, left: 0, width: 0 });
+    const showCategoryDialog = ref(false);
 
     // Get the $api instance
     const instance = getCurrentInstance() as ComponentInternalInstance;
@@ -463,6 +477,18 @@ export default defineComponent({
       }
     };
 
+    // Show add category dialog
+    const showAddDialog = () => {
+      showCategoryDialog.value = true;
+    };
+
+    // Handle when a new category is saved
+    const handleCategorySaved = async (data: any) => {
+      if (data && data.id) {
+        await reloadAndSelect(data.id);
+      }
+    };
+
     return {
       loading,
       options,
@@ -477,6 +503,9 @@ export default defineComponent({
       selectOption,
       handleBlur,
       reloadAndSelect,
+      showCategoryDialog,
+      showAddDialog,
+      handleCategorySaved,
     };
   },
 });

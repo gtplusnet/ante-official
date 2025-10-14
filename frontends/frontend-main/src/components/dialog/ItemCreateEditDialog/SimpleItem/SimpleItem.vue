@@ -71,7 +71,6 @@
             :includeChildren="false"
             :showAddButton="true"
             outlined
-            @show-add-dialog="showCategoryAddDialog"
           />
         </div>
         <div class="col">
@@ -158,9 +157,6 @@
 
     <!-- Add Brand Dialog -->
     <AddEditBrandDialog v-if="isAddBrandDialogOpen" v-model="isAddBrandDialogOpen" @saveDone="selectNewBrand" />
-
-    <!-- Add Category Dialog -->
-    <AssetAddEditItemCategoryDialog v-if="isAddCategoryDialogOpen" v-model="isAddCategoryDialogOpen" @saveDone="selectNewCategory" />
   </div>
 </template>
 <script>
@@ -180,9 +176,6 @@ const AddEditBrandDialog = defineAsyncComponent(() =>
 const ChooseItemDialog = defineAsyncComponent(() =>
   import('../../../dialog/ChooseItemDialog.vue')
 );
-const AssetAddEditItemCategoryDialog = defineAsyncComponent(() =>
-  import('../../../../pages/Member/Asset/dialogs/AssetAddEditItemCategoryDialog.vue')
-);
 
 export default {
   name: 'SimpleItem',
@@ -194,7 +187,6 @@ export default {
     CustomBranchTreeSelect,
     CustomCategoryTreeSelect,
     AddEditBrandDialog,
-    AssetAddEditItemCategoryDialog,
     ChooseItemDialog,
   },
   props: {
@@ -234,7 +226,6 @@ export default {
     isTagPartialDisplayed: true,
     isKeywordsPartialDisplayed: true,
     isAddBrandDialogOpen: false,
-    isAddCategoryDialogOpen: false,
     isChooseItemDialogOpen: false,
   }),
   watch: {
@@ -431,14 +422,6 @@ export default {
       const autoSelect = data.id;
       await this.$refs.brandSelect.refreshSelectOptions(autoSelect);
       this.form.brandId = autoSelect;
-    },
-    showCategoryAddDialog() {
-      this.isAddCategoryDialogOpen = true;
-    },
-    async selectNewCategory(data) {
-      const autoSelect = data.id;
-      await this.$refs.categorySelect.reloadAndSelect(autoSelect);
-      this.form.categoryId = autoSelect;
     },
     addGroupItem(item) {
       // Validate item type - only INDIVIDUAL_PRODUCT items can be added to groups
