@@ -37,14 +37,14 @@ echo "    ✅ PostgreSQL is ready!"
 
 # Wait for Redis
 echo "  - Waiting for Redis..."
-until docker exec ante-redis redis-cli ping >/dev/null 2>&1; do
+until docker exec ante-redis-dev redis-cli ping >/dev/null 2>&1; do
   sleep 1
 done
 echo "    ✅ Redis is ready!"
 
 # Wait for MongoDB
 echo "  - Waiting for MongoDB..."
-until docker exec ante-mongodb mongosh --eval "db.adminCommand('ping')" >/dev/null 2>&1; do
+until docker exec ante-mongodb-dev mongosh --eval "db.adminCommand('ping')" >/dev/null 2>&1; do
   sleep 1
 done
 echo "    ✅ MongoDB is ready!"

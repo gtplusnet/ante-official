@@ -68,8 +68,13 @@
         </div>
         <div class="col">
           <div class="label">Branch</div>
-          <q-select v-model="form.branchId" :options="branchOptions" option-label="name" option-value="id" clearable
-            emit-value map-options outlined dense class="text-body-small" :loading="loadingBranches" />
+          <CustomBranchTreeSelect
+            v-model="selectedBranchIds"
+            placeholder="Select Branch"
+            :showAllOption="false"
+            :includeChildren="false"
+            outlined
+          />
         </div>
       </div>
       <!-- Brand -->
@@ -153,6 +158,7 @@ import GInput from "../../../../components/shared/form/GInput.vue";
 import GButton from "../../../../components/shared/buttons/GButton.vue";
 import TagsPartial from '../Partials/TagsPartial.vue';
 import KeywordsPartial from '../Partials/KeywordsPartial.vue';
+import CustomBranchTreeSelect from '../../../../components/selection/CustomBranchTreeSelect.vue';
 import { environment } from 'src/boot/axios';
 
 // Lazy-loaded dialog (ALL dialogs must be lazy loaded - CLAUDE.md)
@@ -170,6 +176,7 @@ export default {
     GButton,
     TagsPartial,
     KeywordsPartial,
+    CustomBranchTreeSelect,
     AddEditBrandDialog,
     ChooseItemDialog,
   },
@@ -212,9 +219,7 @@ export default {
     isAddBrandDialogOpen: false,
     isChooseItemDialogOpen: false,
     categoryOptions: [],
-    branchOptions: [],
     loadingCategories: false,
-    loadingBranches: false,
   }),
   watch: {
     form: {
@@ -245,10 +250,29 @@ export default {
   mounted() {
     this.isTagHidden = false;
     this.fetchCategoryOptions();
-    this.fetchBranchOptions();
     this.initialize()
   },
-  computed: {},
+  computed: {
+    // Convert between single branchId (for backend) and array format (for CustomBranchTreeSelect)
+    selectedBranchIds: {
+      get() {
+        // Convert single ID to array format for the component
+        if (this.form.branchId === null || this.form.branchId === undefined) {
+          return [];
+        }
+        return [this.form.branchId];
+      },
+      set(value) {
+        // Convert array back to single ID for the form
+        if (!value || value.length === 0) {
+          this.form.branchId = null;
+        } else {
+          // Take the first ID from the array (primary selected branch)
+          this.form.branchId = value[0];
+        }
+      }
+    }
+  },
   methods: {
     async fetchCategoryOptions() {
       this.loadingCategories = true;
@@ -259,17 +283,6 @@ export default {
         console.error('Error fetching categories:', error);
       } finally {
         this.loadingCategories = false;
-      }
-    },
-    async fetchBranchOptions() {
-      this.loadingBranches = true;
-      try {
-        const response = await this.$api.get('/branch/select-box');
-        this.branchOptions = response.data;
-      } catch (error) {
-        console.error('Error fetching branches:', error);
-      } finally {
-        this.loadingBranches = false;
       }
     },
     // Helper function to safely extract raw value from currency objects
