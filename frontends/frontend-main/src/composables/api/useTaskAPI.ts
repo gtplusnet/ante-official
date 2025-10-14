@@ -9,6 +9,12 @@ export interface TaskAPIFilters {
   companyId?: number;
   taskType?: string;
   isDeleted?: boolean;
+  // New filter parameters for server-side filtering
+  priorityLevel?: number;
+  goalId?: number;
+  specificAssignee?: string;  // For assignee filter (different from assignedToId which is for 'my' view)
+  specificProject?: number;   // For project filter
+  dueDateRange?: string;      // no_date, overdue, today, tomorrow, this_week, next_week, later
 }
 
 export interface TaskAPIOptions {
@@ -42,43 +48,70 @@ export function useTaskAPI(options: TaskAPIOptions = {}) {
     error.value = null;
 
     try {
-      console.log('[useTaskAPI] Fetching tasks with filters:', filters);
+      // Extract current filter values (supports reactive refs)
+      const currentFilters = toValue(filters);
+      console.log('[useTaskAPI] Fetching tasks with filters:', currentFilters);
 
       // Build query parameters based on filters
       const params: any = {
-        viewType: filters.filter || 'all',
+        viewType: currentFilters.filter || 'all',
         groupingMode: 'none', // Let frontend handle grouping
         groupingValue: undefined
       };
 
       // Build filter object for backend
       const apiFilters: any = {
-        isDeleted: filters.isDeleted ?? false
+        isDeleted: currentFilters.isDeleted ?? false
       };
 
       // Add company filter (required for multi-tenant)
-      if (filters.companyId) {
-        apiFilters.companyId = filters.companyId;
+      if (currentFilters.companyId) {
+        apiFilters.companyId = currentFilters.companyId;
       }
 
       // Add project filter
-      if (filters.projectId) {
-        apiFilters.projectId = filters.projectId;
+      if (currentFilters.projectId) {
+        apiFilters.projectId = currentFilters.projectId;
       }
 
       // Add board lane filter
-      if (filters.boardLaneId !== undefined) {
-        apiFilters.boardLaneId = filters.boardLaneId;
+      if (currentFilters.boardLaneId !== undefined) {
+        apiFilters.boardLaneId = currentFilters.boardLaneId;
       }
 
       // Add assignee filter
-      if (filters.assignedToId) {
-        apiFilters.assignedToId = filters.assignedToId;
+      if (currentFilters.assignedToId) {
+        apiFilters.assignedToId = currentFilters.assignedToId;
       }
 
       // Add task type filter
-      if (filters.taskType) {
-        apiFilters.taskType = filters.taskType;
+      if (currentFilters.taskType) {
+        apiFilters.taskType = currentFilters.taskType;
+      }
+
+      // Add priority level filter
+      if (currentFilters.priorityLevel !== undefined) {
+        apiFilters.priorityLevel = currentFilters.priorityLevel;
+      }
+
+      // Add goal filter
+      if (currentFilters.goalId !== undefined) {
+        apiFilters.goalId = currentFilters.goalId;
+      }
+
+      // Add specific assignee filter (for assignee dropdown)
+      if (currentFilters.specificAssignee) {
+        apiFilters.specificAssignee = currentFilters.specificAssignee;
+      }
+
+      // Add specific project filter (for project dropdown)
+      if (currentFilters.specificProject !== undefined) {
+        apiFilters.specificProject = currentFilters.specificProject;
+      }
+
+      // Add due date range filter
+      if (currentFilters.dueDateRange) {
+        apiFilters.dueDateRange = currentFilters.dueDateRange;
       }
 
       // Convert filters to JSON string for query param

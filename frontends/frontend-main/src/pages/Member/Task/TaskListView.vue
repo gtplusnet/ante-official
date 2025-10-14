@@ -23,6 +23,7 @@
       </button>
     </div>
 
+
     <!-- Column Headers -->
     <div class="list-header" :class="{
       'hide-assignee': filter === 'my',
@@ -441,6 +442,7 @@ interface Task {
   status: string;
   priority?: 'verylow' | 'low' | 'medium' | 'high' | 'urgent';
   assignee: string;
+  assignedToId?: string | null;
   creator: string;
   project?: string | number;
   projectId?: number;
@@ -458,6 +460,7 @@ interface Task {
     name: string;
   };
   goalId?: number;
+  boardLaneId?: number;
 }
 
 const props = defineProps<{
@@ -628,16 +631,20 @@ const filteredUsers = computed(() => {
 // Get dynamic projects from centralized project store
 const availableProjects = computed(() => projectStore.projectsWithNone);
 
-// Filter tasks by search query
+// Filter tasks by search query only (server-side filtering now handles other filters)
 const filteredTasks = computed(() => {
-  if (!taskSearchStore.searchQuery) {
-    return props.tasks;
+  let tasks = props.tasks;
+
+  // Apply search query (client-side for real-time search)
+  if (taskSearchStore.searchQuery) {
+    const query = taskSearchStore.searchQuery.toLowerCase();
+    tasks = tasks.filter((task: Task) =>
+      task.title.toLowerCase().includes(query) ||
+      task.description.toLowerCase().includes(query)
+    );
   }
-  const query = taskSearchStore.searchQuery.toLowerCase();
-  return props.tasks.filter((task: Task) =>
-    task.title.toLowerCase().includes(query) ||
-    task.description.toLowerCase().includes(query)
-  );
+
+  return tasks;
 });
 
 // Define section interface for dynamic grouping

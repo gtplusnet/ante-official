@@ -28,6 +28,88 @@
       </div>
     </div>
 
+    <!-- Filter Section -->
+    <div v-if="!hideHeader" class="filter-section">
+      <!-- Priority Filter -->
+      <div class="filter-group">
+        <label class="filter-label">Priority:</label>
+        <select v-model="selectedPriorityFilter" class="filter-select">
+          <option value="none">None</option>
+          <option v-for="priority in priorityOptions" :key="priority.key" :value="priority.value">
+            {{ priority.label }}
+          </option>
+          <option value="all">All Priorities</option>
+        </select>
+      </div>
+
+      <!-- Status Filter -->
+      <div class="filter-group">
+        <label class="filter-label">Status:</label>
+        <select v-model="selectedStatusFilter" class="filter-select">
+          <option value="none">None</option>
+          <option v-for="status in statusOptions" :key="status.key" :value="status.value">
+            {{ status.label }}
+          </option>
+          <option value="all">All Statuses</option>
+        </select>
+      </div>
+
+      <!-- Goal Filter -->
+      <div class="filter-group">
+        <label class="filter-label">Goal:</label>
+        <select v-model="selectedGoalFilter" class="filter-select">
+          <option value="none">None</option>
+          <option value="no_goal">No Goal</option>
+          <option v-for="goal in availableGoals" :key="goal.id" :value="goal.id">
+            {{ goal.name }}
+          </option>
+          <option value="all">All Goals</option>
+        </select>
+      </div>
+
+      <!-- Assignee Filter - Hidden in "My Tasks" view -->
+      <div v-if="filter !== 'my'" class="filter-group">
+        <label class="filter-label">Assignee:</label>
+        <select v-model="selectedAssigneeFilter" class="filter-select">
+          <option value="none">None</option>
+          <option value="unassigned">Unassigned</option>
+          <option v-for="user in availableUsers" :key="user.id" :value="user.id">
+            {{ user.name }}
+          </option>
+          <option value="all">All Assignees</option>
+        </select>
+      </div>
+
+      <!-- Project Filter - Hidden when viewing specific project -->
+      <div v-if="!projectId && !hideProjectGrouping" class="filter-group">
+        <label class="filter-label">Project:</label>
+        <select v-model="selectedProjectFilter" class="filter-select">
+          <option value="none">None</option>
+          <option value="no_project">No Project</option>
+          <option v-for="project in availableProjects" :key="project.id" :value="project.id">
+            {{ project.name }}
+          </option>
+          <option value="all">All Projects</option>
+        </select>
+      </div>
+
+      <!-- Due Date Filter -->
+      <div class="filter-group">
+        <label class="filter-label">Due Date:</label>
+        <select v-model="selectedDueDateFilter" class="filter-select">
+          <option value="none">None</option>
+          <option value="no_date">No Date</option>
+          <option value="overdue">Overdue</option>
+          <option value="today">Today</option>
+          <option value="tomorrow">Tomorrow</option>
+          <option value="this_week">This Week</option>
+          <option value="next_week">Next Week</option>
+          <option value="later">Later</option>
+          <option value="all">All</option>
+        </select>
+      </div>
+    </div>
+
     <div class="page-content" :class="{ 'q-mt-sm': !hideHeader }">
       <component
         :is="currentViewComponent"
@@ -79,6 +161,8 @@ import { useTaskStore } from 'src/stores/task';
 // import { useTask } from 'src/composables/supabase/useTask';
 import { useAuthStore } from 'src/stores/auth';
 import { useAssigneeStore } from 'src/stores/assignee';
+import { useGoalStore } from 'src/stores/goal';
+import { useProjectStore } from 'src/stores/project';
 import bus from 'src/bus';
 import TaskListView from './TaskListView.vue';
 import TaskBoardView from './TaskBoardView.vue';
@@ -161,11 +245,42 @@ export default defineComponent({
     const taskStore = useTaskStore();
     const authStore = useAuthStore();
     const assigneeStore = useAssigneeStore();
+    const goalStore = useGoalStore();
+    const projectStore = useProjectStore();
     const loading = ref(false);
     const creatingInlineTask = ref(false); // Loading state for inline task creation
 
+    // Filter state refs for server-side filtering
+    const selectedPriorityFilter = ref<string>('none');
+    const selectedStatusFilter = ref<string>('none');
+    const selectedGoalFilter = ref<string | number>('none');
+    const selectedAssigneeFilter = ref<string>('none');
+    const selectedProjectFilter = ref<string | number>('none');
+    const selectedDueDateFilter = ref<string>('none');
+
     // Get available users for assignee lookups (from global store - initialized in MainLayout)
     const availableUsers = computed(() => assigneeStore.formattedAssignees);
+
+    // Get available goals and projects from stores
+    const availableGoals = computed(() => goalStore.goals || []);
+    const availableProjects = computed(() => projectStore.projects || []);
+
+    // Priority options for filter
+    const priorityOptions = [
+      { key: 0, label: 'Very Low', value: 0 },
+      { key: 1, label: 'Low', value: 1 },
+      { key: 2, label: 'Medium', value: 2 },
+      { key: 3, label: 'High', value: 3 },
+      { key: 4, label: 'Urgent', value: 4 },
+    ];
+
+    // Status options for filter
+    const statusOptions = [
+      { key: 1, label: 'To Do', value: 1 },
+      { key: 2, label: 'In Progress', value: 2 },
+      { key: 3, label: 'Done', value: 3 },
+      { key: 4, label: 'Pending Approval', value: 4 },
+    ];
 
     // Get tasks from store using storeToRefs for reactivity
     const { tasks: storeTasks } = storeToRefs(taskStore);
@@ -1171,6 +1286,33 @@ export default defineComponent({
           break;
       }
 
+      // Add new filter parameters for server-side filtering
+      if (selectedPriorityFilter.value !== 'none' && selectedPriorityFilter.value !== 'all') {
+        filters.priorityLevel = Number(selectedPriorityFilter.value);
+      }
+
+      if (selectedStatusFilter.value !== 'none' && selectedStatusFilter.value !== 'all') {
+        filters.boardLaneId = Number(selectedStatusFilter.value);
+      }
+
+      if (selectedGoalFilter.value !== 'none' && selectedGoalFilter.value !== 'all') {
+        filters.goalId = selectedGoalFilter.value === 'no_goal' ? null : Number(selectedGoalFilter.value);
+      }
+
+      // Assignee filter (only when not in 'my' view)
+      if (props.filter !== 'my' && selectedAssigneeFilter.value !== 'none' && selectedAssigneeFilter.value !== 'all') {
+        filters.specificAssignee = selectedAssigneeFilter.value;
+      }
+
+      // Project filter (only when no projectId prop and not hideProjectGrouping)
+      if (!props.projectId && !props.hideProjectGrouping && selectedProjectFilter.value !== 'none' && selectedProjectFilter.value !== 'all') {
+        filters.specificProject = selectedProjectFilter.value === 'no_project' ? null : Number(selectedProjectFilter.value);
+      }
+
+      if (selectedDueDateFilter.value !== 'none' && selectedDueDateFilter.value !== 'all') {
+        filters.dueDateRange = selectedDueDateFilter.value;
+      }
+
       return filters;
     });
 
@@ -1180,7 +1322,7 @@ export default defineComponent({
       refetch: refetchTasksFromAPI,
       updateTaskOrdering: updateTaskOrderingAPI
     } = useTaskAPI({
-      filters: taskAPIFilters.value,
+      filters: taskAPIFilters,
       autoFetch: true
     });
 
@@ -1421,6 +1563,11 @@ export default defineComponent({
       }
     };
 
+    // Watch filter changes and trigger refetch
+    watch([selectedPriorityFilter, selectedStatusFilter, selectedGoalFilter, selectedAssigneeFilter, selectedProjectFilter, selectedDueDateFilter], () => {
+      refetchTasks();
+    });
+
     // Clear search when component unmounts or route changes
     watch(() => route.name, () => {
       taskSearchStore.clearSearch();
@@ -1462,6 +1609,18 @@ export default defineComponent({
       openTaskMenu,
       addTaskToSection,
       handleReorderTasks,
+      // Filter state and options
+      selectedPriorityFilter,
+      selectedStatusFilter,
+      selectedGoalFilter,
+      selectedAssigneeFilter,
+      selectedProjectFilter,
+      selectedDueDateFilter,
+      priorityOptions,
+      statusOptions,
+      availableGoals,
+      availableProjects,
+      availableUsers,
     };
   },
 });
@@ -1482,6 +1641,52 @@ export default defineComponent({
       min-height: unset;
       padding: 0;
       margin: 0;
+    }
+  }
+
+  // Filter section styles (Material Design 3 - flat)
+  .filter-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--surface-container-low, #f5f5f5);
+    border: 1px solid var(--outline-variant, #e0e0e0);
+    border-radius: 8px;
+    margin-bottom: 16px;
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .filter-label {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--on-surface-variant, #666);
+        white-space: nowrap;
+      }
+
+      .filter-select {
+        min-width: 140px;
+        padding: 6px 12px;
+        border: 1px solid var(--outline, #ccc);
+        border-radius: 4px;
+        font-size: 14px;
+        background: white;
+        cursor: pointer;
+        transition: border-color 0.2s ease;
+
+        &:hover {
+          border-color: var(--primary, #1976d2);
+        }
+
+        &:focus {
+          outline: none;
+          border-color: var(--primary, #1976d2);
+          border-width: 2px;
+        }
+      }
     }
   }
 
