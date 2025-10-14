@@ -207,6 +207,10 @@ export default {
           { icon: 'o_local_hospital', title: 'PhilHealth Contributions', key: 'member_manpower_reports_philhealth', requiredScope: ['MANPOWER_REPORTS_PHILHEALTH_ACCESS'] },
           { icon: 'o_favorite', title: 'Pag-IBIG Contributions', key: 'member_manpower_reports_pagibig', requiredScope: ['MANPOWER_REPORTS_PAGIBIG_ACCESS'] },
           { icon: 'o_receipt', title: 'Tax Withholding', key: 'member_manpower_reports_tax', requiredScope: ['MANPOWER_REPORTS_TAX_ACCESS'] },
+          { icon: 'o_payments', title: '13th Month Pay', key: 'member_manpower_reports_13th_month', requiredScope: [] },
+          { icon: 'o_assessment', title: 'Annualization', key: 'member_manpower_reports_annualization', requiredScope: [] },
+          { icon: 'o_event_available', title: 'Leave Reports', key: 'member_manpower_reports_leave', requiredScope: ['MANPOWER_REPORTS_LEAVE_ACCESS'] },
+          { icon: 'o_attach_money', title: 'Payroll Cost Allocation', key: 'member_manpower_reports_payroll_cost', requiredScope: ['MANPOWER_REPORTS_PAYROLL_COST_ACCESS'] },
         ],
       },
       {
