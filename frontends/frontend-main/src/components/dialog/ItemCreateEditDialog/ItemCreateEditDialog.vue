@@ -12,8 +12,8 @@
           <!-- Tabs for Simple/Variation Item (only for new items) -->
           <q-tabs v-if="!itemInformation" v-model="tab" dense class="text-grey" active-color="primary"
             indicator-color="primary" align="justify" narrow-indicator>
-            <q-tab name="simple" label="Simple Item" />
-            <q-tab name="variation" label="Variation Item" />
+            <q-tab name="simple" label="Simple Item" no-caps/>
+            <q-tab name="variation" label="Variation Item" no-caps />
           </q-tabs>
 
           <q-separator v-if="!itemInformation" />
