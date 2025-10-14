@@ -41,14 +41,26 @@
     <div class="row q-gutter-sm q-pb-md">
       <div class="col">
         <div class="label">Category</div>
-        <q-select v-model="form.categoryId" :options="categoryOptions" option-label="name" option-value="id" clearable
-          emit-value map-options outlined dense class="text-body-small" :loading="loadingCategories" />
+        <CustomCategoryTreeSelect
+          ref="categorySelect"
+          v-model="selectedCategoryIds"
+          placeholder="Select Category"
+          :showAllOption="false"
+          :includeChildren="false"
+          :showAddButton="true"
+          outlined
+        />
       </div>
       <div class="col">
         <div class="label">Branch</div>
-
-        <q-select v-model="form.branchId" :options="branchOptions" option-label="name" option-value="id" clearable
-          emit-value map-options outlined dense class="text-body-small" :loading="loadingBranches" />
+        <CustomBranchTreeSelect
+          v-model="selectedBranchIds"
+          placeholder="Select Branch"
+          :showAllOption="false"
+          :includeChildren="false"
+          :showAddButton="true"
+          outlined
+        />
       </div>
     </div>
     <!-- Brand -->
@@ -81,6 +93,8 @@ import { defineAsyncComponent } from 'vue';
 import GInput from "../../../../../components/shared/form/GInput.vue";
 import TagsPartial from '../../Partials/TagsPartial.vue';
 import KeywordsPartial from '../../Partials/KeywordsPartial.vue';
+import CustomBranchTreeSelect from '../../../../../components/selection/CustomBranchTreeSelect.vue';
+import CustomCategoryTreeSelect from '../../../../../components/selection/CustomCategoryTreeSelect.vue';
 
 // Lazy-loaded dialog (ALL dialogs must be lazy loaded - CLAUDE.md)
 const AddEditBrandDialog = defineAsyncComponent(() =>
@@ -93,6 +107,8 @@ export default {
     GInput,
     TagsPartial,
     KeywordsPartial,
+    CustomBranchTreeSelect,
+    CustomCategoryTreeSelect,
     AddEditBrandDialog,
   },
   props: {},
@@ -115,10 +131,6 @@ export default {
     isKeywordsPartialDisplayed: true,
     isAddBrandDialogOpen: false,
     showMeasurement: false,
-    categoryOptions: [],
-    branchOptions: [],
-    loadingCategories: false,
-    loadingBranches: false,
   }),
   watch: {
     form: {
@@ -128,34 +140,48 @@ export default {
       deep: true,
     },
   },
-  mounted() {
-    this.fetchCategoryOptions();
-    this.fetchBranchOptions();
+  mounted() {},
+  computed: {
+    // Convert between single branchId (for backend) and array format (for CustomBranchTreeSelect)
+    selectedBranchIds: {
+      get() {
+        // Convert single ID to array format for the component
+        if (this.form.branchId === null || this.form.branchId === undefined) {
+          return [];
+        }
+        return [this.form.branchId];
+      },
+      set(value) {
+        // Convert array back to single ID for the form
+        if (!value || value.length === 0) {
+          this.form.branchId = null;
+        } else {
+          // Take the first ID from the array (primary selected branch)
+          this.form.branchId = value[0];
+        }
+      }
+    },
+    // Convert between single categoryId (for backend) and array format (for CustomCategoryTreeSelect)
+    selectedCategoryIds: {
+      get() {
+        // Convert single ID to array format for the component
+        if (this.form.categoryId === null || this.form.categoryId === undefined) {
+          return [];
+        }
+        return [this.form.categoryId];
+      },
+      set(value) {
+        // Convert array back to single ID for the form
+        if (!value || value.length === 0) {
+          this.form.categoryId = null;
+        } else {
+          // Take the first ID from the array (primary selected category)
+          this.form.categoryId = value[0];
+        }
+      }
+    }
   },
-  computed: {},
   methods: {
-    async fetchCategoryOptions() {
-      this.loadingCategories = true;
-      try {
-        const response = await this.$api.get('/item-category/select-box');
-        this.categoryOptions = response.data;
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      } finally {
-        this.loadingCategories = false;
-      }
-    },
-    async fetchBranchOptions() {
-      this.loadingBranches = true;
-      try {
-        const response = await this.$api.get('/branch/select-box');
-        this.branchOptions = response.data;
-      } catch (error) {
-        console.error('Error fetching branches:', error);
-      } finally {
-        this.loadingBranches = false;
-      }
-    },
     setTags(tags) {
       this.form.tags = tags;
       this.$refs.tagsPartial.tags = tags;
