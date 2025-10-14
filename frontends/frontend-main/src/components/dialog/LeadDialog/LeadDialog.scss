@@ -1,5 +1,5 @@
 .view-lead-card {
-  min-width: 900px;
+  min-width: 1000px;
   border-radius: 20px;
 
   .q-badge {
@@ -21,6 +21,15 @@
 
     &.BiddingBadge {
       background-color: var(--q-emerald-green);
+    }
+  }
+
+  // Stage arrow transition
+  .stage-arrow {
+    transition: transform 0.3s ease;
+
+    &.rotate-arrow {
+      transform: rotate(180deg);
     }
   }
 
@@ -102,9 +111,15 @@
     border-radius: 50px;
   }
 
+  .detail-three-card-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
   .detail-three-card {
-    height: 125px;
-    width: 180px;
+    width: 100%;
+    padding: 16px;
     background-color: #f6f8fb;
     border-radius: 20px;
 
@@ -115,8 +130,8 @@
 
     .title {
       margin-top: 8px;
-      font-size: var(--font-label-large);
-      font-weight: var(--weight-label-large);
+      font-size: var(--font-label-medium);
+      font-weight: var(--weight-label-medium);
       color: var(--q-text-dark);
     }
   }

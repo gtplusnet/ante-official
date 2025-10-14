@@ -313,6 +313,7 @@ export default {
           },
         ],
       },
+      /*
       {
         title: "Templates",
         key: "templates",
@@ -331,6 +332,7 @@ export default {
           { icon: "o_gavel", title: "Contract", key: "member_leads_contract" },
         ],
       },
+      */
       {
         title: "Media Library",
         key: "member_leads_media_library",

@@ -34,10 +34,10 @@ export class LeadCreateDto {
   @IsNotEmpty()
   readonly status: ProjectStatus;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsNumber()
   @Exists('client', 'id')
-  clientId: number;
+  clientId?: number;
 
   @IsNotEmpty()
   readonly isLead: boolean;
@@ -81,6 +81,10 @@ export class LeadCreateDto {
   @IsOptional()
   @IsNumber()
   readonly mmr?: number;
+
+  @IsOptional()
+  @IsNumber()
+  readonly implementationFee?: number;
 
   @IsOptional()
   @IsNumber()
@@ -160,11 +164,28 @@ export class LeadUpdateDto {
 
   @IsOptional()
   @IsNumber()
+  @Exists('client', 'id')
+  readonly clientId?: number;
+
+  @IsOptional()
+  @IsNumber()
+  readonly pointOfContactId?: number;
+
+  @IsOptional()
+  @IsString()
+  readonly locationId?: string;
+
+  @IsOptional()
+  @IsNumber()
   readonly abc?: number;
 
   @IsOptional()
   @IsNumber()
   readonly mmr?: number;
+
+  @IsOptional()
+  @IsNumber()
+  readonly implementationFee?: number;
 
   @IsOptional()
   @IsNumber()

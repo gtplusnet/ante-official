@@ -90,6 +90,19 @@ export const formatName = (name: string | undefined) => {
     .join(' ');
 };
 
+/**
+ * Formats lead board stage keys like 'technical_meeting' to 'Technical Meeting'
+ * Replaces underscores with spaces and capitalizes each word
+ */
+export const formatLeadStage = (stage: string | undefined): string => {
+  if (!stage) return '';
+
+  return stage
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
 export const TEXT_TRUNCATION = {
   NOTIFICATION_CONTENT: 60,
   REJECTION_REASON: 65,

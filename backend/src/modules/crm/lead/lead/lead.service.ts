@@ -70,7 +70,7 @@ export class LeadService {
       dealTypeId: params.leadType ? parseInt(params.leadType) : null,
       approvedBudgetContract: params.abc || params.budget || 0,
       monthlyRecurringRevenue: params.mmr || 0,
-      implementationFee: 0,
+      implementationFee: params.implementationFee || 0,
       totalContract: params.initialCosting || 0,
       closeDate: closeDate,
       winProbability: params.winProbability || 50, // Direct number, default 50%
@@ -94,7 +94,11 @@ export class LeadService {
         dealSource: true,
         location: true,
         relationshipOwner: true,
-        pointOfContact: true,
+        pointOfContact: {
+          include: {
+            company: true,
+          },
+        },
         company: true,
       },
     });
@@ -239,7 +243,11 @@ export class LeadService {
             dealSource: true,
             location: true,
             relationshipOwner: true,
-            pointOfContact: true,
+            pointOfContact: {
+              include: {
+                company: true,
+              },
+            },
             company: true,
           },
         });
@@ -346,7 +354,11 @@ export class LeadService {
           dealSource: true,
           location: true,
           relationshipOwner: true,
-          pointOfContact: true,
+          pointOfContact: {
+            include: {
+              company: true,
+            },
+          },
           company: true,
         },
         skip: (query.page - 1) * query.perPage,
@@ -394,7 +406,11 @@ export class LeadService {
         dealSource: true,
         location: true,
         relationshipOwner: true,
-        pointOfContact: true,
+        pointOfContact: {
+          include: {
+            company: true,
+          },
+        },
         company: true,
       },
     });
@@ -431,6 +447,8 @@ export class LeadService {
       updateData.approvedBudgetContract = params.budget;
     if (params.mmr !== undefined)
       updateData.monthlyRecurringRevenue = params.mmr;
+    if (params.implementationFee !== undefined)
+      updateData.implementationFee = params.implementationFee;
     if (params.initialCosting !== undefined)
       updateData.totalContract = params.initialCosting;
     // Handle date updates
@@ -445,6 +463,12 @@ export class LeadService {
       updateData.relationshipOwnerId = params.relationshipOwnerId;
     if (params.personInChargeId)
       updateData.relationshipOwnerId = params.personInChargeId;
+    if (params.clientId)
+      updateData.pointOfContactId = params.clientId;
+    if (params.pointOfContactId)
+      updateData.pointOfContactId = params.pointOfContactId;
+    if (params.locationId)
+      updateData.locationId = params.locationId;
 
     const updatedLead = await this.prisma.leadDeal.update({
       where: { id: leadId },
@@ -454,7 +478,11 @@ export class LeadService {
         dealSource: true,
         location: true,
         relationshipOwner: true,
-        pointOfContact: true,
+        pointOfContact: {
+          include: {
+            company: true,
+          },
+        },
         company: true,
       },
     });
@@ -494,7 +522,11 @@ export class LeadService {
         dealSource: true,
         location: true,
         relationshipOwner: true,
-        pointOfContact: true,
+        pointOfContact: {
+          include: {
+            company: true,
+          },
+        },
         company: true,
       },
     });
@@ -569,7 +601,11 @@ export class LeadService {
         dealSource: true,
         location: true,
         relationshipOwner: true,
-        pointOfContact: true,
+        pointOfContact: {
+          include: {
+            company: true,
+          },
+        },
         company: true,
       },
     });
@@ -597,7 +633,11 @@ export class LeadService {
         dealSource: true,
         location: true,
         relationshipOwner: true,
-        pointOfContact: true,
+        pointOfContact: {
+          include: {
+            company: true,
+          },
+        },
         company: true,
       },
     });
@@ -1002,12 +1042,23 @@ export class LeadService {
     leadDeal: any,
   ): Promise<LeadDataResponse> {
     // Map LeadDeal to LeadDataResponse structure
-    const clientData = leadDeal.pointOfContact
-      ? ({
+    const clientData: any = leadDeal.pointOfContact
+      ? {
           id: leadDeal.pointOfContact.id,
           name: leadDeal.pointOfContact.fullName,
           email: leadDeal.pointOfContact.email,
-        } as ClientDataResponse)
+          contactNumber: leadDeal.pointOfContact.phone || '',
+          totalCollection: this.utilityService.formatCurrency(0),
+          totalCollectionBalance: this.utilityService.formatCurrency(0),
+          totalCollected: this.utilityService.formatCurrency(0),
+          isDeleted: false,
+          createdAt: this.utilityService.formatDate(leadDeal.pointOfContact.createdAt),
+          updatedAt: this.utilityService.formatDate(leadDeal.pointOfContact.updatedAt),
+          company: leadDeal.pointOfContact.company ? {
+            id: leadDeal.pointOfContact.company.id,
+            name: leadDeal.pointOfContact.company.name,
+          } : null,
+        }
       : null;
 
     const relationshipOwnerData = leadDeal.relationshipOwner
@@ -1032,6 +1083,14 @@ export class LeadService {
       ? {
           key: leadDeal.dealType.id.toString(),
           label: leadDeal.dealType.typeName,
+        }
+      : undefined;
+
+    // Format deal source with label
+    const dealSourceData = leadDeal.dealSource
+      ? {
+          key: leadDeal.dealSource.id.toString(),
+          label: leadDeal.dealSource.sourceName,
         }
       : undefined;
 
@@ -1070,12 +1129,16 @@ export class LeadService {
       mmr: this.utilityService.formatCurrency(
         leadDeal.monthlyRecurringRevenue || 0,
       ),
+      implementationFee: this.utilityService.formatCurrency(
+        leadDeal.implementationFee || 0,
+      ),
       initialCosting: this.utilityService.formatCurrency(
         leadDeal.totalContract || 0,
       ),
       contactDetails: '', // Not available in LeadDeal, keeping empty for compatibility
       relationshipOwnerId: leadDeal.relationshipOwnerId || '',
-      leadSource: leadDeal.dealSourceId?.toString() || '',
+      dealSource: dealSourceData,
+      leadSource: leadDeal.dealSourceId?.toString() || '', // Keep for backwards compatibility
       leadType: leadTypeData,
       clientEmailAddress: leadDeal.pointOfContact?.email || '',
 

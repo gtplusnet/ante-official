@@ -10,7 +10,7 @@
         <div v-if="loading" class="chart-skeleton">
           <q-skeleton type="rect" height="300px" />
         </div>
-        <div v-else-if="dealTypes.length > 0 && chartReady">
+        <div v-else-if="hasData && chartReady">
           <ApexChart
             :key="chartKey"
             type="bar"
@@ -27,7 +27,7 @@
         </div>
         <div v-else class="q-pa-lg text-center text-grey-6">
           <q-icon name="bar_chart" size="48px" class="q-mb-md" />
-          <div class="text-body-medium">No deal data available</div>
+          <div class="text-body-medium">No deal types data available</div>
         </div>
       </div>
     </template>
@@ -77,6 +77,11 @@ export default {
       { type: "Strategic", count: 2, color: "#E3F2FD" },
       { type: "Unknown", count: 3, color: "#E3F2FD" },
     ]);
+
+    // Check if there's any meaningful data (count > 0)
+    const hasData = computed(() => {
+      return dealTypes.value.some(d => d.count > 0);
+    });
 
     // Chart configuration
     const chartOptions = computed(() => {
@@ -271,6 +276,7 @@ export default {
       chartReady,
       chartKey,
       dealTypes,
+      hasData,
       refreshData,
     };
   },

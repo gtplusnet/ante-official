@@ -18,9 +18,7 @@
                 <g-input v-model="form.dealName" label="Deal Name/Opportunity*" type="text" required />
               </div>
               <div class="col-6 q-pl-sm">
-                <g-input v-model="form.dealType" label="Deal Type*" type="select-search-with-add"
-                  apiUrl="/select-box/deal-type-list" @showAddDialog="showDealTypeAddDialog" ref="dealTypeSelect"
-                  required />
+                <SelectionDealType v-model="form.dealType" required />
               </div>
             </div>
 
@@ -71,13 +69,10 @@
             <!-- Row 5: Select Location | Select Deal Source -->
             <div class="row justify-center q-mb-md col-12 q-px-sm">
               <div class="col-6 q-pr-sm">
-                <g-input v-model="form.locationId" label="Select Location" type="select-search"
-                  apiUrl="/select-box/location-list" />
+                <SelectionLocation v-model="form.locationId" />
               </div>
               <div class="col-6 q-pl-sm">
-                <g-input v-model="form.dealSourceId" label="Select Deal Source" type="select-search-with-add"
-                  apiUrl="/select-box/deal-source-list" @showAddDialog="showDealSourceAddDialog"
-                  ref="dealSourceSelect" />
+                <SelectionDealSource v-model="form.dealSourceId" />
               </div>
             </div>
 
@@ -85,12 +80,10 @@
             <!-- Row 6: Relationship Owner | Point Of Contact -->
             <div class="row justify-center col-12 q-px-sm q-mt-sm">
               <div class="col-6 q-pr-sm">
-                <g-input v-model="form.relationshipOwnerId" label="Relationship Owner" type="select-search"
-                  apiUrl="/select-box/relationship-owner-list" />
+                <SelectionRelationshipOwner v-model="form.relationshipOwnerId" />
               </div>
               <div class="col-6 q-pl-sm">
-                <g-input v-model="form.pointOfContactId" label="Point Of Contact" type="select-search"
-                  apiUrl="/select-box/point-of-contact-list" ref="pointOfContactSelect" />
+                <SelectionPointOfContact v-model="form.pointOfContactId" />
               </div>
             </div>
           </div>
@@ -105,12 +98,6 @@
         </q-form>
       </template>
     </TemplateDialog>
-
-    <!-- Add/Edit Deal Source Dialog -->
-    <add-edit-deal-source-dialog ref="dealSourceDialog" @created="selectNewDealSourceSave" />
-
-    <!-- Add/Edit Deal Type Dialog -->
-    <add-edit-deal-type-dialog ref="dealTypeDialog" @created="selectNewDealTypeSave" />
   </q-dialog>
 </template>
 
@@ -118,21 +105,24 @@
 // Custom styles for LeadCreateDialog - TemplateDialog handles most styling</style>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, watch, nextTick } from "vue";
+import { defineComponent, ref, onMounted, watch } from "vue";
 import { QDialog, useQuasar } from "quasar";
 // import { useRouter } from 'vue-router';
 import GInput from "../../shared/form/GInput.vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
 import TemplateDialog from "../TemplateDialog.vue";
-import AddEditDealSourceDialog from "../AddEditDealSourceDialog.vue";
-import AddEditDealTypeDialog from "../AddEditDealTypeDialog.vue";
 import { APIRequests } from "../../../utility/api.handler";
 import { ProjectCreateRequest } from "@shared/request";
 import { LeadDataResponse } from "@shared/response";
+import SelectionLocation from "src/components/selection/SelectionLocation.vue";
+import SelectionRelationshipOwner from "src/components/selection/SelectionRelationshipOwner.vue";
+import SelectionPointOfContact from "src/components/selection/SelectionPointOfContact.vue";
+import SelectionDealSource from "src/components/selection/SelectionDealSource.vue";
+import SelectionDealType from "src/components/selection/SelectionDealType.vue";
 
 interface LeadForm {
   dealName: string;
-  dealType: string;
+  dealType: string | number;
   approvedBudgetContract: number;
   monthlyRecurringRevenue: number;
   implementationFee: number;
@@ -141,9 +131,9 @@ interface LeadForm {
   closeYear: string;
   winProbability: number;
   locationId: string;
-  dealSourceId: string;
+  dealSourceId: string | number;
   relationshipOwnerId: string;
-  pointOfContactId: string;
+  pointOfContactId: string | number;
 }
 
 export default defineComponent({
@@ -152,8 +142,11 @@ export default defineComponent({
     GInput,
     GButton,
     TemplateDialog,
-    AddEditDealSourceDialog,
-    AddEditDealTypeDialog,
+    SelectionLocation,
+    SelectionRelationshipOwner,
+    SelectionPointOfContact,
+    SelectionDealSource,
+    SelectionDealType,
   },
   props: {
     leadData: {
@@ -166,13 +159,6 @@ export default defineComponent({
     const $q = useQuasar();
     // const router = useRouter();
     const dialog = ref<InstanceType<typeof QDialog>>();
-    const dealSourceSelect = ref<InstanceType<typeof GInput> | null>(null);
-    const dealSourceDialog = ref<InstanceType<typeof AddEditDealSourceDialog> | null>(null);
-    const dealTypeSelect = ref<InstanceType<typeof GInput> | null>(null);
-    const dealTypeDialog = ref<InstanceType<typeof AddEditDealTypeDialog> | null>(null);
-    const pointOfContactSelect = ref<InstanceType<typeof GInput> | null>(null);
-    const isAddEditClientDialogOpen = ref(false);
-    const isAddEditCompanyDialogOpen = ref(false);
 
     // Month and Year options for Close Date
     const monthOptions = [
@@ -212,41 +198,31 @@ export default defineComponent({
       pointOfContactId: "",
     });
 
-    const initForm = () => {
+    const initForm = async () => {
       if (props.leadData && Object.keys(props.leadData).length > 0 && props.leadData.id) {
         // Edit mode - populate form with existing data
-        const startDate = props.leadData.startDate?.raw ? new Date(props.leadData.startDate.raw) : new Date();
-        const pointOfContactValue = props.leadData.clientId?.toString() || "";
+        const endDate = props.leadData.endDate?.raw ? new Date(props.leadData.endDate.raw) : new Date();
 
-        form.value = {
-          dealName: props.leadData.name || "",
-          dealType: typeof props.leadData.leadType === "string" ? props.leadData.leadType : props.leadData.leadType?.key || "",
-          approvedBudgetContract: props.leadData.abc?.raw || 0,
-          monthlyRecurringRevenue: props.leadData.mmr?.raw || 0,
-          implementationFee: 0, // New field, default to 0 for existing leads
-          totalContract: props.leadData.initialCosting?.raw || 0,
-          closeMonth: String(startDate.getMonth() + 1).padStart(2, '0'),
-          closeYear: startDate.getFullYear().toString(),
-          winProbability: typeof props.leadData.winProbability === "number"
-            ? props.leadData.winProbability
-            : typeof props.leadData.winProbability === "string"
-              ? parseInt(props.leadData.winProbability) || 50
-              : parseInt(props.leadData.winProbability?.key || "50") || 50,
-          locationId: props.leadData.locationId || "",
-          dealSourceId: props.leadData.leadSource || "",
-          relationshipOwnerId: props.leadData.relationshipOwnerId || "",
-          pointOfContactId: pointOfContactValue,
-        };
+        // Set non-select fields immediately
+        form.value.dealName = props.leadData.name || "";
+        form.value.approvedBudgetContract = props.leadData.abc?.raw || 0;
+        form.value.monthlyRecurringRevenue = props.leadData.mmr?.raw || 0;
+        form.value.implementationFee = props.leadData.implementationFee?.raw || 0;
+        form.value.totalContract = props.leadData.initialCosting?.raw || 0;
+        form.value.closeMonth = String(endDate.getMonth() + 1).padStart(2, '0');
+        form.value.closeYear = endDate.getFullYear().toString();
+        form.value.winProbability = typeof props.leadData.winProbability === "number"
+          ? props.leadData.winProbability
+          : typeof props.leadData.winProbability === "string"
+            ? parseInt(props.leadData.winProbability) || 50
+            : parseInt(props.leadData.winProbability?.key || "50") || 50;
 
-        // Reload Point of Contact select to display the selected value
-        nextTick(async () => {
-          if (pointOfContactSelect.value && "reloadGSelect" in pointOfContactSelect.value) {
-            const gInput = pointOfContactSelect.value as unknown as {
-              reloadGSelect: (autoSelect?: number | null) => Promise<void>;
-            };
-            await gInput.reloadGSelect(); // No parameter - just reload options, let v-model handle selection
-          }
-        });
+        // Now set the select field values
+        form.value.dealType = props.leadData.leadType?.key ? Number(props.leadData.leadType.key) : "";
+        form.value.locationId = props.leadData.locationId || "";
+        form.value.dealSourceId = props.leadData.leadSource ? Number(props.leadData.leadSource) : "";
+        form.value.relationshipOwnerId = props.leadData.relationshipOwnerId || "";
+        form.value.pointOfContactId = props.leadData.clientId ? Number(props.leadData.clientId) : "";
       } else {
         // Create mode - set defaults
         const today = new Date();
@@ -266,56 +242,6 @@ export default defineComponent({
       }
     };
 
-    const selectNewSave = async (data: LeadDataResponse) => {
-      // Handle any new save if needed
-    };
-
-    const showClientAddDialog = () => {
-      isAddEditClientDialogOpen.value = true;
-    };
-
-    const showCompanyAddDialog = () => {
-      isAddEditCompanyDialogOpen.value = true;
-    };
-
-    const selectNewCompanySave = async (data: any) => {
-      // Handle company save if needed
-    };
-
-    const showDealSourceAddDialog = () => {
-      if (dealSourceDialog.value) {
-        dealSourceDialog.value.show();
-      }
-    };
-
-    const selectNewDealSourceSave = async (data: any) => {
-      // Update the deal source select with the new source
-      const autoSelect = data.id;
-      if (dealSourceSelect.value && "reloadGSelect" in dealSourceSelect.value) {
-        const gInput = dealSourceSelect.value as unknown as {
-          reloadGSelect: (autoSelect?: number | null) => Promise<void>;
-        };
-        await gInput.reloadGSelect(autoSelect);
-      }
-    };
-
-    const showDealTypeAddDialog = () => {
-      if (dealTypeDialog.value) {
-        dealTypeDialog.value.show();
-      }
-    };
-
-    const selectNewDealTypeSave = async (data: any) => {
-      // Update the deal type select with the new type
-      const autoSelect = data.id;
-      if (dealTypeSelect.value && "reloadGSelect" in dealTypeSelect.value) {
-        const gInput = dealTypeSelect.value as unknown as {
-          reloadGSelect: (autoSelect?: number | null) => Promise<void>;
-        };
-        await gInput.reloadGSelect(autoSelect);
-      }
-    };
-
     const saveLead = async () => {
       const isEdit = !!(props.leadData && props.leadData.id);
       $q.loading.show({ message: isEdit ? "Updating lead..." : "Creating lead..." });
@@ -332,17 +258,20 @@ export default defineComponent({
         startDate: startDate,
         endDate: endDate,
         status: "LEAD" as ProjectCreateRequest["status"],
-        clientId: parseInt(form.value.pointOfContactId) || 0, // Convert string to number for API
-        pointOfContactId: parseInt(form.value.pointOfContactId) || 0, // Add this for backend compatibility
+        ...(form.value.pointOfContactId ? {
+          clientId: parseInt(form.value.pointOfContactId),
+          pointOfContactId: parseInt(form.value.pointOfContactId)
+        } : {}), // Only include clientId/pointOfContactId if Point of Contact is selected
         locationId: form.value.locationId || "", // Using location from form
         downpaymentAmount: 0,
         retentionAmount: 0,
         isLead: true,
         winProbability: form.value.winProbability as unknown as ProjectCreateRequest["winProbability"],
         leadSource: form.value.dealSourceId,
-        leadType: form.value.dealType,
+        leadType: String(form.value.dealType),
         abc: form.value.approvedBudgetContract,
         mmr: form.value.monthlyRecurringRevenue,
+        implementationFee: form.value.implementationFee,
         initialCosting: form.value.totalContract,
         contactDetails: "", // Not capturing this in new form
         relationshipOwnerId: form.value.relationshipOwnerId,
@@ -403,25 +332,10 @@ export default defineComponent({
 
     return {
       dialog,
-      dealSourceSelect,
-      dealSourceDialog,
-      dealTypeSelect,
-      dealTypeDialog,
-      pointOfContactSelect,
       form,
       monthOptions,
       yearOptions,
-      isAddEditClientDialogOpen,
-      isAddEditCompanyDialogOpen,
       initForm,
-      selectNewSave,
-      selectNewCompanySave,
-      selectNewDealSourceSave,
-      selectNewDealTypeSave,
-      showClientAddDialog,
-      showCompanyAddDialog,
-      showDealSourceAddDialog,
-      showDealTypeAddDialog,
       saveLead,
     };
   },

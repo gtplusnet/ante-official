@@ -4,27 +4,27 @@
       <table class="lead-list-table">
         <thead>
           <tr>
-            <th class="text-dark text-label-medium text-left">Lead Name</th>
+            <th class="text-dark text-label-medium text-left">Deal Name</th>
+            <th class="text-dark text-label-medium text-left">Deal Type</th>
             <th class="text-dark text-label-medium text-left">Relationship Owner</th>
-            <th class="text-dark text-label-medium text-left">Budget</th>
-            <th class="text-dark text-label-medium text-left">Initial Costing</th>
-            <th class="text-dark text-label-medium text-left">Close Date</th>
+            <th class="text-dark text-label-medium text-left">Total Contract</th>
             <th class="text-dark text-label-medium text-left">Stage</th>
+            <th class="text-dark text-label-medium text-left">Days in Current Stage</th>
             <th class="text-dark text-label-medium text-center">Actions</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="lead in leadList" :key="lead.id">
             <td class="text-dark text-label-medium list-name" @click="openLead(lead.id)">{{ lead.name }}</td>
-            <td>{{ lead.client?.name }}</td>
-            <td class="text-grey text-label-medium">(MMR or FIXED static) {{ lead.budget.formatted }}</td>
-            <td class="text-grey text-label-medium">{{ lead.budget.formatted }}</td>
-            <td class="text-grey text-label-medium">{{ lead.endDate.formatted }}</td>
+            <td class="text-grey text-label-medium">{{ lead.leadType?.label || 'N/A' }}</td>
+            <td>{{ formatWord(lead.personInCharge.firstName) }} {{ formatWord(lead.personInCharge.lastName) }}</td>
+            <td class="text-grey text-label-medium">{{ lead.budget.formatCurrency }}</td>
             <td>
               <div class="stage-badge text-label-medium text-grey" :class="getStageClass(lead.leadBoardStage)">
-                {{ formatStageName(lead.leadBoardStage) }}
+                {{ formatLeadStage(lead.leadBoardStage) }}
               </div>
             </td>
+            <td class="text-grey text-label-medium">{{ calculateDaysInStage(lead.updatedAt) }}</td>
             <td class="text-center">
               <q-btn flat round icon="edit" color="grey" class="q-mr-md" @click.stop="editLead(lead)" />
               <q-btn flat round icon="delete" color="grey" @click.stop="deleteLead(lead)" />
@@ -58,6 +58,7 @@
       v-model="isViewLeadDialogOpen"
       :leadViewId="leadViewId"
       @close="handleCloseDialog"
+      @stageChanged="handleStageChanged"
     />
   </div>
 </template>
@@ -68,8 +69,9 @@ import { defineComponent, ref, onMounted, defineAsyncComponent, watch } from 'vu
 import { useQuasar } from 'quasar';
 import { APIRequests } from "src/utility/api.handler";
 import GlobalLoader from "src/components/shared/common/GlobalLoader.vue";
-import type { ProjectStatus } from "@shared/response";
-import { LeadDataResponse, ClientDataResponse } from "@shared/response";
+import { LeadDataResponse, TableResponse } from "@shared/response";
+import { formatLeadStage } from "src/utility/formatter";
+import { formatWord } from "src/utility/formatter";
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
 const LeadCreateDialog = defineAsyncComponent(() =>
@@ -78,29 +80,6 @@ const LeadCreateDialog = defineAsyncComponent(() =>
 const ViewLeadDialog = defineAsyncComponent(() =>
   import("src/components/dialog/LeadDialog/ViewLeadDialog.vue")
 );
-
-interface TableResponse<T> {
-  list: T[];
-  currentPage: number;
-  pagination: number[];
-}
-
-interface LeadDisplayInterface {
-  id: number;
-  name: string;
-  description: string;
-  budget: { formatted: string; raw: number };
-  isDeleted: boolean;
-  isLead: boolean;
-  leadBoardStage?: string;
-  startDate: { formatted: string; raw: string | Date };
-  endDate: { formatted: string; raw: string | Date };
-  status: ProjectStatus;
-  client?: ClientDataResponse;
-  clientId?: number;
-  locationId?: number;
-  leadType?: { key: string; label: string };
-}
 
 export default defineComponent({
   name: 'LeadsListView',
@@ -129,21 +108,13 @@ export default defineComponent({
 
     // State
     const isLoading = ref(true);
-    const leadList = ref<LeadDisplayInterface[]>([]);
+    const leadList = ref<LeadDataResponse[]>([]);
     const leadData = ref<LeadDataResponse>();
     const isLeadCreateDialogOpen = ref(false);
     const leadViewId = ref<number>(0);
     const isViewLeadDialogOpen = ref(false);
 
     // Helper methods
-    const formatStageName = (stage: string | undefined): string => {
-      if (!stage) return 'Unknown';
-      return stage
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-    };
-
     const getStageClass = (stage: string | undefined): string => {
       if (!stage) return 'unknown';
 
@@ -172,9 +143,34 @@ export default defineComponent({
       return stageMap[stageLower] || 'unknown';
     };
 
+    const calculateDaysInStage = (updatedAt: any): string => {
+      if (!updatedAt?.raw) {
+        return "0 days";
+      }
+      const updatedAtDate = new Date(updatedAt.raw);
+      const now = new Date();
+      const diffMs = now.getTime() - updatedAtDate.getTime();
+      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const weeks = Math.floor(days / 7);
+      const months = Math.floor(days / 30);
+
+      if (days < 7) {
+        return days === 1 ? "1 day" : `${days} days`;
+      } else if (weeks < 4) {
+        return weeks === 1 ? "1 week" : `${weeks} weeks`;
+      } else {
+        return months === 1 ? "1 month" : `${months} months`;
+      }
+    };
+
     const handleCloseDialog = () => {
       isViewLeadDialogOpen.value = false;
       leadViewId.value = 0;
+    };
+
+    const handleStageChanged = () => {
+      // Refresh the list view to reflect the stage change
+      fetchData();
     };
 
     // Methods
@@ -206,32 +202,8 @@ export default defineComponent({
 
         if (response && typeof response === 'object') {
           const typedResponse = response as unknown as TableResponse<LeadDataResponse>;
-          // Current page is not used in the UI
-
-          leadList.value = typedResponse.list.map((item: LeadDataResponse) => ({
-            id: item.id,
-            name: item.name,
-            description: item.description,
-            budget: {
-              formatted: item.budget.formatCurrency,
-              raw: item.budget.raw
-            },
-            isDeleted: item.isDeleted,
-            isLead: item.isLead,
-            leadBoardStage: item.leadBoardStage,
-            startDate: {
-              formatted: item.startDate.dateFull,
-              raw: item.startDate.raw
-            },
-            endDate: {
-              formatted: item.endDate.dateFull,
-              raw: item.endDate.raw
-            },
-            status: item.status as unknown as ProjectStatus,
-            client: item.client,
-            clientId: item.clientId,
-            locationId: item.locationId ? Number(item.locationId) : undefined
-          }));
+          // Use the list directly without transformation (same as Board View)
+          leadList.value = typedResponse.list;
         }
       } catch (error) {
         console.warn('Failed to fetch lead data:', error);
@@ -245,31 +217,9 @@ export default defineComponent({
       isLeadCreateDialogOpen.value = true;
     };
 
-    const editLead = (lead: LeadDisplayInterface): void => {
-      leadData.value = {
-        id: lead.id,
-        name: lead.name,
-        description: lead.description,
-        budget: {
-          raw: lead.budget.raw,
-          formatCurrency: lead.budget.formatted,
-        },
-        clientId: lead.clientId,
-        isDeleted: lead.isDeleted,
-        isLead: true,
-        leadBoardStage: lead.leadBoardStage,
-        startDate: {
-          raw: lead.startDate.raw,
-          dateFull: lead.startDate.formatted,
-        },
-        endDate: {
-          raw: lead.endDate.raw,
-          dateFull: lead.endDate.formatted,
-        },
-        status: lead.status,
-        client: lead.client,
-      } as unknown as LeadDataResponse;
-
+    const editLead = (lead: LeadDataResponse): void => {
+      // Use the lead data directly (no transformation needed)
+      leadData.value = lead;
       isLeadCreateDialogOpen.value = true;
     };
 
@@ -279,7 +229,7 @@ export default defineComponent({
       // router.push({ name: 'member_lead_page', params: { id } });
     };
 
-    const deleteLead = (lead: LeadDisplayInterface): void => {
+    const deleteLead = (lead: LeadDataResponse): void => {
       $q.dialog({
         title: 'Confirm',
         message: `Are you sure you want to delete ${lead.name}?`,
@@ -318,16 +268,19 @@ export default defineComponent({
       leadViewId,
 
       // Helper methods
-      formatStageName,
+      formatLeadStage,
       getStageClass,
+      calculateDaysInStage,
 
       // Methods
       handleCloseDialog,
+      handleStageChanged,
       fetchData,
       addLead,
       editLead,
       deleteLead,
       openLead,
+      formatWord,
     };
   },
 });
