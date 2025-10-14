@@ -652,6 +652,9 @@ export default defineComponent({
           const user = availableUsers.value.find(u => u.id === selectedAssigneeFilter.value);
           if (user) {
             chips.push({ key: 'assignee', label: `Assignee: ${user.name}` });
+          } else {
+            // Fallback: show chip with ID if user not found (better than nothing)
+            chips.push({ key: 'assignee', label: `Assignee: ${selectedAssigneeFilter.value}` });
           }
         }
       }
