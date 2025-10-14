@@ -183,7 +183,7 @@ import { defineComponent, defineAsyncComponent, ref, onMounted, onUnmounted, com
 import type { ComponentInternalInstance, PropType } from 'vue';
 
 const AssetAddEditItemCategoryDialog = defineAsyncComponent(() =>
-  import('../../../pages/Member/Asset/dialogs/AssetAddEditItemCategoryDialog.vue')
+  import('../../pages/Member/Asset/dialogs/AssetAddEditItemCategoryDialog.vue')
 );
 
 interface CategoryOption {
