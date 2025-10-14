@@ -1006,6 +1006,11 @@ const routesConfig: RouteRecordRaw[] = [
             component: () => import('pages/Member/Leads/Companies/LeadCompanies.vue'),
           },
           {
+            path: 'deal-type',
+            name: 'member_leads_deal_type',
+            component: () => import('pages/Member/Leads/DealType/DealType.vue'),
+          },
+          {
             path: 'people',
             name: 'member_leads_people',
             component: () => import('pages/Member/Leads/People/LeadsPeople.vue'),
