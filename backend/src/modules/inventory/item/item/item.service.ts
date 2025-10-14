@@ -291,6 +291,17 @@ export class ItemService {
             },
           },
         },
+        belongsToGroups: {
+          include: {
+            group: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -914,6 +925,40 @@ export class ItemService {
       formattedItem.variations = await this.getVariants(formattedItem.id);
     }
 
+    // Check if parent is in a group
+    const parentInGroup = (item.belongsToGroups?.length || 0) > 0;
+
+    // Check if any variation is in a group
+    let variationInGroup = false;
+    if (variationCount > 0) {
+      const variations = await this.prisma.item.findMany({
+        where: { parent: item.id, isDeleted: false },
+        include: {
+          belongsToGroups: {
+            include: {
+              group: { select: { name: true, sku: true } }
+            }
+          }
+        }
+      });
+
+      variationInGroup = variations.some(v => v.belongsToGroups.length > 0);
+
+      // Combine all groups from parent and variations
+      const allGroups = [...(item.belongsToGroups || [])];
+      variations.forEach(v => {
+        if (v.belongsToGroups.length > 0) {
+          allGroups.push(...v.belongsToGroups);
+        }
+      });
+      formattedItem.belongsToGroups = allGroups;
+    } else {
+      formattedItem.belongsToGroups = item.belongsToGroups || [];
+    }
+
+    // Item is part of group if parent OR any variation is in a group
+    formattedItem.isPartOfGroup = parentInGroup || variationInGroup;
+
     return formattedItem;
   }
 
@@ -1468,6 +1513,26 @@ export class ItemService {
     }
 
     return totalStock;
+  }
+
+  private async checkItemGroupReferences(itemId: string) {
+    // Check if this item is referenced in any Item Group
+    const groupReferences = await this.prisma.itemGroupItem.findMany({
+      where: { itemId },
+      include: {
+        group: {
+          select: { name: true, sku: true }
+        }
+      }
+    });
+
+    if (groupReferences.length > 0) {
+      const groupNames = groupReferences.map(ref => ref.group.name).join(', ');
+      throw new ConflictException(
+        `Cannot delete this item because it is part of the following Item Group(s): ${groupNames}. ` +
+        `Please remove this item from the group(s) before deleting.`
+      );
+    }
   }
 
   private async validateGroupItems(groupItems: any[]) {

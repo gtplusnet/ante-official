@@ -7,8 +7,11 @@
         <q-icon class="q-mr-sm" size="20px" name="edit"></q-icon> Edit
       </q-btn>
 
-      <q-btn rounded class="text-label-medium" @click="deleteItem(props.data)" no-caps color="red" outline>
+      <q-btn rounded class="text-label-medium" @click="deleteItem(props.data)" no-caps color="red" outline :disable="props.data.isPartOfGroup">
         <q-icon class="q-mr-sm" size="20px" name="delete"></q-icon> Delete
+        <q-tooltip v-if="props.data.isPartOfGroup">
+          Cannot delete - Part of: {{ getGroupNames(props.data) }}
+        </q-tooltip>
       </q-btn>
     </template>
 
@@ -126,6 +129,12 @@ export default {
     },
     refetch() {
       this.$refs.table.refetch();
+    },
+    getGroupNames(data) {
+      if (!data.belongsToGroups || data.belongsToGroups.length === 0) {
+        return '';
+      }
+      return data.belongsToGroups.map(bg => bg.group.name).join(', ');
     },
   },
 };
