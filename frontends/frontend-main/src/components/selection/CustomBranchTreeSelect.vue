@@ -1,14 +1,13 @@
 <template>
-  <div 
-    class="custom-branch-select" 
-    :class="{ 
-      'is-focused': isFocused, 
+  <div
+    class="custom-branch-select"
+    :class="{
+      'is-focused': isFocused,
       'is-disabled': disable,
       [`variant-${variant}`]: true,
       'is-dense': dense,
       'is-outlined': outlined
     }"
-    @click="toggleDropdown"
     tabindex="0"
     @focus="isFocused = true"
     @blur="handleBlur"
