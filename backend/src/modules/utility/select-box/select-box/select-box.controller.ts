@@ -500,12 +500,14 @@ export class SelectBoxController {
     @Query('search') search?: string,
     @Query('role') role?: string,
     @Query('department') department?: string,
+    @Query('excludeAccountIds') excludeAccountIds?: string,
   ) {
     try {
       const list = await this.selectBoxService.getAccountList({
         search,
         role,
         department,
+        excludeAccountIds,
       });
       return response.status(HttpStatus.OK).json({
         list,

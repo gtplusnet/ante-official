@@ -2,10 +2,6 @@
   <div class="page-head">
     <div class="title text-title-large">Role Management</div>
     <div class="actions">
-      <q-btn class="q-mr-sm text-label-large" color="red" outline unelevated rounded @click="resetDefaultRoles">
-        <q-icon name="refresh" size="14px" class="q-mr-xs"></q-icon>
-        Reset Default Roles
-      </q-btn>
       <q-btn class="q-mr-sm text-label-large" @click="viewTree()" color="primary" outline rounded>
         <q-icon size="14px" class="q-mr-xs" name="account_tree"></q-icon>
         View Tree
@@ -114,23 +110,6 @@ export default {
     saveDone() {
       this.isCreateEditRoleDialogVisible = false;
       this.$refs.table.refetch();
-    },
-    resetDefaultRoles() {
-      this.$q.dialog({
-        title: 'Reset Default Roles',
-        message: 'Are you sure you want to reset all roles to default? This will overwrite current roles.',
-        ok: true,
-        cancel: true,
-      }).onOk(() => {
-        api.post('/role/populate-default')
-          .then(() => {
-            this.$q.notify({ type: 'positive', message: 'Default roles have been reset.' });
-            this.$refs.table.refetch();
-          })
-          .catch((error) => {
-            this.$q.notify({ type: 'negative', message: error?.response?.data?.message || 'Failed to reset roles.' });
-          });
-      });
     },
   },
 };

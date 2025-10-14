@@ -931,6 +931,11 @@ const routesConfig: RouteRecordRaw[] = [
             component: () => import('pages/Member/Developer/DeveloperUserManagement.vue'),
           },
           {
+            path: 'deletion-logs',
+            name: 'member_developer_deletion_logs',
+            component: () => import('pages/Member/Developer/DeletionLogs.vue'),
+          },
+          {
             path: 'default-roles',
             name: 'member_developer_default_roles',
             component: () => import('pages/Member/Developer/DeveloperRoles.vue'),

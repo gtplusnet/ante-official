@@ -1,6 +1,7 @@
 // Import all individual table reference files
 import accomplishment from './table/accomplishment.table.reference';
 import account from './table/account.table.reference';
+import accountDeletionLog from './table/accountDeletionLog.table.reference';
 import accountInvite from './table/accountInvite.table.reference';
 import allowanceTable from './table/allowanceTable.table.reference';
 import attendanceConflicts from './table/attendanceConflicts.table.reference';
@@ -79,6 +80,7 @@ import sectionTable from './table/sectionTable.table.reference';
 export default {
   accomplishment,
   account,
+  accountDeletionLog,
   accountInvite,
   allowanceTable,
   attendanceConflicts,

@@ -254,8 +254,6 @@ export class EmployeeImportService {
           : hasWarnings
             ? 'awaiting_approval'
             : 'validated',
-        isUpdate: validation.isUpdate || false,
-        existingAccountId: validation.existingAccountId || null,
       };
 
       // If Level 0 role, clear the reportsTo field
@@ -315,8 +313,6 @@ export class EmployeeImportService {
     allRecords: EmployeeImportTemp[],
   ): Promise<
     RecordValidation & {
-      isUpdate?: boolean;
-      existingAccountId?: string;
       clearReportsTo?: boolean;
     }
   > {
@@ -512,10 +508,7 @@ export class EmployeeImportService {
       });
     }
 
-    // Check for existing employee - could be an update scenario
-    let isUpdate = false;
-    let existingAccountId: string | null = null;
-
+    // Check for existing employee - ALWAYS block duplicates (no update support)
     // First, check if employee code exists
     const existingEmployee = record.employeeCode
       ? await this.prisma.employeeData.findFirst({
@@ -547,63 +540,29 @@ export class EmployeeImportService {
         })
       : null;
 
-    // Determine if this is an update scenario (employee code AND username match same account)
-    if (existingEmployee && existingUserByUsername) {
-      // Check if both point to the same account
-      if (existingEmployee.accountId === existingUserByUsername.id) {
-        // This is an update scenario
-        isUpdate = true;
-        existingAccountId = existingEmployee.accountId;
-        warnings.push({
-          field: 'employeeCode',
-          message: `This will update existing employee: ${existingEmployee.account.firstName} ${existingEmployee.account.lastName}`,
-          type: 'business_rule',
-        });
+    // Block ALL duplicate entries - employee import is for NEW employees only
+    if (existingEmployee) {
+      errors.push({
+        field: 'employeeCode',
+        message: 'Employee code already exists in the system. Cannot import duplicate employees.',
+        type: 'unique',
+      });
+    }
 
-        // If email is being changed, add a warning
-        if (
-          existingUserByEmail &&
-          existingUserByEmail.id !== existingEmployee.accountId
-        ) {
-          warnings.push({
-            field: 'email',
-            message: `Email address already exists for another user. Email will NOT be updated.`,
-            type: 'business_rule',
-          });
-        }
-      } else {
-        // Different accounts - this is an error
-        errors.push({
-          field: 'employeeCode',
-          message: 'Employee code and username belong to different employees',
-          type: 'unique',
-        });
-      }
-    } else {
-      // Check individual uniqueness if not an update
-      if (existingEmployee) {
-        errors.push({
-          field: 'employeeCode',
-          message: 'Employee code already exists in the system',
-          type: 'unique',
-        });
-      }
+    if (existingUserByUsername) {
+      errors.push({
+        field: 'username',
+        message: 'Username already exists in the system. Cannot import duplicate usernames.',
+        type: 'unique',
+      });
+    }
 
-      if (existingUserByUsername) {
-        errors.push({
-          field: 'username',
-          message: 'Username already exists in the system',
-          type: 'unique',
-        });
-      }
-
-      if (existingUserByEmail) {
-        errors.push({
-          field: 'email',
-          message: 'Email address already exists in the system',
-          type: 'unique',
-        });
-      }
+    if (existingUserByEmail) {
+      errors.push({
+        field: 'email',
+        message: 'Email address already exists in the system. Cannot import duplicate emails.',
+        type: 'unique',
+      });
     }
 
     // Employment Status validations
@@ -1112,8 +1071,6 @@ export class EmployeeImportService {
       warnings,
       isValid: errors.length === 0,
       hasWarnings: warnings.length > 0,
-      isUpdate,
-      existingAccountId,
       clearReportsTo,
     };
   }
@@ -1279,139 +1236,61 @@ export class EmployeeImportService {
       (s) => s.label === record.employmentStatus,
     )?.key as EmploymentStatus;
 
-    // Check if this is an update
-    if (record.isUpdate && record.existingAccountId) {
-      // Get existing employee data
-      const existingEmployee = await this.prisma.employeeData.findFirst({
-        where: {
-          accountId: record.existingAccountId,
-        },
-        include: {
-          account: true,
-        },
-      });
-
-      if (!existingEmployee) {
-        throw new Error('Existing employee data not found for update');
-      }
-
-      // Check if email is being changed and if new email already exists
-      let emailToUse = record.email;
-      if (
-        existingEmployee.account.email.toLowerCase() !==
-        record.email.toLowerCase()
-      ) {
-        const emailExists = await this.prisma.account.findFirst({
-          where: {
-            email: record.email.toLowerCase(),
-            NOT: { id: record.existingAccountId },
-          },
-        });
-
-        if (emailExists) {
-          // Keep existing email if new one is taken
-          emailToUse = existingEmployee.account.email;
-        }
-      }
-
-      // Update employee using employee list service
-      await this.employeeListService.edit({
-        accountId: record.existingAccountId,
-        employeeCode: record.employeeCode,
-        payrollGroupId: payrollGroup.id,
-        scheduleId: schedule.id,
-        branchId: branch.id,
-        bankName: record.bankName || null,
-        bankAccountNumber: record.bankAccountNumber || null,
-        tinNumber: record.tinNumber || null,
-        sssNumber: record.sssNumber || null,
-        hdmfNumber: record.hdmfNumber || null,
-        phicNumber: record.phcNumber || null,
-        accountDetails: {
-          firstName: record.firstName,
-          lastName: record.lastName,
-          middleName: record.middleName || '',
-          email: emailToUse,
-          username: record.username,
-          contactNumber: record.contactNumber,
-          roleID: role.id,
-          parentAccountId: parentAccountId,
-          password: '', // Not used for updates, but required by interface
-          dateOfBirth: record.birthdate || null,
-          gender: record.sex || null,
-          civilStatus: record.civilStatus || null,
-          street: record.street || null,
-          city: record.city || null,
-          stateProvince: record.stateProvince || null,
-          postalCode: record.postalCode || null,
-          zipCode: record.zipCode || null,
-          country: record.country || null,
-        } as any,
-        contractDetails: {
-          monthlyRate: record.monthlyRate,
-          startDate: record.startDate.toISOString(),
-          endDate: record.endDate ? record.endDate.toISOString() : null,
-          employmentStatus: employmentStatusEnum,
-          contractFileId: null,
-        },
-      });
+    // Generate password based on birthdate
+    let password = 'TempPass123!'; // Default fallback
+    if (record.birthdate) {
+      const birthDate = new Date(record.birthdate);
+      const month = String(birthDate.getMonth() + 1).padStart(2, '0');
+      const day = String(birthDate.getDate()).padStart(2, '0');
+      const year = birthDate.getFullYear();
+      password = `${month}${day}${year}`; // MMDDYYYY format
     } else {
-      // Generate password based on birthdate
-      let password = 'TempPass123!'; // Default fallback
-      if (record.birthdate) {
-        const birthDate = new Date(record.birthdate);
-        const month = String(birthDate.getMonth() + 1).padStart(2, '0');
-        const day = String(birthDate.getDate()).padStart(2, '0');
-        const year = birthDate.getFullYear();
-        password = `${month}${day}${year}`; // MMDDYYYY format
-      } else {
-        // Log when using fallback password
-        console.log(
-          `Employee ${record.employeeCode} has no birthdate, using fallback password`,
-        );
-      }
-
-      // Create new employee
-      await this.employeeListService.add({
-        employeeCode: record.employeeCode,
-        payrollGroupId: payrollGroup.id,
-        scheduleId: schedule.id,
-        branchId: branch.id,
-        bankName: record.bankName || null,
-        bankAccountNumber: record.bankAccountNumber || null,
-        tinNumber: record.tinNumber || null,
-        sssNumber: record.sssNumber || null,
-        hdmfNumber: record.hdmfNumber || null,
-        phicNumber: record.phcNumber || null,
-        accountDetails: {
-          firstName: record.firstName,
-          lastName: record.lastName,
-          middleName: record.middleName || '',
-          email: record.email,
-          username: record.username,
-          password: password,
-          contactNumber: record.contactNumber,
-          roleID: role.id,
-          parentAccountId: parentAccountId,
-          dateOfBirth: record.birthdate || null,
-          gender: record.sex || null,
-          civilStatus: record.civilStatus || null,
-          street: record.street || null,
-          city: record.city || null,
-          stateProvince: record.stateProvince || null,
-          postalCode: record.postalCode || null,
-          zipCode: record.zipCode || null,
-          country: record.country || null,
-        },
-        contractDetails: {
-          monthlyRate: record.monthlyRate,
-          startDate: record.startDate.toISOString(),
-          endDate: record.endDate ? record.endDate.toISOString() : null,
-          employmentStatus: employmentStatusEnum,
-          contractFileId: null,
-        },
-      });
+      // Log when using fallback password
+      console.log(
+        `Employee ${record.employeeCode} has no birthdate, using fallback password`,
+      );
     }
+
+    // Create new employee (import only supports creating new employees)
+    await this.employeeListService.add({
+      employeeCode: record.employeeCode,
+      payrollGroupId: payrollGroup.id,
+      scheduleId: schedule.id,
+      branchId: branch.id,
+      bankName: record.bankName || null,
+      bankAccountNumber: record.bankAccountNumber || null,
+      tinNumber: record.tinNumber || null,
+      sssNumber: record.sssNumber || null,
+      hdmfNumber: record.hdmfNumber || null,
+      phicNumber: record.phcNumber || null,
+      accountDetails: {
+        firstName: record.firstName,
+        lastName: record.lastName,
+        middleName: record.middleName || '',
+        email: record.email,
+        username: record.username,
+        password: password,
+        contactNumber: record.contactNumber,
+        roleID: role.id,
+        parentAccountId: parentAccountId,
+        dateOfBirth: record.birthdate || null,
+        gender: record.sex || null,
+        civilStatus: record.civilStatus || null,
+        street: record.street || null,
+        city: record.city || null,
+        stateProvince: record.stateProvince || null,
+        postalCode: record.postalCode || null,
+        zipCode: record.zipCode || null,
+        country: record.country || null,
+      },
+      contractDetails: {
+        monthlyRate: record.monthlyRate,
+        startDate: record.startDate.toISOString(),
+        endDate: record.endDate ? record.endDate.toISOString() : null,
+        employmentStatus: employmentStatusEnum,
+        contractFileId: null,
+      },
+    });
   }
 
   async getImportStatus(batchId: string): Promise<ImportStatusResponse> {

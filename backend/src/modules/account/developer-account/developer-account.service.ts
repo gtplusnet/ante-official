@@ -211,7 +211,7 @@ export class DeveloperAccountService {
     return this.formatAccountData(updatedAccount);
   }
 
-  async deleteDeveloperAccount({ id }) {
+  async deleteDeveloperAccount({ id, deletedBy = null, reason = null }) {
     const account = await this.prisma.account.findFirst({
       where: { id, isDeleted: false },
     });
@@ -219,6 +219,35 @@ export class DeveloperAccountService {
     if (!account) {
       throw new NotFoundException('Developer account not found');
     }
+
+    // Get deletedBy account details if provided
+    let deletedByUsername = null;
+    if (deletedBy) {
+      const deletedByAccount = await this.prisma.account.findUnique({
+        where: { id: deletedBy },
+        select: { username: true },
+      });
+      deletedByUsername = deletedByAccount?.username;
+    }
+
+    // Create audit log before deletion
+    await this.prisma.accountDeletionLog.create({
+      data: {
+        deletedAccountId: account.id,
+        deletedUsername: account.username,
+        deletedEmail: account.email,
+        deletedByAccountId: deletedBy,
+        deletedByUsername: deletedByUsername,
+        reason: reason,
+        deletionType: 'soft',
+        metadata: {
+          accountType: account.accountType,
+          roleId: account.roleId,
+          companyId: account.companyId,
+          isDeveloper: account.isDeveloper,
+        },
+      },
+    });
 
     // Soft delete
     await this.prisma.account.update({
@@ -391,5 +420,36 @@ export class DeveloperAccountService {
       token,
       accountInformation,
     };
+  }
+
+  async getDeletionLogsTable(query: TableQueryDTO, body: TableBodyDTO) {
+    this.tableHandler.initialize(query, body, 'accountDeletionLog');
+    const tableQuery = this.tableHandler.constructTableQuery();
+
+    // Format dates and sort by most recent first
+    tableQuery['orderBy'] = { deletedAt: 'desc' };
+
+    const { list, currentPage, pagination } =
+      await this.tableHandler.getTableData(
+        this.prisma.accountDeletionLog,
+        query,
+        tableQuery,
+      );
+
+    // Format the data for display
+    const formattedList = list.map((log: any) => ({
+      id: log.id,
+      deletedAccountId: log.deletedAccountId,
+      deletedUsername: log.deletedUsername,
+      deletedEmail: log.deletedEmail,
+      deletedByAccountId: log.deletedByAccountId,
+      deletedByUsername: log.deletedByUsername || 'System',
+      reason: log.reason || 'No reason provided',
+      deletionType: log.deletionType,
+      deletedAt: this.utility.formatDate(log.deletedAt),
+      metadata: log.metadata,
+    }));
+
+    return { list: formattedList, pagination, currentPage };
   }
 }
