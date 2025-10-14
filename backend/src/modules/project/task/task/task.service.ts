@@ -1044,6 +1044,7 @@ export class TaskService {
       updatedBy: { connect: { id: this.utilityService.accountInformation.id } },
       order: createTaskDto.order ?? await this.getNextTaskOrder(createTaskDto.boardLaneId),
       assignedByDifficultySet: createTaskDto.difficulty,
+      priorityLevel: createTaskDto.difficulty,  // Set priority level from difficulty
       boardLane: { connect: { id: createTaskDto.boardLaneId } },
       assignMode: createTaskDto.assignedMode,
     };
