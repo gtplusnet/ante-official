@@ -642,6 +642,26 @@ const routesConfig: RouteRecordRaw[] = [
         path: 'manpower/reports/tax',
         component: () => import('pages/Member/Manpower/Reports/TaxWithholdingReport.vue'),
       },
+      {
+        name: 'member_manpower_reports_13th_month',
+        path: 'manpower/reports/13th-month-pay',
+        component: () => import('pages/Member/Manpower/Reports/ThirteenthMonthPayReport.vue'),
+      },
+      {
+        name: 'member_manpower_reports_annualization',
+        path: 'manpower/reports/annualization',
+        component: () => import('pages/Member/Manpower/Reports/AnnualizationReport.vue'),
+      },
+      {
+        name: 'member_manpower_reports_leave',
+        path: 'manpower/reports/leave',
+        component: () => import('pages/Member/Manpower/Reports/LeaveReport.vue'),
+      },
+      {
+        name: 'member_manpower_reports_payroll_cost',
+        path: 'manpower/reports/payroll-cost',
+        component: () => import('pages/Member/Manpower/Reports/PayrollCostAllocation.vue'),
+      },
 
       // Manpower API
       {
