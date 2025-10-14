@@ -529,7 +529,7 @@ export class InviteService {
     this.utility.log(`Invitation resent to ${invite.email}`);
   }
 
-  async cancelInvite(inviteId: string): Promise<void> {
+  async cancelInvite(inviteId: string, cancelledBy?: string): Promise<void> {
     const invite = await this.prisma.accountInvite.findUnique({
       where: { id: inviteId },
     });
@@ -540,6 +540,54 @@ export class InviteService {
 
     if (invite.isAccepted) {
       throw new BadRequestException('Cannot cancel an accepted invitation');
+    }
+
+    // Get cancelledBy account details if provided
+    let cancelledByUsername = null;
+    if (cancelledBy) {
+      const cancelledByAccount = await this.prisma.account.findUnique({
+        where: { id: cancelledBy },
+        select: { username: true },
+      });
+      cancelledByUsername = cancelledByAccount?.username;
+    }
+
+    // Get account details before deletion for audit log
+    let accountToDelete = null;
+    if (invite.accountId) {
+      accountToDelete = await this.prisma.account.findUnique({
+        where: { id: invite.accountId },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          accountType: true,
+          roleId: true,
+          companyId: true,
+        },
+      });
+
+      // Create audit log before deletion
+      if (accountToDelete) {
+        await this.prisma.accountDeletionLog.create({
+          data: {
+            deletedAccountId: accountToDelete.id,
+            deletedUsername: accountToDelete.username,
+            deletedEmail: accountToDelete.email,
+            deletedByAccountId: cancelledBy,
+            deletedByUsername: cancelledByUsername,
+            reason: 'Invitation cancelled - placeholder account removed',
+            deletionType: 'hard',
+            metadata: {
+              inviteId: invite.id,
+              accountType: accountToDelete.accountType,
+              roleId: accountToDelete.roleId,
+              companyId: accountToDelete.companyId,
+              isPlaceholderAccount: true,
+            },
+          },
+        });
+      }
     }
 
     // Delete the invite and associated placeholder account in a transaction
