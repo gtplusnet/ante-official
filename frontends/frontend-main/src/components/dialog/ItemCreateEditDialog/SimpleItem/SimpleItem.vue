@@ -80,6 +80,7 @@
             placeholder="Select Branch"
             :showAllOption="false"
             :includeChildren="false"
+            :showAddButton="true"
             outlined
           />
         </div>

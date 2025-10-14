@@ -202,9 +202,9 @@ export default {
 
       api
         .post("branch/create", params)
-        .then(() => {
+        .then((response) => {
           $q.loading.hide();
-          emit("saveDone");
+          emit("saveDone", response.data);
 
           if (dialog.value) {
             dialog.value.hide();
@@ -227,13 +227,13 @@ export default {
       };
       api
         .patch("branch/update", updatedParams)
-        .then(() => {
+        .then((response) => {
           $q.loading.hide();
 
           if (dialog.value) {
             dialog.value.hide();
           }
-          emit("saveDone");
+          emit("saveDone", response.data);
         })
         .catch((error) => {
           handleAxiosError($q, error);
