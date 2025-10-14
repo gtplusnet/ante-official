@@ -192,11 +192,42 @@ export default defineComponent({
       selectedTaskIds.value = [];
 
       try {
-        // Fetch all tasks (backend will return tasks with goal info)
-        const response = await api.get('/task/all');
+        // Fetch all tasks using the ordered endpoint
+        // viewType: 'all' to get all tasks, not just 'my' tasks
+        const response = await api.get('/task/ordered', {
+          params: {
+            viewType: 'all',
+            groupingMode: 'none'
+          }
+        });
 
-        if (response.data && response.data.items) {
-          availableTasks.value = response.data.items;
+        // Response is direct array, not nested in items
+        if (response.data && Array.isArray(response.data)) {
+          // Map backend response to expected Task format
+          availableTasks.value = response.data.map((task: any) => ({
+            id: task.id,
+            title: task.title || task.name, // Handle both title and name fields
+            description: task.description,
+            assignedTo: task.assignedTo ? {
+              id: task.assignedTo.id,
+              firstName: task.assignedTo.firstName,
+              lastName: task.assignedTo.lastName
+            } : undefined,
+            project: task.project ? {
+              id: task.project.id,
+              name: task.project.name
+            } : undefined,
+            dueDate: task.dueDate ? {
+              raw: task.dueDate,
+              formatted: new Date(task.dueDate).toLocaleDateString()
+            } : undefined,
+            goal: task.goal ? {
+              id: task.goal.id,
+              name: task.goal.name
+            } : undefined
+          }));
+
+          console.log('[GoalTaskLinkDialog] Loaded', availableTasks.value.length, 'tasks');
         }
       } catch (error) {
         console.error('Failed to load tasks:', error);
