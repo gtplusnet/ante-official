@@ -1,14 +1,14 @@
 <template>
   <expanded-nav-page-container>
     <div class="page-head">
-      <div class="title text-headline-small">Simple View</div>
+      <div class="title text-headline-small">Group View</div>
     </div>
     <div class="bread-crumbs text-body-small">
       <q-breadcrumbs>
         <q-breadcrumbs-el label="Dashboard" :to="{ name: 'member_dashboard' }" />
         <q-breadcrumbs-el label="Asset Management" />
         <q-breadcrumbs-el label="Item" />
-        <q-breadcrumbs-el label="Simple View" />
+        <q-breadcrumbs-el label="Group View" />
       </q-breadcrumbs>
     </div>
     <div class="page-content">
@@ -22,7 +22,7 @@
         </div>
       </div>
       <g-card class="q-pa-md q-mt-sm text-body-small">
-        <SimpleItemTable ref="table" :tab="'simple'" :hideItemGroups="true"></SimpleItemTable>
+        <GroupItemTable ref="table"></GroupItemTable>
       </g-card>
 
       <!-- item information dialog -->
@@ -30,7 +30,7 @@
 
       <!-- item create edit dialog -->
       <ItemCreateEditDialog v-model="isItemCreateEditDialogOpen" :itemInformation="itemInformation"
-        @close="onCloseItemCreateEditDialog" />
+        :forceItemGroup="true" @close="onCloseItemCreateEditDialog" />
 
       <!-- item advance list dialog -->
       <ItemAdvanceListDialog v-if="isItemAdvanceListDialogOpen" v-model="isItemAdvanceListDialogOpen"
@@ -44,7 +44,7 @@
 import { defineAsyncComponent } from 'vue';
 import ExpandedNavPageContainer from '../../../../components/shared/ExpandedNavPageContainer.vue';
 import GCard from "../../../../components/shared/display/GCard.vue";
-import SimpleItemTable from "../../../../components/tables/SimpleItemTable.vue";
+import GroupItemTable from "../../../../components/tables/GroupItemTable.vue";
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
 const ItemCreateEditDialog = defineAsyncComponent(() =>
@@ -58,14 +58,14 @@ const ItemAdvanceListDialog = defineAsyncComponent(() =>
 );
 
 export default {
-  name: 'MemberAssetItemSimple',
+  name: 'MemberAssetItemGroup',
   components: {
     ExpandedNavPageContainer,
     GCard,
     ItemCreateEditDialog,
     ItemInformationDialog,
     ItemAdvanceListDialog,
-    SimpleItemTable,
+    GroupItemTable,
   },
   data: () => ({
     parentId: null,

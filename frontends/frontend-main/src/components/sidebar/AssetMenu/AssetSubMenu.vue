@@ -121,6 +121,7 @@ export default {
         child: [
           { icon: 'o_view_column', title: 'Simple View', key: 'member_asset_item_simple', requiredScope: ['ASSET_ITEM_SIMPLE_ACCESS'] },
           { icon: 'o_view_module', title: 'Advance View', key: 'member_asset_item_advance', requiredScope: ['ASSET_ITEM_ADVANCE_ACCESS'] },
+          { icon: 'o_workspaces', title: 'Group View', key: 'member_asset_item_group', requiredScope: ['ASSET_ITEM_GROUP_ACCESS'] },
           { icon: 'o_delete', title: 'Deleted List', key: 'member_asset_item_deleted', requiredScope: ['ASSET_ITEM_DELETED_ACCESS'] }
         ],
       },

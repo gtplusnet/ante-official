@@ -175,6 +175,18 @@ export class ItemService {
     tableQuery.where['NOT'] = [{ estimatedBuyingPrice: null }, { size: null }];
     tableQuery.where['companyId'] = this.utility.companyId;
 
+    // Check for Item Group filtering
+    const isItemGroupFilter = body.filters?.find(f => f.hasOwnProperty('isItemGroup'));
+    if (isItemGroupFilter) {
+      if (isItemGroupFilter.isItemGroup === true) {
+        // Hide Item Groups (show only Individual Products)
+        tableQuery.where['itemType'] = { not: 'ITEM_GROUP' };
+      } else if (isItemGroupFilter.isItemGroup === false) {
+        // Show ONLY Item Groups
+        tableQuery.where['itemType'] = 'ITEM_GROUP';
+      }
+    }
+
     // Get items with brand, category, branch, and keywords data
     const itemsWithBrands = await this.prisma.item.findMany({
       ...tableQuery,
@@ -240,10 +252,16 @@ export class ItemService {
     tableQuery.where['isDraft'] = false;
     tableQuery.where['companyId'] = this.utility.companyId;
 
-    // Check if we need to filter out Item Groups
-    const isItemGroupFilter = body.filters?.find(f => f.hasOwnProperty('isItemGroup') && f.isItemGroup === true);
+    // Check for Item Group filtering
+    const isItemGroupFilter = body.filters?.find(f => f.hasOwnProperty('isItemGroup'));
     if (isItemGroupFilter) {
-      tableQuery.where['itemType'] = { not: 'ITEM_GROUP' };
+      if (isItemGroupFilter.isItemGroup === true) {
+        // Hide Item Groups (show only Individual Products)
+        tableQuery.where['itemType'] = { not: 'ITEM_GROUP' };
+      } else if (isItemGroupFilter.isItemGroup === false) {
+        // Show ONLY Item Groups
+        tableQuery.where['itemType'] = 'ITEM_GROUP';
+      }
     }
 
     const totalCount = await this.prisma.item.count({

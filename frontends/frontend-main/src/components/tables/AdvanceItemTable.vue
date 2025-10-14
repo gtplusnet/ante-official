@@ -1,5 +1,5 @@
 <template>
-  <g-table :isRowActionEnabled="true" tableKey="itemAdvance" apiUrl="/items/advanceView" :apiFilters="[{ deleted: false }]" ref="table">
+  <g-table :isRowActionEnabled="true" tableKey="itemAdvance" apiUrl="/items/advanceView" :apiFilters="apiFilters" ref="table">
     <!-- slot actions -->
     <template v-slot:row-actions="props">
       <q-btn rounded class="q-mr-sm text-label-medium" @click="editItem(props.data)" no-caps color="primary" unelevated>
@@ -42,7 +42,7 @@ const ItemAdvanceListDialog = defineAsyncComponent(() =>
 );
 
 export default {
-  name: 'SimpleItemTable',
+  name: 'AdvanceItemTable',
   components: {
     GTable,
     ItemCreateEditDialog,
@@ -55,8 +55,24 @@ export default {
       default: 'create',
       validator: (value) => ['create', 'edit'].includes(value),
     },
+    hideItemGroups: {
+      type: Boolean,
+      default: false,
+    },
   },
-  computed: {},
+  computed: {
+    apiFilters() {
+      const filters = [{ deleted: false }];
+
+      // Add isItemGroup filter when hideItemGroups is true
+      // When hiding group items, show only individual products
+      if (this.hideItemGroups) {
+        filters.push({ isItemGroup: true });
+      }
+
+      return filters;
+    },
+  },
   data: () => ({
     isItemCreateEditDialogOpen: false,
     isItemInformationDialogOpen: false,

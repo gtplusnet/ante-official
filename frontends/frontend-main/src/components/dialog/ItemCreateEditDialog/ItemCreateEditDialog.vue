@@ -22,7 +22,7 @@
           <q-tab-panels v-model="tab" animated>
             <q-tab-panel name="simple">
               <simple-item :key="componentKey" :v-model="isSimpleItemOnDisplay" :itemInformation="itemInformation"
-                @onFormUpdate="onSimpleItemUpdate" />
+                :forceItemGroup="forceItemGroup" @onFormUpdate="onSimpleItemUpdate" />
             </q-tab-panel>
             <q-tab-panel name="variation">
               <variation-item :key="componentKey" :v-model="isVariationItemOnDisplay" :itemInformation="itemInformation"
@@ -96,6 +96,10 @@ export default {
       default: null,
     },
     modelValue: {
+      type: Boolean,
+      default: false,
+    },
+    forceItemGroup: {
       type: Boolean,
       default: false,
     },

@@ -5,7 +5,7 @@
       <div class="col q-mb-md">
         <div class="label">Type</div>
         <q-select v-model="form.itemType" :options="typeOptions" outlined dense class="text-body-small" emit-value
-          map-options />
+          map-options :disable="forceItemGroup" />
       </div>
       <!-- Item name and SKU -->
       <div class="row q-gutter-sm">
@@ -195,6 +195,10 @@ export default {
       type: Object || null,
       required: false,
     },
+    forceItemGroup: {
+      type: Boolean,
+      default: false,
+    },
   },
   data: () => ({
     isTagHidden: false,
@@ -257,6 +261,10 @@ export default {
   },
   mounted() {
     this.isTagHidden = false;
+    // If forceItemGroup is true and we're creating a new item, set itemType to ITEM_GROUP
+    if (this.forceItemGroup && !this.itemInformation) {
+      this.form.itemType = 'ITEM_GROUP';
+    }
     this.initialize()
   },
   computed: {
