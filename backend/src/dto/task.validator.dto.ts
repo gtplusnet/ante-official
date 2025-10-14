@@ -92,6 +92,10 @@ export class TaskUpdateDto {
   @IsOptional()
   @IsNumber()
   readonly boardLaneId?: number;
+
+  @IsOptional()
+  @IsNumber()
+  readonly goalId?: number;
 }
 export class TaskDeleteDto {
   @IsNotEmpty()

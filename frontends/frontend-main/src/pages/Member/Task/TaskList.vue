@@ -272,7 +272,9 @@ export default defineComponent({
         projectId: task.projectId,
         taskPhaseId: task.taskPhaseId,
         boardLaneId: task.boardLaneId,
-        order: task.order || 0
+        order: task.order || 0,
+        goalId: task.goalId || null,
+        goal: task.goal || null
       };
     };
 

@@ -585,6 +585,7 @@ export class TaskService {
             }
           : null,
         workflowInstanceId: taskInformation.WorkflowTask?.instanceId || null,
+        goalId: taskInformation.goalId,
       };
     } catch (error) {
       if (
@@ -1344,6 +1345,26 @@ export class TaskService {
       }
     }
 
+    // Track goal change
+    if (taskUpdateDto.goalId !== undefined && taskUpdateDto.goalId !== taskInformation.goalId) {
+      // Validate goal exists if not null
+      if (taskUpdateDto.goalId !== null) {
+        const goal = await this.prisma.goal.findUnique({
+          where: { id: taskUpdateDto.goalId },
+        });
+        if (!goal) {
+          throw new NotFoundException('Goal not found');
+        }
+      }
+      updateParams.goalId = taskUpdateDto.goalId;
+      changes.push({
+        field: 'goalId',
+        oldValue: taskInformation.goalId,
+        newValue: taskUpdateDto.goalId,
+        displayName: 'goal',
+      });
+    }
+
     const result = await this.prisma.task.update({
       where: { id: taskId },
       data: updateParams,
@@ -2023,6 +2044,11 @@ export class TaskService {
           }
         : null,
       workflowInstanceId: task.WorkflowTask?.instanceId || null,
+      goalId: task.goalId,
+      goal: task.goal ? {
+        id: task.goal.id,
+        name: task.goal.name
+      } : null,
     };
   }
 
@@ -2344,6 +2370,7 @@ export class TaskService {
         createdBy: true,
         boardLane: true,
         project: true,
+        goal: true,
         // Add other includes as needed
       },
     });

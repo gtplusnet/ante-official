@@ -89,6 +89,19 @@
             </GInput>
           </div>
 
+          <!-- Goal -->
+          <div class="form-field q-pb-md">
+            <GInput
+              type="select-search"
+              apiUrl="/task/goal?status=PENDING"
+              label="Goal (Optional)"
+              nullOption="No Goal"
+              v-model="form.goalId"
+              :mapData="mapGoalData"
+            >
+            </GInput>
+          </div>
+
           <!-- Due Date -->
           <div class="form-field q-pb-md">
             <GInput type="date" label="Due Date" v-model="form.dueDate"></GInput>
@@ -529,6 +542,7 @@ export default {
         assignMode: 'SELF',
         difficulty: 1,
         dueDate: null,
+        goalId: null,
         collaborators: [],
       };
     },
@@ -570,6 +584,11 @@ export default {
           param.dueDate = new Date(this.form.dueDate).toISOString();
         }
 
+        // add goal
+        if (this.form.goalId) {
+          param.goalId = this.form.goalId;
+        }
+
         // add collaborators
         if (this.form.collaborators && this.form.collaborators.length > 0) {
           param.collaboratorAccountIds = this.form.collaborators.map(
@@ -594,6 +613,13 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+    mapGoalData(response) {
+      // Map API response to GInput select format
+      return response.map((goal) => ({
+        label: goal.name,
+        value: goal.id,
+      }));
     },
   },
 };

@@ -106,6 +106,9 @@ import { MediaModule } from '@infrastructure/file-upload/media/media.module';
 import { TimeTrackingModule } from '@modules/time-tracking/time-tracking.module';
 import { ManpowerDeviceModule } from '@modules/manpower-device/manpower-device.module';
 
+// Goal module
+import { GoalModule } from '@modules/project/task/goal/goal.module';
+
 // App controller
 import { AppController } from './app.controller';
 
@@ -302,6 +305,9 @@ const ENV = process.env.NODE_ENV;
     // Time tracking module
     TimeTrackingModule,
     ManpowerDeviceModule,
+
+    // Goal module
+    GoalModule,
   ],
   controllers: [
     // Root app controller
