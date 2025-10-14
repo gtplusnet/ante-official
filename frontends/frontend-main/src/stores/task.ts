@@ -175,8 +175,10 @@ export const useTaskStore = defineStore('task', () => {
       const priorityToNumber = (priority?: string): number => {
         if (!priority) return 2; // Default NORMAL
         switch (priority.toUpperCase()) {
+          case 'VERYLOW': return 0;
           case 'LOW': return 1;
           case 'NORMAL': return 2;
+          case 'MEDIUM': return 2;  // Medium = Normal difficulty level
           case 'HIGH': return 3;
           case 'URGENT': return 4;
           default: return 2;

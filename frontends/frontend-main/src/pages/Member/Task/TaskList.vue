@@ -535,8 +535,11 @@ export default defineComponent({
 
         if (groupingMode === 'priority') {
           // Set priority based on section
-          if (section === 'high') {
+          if (section === 'urgent') {
             taskData.priorityLevel = 4;
+            taskData.priority = 'urgent';
+          } else if (section === 'high') {
+            taskData.priorityLevel = 3;
             taskData.priority = 'high';
           } else if (section === 'medium') {
             taskData.priorityLevel = 2;
@@ -544,6 +547,9 @@ export default defineComponent({
           } else if (section === 'low') {
             taskData.priorityLevel = 1;
             taskData.priority = 'low';
+          } else if (section === 'verylow') {
+            taskData.priorityLevel = 0;
+            taskData.priority = 'verylow';
           }
         } else if (groupingMode === 'assignee') {
           // Set assignee based on section (only in All Tasks view or when explicitly grouped)
@@ -603,19 +609,6 @@ export default defineComponent({
           return;
         }
 
-        // Map priority string to uppercase for backend compatibility
-        const mapPriorityToString = (priority?: string) => {
-          if (!priority) return 'NORMAL';
-          const map: Record<string, string> = {
-            'verylow': 'LOW',
-            'low': 'LOW',
-            'medium': 'NORMAL',
-            'high': 'HIGH',
-            'urgent': 'URGENT'
-          };
-          return map[priority.toLowerCase()] || 'NORMAL';
-        };
-
         // Map status to backend format
         const mapStatusToString = (status?: string) => {
           if (!status) return 'TODO';
@@ -629,7 +622,8 @@ export default defineComponent({
           return map[status.toLowerCase()] || 'TODO';
         };
 
-        // Prepare data for Supabase quick creation
+        // Prepare data for backend API quick creation
+        // Note: priority string gets converted to difficulty number by the store
         const quickTaskData = {
           name: taskData.title, // Map title to name for backend compatibility
           description: taskData.description || '',
@@ -637,14 +631,14 @@ export default defineComponent({
           taskPhaseId: taskData.taskPhaseId || null, // Include task phase ID
           companyId: currentCompanyId.value,
           assignedTo: taskData.assignedToId || null,
-          priority: mapPriorityToString(taskData.priority),
+          priority: taskData.priority, // Will be converted to difficulty by store
           status: mapStatusToString(taskData.status),
           dueDate: taskData.dueDate || null,
           boardLaneId: taskData.boardLaneId || 1,
           order: taskData.order || newTaskOrder
         };
 
-        console.log('[DEBUG] Creating task with Supabase (all groups):', quickTaskData);
+        console.log('[DEBUG] Creating task via backend API (all groups):', quickTaskData);
         createdTask = await taskStore.createQuickTask(quickTaskData);
 
         console.log('[DEBUG] Created task response:', createdTask);

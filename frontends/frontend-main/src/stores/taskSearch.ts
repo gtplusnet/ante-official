@@ -11,7 +11,7 @@ export const useTaskSearchStore = defineStore('taskSearch', () => {
   const viewType = ref<TaskViewType>('list'); // Default to Asana-style list view
 
   // Grouping mode management with localStorage persistence
-  const groupingMode = ref<TaskGroupingMode>('stages'); // Default to stages (To do, Doing, Done)
+  const groupingMode = ref<TaskGroupingMode>('none'); // Default to no groups (all tasks in one list)
 
   // Current grouping value for drag-and-drop operations
   const currentGroupingValue = ref<string | undefined>(undefined)

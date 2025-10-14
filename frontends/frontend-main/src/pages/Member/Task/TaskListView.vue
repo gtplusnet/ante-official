@@ -504,7 +504,7 @@ const newTaskTitle = ref('');
 watch(() => props.filter, (newFilter) => {
   // If switching to "My Task" view and currently grouped by assignee, switch to default grouping
   if (newFilter === 'my' && currentGroupingMode.value === 'assignee') {
-    taskSearchStore.setGroupingMode('stages'); // Default to stages grouping
+    taskSearchStore.setGroupingMode('none'); // Default to no groups
   }
 });
 
