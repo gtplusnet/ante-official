@@ -568,6 +568,20 @@ export class SelectBoxController {
     }
   }
 
+  @Get('category-tree')
+  async getCategoryTreeList(@Res() response: Response) {
+    try {
+      const list = await this.selectBoxService.getCategoryTreeList();
+      return response.status(HttpStatus.OK).json({ list });
+    } catch (err) {
+      return this.utilityService.errorResponse(
+        response,
+        err,
+        'Category tree list fetched failed',
+      );
+    }
+  }
+
   @Get('role-list-simple')
   async getRoleListSimple(@Res() response: Response) {
     try {

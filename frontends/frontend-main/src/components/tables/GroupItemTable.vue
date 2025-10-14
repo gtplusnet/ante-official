@@ -7,21 +7,11 @@
         <q-icon class="q-mr-sm" size="20px" name="edit"></q-icon> Edit
       </q-btn>
 
-      <q-btn v-if="this.tab == 'select'" rounded class="q-mr-sm text-label-medium" @click="selectItem(props.data)" no-caps color="primary"
-        unelevated>
-        <q-icon class="q-mr-sm" size="20px" name="check"></q-icon> Select
-      </q-btn>
-
-      <q-btn v-if="this.tab == 'simple'" rounded class="text-label-medium" @click="deleteItem(props.data)" no-caps color="red" outline :disable="props.data.isPartOfGroup">
+      <q-btn rounded class="text-label-medium" @click="deleteItem(props.data)" no-caps color="red" outline :disable="props.data.isPartOfGroup">
         <q-icon class="q-mr-sm" size="20px" name="delete"></q-icon> Delete
         <q-tooltip v-if="props.data.isPartOfGroup">
           Cannot delete - Part of: {{ getGroupNames(props.data) }}
         </q-tooltip>
-      </q-btn>
-
-      <q-btn v-if="this.tab == 'deleted'" rounded class="text-label-medium" @click="restoreItem(props.data)" no-caps color="red" outline>
-        <q-icon class="q-mr-sm" size="20px" name="unarchive"></q-icon>
-        Restore
       </q-btn>
     </template>
 
@@ -43,7 +33,7 @@
 
   <!-- item create edit dialog -->
   <ItemCreateEditDialog v-model="isItemCreateEditDialogOpen" :itemInformation="itemInformation"
-    @close="onCloseItemCreateEditDialog" />
+    :forceItemGroup="true" @close="onCloseItemCreateEditDialog" />
 
   <!-- item advance list dialog -->
   <ItemAdvanceListDialog v-if="isItemAdvanceListDialogOpen" v-model="isItemAdvanceListDialogOpen" :parentId="parentId">
@@ -67,40 +57,20 @@ const ItemAdvanceListDialog = defineAsyncComponent(() =>
 );
 
 export default {
-  name: 'SimpleItemTable',
+  name: 'GroupItemTable',
   components: {
     GTable,
     ItemCreateEditDialog,
     ItemInformationDialog,
     ItemAdvanceListDialog,
   },
-  emits: ['select'],
-  props: {
-    tab: {
-      type: String,
-      default: 'simple',
-      validator: (value) => ['select', 'simple', 'deleted'].includes(value),
-    },
-    emitKey: {
-      type: String,
-      default: '',
-    },
-    hideItemGroups: {
-      type: Boolean,
-      default: false,
-    },
-  },
   computed: {
     apiFilters() {
-      const filters = [{ deleted: this.tab === 'deleted' }];
-
-      // Add isItemGroup filter when hideItemGroups is true
-      // When hiding group items, show only individual products
-      if (this.hideItemGroups) {
-        filters.push({ isItemGroup: true });
-      }
-
-      return filters;
+      // Show only items that are marked as Group (isItemGroup = false shows ONLY groups)
+      return [
+        { deleted: false },
+        { isItemGroup: false } // Filter to show ONLY group items
+      ];
     },
   },
   data: () => ({
@@ -109,38 +79,12 @@ export default {
     itemId: null,
     itemInformation: null,
     isItemAdvanceListDialogOpen: false,
+    parentId: null,
   }),
   methods: {
-    addItem() {
-      this.itemInformation = null;
-      this.isItemCreateEditDialogOpen = true;
-    },
     editItem(data) {
       this.itemInformation = data;
       this.isItemCreateEditDialogOpen = true;
-    },
-    restoreItem(data) {
-      this.$q
-        .dialog({
-          title: 'Restore Item',
-          message: 'Are you sure you want to restore this item?',
-          ok: true,
-          cancel: true,
-        })
-        .onOk(() => {
-          this.restoreItemRequest(data);
-        });
-    },
-    async restoreItemRequest(data) {
-      try {
-        this.$q.loading.show();
-        await api.put(`/items/restore/${data.id}`);
-        this.$refs.table.refetch();
-        this.$q.loading.hide();
-      } catch (error) {
-        this.handleAxiosError(error);
-        this.$q.loading.hide();
-      }
     },
     deleteItem(data) {
       this.$q
@@ -153,10 +97,6 @@ export default {
         .onOk(() => {
           this.deleteItemRequest(data);
         });
-    },
-    async selectItem(data) {
-      data.emitKey = this.emitKey;
-      this.$emit('select', data);
     },
     async deleteItemRequest(data) {
       try {

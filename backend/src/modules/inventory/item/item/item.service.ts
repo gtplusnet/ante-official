@@ -119,22 +119,45 @@ export class ItemService {
         });
       }
 
-      for (const attribute of tier.attributes) {
-        const checkAttribute = await this.prisma.itemTierAttribute.findFirst({
-          where: {
+      // Fetch existing attributes for this tier
+      const existingAttributes = await this.prisma.itemTierAttribute.findMany({
+        where: { itemTierId: tierInformation.id },
+        select: { id: true, attributeKey: true },
+      });
+
+      // Build maps for comparison
+      const existingMap = new Map(
+        existingAttributes.map(attr => [attr.attributeKey, attr]),
+      );
+      const incomingKeys = new Set(
+        tier.attributes.map((attr: string) => attr.toLowerCase()),
+      );
+
+      // Determine attributes to delete (exist in DB but not in incoming)
+      const attributesToDelete = existingAttributes
+        .filter(existing => !incomingKeys.has(existing.attributeKey))
+        .map(attr => attr.id);
+
+      // Determine attributes to create (exist in incoming but not in DB)
+      const attributesToCreate = tier.attributes.filter(
+        (attr: string) => !existingMap.has(attr.toLowerCase()),
+      );
+
+      // Execute deletions
+      if (attributesToDelete.length > 0) {
+        await this.prisma.itemTierAttribute.deleteMany({
+          where: { id: { in: attributesToDelete } },
+        });
+      }
+
+      // Execute creations
+      for (const attribute of attributesToCreate) {
+        await this.prisma.itemTierAttribute.create({
+          data: {
             itemTierId: tierInformation.id,
             attributeKey: attribute.toLowerCase(),
           },
         });
-
-        if (!checkAttribute) {
-          await this.prisma.itemTierAttribute.create({
-            data: {
-              itemTierId: tierInformation.id,
-              attributeKey: attribute.toLowerCase(),
-            },
-          });
-        }
       }
     }
   }
@@ -148,8 +171,21 @@ export class ItemService {
     const tableQuery = this.tableHandler.constructTableQuery();
 
     tableQuery.where['isDraft'] = false;
+    tableQuery.where['isDeleted'] = false;
     tableQuery.where['NOT'] = [{ estimatedBuyingPrice: null }, { size: null }];
     tableQuery.where['companyId'] = this.utility.companyId;
+
+    // Check for Item Group filtering
+    const isItemGroupFilter = body.filters?.find(f => f.hasOwnProperty('isItemGroup'));
+    if (isItemGroupFilter) {
+      if (isItemGroupFilter.isItemGroup === true) {
+        // Hide Item Groups (show only Individual Products)
+        tableQuery.where['itemType'] = { not: 'ITEM_GROUP' };
+      } else if (isItemGroupFilter.isItemGroup === false) {
+        // Show ONLY Item Groups
+        tableQuery.where['itemType'] = 'ITEM_GROUP';
+      }
+    }
 
     // Get items with brand, category, branch, and keywords data
     const itemsWithBrands = await this.prisma.item.findMany({
@@ -216,10 +252,16 @@ export class ItemService {
     tableQuery.where['isDraft'] = false;
     tableQuery.where['companyId'] = this.utility.companyId;
 
-    // Check if we need to filter out Item Groups
-    const isItemGroupFilter = body.filters?.find(f => f.hasOwnProperty('isItemGroup') && f.isItemGroup === true);
+    // Check for Item Group filtering
+    const isItemGroupFilter = body.filters?.find(f => f.hasOwnProperty('isItemGroup'));
     if (isItemGroupFilter) {
-      tableQuery.where['itemType'] = { not: 'ITEM_GROUP' };
+      if (isItemGroupFilter.isItemGroup === true) {
+        // Hide Item Groups (show only Individual Products)
+        tableQuery.where['itemType'] = { not: 'ITEM_GROUP' };
+      } else if (isItemGroupFilter.isItemGroup === false) {
+        // Show ONLY Item Groups
+        tableQuery.where['itemType'] = 'ITEM_GROUP';
+      }
     }
 
     const totalCount = await this.prisma.item.count({
@@ -241,6 +283,17 @@ export class ItemService {
         groupItems: {
           include: {
             item: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+              },
+            },
+          },
+        },
+        belongsToGroups: {
+          include: {
+            group: {
               select: {
                 id: true,
                 name: true,
@@ -376,7 +429,7 @@ export class ItemService {
 
   private async getVariations(itemId: string): Promise<string> {
     const tiers = await this.prisma.item.findMany({
-      where: { parent: itemId },
+      where: { parent: itemId, isDeleted: false },
       select: { id: true },
     });
 
@@ -390,7 +443,7 @@ export class ItemService {
 
   private async getVariationCount(itemId: string): Promise<number> {
     const count = await this.prisma.item.count({
-      where: { parent: itemId },
+      where: { parent: itemId, isDeleted: false },
     });
     return count;
   }
@@ -462,6 +515,10 @@ export class ItemService {
         estimatedBuyingPrice: true,
         size: true,
         parent: true,
+        variantCombination: true,
+        sellingPrice: true,
+        minimumStockLevelPrice: true,
+        maximumStockLevelPrice: true,
       },
     });
 
@@ -868,6 +925,40 @@ export class ItemService {
       formattedItem.variations = await this.getVariants(formattedItem.id);
     }
 
+    // Check if parent is in a group
+    const parentInGroup = (item.belongsToGroups?.length || 0) > 0;
+
+    // Check if any variation is in a group
+    let variationInGroup = false;
+    if (variationCount > 0) {
+      const variations = await this.prisma.item.findMany({
+        where: { parent: item.id, isDeleted: false },
+        include: {
+          belongsToGroups: {
+            include: {
+              group: { select: { name: true, sku: true } }
+            }
+          }
+        }
+      });
+
+      variationInGroup = variations.some(v => v.belongsToGroups.length > 0);
+
+      // Combine all groups from parent and variations
+      const allGroups = [...(item.belongsToGroups || [])];
+      variations.forEach(v => {
+        if (v.belongsToGroups.length > 0) {
+          allGroups.push(...v.belongsToGroups);
+        }
+      });
+      formattedItem.belongsToGroups = allGroups;
+    } else {
+      formattedItem.belongsToGroups = item.belongsToGroups || [];
+    }
+
+    // Item is part of group if parent OR any variation is in a group
+    formattedItem.isPartOfGroup = parentInGroup || variationInGroup;
+
     return formattedItem;
   }
 
@@ -881,7 +972,7 @@ export class ItemService {
 
   private async getChildPrices(parentId: string): Promise<number[]> {
     const childItems = await this.prisma.item.findMany({
-      where: { parent: parentId },
+      where: { parent: parentId, isDeleted: false },
       select: { estimatedBuyingPrice: true },
     });
     return childItems
@@ -904,7 +995,7 @@ export class ItemService {
 
   private async getChildSizes(parentId: string): Promise<number[]> {
     const childItems = await this.prisma.item.findMany({
-      where: { parent: parentId },
+      where: { parent: parentId, isDeleted: false },
       select: { size: true },
     });
     return childItems
@@ -979,9 +1070,59 @@ export class ItemService {
       await this.createItemKeywords(itemId, keywordIds);
     }
 
-    const variantItems = await Promise.all(
-      itemDto.variants.map(async (variant) => {
-        await this.ensureUniqueSKU(variant.sku, variant.id);
+    // Update tiers if provided - this will sync tier attributes
+    if (itemDto.tiers) {
+      await this.saveTiers(itemId, itemDto.tiers);
+    }
+
+    // Fetch existing variant items
+    const existingVariants = await this.prisma.item.findMany({
+      where: { parent: itemId, isDeleted: false },
+      select: { id: true, variantCombination: true },
+    });
+
+    // Build maps for efficient lookup
+    const existingMap = new Map(existingVariants.map(v => [v.variantCombination, v]));
+    const incomingMap = new Map((itemDto.variants || []).map(v => {
+      // Calculate variantCombination for incoming variant
+      const variantCombination = this.getVariationCombination(v.variation || {});
+      return [variantCombination, v];
+    }));
+
+    // Determine variants to delete (exist in DB but not in incoming array)
+    const variantsToDelete = existingVariants
+      .filter(existing => !incomingMap.has(existing.variantCombination))
+      .map(v => v.id);
+
+    // Determine variants to create (exist in incoming array but not in DB)
+    const variantsToCreate = (itemDto.variants || [])
+      .filter(incoming => {
+        const variantCombination = this.getVariationCombination(incoming.variation || {});
+        return !existingMap.has(variantCombination);
+      });
+
+    // Determine variants to update (exist in both)
+    const variantsToUpdate = (itemDto.variants || [])
+      .filter(incoming => {
+        const variantCombination = this.getVariationCombination(incoming.variation || {});
+        return existingMap.has(variantCombination);
+      });
+
+    // Execute deletions
+    if (variantsToDelete.length > 0) {
+      await this.prisma.item.updateMany({
+        where: { id: { in: variantsToDelete } },
+        data: { isDeleted: true },
+      });
+    }
+
+    // Execute updates
+    const updatedVariants = await Promise.all(
+      variantsToUpdate.map(async (variant) => {
+        const variantCombination = this.getVariationCombination(variant.variation || {});
+        const existingVariant = existingMap.get(variantCombination);
+
+        await this.ensureUniqueSKU(variant.sku, existingVariant.id);
 
         const variantItemUpdate = {
           name: variant.name,
@@ -993,19 +1134,30 @@ export class ItemService {
           maximumStockLevelPrice: variant.maximumStockLevel,
         };
 
-        const updatedVariantItem = await this.prisma.item.update({
-          where: { id: variant.id },
+        return await this.prisma.item.update({
+          where: { id: existingVariant.id },
           data: variantItemUpdate,
         });
-
-        return updatedVariantItem;
       }),
     );
+
+    // Execute creations
+    const createdVariants = await Promise.all(
+      variantsToCreate.map(async (variant) => {
+        return await this.createVariantItem(
+          itemId,
+          variant as CreateVariantDto,
+          itemDto.description,
+        );
+      }),
+    );
+
+    const allVariants = [...updatedVariants, ...createdVariants];
 
     return this.formatUpdateItemResponse(
       updatedParentItem,
       tagIds,
-      variantItems,
+      allVariants,
     );
   }
 
@@ -1361,6 +1513,26 @@ export class ItemService {
     }
 
     return totalStock;
+  }
+
+  private async checkItemGroupReferences(itemId: string) {
+    // Check if this item is referenced in any Item Group
+    const groupReferences = await this.prisma.itemGroupItem.findMany({
+      where: { itemId },
+      include: {
+        group: {
+          select: { name: true, sku: true }
+        }
+      }
+    });
+
+    if (groupReferences.length > 0) {
+      const groupNames = groupReferences.map(ref => ref.group.name).join(', ');
+      throw new ConflictException(
+        `Cannot delete this item because it is part of the following Item Group(s): ${groupNames}. ` +
+        `Please remove this item from the group(s) before deleting.`
+      );
+    }
   }
 
   private async validateGroupItems(groupItems: any[]) {

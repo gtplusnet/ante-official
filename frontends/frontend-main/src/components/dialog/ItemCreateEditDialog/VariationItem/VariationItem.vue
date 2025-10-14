@@ -12,7 +12,7 @@
 
     <!-- Variations -->
     <div v-if="form.itemName && form.tiers && form.tiers.length > 0" class="column justify-start">
-      <variations-partial :itemInformation="itemInformation" ref="tags" :tiers="form.tiers" :itemName="form.itemName"
+      <variations-partial :itemInformation="itemInformation" :fullItemData="fullItemData" ref="tags" :tiers="form.tiers" :itemName="form.itemName"
         @onVariationUpdate="onVariationUpdate" />
     </div>
   </div>
@@ -31,6 +31,10 @@ export default {
   },
   props: {
     itemInformation: {
+      type: Object || null,
+      default: null,
+    },
+    fullItemData: {
       type: Object || null,
       default: null,
     },

@@ -5,7 +5,7 @@
       <div class="col q-mb-md">
         <div class="label">Type</div>
         <q-select v-model="form.itemType" :options="typeOptions" outlined dense class="text-body-small" emit-value
-          map-options />
+          map-options :disable="forceItemGroup" />
       </div>
       <!-- Item name and SKU -->
       <div class="row q-gutter-sm">
@@ -26,7 +26,7 @@
         </div>
       </div>
       <!-- Estimated buying price & Unit Size-->
-      <div class="row q-gutter-sm">
+      <div v-if="form.itemType !== 'ITEM_GROUP'" class="row q-gutter-sm">
         <div class="col">
           <GInput required type="text" label="Estimated Buying Price" class="text-body-small"
             v-model="form.estimatedBuyingPrice"></GInput>
@@ -43,12 +43,12 @@
       <!-- Selling Price & Stock Levels -->
       <div class="row q-gutter-sm">
         <div class="col">
-          <GInput required type="text" label="Selling Price" v-model="form.sellingPrice"></GInput>
+          <GInput required type="number" label="Selling Price" v-model="form.sellingPrice"></GInput>
         </div>
-        <div class="col">
+        <div v-if="form.itemType !== 'ITEM_GROUP'" class="col">
           <GInput required type="number" label="Minimum Stock Level" v-model="form.minimumStockLevel"></GInput>
         </div>
-        <div class="col">
+        <div v-if="form.itemType !== 'ITEM_GROUP'" class="col">
           <GInput required type="number" label="Maximum Stock Level" v-model="form.maximumStockLevel"></GInput>
         </div>
       </div>
@@ -63,13 +63,26 @@
       <div v-if="!isTagHidden" class="row q-gutter-sm q-pb-md">
         <div class="col">
           <div class="label">Category</div>
-          <q-select v-model="form.categoryId" :options="categoryOptions" option-label="name" option-value="id" clearable
-            emit-value map-options outlined dense class="text-body-small" :loading="loadingCategories" />
+          <CustomCategoryTreeSelect
+            ref="categorySelect"
+            v-model="selectedCategoryIds"
+            placeholder="Select Category"
+            :showAllOption="false"
+            :includeChildren="false"
+            :showAddButton="true"
+            outlined
+          />
         </div>
         <div class="col">
           <div class="label">Branch</div>
-          <q-select v-model="form.branchId" :options="branchOptions" option-label="name" option-value="id" clearable
-            emit-value map-options outlined dense class="text-body-small" :loading="loadingBranches" />
+          <CustomBranchTreeSelect
+            v-model="selectedBranchIds"
+            placeholder="Select Branch"
+            :showAllOption="false"
+            :includeChildren="false"
+            :showAddButton="true"
+            outlined
+          />
         </div>
       </div>
       <!-- Brand -->
@@ -153,6 +166,8 @@ import GInput from "../../../../components/shared/form/GInput.vue";
 import GButton from "../../../../components/shared/buttons/GButton.vue";
 import TagsPartial from '../Partials/TagsPartial.vue';
 import KeywordsPartial from '../Partials/KeywordsPartial.vue';
+import CustomBranchTreeSelect from '../../../../components/selection/CustomBranchTreeSelect.vue';
+import CustomCategoryTreeSelect from '../../../../components/selection/CustomCategoryTreeSelect.vue';
 import { environment } from 'src/boot/axios';
 
 // Lazy-loaded dialog (ALL dialogs must be lazy loaded - CLAUDE.md)
@@ -170,6 +185,8 @@ export default {
     GButton,
     TagsPartial,
     KeywordsPartial,
+    CustomBranchTreeSelect,
+    CustomCategoryTreeSelect,
     AddEditBrandDialog,
     ChooseItemDialog,
   },
@@ -177,6 +194,10 @@ export default {
     itemInformation: {
       type: Object || null,
       required: false,
+    },
+    forceItemGroup: {
+      type: Boolean,
+      default: false,
     },
   },
   data: () => ({
@@ -211,10 +232,6 @@ export default {
     isKeywordsPartialDisplayed: true,
     isAddBrandDialogOpen: false,
     isChooseItemDialogOpen: false,
-    categoryOptions: [],
-    branchOptions: [],
-    loadingCategories: false,
-    loadingBranches: false,
   }),
   watch: {
     form: {
@@ -244,34 +261,53 @@ export default {
   },
   mounted() {
     this.isTagHidden = false;
-    this.fetchCategoryOptions();
-    this.fetchBranchOptions();
+    // If forceItemGroup is true and we're creating a new item, set itemType to ITEM_GROUP
+    if (this.forceItemGroup && !this.itemInformation) {
+      this.form.itemType = 'ITEM_GROUP';
+    }
     this.initialize()
   },
-  computed: {},
+  computed: {
+    // Convert between single branchId (for backend) and array format (for CustomBranchTreeSelect)
+    selectedBranchIds: {
+      get() {
+        // Convert single ID to array format for the component
+        if (this.form.branchId === null || this.form.branchId === undefined) {
+          return [];
+        }
+        return [this.form.branchId];
+      },
+      set(value) {
+        // Convert array back to single ID for the form
+        if (!value || value.length === 0) {
+          this.form.branchId = null;
+        } else {
+          // Take the first ID from the array (primary selected branch)
+          this.form.branchId = value[0];
+        }
+      }
+    },
+    // Convert between single categoryId (for backend) and array format (for CustomCategoryTreeSelect)
+    selectedCategoryIds: {
+      get() {
+        // Convert single ID to array format for the component
+        if (this.form.categoryId === null || this.form.categoryId === undefined) {
+          return [];
+        }
+        return [this.form.categoryId];
+      },
+      set(value) {
+        // Convert array back to single ID for the form
+        if (!value || value.length === 0) {
+          this.form.categoryId = null;
+        } else {
+          // Take the first ID from the array (primary selected category)
+          this.form.categoryId = value[0];
+        }
+      }
+    }
+  },
   methods: {
-    async fetchCategoryOptions() {
-      this.loadingCategories = true;
-      try {
-        const response = await this.$api.get('/item-category/select-box');
-        this.categoryOptions = response.data;
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      } finally {
-        this.loadingCategories = false;
-      }
-    },
-    async fetchBranchOptions() {
-      this.loadingBranches = true;
-      try {
-        const response = await this.$api.get('/branch/select-box');
-        this.branchOptions = response.data;
-      } catch (error) {
-        console.error('Error fetching branches:', error);
-      } finally {
-        this.loadingBranches = false;
-      }
-    },
     // Helper function to safely extract raw value from currency objects
     extractRawValue(value, fallback = 0) {
       if (value === null || value === undefined) return fallback;

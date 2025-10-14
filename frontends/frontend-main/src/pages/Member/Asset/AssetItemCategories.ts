@@ -6,6 +6,7 @@ import GTable from "../../../components/shared/display/GTable.vue";
 import { useQuasar } from 'quasar';
 import { ItemCategoryDataResponse } from '@shared/response/item-category.response';
 import { handleAxiosError } from "../../../utility/axios.error.handler";
+import GButton from 'src/components/shared/buttons/GButton.vue';
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
 const AddEditItemCategoryDialog = defineAsyncComponent(() =>
@@ -23,6 +24,7 @@ export default {
     ViewItemCategoryDialog,
     ItemCategoryNode,
     GTable,
+    GButton,
   },
   setup() {
     const $q = useQuasar();

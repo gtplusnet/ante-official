@@ -1,6 +1,6 @@
 <template>
   <q-dialog v-model="dialogVisible" @before-show="initialize" ref="dialog">
-    <TemplateDialog size="sm" :icon="'inventory'" :iconColor="'primary'">
+    <TemplateDialog maxWidth="700px" :icon="'inventory'" :iconColor="'primary'">
       <!-- Dialog Title -->
       <template #DialogTitle>
         {{ itemInformation ? 'Edit Item' : 'Create Item' }}
@@ -12,8 +12,8 @@
           <!-- Tabs for Simple/Variation Item (only for new items) -->
           <q-tabs v-if="!itemInformation" v-model="tab" dense class="text-grey" active-color="primary"
             indicator-color="primary" align="justify" narrow-indicator>
-            <q-tab name="simple" label="Simple Item" />
-            <q-tab name="variation" label="Variation Item" />
+            <q-tab name="simple" label="Simple Item" no-caps/>
+            <q-tab name="variation" label="Variation Item" no-caps />
           </q-tabs>
 
           <q-separator v-if="!itemInformation" />
@@ -22,11 +22,11 @@
           <q-tab-panels v-model="tab" animated>
             <q-tab-panel name="simple">
               <simple-item :key="componentKey" :v-model="isSimpleItemOnDisplay" :itemInformation="itemInformation"
-                @onFormUpdate="onSimpleItemUpdate" />
+                :forceItemGroup="forceItemGroup" @onFormUpdate="onSimpleItemUpdate" />
             </q-tab-panel>
             <q-tab-panel name="variation">
               <variation-item :key="componentKey" :v-model="isVariationItemOnDisplay" :itemInformation="itemInformation"
-                @onFormUpdate="onVariationItemUpdate" />
+                :fullItemData="fullItemData" @onFormUpdate="onVariationItemUpdate" />
             </q-tab-panel>
           </q-tab-panels>
         </div>
@@ -88,6 +88,7 @@ export default {
     confirm: false,
     data: null,
     componentKey: 0,
+    fullItemData: null, // Store full parent + children data
   }),
   props: {
     itemInformation: {
@@ -95,6 +96,10 @@ export default {
       default: null,
     },
     modelValue: {
+      type: Boolean,
+      default: false,
+    },
+    forceItemGroup: {
       type: Boolean,
       default: false,
     },
@@ -129,17 +134,20 @@ export default {
     }
   },
   methods: {
-    initialize() {
+    async initialize() {
       // Force child components to re-mount and reload data
       this.componentKey++;
 
       // Reset data
       this.data = null;
       this.confirm = false;
+      this.fullItemData = null;
 
       // Set appropriate tab based on item type
       if (this.itemInformation) {
+        // Fetch full item data with children for variation items
         if (this.itemInformation.variationCount > 0) {
+          await this.fetchFullItemData();
           this.tab = ref('variation');
           this.isVariationItemOnDisplay = true;
           this.isSimpleItemOnDisplay = false;
@@ -153,6 +161,15 @@ export default {
         this.tab = ref('simple');
         this.isSimpleItemOnDisplay = true;
         this.isVariationItemOnDisplay = false;
+      }
+    },
+    async fetchFullItemData() {
+      try {
+        const { data } = await api.get(`/items/${this.itemInformation.id}/parent`);
+        this.fullItemData = data;
+      } catch (error) {
+        console.error('Error fetching full item data:', error);
+        this.handleAxiosError(error);
       }
     },
     closeDialog() {
@@ -251,6 +268,7 @@ export default {
           keywords: keywords || [],
           enabledInPOS: Boolean(enabledInPOS),
           variants: variations.map((variation) => ({
+            ...(variation.id && { id: variation.id }), // Include id if exists (for updates)
             name: variation.itemName,
             sku: variation.sku,
             description: `${itemName} - ${variation.itemName}`,

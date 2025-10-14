@@ -253,6 +253,11 @@ const routesConfig: RouteRecordRaw[] = [
         component: () => import('pages/Member/Asset/Item/AssetItemAdvance.vue'),
       },
       {
+        name: 'member_asset_item_group',
+        path: 'asset/item/group',
+        component: () => import('pages/Member/Asset/Item/AssetItemGroup.vue'),
+      },
+      {
         name: 'member_asset_item_deleted',
         path: 'asset/item/deleted',
         component: () => import('pages/Member/Asset/Item/AssetItemDeleted.vue'),

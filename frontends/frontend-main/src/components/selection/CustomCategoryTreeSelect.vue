@@ -1,6 +1,6 @@
 <template>
   <div
-    class="custom-branch-select"
+    class="custom-category-select"
     :class="{
       'is-focused': isFocused,
       'is-disabled': disable,
@@ -12,29 +12,29 @@
     @focus="isFocused = true"
     @blur="handleBlur"
   >
-    <!-- Business icon for standalone and md3-filter variants -->
+    <!-- Category icon for standalone and md3-filter variants -->
     <q-icon
       v-if="(showIcon && variant === 'standalone') || variant === 'md3-filter'"
-      name="business"
+      name="category"
       class="variant-icon"
     />
 
     <!-- Wrapper for select and add button (when showAddButton is true) -->
-    <div v-if="showAddButton" class="branch-select-wrapper">
+    <div v-if="showAddButton" class="category-select-wrapper">
       <div
         class="select-container"
         @click="toggleDropdown"
       >
-        <div class="select-label" v-if="label && !selectedBranch">{{ label }}</div>
-        <div class="select-value" v-if="selectedBranch && selectedOption">
+        <div class="select-label" v-if="label && !selectedCategory">{{ label }}</div>
+        <div class="select-value" v-if="selectedCategory && selectedOption">
           <q-icon
             v-if="selectedOption.hasChildren"
             name="account_tree"
             size="14px"
             color="primary"
-            class="branch-icon"
+            class="category-icon"
           />
-          <span class="branch-name">{{ selectedOption.label }}</span>
+          <span class="category-name">{{ selectedOption.label }}</span>
           <span
             v-if="includeChildren && selectedOption.childCount && selectedOption.childCount > 0"
             class="child-count"
@@ -67,16 +67,16 @@
       class="select-container"
       @click="toggleDropdown"
     >
-      <div class="select-label" v-if="label && !selectedBranch">{{ label }}</div>
-      <div class="select-value" v-if="selectedBranch && selectedOption">
+      <div class="select-label" v-if="label && !selectedCategory">{{ label }}</div>
+      <div class="select-value" v-if="selectedCategory && selectedOption">
         <q-icon
           v-if="selectedOption.hasChildren"
           name="account_tree"
           size="14px"
           color="primary"
-          class="branch-icon"
+          class="category-icon"
         />
-        <span class="branch-name">{{ selectedOption.label }}</span>
+        <span class="category-name">{{ selectedOption.label }}</span>
         <span
           v-if="includeChildren && selectedOption.childCount && selectedOption.childCount > 0"
           class="child-count"
@@ -92,17 +92,17 @@
         :class="{ 'rotate': showDropdown }"
       />
     </div>
-    
+
     <teleport to="body">
-      <div 
-        v-show="showDropdown" 
-        class="dropdown-menu" 
+      <div
+        v-show="showDropdown"
+        class="dropdown-menu"
         :style="dropdownStyle"
       >
         <div class="search-box" v-if="options.length > 10">
           <q-input
             v-model="searchText"
-            placeholder="Search branches..."
+            placeholder="Search categories..."
             dense
             outlined
             @click.stop
@@ -113,45 +113,45 @@
             </template>
           </q-input>
         </div>
-        
+
         <div class="options-container">
-          <div 
+          <div
             v-if="showAllOption"
             class="option-item"
-            :class="{ 'is-selected': selectedBranch === 'all' }"
+            :class="{ 'is-selected': selectedCategory === 'all' }"
             @click="selectOption('all')"
           >
             <q-icon name="select_all" size="18px" color="primary" class="q-mr-sm" />
-            <span class="option-label">All Branches</span>
+            <span class="option-label">All Categories</span>
           </div>
-          
+
           <div
             v-for="option in filteredOptions"
             :key="option.key"
             class="option-item"
-            :class="{ 'is-selected': selectedBranch === option.key }"
+            :class="{ 'is-selected': selectedCategory === option.key }"
             :style="{ paddingLeft: `${option.depth * 24 + 12}px` }"
             @click="selectOption(option.key)"
           >
-            <q-icon 
-              v-if="option.hasChildren" 
-              name="account_tree" 
-              size="18px" 
-              color="primary" 
+            <q-icon
+              v-if="option.hasChildren"
+              name="account_tree"
+              size="18px"
+              color="primary"
               class="q-mr-sm"
             />
-            <q-icon 
-              v-else-if="option.depth > 0" 
-              name="subdirectory_arrow_right" 
-              size="18px" 
-              color="grey-6" 
+            <q-icon
+              v-else-if="option.depth > 0"
+              name="subdirectory_arrow_right"
+              size="18px"
+              color="grey-6"
               class="q-mr-sm"
             />
             <span class="option-label">{{ option.label }}</span>
-            <q-chip 
-              v-if="option.childCount > 0" 
-              size="sm" 
-              color="blue-1" 
+            <q-chip
+              v-if="option.childCount > 0"
+              size="sm"
+              color="blue-1"
               text-color="primary"
               dense
               class="q-ml-auto"
@@ -159,9 +159,9 @@
               {{ option.childCount }}
             </q-chip>
           </div>
-          
+
           <div v-if="filteredOptions.length === 0" class="no-options">
-            No branches found
+            No categories found
           </div>
         </div>
       </div>
@@ -169,11 +169,11 @@
 
     <q-linear-progress v-if="loading" indeterminate color="primary" class="loading-bar" />
 
-    <!-- Add Branch Dialog -->
-    <ManpowerAddEditBranchDialog
+    <!-- Add Category Dialog -->
+    <AssetAddEditItemCategoryDialog
       v-if="showAddButton"
-      v-model="showBranchDialog"
-      @saveDone="handleBranchSaved"
+      v-model="showCategoryDialog"
+      @saveDone="handleCategorySaved"
     />
   </div>
 </template>
@@ -182,11 +182,11 @@
 import { defineComponent, defineAsyncComponent, ref, onMounted, onUnmounted, computed, watch, getCurrentInstance } from 'vue';
 import type { ComponentInternalInstance, PropType } from 'vue';
 
-const ManpowerAddEditBranchDialog = defineAsyncComponent(() =>
-  import('../../pages/Member/Manpower/dialogs/configuration/ManpowerAddEditBranchDialog.vue')
+const AssetAddEditItemCategoryDialog = defineAsyncComponent(() =>
+  import('../../pages/Member/Asset/dialogs/AssetAddEditItemCategoryDialog.vue')
 );
 
-interface BranchOption {
+interface CategoryOption {
   key: number | string;
   label: string;
   value: number | string;
@@ -197,9 +197,9 @@ interface BranchOption {
 }
 
 export default defineComponent({
-  name: 'CustomBranchTreeSelect',
+  name: 'CustomCategoryTreeSelect',
   components: {
-    ManpowerAddEditBranchDialog,
+    AssetAddEditItemCategoryDialog,
   },
   props: {
     modelValue: {
@@ -212,7 +212,7 @@ export default defineComponent({
     },
     placeholder: {
       type: String,
-      default: 'Select a branch',
+      default: 'Select a category',
     },
     disable: {
       type: Boolean,
@@ -253,50 +253,50 @@ export default defineComponent({
     },
     addButtonTooltip: {
       type: String,
-      default: 'Add Branch',
+      default: 'Add Category',
     },
   },
   emits: ['update:modelValue'],
   setup(props, { emit }) {
     const loading = ref(false);
-    const options = ref<BranchOption[]>([]);
-    const selectedBranch = ref<number | string | null>(null);
+    const options = ref<CategoryOption[]>([]);
+    const selectedCategory = ref<number | string | null>(null);
     const searchText = ref('');
     const showDropdown = ref(false);
     const isFocused = ref(false);
     const dropdownPosition = ref({ top: 0, left: 0, width: 0 });
-    const showBranchDialog = ref(false);
-    
+    const showCategoryDialog = ref(false);
+
     // Get the $api instance
     const instance = getCurrentInstance() as ComponentInternalInstance;
     const $api = instance?.proxy?.$api;
 
-    // Load branches from API
-    const loadBranches = async () => {
+    // Load categories from API
+    const loadCategories = async () => {
       if (!$api) {
         console.error('API instance not available');
         return;
       }
-      
+
       loading.value = true;
       try {
-        const response = await $api.get('/select-box/branch-tree');
-        
+        const response = await $api.get('/select-box/category-tree');
+
         if (response.data && response.data.list) {
-          // Check if "All Branches" is already in the list from backend
+          // Check if "All Categories" is already in the list from backend
           const hasAllOption = response.data.list.some((item: any) => item.key === 'all');
-          
+
           options.value = response.data.list.map((item: any) => ({
             ...item,
             value: item.key,
           }));
-          
-          
-          // Only add "All Branches" if not already present and enabled
+
+
+          // Only add "All Categories" if not already present and enabled
           if (props.showAllOption && !hasAllOption) {
             options.value.unshift({
               key: 'all',
-              label: 'All Branches',
+              label: 'All Categories',
               value: 'all',
               depth: 0,
               hasChildren: false,
@@ -305,23 +305,23 @@ export default defineComponent({
           }
         }
       } catch (error) {
-        console.error('Error loading branches:', error);
+        console.error('Error loading categories:', error);
         options.value = [];
       } finally {
         loading.value = false;
       }
     };
 
-    // Get all child IDs for a branch
-    const getChildIds = (branchId: number | string): (number | string)[] => {
+    // Get all child IDs for a category
+    const getChildIds = (categoryId: number | string): (number | string)[] => {
       const children: (number | string)[] = [];
-      const branch = options.value.find(b => b.key === branchId);
-      
-      if (!branch || !branch.hasChildren) {
+      const category = options.value.find(c => c.key === categoryId);
+
+      if (!category || !category.hasChildren) {
         return children;
       }
 
-      // Find all branches that have this as parent
+      // Find all categories that have this as parent
       const findChildren = (parentId: number | string) => {
         options.value.forEach(opt => {
           if (opt.parentId === parentId) {
@@ -333,7 +333,7 @@ export default defineComponent({
         });
       };
 
-      findChildren(branchId);
+      findChildren(categoryId);
       return children;
     };
 
@@ -353,36 +353,36 @@ export default defineComponent({
     // Toggle dropdown
     const toggleDropdown = () => {
       if (props.disable || props.readonly) return;
-      
+
       if (!showDropdown.value) {
         updateDropdownPosition();
       }
-      
+
       showDropdown.value = !showDropdown.value;
     };
 
     // Select an option
     const selectOption = (value: number | string) => {
-      selectedBranch.value = value;
+      selectedCategory.value = value;
       showDropdown.value = false;
-      
+
       if (value === 'all') {
-        // Return empty array when "All Branches" is selected (no filtering needed)
+        // Return empty array when "All Categories" is selected (no filtering needed)
         emit('update:modelValue', []);
         return;
       }
 
       // Always return an array of IDs
-      const branchIds: (number | string)[] = [value];
-      
+      const categoryIds: (number | string)[] = [value];
+
       // If including children, add all child IDs
       if (props.includeChildren) {
-        branchIds.push(...getChildIds(value));
+        categoryIds.push(...getChildIds(value));
       }
 
       // Remove duplicates and emit
-      const uniqueBranchIds = [...new Set(branchIds)];
-      emit('update:modelValue', uniqueBranchIds);
+      const uniqueCategoryIds = [...new Set(categoryIds)];
+      emit('update:modelValue', uniqueCategoryIds);
     };
 
     // Computed filtered options
@@ -392,14 +392,14 @@ export default defineComponent({
       }
 
       const needle = searchText.value.toLowerCase();
-      return options.value.filter(opt => 
+      return options.value.filter(opt =>
         opt.key !== 'all' && opt.label.toLowerCase().indexOf(needle) > -1
       );
     });
 
     // Get selected option details
     const selectedOption = computed(() => {
-      return options.value.find(opt => opt.key === selectedBranch.value);
+      return options.value.find(opt => opt.key === selectedCategory.value);
     });
 
     // Computed dropdown style
@@ -422,30 +422,30 @@ export default defineComponent({
 
     // Watch for external model value changes
     watch(() => props.modelValue, (newVal) => {
-      const branchIds = newVal as (number | string)[];
-      // If modelValue is null/undefined or empty array from "All Branches" selection
-      if (!branchIds) {
-        selectedBranch.value = null;
-      } else if (branchIds.length === 0) {
-        // If empty array, set to 'all' (means no filtering - "All Branches" selected)
-        selectedBranch.value = 'all';
+      const categoryIds = newVal as (number | string)[];
+      // If modelValue is null/undefined or empty array from "All Categories" selection
+      if (!categoryIds) {
+        selectedCategory.value = null;
+      } else if (categoryIds.length === 0) {
+        // If empty array, set to 'all' (means no filtering - "All Categories" selected)
+        selectedCategory.value = 'all';
       } else {
-        // Otherwise, find the primary branch (the one without parent in the selection)
-        const primaryBranch = branchIds.find(id => {
-          const branch = options.value.find(opt => opt.key === id);
-          return branch && (!branch.parentId || !branchIds.includes(branch.parentId));
+        // Otherwise, find the primary category (the one without parent in the selection)
+        const primaryCategory = categoryIds.find(id => {
+          const category = options.value.find(opt => opt.key === id);
+          return category && (!category.parentId || !categoryIds.includes(category.parentId));
         });
-        selectedBranch.value = primaryBranch || branchIds[0];
+        selectedCategory.value = primaryCategory || categoryIds[0];
       }
     });
 
     // Close dropdown when clicking outside
     const handleClickOutside = (e: MouseEvent) => {
       if (!showDropdown.value) return;
-      
+
       const target = e.target as HTMLElement;
       const element = instance?.vnode.el as HTMLElement;
-      
+
       if (element && !element.contains(target)) {
         showDropdown.value = false;
       }
@@ -454,14 +454,14 @@ export default defineComponent({
     onMounted(async () => {
       // Small delay to ensure $api is available
       await new Promise(resolve => setTimeout(resolve, 100));
-      await loadBranches();
-      
-      // Set default to "All Branches" if no initial value
+      await loadCategories();
+
+      // Set default to "All Categories" if no initial value
       if (!props.modelValue || props.modelValue.length === 0) {
-        selectedBranch.value = 'all';
+        selectedCategory.value = 'all';
         emit('update:modelValue', []);
       }
-      
+
       document.addEventListener('click', handleClickOutside);
     });
 
@@ -469,21 +469,21 @@ export default defineComponent({
       document.removeEventListener('click', handleClickOutside);
     });
 
-    // Public method for reloading branches and selecting a specific one
-    const reloadAndSelect = async (branchId: number | string) => {
-      await loadBranches();
-      if (branchId) {
-        selectOption(branchId);
+    // Public method for reloading categories and selecting a specific one
+    const reloadAndSelect = async (categoryId: number | string) => {
+      await loadCategories();
+      if (categoryId) {
+        selectOption(categoryId);
       }
     };
 
-    // Show add branch dialog
+    // Show add category dialog
     const showAddDialog = () => {
-      showBranchDialog.value = true;
+      showCategoryDialog.value = true;
     };
 
-    // Handle when a new branch is saved
-    const handleBranchSaved = async (data: any) => {
+    // Handle when a new category is saved
+    const handleCategorySaved = async (data: any) => {
       if (data && data.id) {
         await reloadAndSelect(data.id);
       }
@@ -492,7 +492,7 @@ export default defineComponent({
     return {
       loading,
       options,
-      selectedBranch,
+      selectedCategory,
       searchText,
       showDropdown,
       isFocused,
@@ -503,19 +503,18 @@ export default defineComponent({
       selectOption,
       handleBlur,
       reloadAndSelect,
-      showBranchDialog,
+      showCategoryDialog,
       showAddDialog,
-      handleBranchSaved,
+      handleCategorySaved,
     };
   },
 });
 </script>
 
 <style lang="scss" scoped>
-.custom-branch-select {
+.custom-category-select {
   position: relative;
   width: 100%;
-  cursor: pointer;
   outline: none;
 
   &.is-disabled {
@@ -525,7 +524,7 @@ export default defineComponent({
   }
 }
 
-.branch-select-wrapper {
+.category-select-wrapper {
   display: grid;
   grid-gap: 10px;
   grid-template-columns: 1fr auto;
@@ -547,11 +546,11 @@ export default defineComponent({
   transition: all 0.2s ease;
   cursor: pointer;
 
-  .custom-branch-select:hover:not(.is-disabled) & {
+  .custom-category-select:hover:not(.is-disabled) & {
     background: #ebebeb;
   }
 
-  .custom-branch-select.is-focused & {
+  .custom-category-select.is-focused & {
     background: #e8e8e8;
   }
 }
@@ -574,18 +573,18 @@ export default defineComponent({
   width: 100%;
   overflow: hidden;
   gap: 4px;
-  
-  .branch-icon {
+
+  .category-icon {
     flex-shrink: 0;
     margin-right: 4px;
   }
-  
-  .branch-name {
+
+  .category-name {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  
+
   .child-count {
     color: #666;
     font-size: 11px;
@@ -607,7 +606,7 @@ export default defineComponent({
   transform: translateY(-50%);
   transition: transform 0.2s ease;
   color: #666;
-  
+
   &.rotate {
     transform: translateY(-50%) rotate(180deg);
   }
@@ -630,7 +629,7 @@ export default defineComponent({
 .search-box {
   padding: 8px;
   border-bottom: 1px solid #e0e0e0;
-  
+
   .search-input {
     :deep(.q-field__control) {
       height: 32px;
@@ -650,26 +649,26 @@ export default defineComponent({
   padding: 8px 12px;
   cursor: pointer;
   transition: background 0.2s ease;
-  
+
   &:hover {
     background: #f5f5f5;
   }
-  
+
   &.is-selected {
     background: #e3f2fd;
     color: #1976d2;
     font-weight: 500;
   }
-  
+
   .option-label {
     flex: 1;
   }
-  
+
   :deep(.q-chip) {
     height: 18px;
     font-size: 11px;
     padding: 0 6px;
-    
+
     .q-chip__content {
       padding: 0;
     }
@@ -708,15 +707,15 @@ export default defineComponent({
   &::-webkit-scrollbar {
     width: 6px;
   }
-  
+
   &::-webkit-scrollbar-track {
     background: #f5f5f5;
   }
-  
+
   &::-webkit-scrollbar-thumb {
     background: #ccc;
     border-radius: 3px;
-    
+
     &:hover {
       background: #999;
     }
@@ -724,23 +723,23 @@ export default defineComponent({
 }
 
 // Variant-specific styles
-.custom-branch-select {
+.custom-category-select {
   // Standalone variant - has its own icon and more spacing
   &.variant-standalone {
     display: flex;
     align-items: center;
     gap: 8px;
-    
+
     .variant-icon {
       color: #666;
       font-size: 20px;
     }
-    
+
     .select-container {
       flex: 1;
     }
   }
-  
+
   // MD3 filter variant - self-contained with icon and full styling
   &.variant-md3-filter {
     position: relative;
@@ -751,16 +750,16 @@ export default defineComponent({
     display: flex;
     align-items: center;
     padding: 0 16px;
-    
+
     &:hover:not(.is-disabled) {
       background-color: #ebebed;
     }
-    
+
     &.is-focused {
       background-color: #e8e8ea;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
     }
-    
+
     .variant-icon {
       position: absolute;
       left: 16px;
@@ -770,7 +769,7 @@ export default defineComponent({
       font-size: 18px;
       z-index: 1;
     }
-    
+
     .select-container {
       background: transparent;
       border: none;
@@ -778,41 +777,41 @@ export default defineComponent({
       border-radius: 0;
       min-height: auto;
       width: 100%;
-      
+
       &:hover {
         background: transparent; // No additional hover, parent handles it
       }
     }
-    
+
     &.is-focused .select-container {
       background: transparent; // No additional focus styling
     }
   }
-  
+
   // Dense variant
   &.is-dense {
     .select-container {
       min-height: 32px;
       padding: 4px 32px 4px 12px;
     }
-    
+
     .select-value,
     .select-placeholder {
       font-size: 12px;
     }
   }
-  
+
   // Outlined variant
   &.is-outlined {
     .select-container {
       background: transparent;
       border: 1px solid #e0e0e0;
-      
+
       &:hover {
         border-color: #ccc;
       }
     }
-    
+
     &.is-focused .select-container {
       border-color: #1976d2;
       background: transparent;
