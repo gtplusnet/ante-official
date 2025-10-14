@@ -297,6 +297,11 @@ export default {
         icon: "o_business",
       },
       {
+        title: "Deal Type",
+        key: "member_leads_deal_type",
+        icon: "o_category",
+      },
+      {
         icon: "diversity_3",
         title: "People",
         key: "member_leads_people",
