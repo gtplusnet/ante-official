@@ -92,9 +92,12 @@ export class CreateItemWithVariantsDto {
   itemType?: string;
 }
 export class UpdateVariantDto {
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  id: string;
+  id?: string;
+
+  @IsOptional()
+  variation?: any;
 
   @IsOptional()
   @IsString()
@@ -150,6 +153,10 @@ export class UpdateItemWithVariantsDto {
   @ValidateNested({ each: true })
   @Type(() => UpdateVariantDto)
   variants?: UpdateVariantDto[];
+
+  @IsOptional()
+  @IsArray()
+  tiers?: any[];
 
   @IsOptional()
   @IsNumber()

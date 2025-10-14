@@ -62,6 +62,10 @@ export default {
       type: Object || null,
       default: null,
     },
+    fullItemData: {
+      type: Object || null,
+      default: null,
+    },
   },
   data() {
     return {
@@ -94,16 +98,43 @@ export default {
       }
 
       const variations = this.generateCombinations(tiers);
-      this.data = variations.map((variation) => ({
-        itemName: this.generateItemName(variation),
-        sku: this.generateSku(variation),
-        variation: variation,
-        price: 0,
-        size: 0,
-        sellingPrice: 0,
-        minimumStockLevel: 0,
-        maximumStockLevel: 0,
-      }));
+
+      // Build map of existing children by variantCombination
+      const existingChildrenMap = new Map();
+      if (this.fullItemData && this.fullItemData.children && Array.isArray(this.fullItemData.children)) {
+        this.fullItemData.children.forEach(child => {
+          if (child.variantCombination) {
+            existingChildrenMap.set(child.variantCombination, child);
+          }
+        });
+      }
+
+      this.data = variations.map((variation) => {
+        // Generate variantCombination for matching
+        const variantCombination = this.getVariantCombination(variation);
+        const existingChild = existingChildrenMap.get(variantCombination);
+
+        return {
+          itemName: this.generateItemName(variation),
+          sku: existingChild ? existingChild.sku : this.generateSku(variation),
+          variation: variation,
+          price: existingChild ? existingChild.estimatedBuyingPrice : 0,
+          size: existingChild ? existingChild.size : 0,
+          sellingPrice: existingChild ? existingChild.sellingPrice : 0,
+          minimumStockLevel: existingChild ? existingChild.minimumStockLevelPrice : 0,
+          maximumStockLevel: existingChild ? existingChild.maximumStockLevelPrice : 0,
+          id: existingChild ? existingChild.id : undefined, // Preserve ID if exists
+        };
+      });
+    },
+
+    getVariantCombination(variation) {
+      // Convert variation object to variantCombination string
+      // E.g., { color: 'blue', size: 'small' } -> 'BLUE-SMALL'
+      const sortedKeys = Object.keys(variation).sort();
+      return sortedKeys
+        .map(key => variation[key].toUpperCase())
+        .join('-');
     },
     
 
@@ -140,6 +171,10 @@ export default {
 
     capitalizeFirstLetter(string) {
       return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+    },
+
+    formatCode(string) {
+      return string.toUpperCase().replace(/\s+/g, '-');
     },
   },
 };

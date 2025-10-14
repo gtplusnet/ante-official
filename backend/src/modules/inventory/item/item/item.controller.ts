@@ -105,11 +105,10 @@ export class ItemController {
   @Post('update-variation-item/id')
   async updateItemWithVariants(
     @Res() response,
-    @Param('id') itemId: string,
     @Body() itemDto: UpdateItemWithVariantsDto,
   ) {
     this.utility.responseHandler(
-      this.itemService.updateItemWithVariants(itemId, itemDto),
+      this.itemService.updateItemWithVariants(itemDto.id, itemDto),
       response,
     );
   }
