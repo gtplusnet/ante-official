@@ -110,8 +110,24 @@ export class LocalHolidayConfigurationService {
   }
   async getLocalHolidayListByDate(params: {
     date: Date;
+    companyId?: number; // Optional companyId parameter for background processing
   }): Promise<LocalHolidayResponse[]> {
-    const { date } = params;
+    const { date, companyId } = params;
+
+    // Use provided companyId, or fallback to CLS context if available
+    let targetCompanyId = companyId;
+    if (!targetCompanyId) {
+      try {
+        targetCompanyId = this.utilityService.companyId;
+      } catch (error) {
+        // CLS context not available - this shouldn't happen for local holidays
+        // as they should always have companyId passed in background jobs
+        this.utilityService.log(
+          `[LOCAL-HOLIDAY] Warning: No companyId available, skipping local holiday check for date: ${date}`,
+        );
+        return []; // Return empty array instead of throwing error
+      }
+    }
 
     const holidayList = await this.prisma.localHoliday.findMany({
       where: {
@@ -119,7 +135,7 @@ export class LocalHolidayConfigurationService {
           gte: new Date(date.getFullYear(), date.getMonth(), date.getDate()),
           lt: new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1),
         },
-        companyId: this.utilityService.companyId,
+        companyId: targetCompanyId,
       },
     });
 

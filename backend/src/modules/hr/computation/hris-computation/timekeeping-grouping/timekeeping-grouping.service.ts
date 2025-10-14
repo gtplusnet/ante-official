@@ -133,9 +133,13 @@ export class TimekeepingGroupingService {
       );
     }
 
+    // Get employee's companyId for background processing (without CLS context)
+    const employeeCompanyId = this.employeeInformation?.accountDetails?.company?.id;
+
     const localHolidayList: LocalHolidayResponse[] =
       await this.localHolidayConfigurationService.getLocalHolidayListByDate({
         date: employeeTimekeeping.date,
+        companyId: employeeCompanyId, // Pass companyId for background processing
       });
 
     const nationalHolidayList: NationalHolidayResponse[] =
@@ -374,11 +378,12 @@ export class TimekeepingGroupingService {
       const dateStr = `${year}-${month}-${day}`;
 
       // Get team schedule assignment
+      // Use employee's companyId instead of accessing CLS context
       const teamSchedule = await this.prisma.teamScheduleAssignment.findFirst({
         where: {
           teamId: employee.teamMembership.teamId,
           date: dateStr,
-          companyId: this.utilityService.companyId,
+          companyId: employee.companyId, // Use employee's companyId from database
         },
       });
 

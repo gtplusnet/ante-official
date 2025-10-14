@@ -183,13 +183,17 @@ export class QueueService {
             completePercentage: completePercentage,
           });
 
+          // Get companyId from first log queue params (all logs in batch should have same companyId)
+          const companyId = logQueues[0]?.params?.['companyId'];
+
           // Emit queue progress update via socket
-          this.emitQueueProgressUpdate(
+          await this.emitQueueProgressUpdate(
             queue._id as string,
             currentCount,
             queue.totalCount,
             QueueStatus.PROCESSING,
             completePercentage,
+            companyId, // Pass companyId from queue log params
           );
 
           this.utilityService.log(
@@ -319,44 +323,57 @@ export class QueueService {
     return response;
   }
 
-  private emitQueueProgressUpdate(
+  private async emitQueueProgressUpdate(
     queueId: string,
     currentCount: number,
     totalCount: number,
     status: QueueStatus,
     completePercentage: number,
-  ): void {
+    companyId?: number, // Optional companyId parameter
+  ): Promise<void> {
     try {
       // Get queue settings to find the cutoffDateRangeId if it's a payroll processing queue
-      this.queueMongoService.findById(queueId).then((queue) => {
-        if (
-          queue &&
-          queue.queueSettings &&
-          queue.queueSettings['cutoffDateRangeId']
-        ) {
-          const cutoffDateRangeId = queue.queueSettings['cutoffDateRangeId'];
+      const queue = await this.queueMongoService.findById(queueId);
 
-          // Emit to all users in the company
-          // We need to get the company ID from somewhere - let's assume it's in utility service
-          const companyId = this.utilityService.companyId;
+      if (
+        queue &&
+        queue.queueSettings &&
+        queue.queueSettings['cutoffDateRangeId']
+      ) {
+        const cutoffDateRangeId = queue.queueSettings['cutoffDateRangeId'];
 
-          if (companyId) {
-            this.socketService.emitToCompany(
-              companyId,
-              'queue-progress-updated',
-              {
-                queueId,
-                cutoffDateRangeId,
-                currentCount,
-                totalCount,
-                status,
-                completePercentage,
-                companyId,
-              },
+        // Use provided companyId, or try to get from CLS context if in request context
+        let targetCompanyId = companyId;
+
+        if (!targetCompanyId) {
+          try {
+            // Only try to get from CLS if we're in a request context
+            targetCompanyId = this.utilityService.companyId;
+          } catch (error) {
+            // CLS context not available (background processing) - skip socket emission
+            this.utilityService.log(
+              `[QUEUE-PROGRESS] Skipping socket emission - no companyId available for queue #${queueId}`,
             );
+            return;
           }
         }
-      });
+
+        if (targetCompanyId) {
+          this.socketService.emitToCompany(
+            targetCompanyId,
+            'queue-progress-updated',
+            {
+              queueId,
+              cutoffDateRangeId,
+              currentCount,
+              totalCount,
+              status,
+              completePercentage,
+              companyId: targetCompanyId,
+            },
+          );
+        }
+      }
     } catch (error) {
       this.utilityService.error(
         'Error emitting queue progress update: ' + error.message,
