@@ -76,6 +76,11 @@ export default {
 
     const navList = ref<NavItem[]>([
       {
+        title: "Goals",
+        key: "member_task_goals",
+        icon: "o_emoji_events",
+      },
+      {
         title: "My Task",
         key: "member_task_my_task",
         icon: "o_person",

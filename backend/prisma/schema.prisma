@@ -169,6 +169,7 @@ model Account {
   assignedTask                           Task[]                             @relation("AssignedTo")
   tasks                                  Task[]                             @relation("CreatedBy")
   updatedTasks                           Task[]                             @relation("UpdatedBy")
+  goals                                  Goal[]                             @relation("GoalCreatedBy")
   TaskWatcher                            TaskWatcher[]
   TaskOrderContext                       TaskOrderContext[]
   teamMembership                         TeamMember?
@@ -473,6 +474,7 @@ model Task {
   companyId               Int?
   taskPhaseId             Int?
   isDraft                 Boolean                  @default(false)
+  goalId                  Int?
   ApprovalMetadata        ApprovalMetadata?
   EmailApprovalToken      EmailApprovalToken[]
   Files                   Files[]
@@ -484,6 +486,7 @@ model Task {
   updatedBy               Account                  @relation("UpdatedBy", fields: [updatedById], references: [id], onDelete: Cascade)
   company                 Company?                 @relation(fields: [companyId], references: [id], onDelete: SetNull)
   taskPhase               TaskPhase?               @relation(fields: [taskPhaseId], references: [id], onDelete: SetNull)
+  goal                    Goal?                    @relation(fields: [goalId], references: [id], onDelete: SetNull)
   TaskWatcher             TaskWatcher[]
   TaskOrderContext        TaskOrderContext[]
   WorkflowTask            WorkflowTask?
@@ -543,6 +546,28 @@ model TaskPhase {
 
   @@index([projectId, isDeleted, order])
   @@index([companyId])
+}
+
+model Goal {
+  id          Int        @id @default(autoincrement())
+  name        String     @db.VarChar(255)
+  description String?    @db.Text
+  deadline    DateTime?
+  status      GoalStatus @default(PENDING)
+  progress    Float      @default(0)
+  createdById String
+  companyId   Int?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  isDeleted   Boolean    @default(false)
+
+  createdBy Account  @relation("GoalCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  tasks     Task[]
+
+  @@index([createdById])
+  @@index([companyId])
+  @@index([status, isDeleted])
 }
 
 model ApprovalMetadata {
@@ -2158,6 +2183,7 @@ model Company {
   RequestForPayment             RequestForPayment[]
   Task                          Task[]
   TaskPhase                     TaskPhase[]
+  Goal                          Goal[]
   Role                          Role[]
   Schedule                      Schedule[]
   SchoolAttendance              SchoolAttendance[]
@@ -3787,6 +3813,11 @@ enum TaskType {
 enum TaskPhaseStatus {
   DRAFT
   ACTIVE
+  COMPLETED
+}
+
+enum GoalStatus {
+  PENDING
   COMPLETED
 }
 

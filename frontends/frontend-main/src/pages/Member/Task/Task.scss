@@ -293,6 +293,28 @@ $asana-off-track: #fc636b;
         }
       }
     }
+
+    &.goal-dropdown {
+      min-width: 180px;
+
+      .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+
+        &:hover {
+          background: $asana-hover;
+        }
+
+        span {
+          font-size: 14px;
+          color: $asana-text-primary;
+        }
+      }
+    }
   }
 
   // Material Icons integration
@@ -317,18 +339,18 @@ $asana-off-track: #fc636b;
   // Column headers
   .list-header {
     display: grid;
-    grid-template-columns: 1fr 150px 120px 80px 120px 100px 30px;
+    grid-template-columns: 1fr 150px 120px 80px 120px 150px 100px 30px;
     padding: 6px 12px;
     background: $asana-bg;
 
     &.hide-assignee {
-      grid-template-columns: 1fr 120px 80px 120px 100px 30px;
+      grid-template-columns: 1fr 120px 80px 120px 150px 100px 30px;
     }
     &.hide-project {
-      grid-template-columns: 1fr 150px 120px 80px 100px 30px;
+      grid-template-columns: 1fr 150px 120px 80px 150px 100px 30px;
     }
     &.hide-assignee.hide-project {
-      grid-template-columns: 1fr 120px 80px 100px 30px;
+      grid-template-columns: 1fr 120px 80px 150px 100px 30px;
     }
     border-bottom: 1px solid $asana-border;
     font-size: 11px;
@@ -482,18 +504,18 @@ $asana-off-track: #fc636b;
 
   .task-row {
     display: grid;
-    grid-template-columns: 1fr 150px 120px 80px 120px 100px 30px;
+    grid-template-columns: 1fr 150px 120px 80px 120px 150px 100px 30px;
     align-items: center;
     min-height: 28px;
 
     &.hide-assignee {
-      grid-template-columns: 1fr 120px 80px 120px 100px 30px;
+      grid-template-columns: 1fr 120px 80px 120px 150px 100px 30px;
     }
     &.hide-project {
-      grid-template-columns: 1fr 150px 120px 80px 100px 30px;
+      grid-template-columns: 1fr 150px 120px 80px 150px 100px 30px;
     }
     &.hide-assignee.hide-project {
-      grid-template-columns: 1fr 120px 80px 100px 30px;
+      grid-template-columns: 1fr 120px 80px 150px 100px 30px;
     }
     padding: 2px 12px;
     border-bottom: 1px solid color.adjust($asana-border, $lightness: 5%);
@@ -897,6 +919,53 @@ $asana-off-track: #fc636b;
       }
     }
 
+    .task-goal {
+      padding: 2px 6px;
+      position: relative;
+      max-width: 200px;
+
+      &.editable {
+        .goal-button {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 2px 12px 2px 6px;
+          background: transparent;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          max-width: 100%;
+          overflow: hidden;
+
+          &:hover {
+            background: $asana-hover;
+
+            .goal-name {
+              color: $asana-primary;
+            }
+          }
+
+          .goal-indicator {
+            font-size: 14px;
+            flex-shrink: 0;
+          }
+
+          .goal-name {
+            font-size: 12px;
+            color: $asana-text-secondary;
+            transition: color 0.2s ease;
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: inline-block;
+            vertical-align: middle;
+          }
+        }
+      }
+    }
+
     .task-tags {
       padding: 2px 6px;
 
@@ -1014,7 +1083,7 @@ $asana-off-track: #fc636b;
 
     .inline-task-input-row {
       display: grid;
-      grid-template-columns: minmax(300px, 1fr) 120px 100px 80px 150px 120px 40px;
+      grid-template-columns: minmax(300px, 1fr) 120px 100px 80px 150px 150px 120px 40px;
       align-items: center;
       padding: 4px 12px 4px 12px;
       min-height: 36px;
@@ -1022,7 +1091,7 @@ $asana-off-track: #fc636b;
       border: 1px solid $asana-primary;
 
       &.hide-assignee {
-        grid-template-columns: minmax(300px, 1fr) 100px 80px 150px 120px 40px;
+        grid-template-columns: minmax(300px, 1fr) 100px 80px 150px 150px 120px 40px;
       }
 
       .task-name {

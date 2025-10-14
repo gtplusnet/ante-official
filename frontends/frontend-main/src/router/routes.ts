@@ -115,6 +115,12 @@ const routesConfig: RouteRecordRaw[] = [
         redirect: { name: 'member_task_my_task' },
         children: [
           {
+            path: 'goals',
+            name: 'member_task_goals',
+            component: () => import('pages/Member/Task/GoalList.vue'),
+            meta: { title: 'Goals' }
+          },
+          {
             path: 'my-task',
             name: 'member_task_my_task',
             component: TaskList,

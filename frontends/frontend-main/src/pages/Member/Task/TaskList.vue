@@ -28,6 +28,35 @@
       </div>
     </div>
 
+    <!-- Filter Button & Active Chips Bar -->
+    <div v-if="!hideHeader" class="filter-toolbar">
+      <!-- Filter Button with Badge -->
+      <q-btn
+        flat
+        dense
+        icon="filter_list"
+        label="Filters"
+        @click="showFilterDialog = true"
+        class="filter-button"
+      >
+        <q-badge
+          v-if="activeFilterCount > 0"
+          color="primary"
+          floating
+        >
+          {{ activeFilterCount }}
+        </q-badge>
+      </q-btn>
+
+      <!-- Active Filter Chips -->
+      <TaskFilterChips
+        v-if="activeFilterChips.length > 0"
+        :chips="activeFilterChips"
+        @remove="removeFilter"
+        @clearAll="clearAllFilters"
+      />
+    </div>
+
     <div class="page-content" :class="{ 'q-mt-sm': !hideHeader }">
       <component
         :is="currentViewComponent"
@@ -62,6 +91,20 @@
       v-model="showCreateDialog"
       @task-created="handleTaskCreated"
     />
+
+    <!-- Task Filter Dialog -->
+    <TaskFilterDialog
+      v-model="showFilterDialog"
+      :current-filters="currentFilters"
+      :priority-options="priorityOptionsForDialog"
+      :status-options="statusOptionsForDialog"
+      :goal-options="goalOptionsForDialog"
+      :assignee-options="assigneeOptionsForDialog"
+      :project-options="projectOptionsForDialog"
+      :due-date-options="dueDateOptions"
+      @apply="applyFilters"
+      @clear="clearAllFilters"
+    />
   </div>
 </template>
 
@@ -79,6 +122,8 @@ import { useTaskStore } from 'src/stores/task';
 // import { useTask } from 'src/composables/supabase/useTask';
 import { useAuthStore } from 'src/stores/auth';
 import { useAssigneeStore } from 'src/stores/assignee';
+import { useGoalStore } from 'src/stores/goal';
+import { useProjectStore } from 'src/stores/project';
 import bus from 'src/bus';
 import TaskListView from './TaskListView.vue';
 import TaskBoardView from './TaskBoardView.vue';
@@ -88,6 +133,13 @@ import TaskCardView from './TaskCardView.vue';
 const TaskCreateDialog = defineAsyncComponent(() =>
   import('../../../components/dialog/TaskCreateDialog/TaskCreateDialog.vue')
 );
+
+const TaskFilterDialog = defineAsyncComponent(() =>
+  import('../../../components/dialog/TaskFilterDialog.vue')
+);
+
+// Filter components
+import TaskFilterChips from '../../../components/task/TaskFilterChips.vue';
 
 interface Task {
   id: string;
@@ -128,6 +180,8 @@ export default defineComponent({
     TaskBoardView,
     TaskCardView,
     TaskCreateDialog,
+    TaskFilterDialog,
+    TaskFilterChips,
   },
   props: {
     filter: {
@@ -161,11 +215,159 @@ export default defineComponent({
     const taskStore = useTaskStore();
     const authStore = useAuthStore();
     const assigneeStore = useAssigneeStore();
+    const goalStore = useGoalStore();
+    const projectStore = useProjectStore();
     const loading = ref(false);
     const creatingInlineTask = ref(false); // Loading state for inline task creation
 
+    // Filter state refs for server-side filtering
+    const selectedPriorityFilter = ref<string>('none');
+    const selectedStatusFilter = ref<string>('ongoing'); // Default to "Ongoing Task" (To Do + In Progress)
+    const selectedGoalFilter = ref<string | number>('none');
+    const selectedAssigneeFilter = ref<string>('none');
+    const selectedProjectFilter = ref<string | number>('none');
+    const selectedDueDateFilter = ref<string>('none');
+
     // Get available users for assignee lookups (from global store - initialized in MainLayout)
     const availableUsers = computed(() => assigneeStore.formattedAssignees);
+
+    // Get available goals and projects from stores
+    const availableGoals = computed(() => goalStore.goals || []);
+    const availableProjects = computed(() => projectStore.projects || []);
+
+    // Priority options for filter
+    const priorityOptions = [
+      { key: 0, label: 'Very Low', value: 0 },
+      { key: 1, label: 'Low', value: 1 },
+      { key: 2, label: 'Medium', value: 2 },
+      { key: 3, label: 'High', value: 3 },
+      { key: 4, label: 'Urgent', value: 4 },
+    ];
+
+    // Status options for filter
+    const statusOptions = [
+      { key: 'ongoing', label: 'Ongoing Task', value: 'ongoing' }, // To Do + In Progress
+      { key: 1, label: 'To Do', value: 1 },
+      { key: 2, label: 'In Progress', value: 2 },
+      { key: 3, label: 'Done', value: 3 },
+      { key: 4, label: 'Pending Approval', value: 4 },
+    ];
+
+    // Due date options for filter
+    const dueDateOptions = [
+      { key: 'none', label: 'None', value: 'none' },
+      { key: 'no_date', label: 'No Date', value: 'no_date' },
+      { key: 'overdue', label: 'Overdue', value: 'overdue' },
+      { key: 'today', label: 'Today', value: 'today' },
+      { key: 'tomorrow', label: 'Tomorrow', value: 'tomorrow' },
+      { key: 'this_week', label: 'This Week', value: 'this_week' },
+      { key: 'next_week', label: 'Next Week', value: 'next_week' },
+      { key: 'later', label: 'Later', value: 'later' },
+      { key: 'all', label: 'All', value: 'all' },
+    ];
+
+    // Filtered options for searchable q-select components
+    const filteredPriorityOptions = ref(priorityOptions);
+    const filteredStatusOptions = ref(statusOptions);
+    const filteredGoalOptions = ref<any[]>([]);
+    const filteredAssigneeOptions = ref<any[]>([]);
+    const filteredProjectOptions = ref<any[]>([]);
+    const filteredDueDateOptions = ref(dueDateOptions);
+
+    // Filter dialog state
+    const showFilterDialog = ref(false);
+
+    // Filter functions for searchable q-select
+    const filterPriorityFn = (val: string, update: Function) => {
+      update(() => {
+        if (val === '') {
+          filteredPriorityOptions.value = priorityOptions;
+        } else {
+          const needle = val.toLowerCase();
+          filteredPriorityOptions.value = priorityOptions.filter(
+            v => v.label.toLowerCase().indexOf(needle) > -1
+          );
+        }
+      });
+    };
+
+    const filterStatusFn = (val: string, update: Function) => {
+      update(() => {
+        if (val === '') {
+          filteredStatusOptions.value = statusOptions;
+        } else {
+          const needle = val.toLowerCase();
+          filteredStatusOptions.value = statusOptions.filter(
+            v => v.label.toLowerCase().indexOf(needle) > -1
+          );
+        }
+      });
+    };
+
+    const filterGoalFn = (val: string, update: Function) => {
+      update(() => {
+        if (val === '') {
+          filteredGoalOptions.value = availableGoals.value || [];
+        } else {
+          const needle = val.toLowerCase();
+          filteredGoalOptions.value = (availableGoals.value || []).filter(
+            (v: any) => v.name?.toLowerCase().indexOf(needle) > -1
+          );
+        }
+      });
+    };
+
+    const filterAssigneeFn = (val: string, update: Function) => {
+      update(() => {
+        if (val === '') {
+          filteredAssigneeOptions.value = availableUsers.value || [];
+        } else {
+          const needle = val.toLowerCase();
+          filteredAssigneeOptions.value = (availableUsers.value || []).filter(
+            (v: any) => v.name?.toLowerCase().indexOf(needle) > -1
+          );
+        }
+      });
+    };
+
+    const filterProjectFn = (val: string, update: Function) => {
+      update(() => {
+        if (val === '') {
+          filteredProjectOptions.value = availableProjects.value || [];
+        } else {
+          const needle = val.toLowerCase();
+          filteredProjectOptions.value = (availableProjects.value || []).filter(
+            (v: any) => v.name?.toLowerCase().indexOf(needle) > -1
+          );
+        }
+      });
+    };
+
+    const filterDueDateFn = (val: string, update: Function) => {
+      update(() => {
+        if (val === '') {
+          filteredDueDateOptions.value = dueDateOptions;
+        } else {
+          const needle = val.toLowerCase();
+          filteredDueDateOptions.value = dueDateOptions.filter(
+            v => v.label.toLowerCase().indexOf(needle) > -1
+          );
+        }
+      });
+    };
+
+    // Watch for changes in store data to update filtered options
+    watch(availableGoals, (newGoals) => {
+      filteredGoalOptions.value = newGoals || [];
+    }, { immediate: true });
+
+    watch(availableUsers, (newUsers) => {
+      filteredAssigneeOptions.value = newUsers || [];
+    }, { immediate: true });
+
+    watch(availableProjects, (newProjects) => {
+      filteredProjectOptions.value = newProjects || [];
+    }, { immediate: true });
 
     // Get tasks from store using storeToRefs for reactivity
     const { tasks: storeTasks } = storeToRefs(taskStore);
@@ -272,7 +474,9 @@ export default defineComponent({
         projectId: task.projectId,
         taskPhaseId: task.taskPhaseId,
         boardLaneId: task.boardLaneId,
-        order: task.order || 0
+        order: task.order || 0,
+        goalId: task.goalId || null,
+        goal: task.goal || null
       };
     };
 
@@ -348,6 +552,134 @@ export default defineComponent({
         default:
           return 'Manage your tasks';
       }
+    });
+
+    // Modern filter pattern - computed properties
+    // Current filter state object for dialog
+    const currentFilters = computed(() => ({
+      priority: selectedPriorityFilter.value,
+      status: selectedStatusFilter.value,
+      goal: selectedGoalFilter.value,
+      assignee: selectedAssigneeFilter.value,
+      project: selectedProjectFilter.value,
+      dueDate: selectedDueDateFilter.value
+    }));
+
+    // Options formatted for dialog (with all/none options)
+    const priorityOptionsForDialog = computed(() => [
+      { label: 'None', value: 'none' },
+      ...priorityOptions,
+      { label: 'All Priorities', value: 'all' }
+    ]);
+
+    const statusOptionsForDialog = computed(() => [
+      { label: 'None', value: 'none' },
+      ...statusOptions,
+      { label: 'All Statuses', value: 'all' }
+    ]);
+
+    const goalOptionsForDialog = computed(() => [
+      { label: 'None', value: 'none' },
+      { label: 'No Goal', value: 'no_goal' },
+      ...filteredGoalOptions.value.map(g => ({ label: g.name, value: g.id })),
+      { label: 'All Goals', value: 'all' }
+    ]);
+
+    const assigneeOptionsForDialog = computed(() => [
+      { label: 'None', value: 'none' },
+      { label: 'Unassigned', value: 'unassigned' },
+      ...filteredAssigneeOptions.value.map(u => ({ label: u.name, value: u.id })),
+      { label: 'All Assignees', value: 'all' }
+    ]);
+
+    const projectOptionsForDialog = computed(() => [
+      { label: 'None', value: 'none' },
+      { label: 'No Project', value: 'no_project' },
+      ...filteredProjectOptions.value.map(p => ({ label: p.name, value: p.id })),
+      { label: 'All Projects', value: 'all' }
+    ]);
+
+    // Count active filters (excluding defaults)
+    const activeFilterCount = computed(() => {
+      let count = 0;
+      if (selectedPriorityFilter.value !== 'none' && selectedPriorityFilter.value !== 'all') count++;
+      // Don't count status="ongoing" as it's default
+      if (selectedStatusFilter.value !== 'ongoing' && selectedStatusFilter.value !== 'none' && selectedStatusFilter.value !== 'all') count++;
+      if (selectedGoalFilter.value !== 'none' && selectedGoalFilter.value !== 'all') count++;
+      if (selectedAssigneeFilter.value !== 'none' && selectedAssigneeFilter.value !== 'all') count++;
+      if (selectedProjectFilter.value !== 'none' && selectedProjectFilter.value !== 'all') count++;
+      if (selectedDueDateFilter.value !== 'none' && selectedDueDateFilter.value !== 'all') count++;
+      return count;
+    });
+
+    // Generate chip data for active filters
+    const activeFilterChips = computed(() => {
+      const chips: Array<{ key: string; label: string }> = [];
+
+      // Priority chip
+      if (selectedPriorityFilter.value !== 'none' && selectedPriorityFilter.value !== 'all') {
+        const option = priorityOptions.find(o => o.value === Number(selectedPriorityFilter.value));
+        if (option) {
+          chips.push({ key: 'priority', label: `Priority: ${option.label}` });
+        }
+      }
+
+      // Status chip (only show if NOT default "ongoing")
+      if (selectedStatusFilter.value !== 'ongoing' && selectedStatusFilter.value !== 'none' && selectedStatusFilter.value !== 'all') {
+        const option = statusOptions.find(o => o.value === selectedStatusFilter.value);
+        if (option) {
+          chips.push({ key: 'status', label: option.label });
+        }
+      }
+
+      // Goal chip
+      if (selectedGoalFilter.value !== 'none' && selectedGoalFilter.value !== 'all') {
+        if (selectedGoalFilter.value === 'no_goal') {
+          chips.push({ key: 'goal', label: 'Goal: No Goal' });
+        } else {
+          const goal = availableGoals.value.find(g => g.id === selectedGoalFilter.value);
+          if (goal) {
+            chips.push({ key: 'goal', label: `Goal: ${goal.name}` });
+          }
+        }
+      }
+
+      // Assignee chip (only in views where assignee filter is visible)
+      if (props.filter !== 'my' && selectedAssigneeFilter.value !== 'none' && selectedAssigneeFilter.value !== 'all') {
+        if (selectedAssigneeFilter.value === 'unassigned') {
+          chips.push({ key: 'assignee', label: 'Assignee: Unassigned' });
+        } else {
+          const user = availableUsers.value.find(u => u.id === selectedAssigneeFilter.value);
+          if (user) {
+            chips.push({ key: 'assignee', label: `Assignee: ${user.name}` });
+          } else {
+            // Fallback: show chip with ID if user not found (better than nothing)
+            chips.push({ key: 'assignee', label: `Assignee: ${selectedAssigneeFilter.value}` });
+          }
+        }
+      }
+
+      // Project chip (only when project filter is visible)
+      if (!props.projectId && !props.hideProjectGrouping && selectedProjectFilter.value !== 'none' && selectedProjectFilter.value !== 'all') {
+        if (selectedProjectFilter.value === 'no_project') {
+          chips.push({ key: 'project', label: 'Project: No Project' });
+        } else {
+          const project = availableProjects.value.find(p => p.id === selectedProjectFilter.value);
+          if (project) {
+            chips.push({ key: 'project', label: `Project: ${project.name}` });
+          }
+        }
+      }
+
+      // Due date chip
+      if (selectedDueDateFilter.value !== 'none' && selectedDueDateFilter.value !== 'all') {
+        const option = dueDateOptions.find(o => o.value === selectedDueDateFilter.value);
+        if (option) {
+          chips.push({ key: 'dueDate', label: `Due: ${option.label}` });
+        }
+      }
+
+      return chips;
     });
 
     const filteredTasks = computed(() => {
@@ -1169,6 +1501,38 @@ export default defineComponent({
           break;
       }
 
+      // Add new filter parameters for server-side filtering
+      if (selectedPriorityFilter.value !== 'none' && selectedPriorityFilter.value !== 'all') {
+        filters.priorityLevel = Number(selectedPriorityFilter.value);
+      }
+
+      if (selectedStatusFilter.value !== 'none' && selectedStatusFilter.value !== 'all') {
+        // Handle "Ongoing Task" filter (To Do + In Progress)
+        if (selectedStatusFilter.value === 'ongoing') {
+          filters.boardLaneId = [1, 2]; // BACKLOG (To Do) + IN_PROGRESS
+        } else {
+          filters.boardLaneId = Number(selectedStatusFilter.value);
+        }
+      }
+
+      if (selectedGoalFilter.value !== 'none' && selectedGoalFilter.value !== 'all') {
+        filters.goalId = selectedGoalFilter.value === 'no_goal' ? null : Number(selectedGoalFilter.value);
+      }
+
+      // Assignee filter (only when not in 'my' view)
+      if (props.filter !== 'my' && selectedAssigneeFilter.value !== 'none' && selectedAssigneeFilter.value !== 'all') {
+        filters.specificAssignee = selectedAssigneeFilter.value;
+      }
+
+      // Project filter (only when no projectId prop and not hideProjectGrouping)
+      if (!props.projectId && !props.hideProjectGrouping && selectedProjectFilter.value !== 'none' && selectedProjectFilter.value !== 'all') {
+        filters.specificProject = selectedProjectFilter.value === 'no_project' ? null : Number(selectedProjectFilter.value);
+      }
+
+      if (selectedDueDateFilter.value !== 'none' && selectedDueDateFilter.value !== 'all') {
+        filters.dueDateRange = selectedDueDateFilter.value;
+      }
+
       return filters;
     });
 
@@ -1178,7 +1542,7 @@ export default defineComponent({
       refetch: refetchTasksFromAPI,
       updateTaskOrdering: updateTaskOrderingAPI
     } = useTaskAPI({
-      filters: taskAPIFilters.value,
+      filters: taskAPIFilters,
       autoFetch: true
     });
 
@@ -1419,6 +1783,56 @@ export default defineComponent({
       }
     };
 
+    // Modern filter pattern - methods
+    const applyFilters = (filters: typeof currentFilters.value) => {
+      selectedPriorityFilter.value = filters.priority;
+      selectedStatusFilter.value = filters.status;
+      selectedGoalFilter.value = filters.goal;
+      selectedAssigneeFilter.value = filters.assignee;
+      selectedProjectFilter.value = filters.project;
+      selectedDueDateFilter.value = filters.dueDate;
+      // Watcher will trigger refetch automatically
+    };
+
+    const removeFilter = (key: string) => {
+      switch (key) {
+        case 'priority':
+          selectedPriorityFilter.value = 'none';
+          break;
+        case 'status':
+          selectedStatusFilter.value = 'ongoing'; // Reset to default
+          break;
+        case 'goal':
+          selectedGoalFilter.value = 'none';
+          break;
+        case 'assignee':
+          selectedAssigneeFilter.value = 'none';
+          break;
+        case 'project':
+          selectedProjectFilter.value = 'none';
+          break;
+        case 'dueDate':
+          selectedDueDateFilter.value = 'none';
+          break;
+      }
+      // Watcher will trigger refetch automatically
+    };
+
+    const clearAllFilters = () => {
+      selectedPriorityFilter.value = 'none';
+      selectedStatusFilter.value = 'ongoing'; // Reset to default
+      selectedGoalFilter.value = 'none';
+      selectedAssigneeFilter.value = 'none';
+      selectedProjectFilter.value = 'none';
+      selectedDueDateFilter.value = 'none';
+      // Watcher will trigger refetch automatically
+    };
+
+    // Watch filter changes and trigger refetch
+    watch([selectedPriorityFilter, selectedStatusFilter, selectedGoalFilter, selectedAssigneeFilter, selectedProjectFilter, selectedDueDateFilter], () => {
+      refetchTasks();
+    });
+
     // Clear search when component unmounts or route changes
     watch(() => route.name, () => {
       taskSearchStore.clearSearch();
@@ -1460,6 +1874,46 @@ export default defineComponent({
       openTaskMenu,
       addTaskToSection,
       handleReorderTasks,
+      // Filter state and options
+      selectedPriorityFilter,
+      selectedStatusFilter,
+      selectedGoalFilter,
+      selectedAssigneeFilter,
+      selectedProjectFilter,
+      selectedDueDateFilter,
+      priorityOptions,
+      statusOptions,
+      dueDateOptions,
+      availableGoals,
+      availableProjects,
+      availableUsers,
+      // Filtered options for q-select
+      filteredPriorityOptions,
+      filteredStatusOptions,
+      filteredGoalOptions,
+      filteredAssigneeOptions,
+      filteredProjectOptions,
+      filteredDueDateOptions,
+      // Filter functions
+      filterPriorityFn,
+      filterStatusFn,
+      filterGoalFn,
+      filterAssigneeFn,
+      filterProjectFn,
+      filterDueDateFn,
+      // Modern filter pattern
+      showFilterDialog,
+      currentFilters,
+      priorityOptionsForDialog,
+      statusOptionsForDialog,
+      goalOptionsForDialog,
+      assigneeOptionsForDialog,
+      projectOptionsForDialog,
+      activeFilterCount,
+      activeFilterChips,
+      applyFilters,
+      removeFilter,
+      clearAllFilters,
     };
   },
 });
@@ -1480,6 +1934,26 @@ export default defineComponent({
       min-height: unset;
       padding: 0;
       margin: 0;
+    }
+  }
+
+  // Modern filter toolbar with button and chips
+  .filter-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+
+    .filter-button {
+      align-self: flex-start;
+      font-size: 13px;
+      padding: 6px 16px;
+
+      // Mobile: full width
+      @media (max-width: 768px) {
+        width: 100%;
+        justify-content: center;
+      }
     }
   }
 

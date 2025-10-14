@@ -585,6 +585,7 @@ export class TaskService {
             }
           : null,
         workflowInstanceId: taskInformation.WorkflowTask?.instanceId || null,
+        goalId: taskInformation.goalId,
       };
     } catch (error) {
       if (
@@ -1344,6 +1345,26 @@ export class TaskService {
       }
     }
 
+    // Track goal change
+    if (taskUpdateDto.goalId !== undefined && taskUpdateDto.goalId !== taskInformation.goalId) {
+      // Validate goal exists if not null
+      if (taskUpdateDto.goalId !== null) {
+        const goal = await this.prisma.goal.findUnique({
+          where: { id: taskUpdateDto.goalId },
+        });
+        if (!goal) {
+          throw new NotFoundException('Goal not found');
+        }
+      }
+      updateParams.goalId = taskUpdateDto.goalId;
+      changes.push({
+        field: 'goalId',
+        oldValue: taskInformation.goalId,
+        newValue: taskUpdateDto.goalId,
+        displayName: 'goal',
+      });
+    }
+
     const result = await this.prisma.task.update({
       where: { id: taskId },
       data: updateParams,
@@ -2023,6 +2044,11 @@ export class TaskService {
           }
         : null,
       workflowInstanceId: task.WorkflowTask?.instanceId || null,
+      goalId: task.goalId,
+      goal: task.goal ? {
+        id: task.goal.id,
+        name: task.goal.name
+      } : null,
     };
   }
 
@@ -2333,10 +2359,97 @@ export class TaskService {
       },
     });
 
+    // Build enhanced filter with new filter parameters
+    const enhancedFilter: any = { ...filter };
+
+    // Handle boardLaneId filter (support both single value and array for "Ongoing Task")
+    if (filter.boardLaneId !== undefined) {
+      if (Array.isArray(filter.boardLaneId)) {
+        // Array of board lane IDs (e.g., [1, 2] for "Ongoing Task")
+        enhancedFilter.boardLaneId = { in: filter.boardLaneId.map((id: any) => Number(id)) };
+      } else {
+        // Single board lane ID
+        enhancedFilter.boardLaneId = Number(filter.boardLaneId);
+      }
+    }
+
+    // Apply priority level filter
+    if (filter.priorityLevel !== undefined) {
+      enhancedFilter.priorityLevel = Number(filter.priorityLevel);
+    }
+
+    // Apply goal filter
+    if (filter.goalId !== undefined) {
+      enhancedFilter.goalId = filter.goalId === null ? null : Number(filter.goalId);
+    }
+
+    // Apply specific assignee filter (different from assignedToId for 'my' view)
+    if (filter.specificAssignee) {
+      if (filter.specificAssignee === 'unassigned') {
+        enhancedFilter.assignedToId = null;
+      } else {
+        enhancedFilter.assignedToId = filter.specificAssignee;
+      }
+    }
+
+    // Apply specific project filter
+    if (filter.specificProject !== undefined) {
+      enhancedFilter.projectId = filter.specificProject === null ? null : Number(filter.specificProject);
+    }
+
+    // Apply due date range filter
+    if (filter.dueDateRange) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      switch (filter.dueDateRange) {
+        case 'no_date':
+          enhancedFilter.dueDate = null;
+          break;
+        case 'overdue':
+          enhancedFilter.dueDate = { lt: today };
+          break;
+        case 'today':
+          const tomorrow = new Date(today);
+          tomorrow.setDate(today.getDate() + 1);
+          enhancedFilter.dueDate = { gte: today, lt: tomorrow };
+          break;
+        case 'tomorrow':
+          const dayAfterTomorrow = new Date(today);
+          dayAfterTomorrow.setDate(today.getDate() + 2);
+          const tomorrowStart = new Date(today);
+          tomorrowStart.setDate(today.getDate() + 1);
+          enhancedFilter.dueDate = { gte: tomorrowStart, lt: dayAfterTomorrow };
+          break;
+        case 'this_week':
+          const endOfWeek = new Date(today);
+          endOfWeek.setDate(today.getDate() + (7 - today.getDay()));
+          enhancedFilter.dueDate = { gte: today, lte: endOfWeek };
+          break;
+        case 'next_week':
+          const startOfNextWeek = new Date(today);
+          startOfNextWeek.setDate(today.getDate() + (7 - today.getDay()) + 1);
+          const endOfNextWeek = new Date(startOfNextWeek);
+          endOfNextWeek.setDate(startOfNextWeek.getDate() + 6);
+          enhancedFilter.dueDate = { gte: startOfNextWeek, lte: endOfNextWeek };
+          break;
+        case 'later':
+          const twoWeeksFromNow = new Date(today);
+          twoWeeksFromNow.setDate(today.getDate() + 14);
+          enhancedFilter.dueDate = { gt: twoWeeksFromNow };
+          break;
+      }
+    }
+
+    // Remove the temporary filter properties that were used for building the where clause
+    delete enhancedFilter.specificAssignee;
+    delete enhancedFilter.specificProject;
+    delete enhancedFilter.dueDateRange;
+
     // Fetch ALL tasks matching the filter (including new tasks not in orderContext)
     const tasks = await this.prisma.task.findMany({
       where: {
-        ...filter,
+        ...enhancedFilter,
         ...(companyId && { companyId }),
       },
       include: {
@@ -2344,6 +2457,7 @@ export class TaskService {
         createdBy: true,
         boardLane: true,
         project: true,
+        goal: true,
         // Add other includes as needed
       },
     });
