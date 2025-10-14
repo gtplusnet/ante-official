@@ -164,7 +164,7 @@ export default defineComponent({
 }
 
 .category-node-content {
-  background: white;
+  background: var(--q-extra-lighter);
   border-radius: 8px;
   transition: all 0.2s ease;
 

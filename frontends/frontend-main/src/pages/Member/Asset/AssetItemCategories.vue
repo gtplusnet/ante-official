@@ -5,22 +5,25 @@
     </div>
     <div class="bread-crumbs text-body-small">
       <q-breadcrumbs>
-        <q-breadcrumbs-el label="Dashboard" :to="{ name: 'member_dashboard' }" />
+        <q-breadcrumbs-el
+          label="Dashboard"
+          :to="{ name: 'member_dashboard' }"
+        />
         <q-breadcrumbs-el label="Asset Management" />
         <q-breadcrumbs-el label="Item Categories" />
       </q-breadcrumbs>
     </div>
+    <div class="page-content-actions row justify-end">
+      <GButton
+        @click="openDialog()"
+        color="primary"
+        icon="add"
+        icon-size="md"
+        label="Create Category"
+        class="text-label-large"
+      />
+    </div>
     <div class="page-content">
-      <div class="page-content-actions row justify-between">
-        <div class="left"></div>
-        <div class="right">
-          <q-btn @click="openDialog()" color="primary" rounded unelevated class="text-label-large">
-            <q-icon size="16px" name="add"></q-icon>
-            Create Category
-          </q-btn>
-        </div>
-      </div>
-
       <q-tabs
         v-model="activeTab"
         class="text-grey q-mt-md"
@@ -39,16 +42,30 @@
       <q-tab-panels v-model="activeTab" animated class="bg-transparent">
         <q-tab-panel name="tree" class="q-pa-none">
           <div class="categories-tree-container">
-            <q-spinner-dots v-if="loading" color="primary" size="40px" class="q-ma-md" />
+            <q-spinner-dots
+              v-if="loading"
+              color="primary"
+              size="40px"
+              class="q-ma-md"
+            />
 
-            <div v-else-if="categories.length === 0" class="text-center q-pa-lg text-grey-6">
+            <div
+              v-else-if="categories.length === 0"
+              class="text-center q-pa-lg text-grey-6"
+            >
               <q-icon name="folder_open" size="64px" class="q-mb-md" />
               <div class="text-h6">No categories yet</div>
-              <div class="text-body2">Create your first category to get started</div>
+              <div class="text-body2">
+                Create your first category to get started
+              </div>
             </div>
 
             <div v-else class="categories-tree">
-              <div v-for="category in categories" :key="category.id" class="category-node">
+              <div
+                v-for="category in categories"
+                :key="category.id"
+                class="category-node"
+              >
                 <ItemCategoryNode
                   :category="category"
                   @view="viewCategory"
@@ -73,7 +90,7 @@
             >
               <template v-slot:isActive="props">
                 <q-badge :color="props.data.isActive ? 'positive' : 'negative'">
-                  {{ props.data.isActive ? 'Active' : 'Inactive' }}
+                  {{ props.data.isActive ? "Active" : "Inactive" }}
                 </q-badge>
               </template>
             </g-table>
@@ -100,7 +117,9 @@
   />
 </template>
 
-<script src="./AssetItemCategories.ts"></script>
+<script src="./AssetItemCategories.ts">
+import GButton from '@/components/shared/buttons/GButton.vue';
+</script>
 
 <style lang="scss" scoped>
 .categories-tree-container {
@@ -110,7 +129,6 @@
 
 .categories-tree {
   padding: 20px;
-  background: #f8f9fa;
   border-radius: 12px;
   min-height: 400px;
   position: relative;
