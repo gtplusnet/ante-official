@@ -2362,6 +2362,17 @@ export class TaskService {
     // Build enhanced filter with new filter parameters
     const enhancedFilter: any = { ...filter };
 
+    // Handle boardLaneId filter (support both single value and array for "Ongoing Task")
+    if (filter.boardLaneId !== undefined) {
+      if (Array.isArray(filter.boardLaneId)) {
+        // Array of board lane IDs (e.g., [1, 2] for "Ongoing Task")
+        enhancedFilter.boardLaneId = { in: filter.boardLaneId.map((id: any) => Number(id)) };
+      } else {
+        // Single board lane ID
+        enhancedFilter.boardLaneId = Number(filter.boardLaneId);
+      }
+    }
+
     // Apply priority level filter
     if (filter.priorityLevel !== undefined) {
       enhancedFilter.priorityLevel = Number(filter.priorityLevel);

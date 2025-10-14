@@ -260,27 +260,22 @@ import { useGoalStore, type GoalData } from 'src/stores/goal';
 import { storeToRefs } from 'pinia';
 import { useQuasar } from 'quasar';
 
-// Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
-const GoalCreateDialog = defineAsyncComponent(() =>
-  import('../../../components/dialog/GoalCreateDialog.vue')
-);
-const GoalEditDialog = defineAsyncComponent(() =>
-  import('../../../components/dialog/GoalEditDialog.vue')
-);
-const GoalViewDialog = defineAsyncComponent(() =>
-  import('../../../components/dialog/GoalViewDialog.vue')
-);
-const GoalTaskLinkDialog = defineAsyncComponent(() =>
-  import('../../../components/dialog/GoalTaskLinkDialog.vue')
-);
-
 export default defineComponent({
   name: 'GoalList',
   components: {
-    GoalCreateDialog,
-    GoalEditDialog,
-    GoalViewDialog,
-    GoalTaskLinkDialog
+    // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
+    GoalCreateDialog: defineAsyncComponent(() =>
+      import('../../../components/dialog/GoalCreateDialog.vue')
+    ),
+    GoalEditDialog: defineAsyncComponent(() =>
+      import('../../../components/dialog/GoalEditDialog.vue')
+    ),
+    GoalViewDialog: defineAsyncComponent(() =>
+      import('../../../components/dialog/GoalViewDialog.vue')
+    ),
+    GoalTaskLinkDialog: defineAsyncComponent(() =>
+      import('../../../components/dialog/GoalTaskLinkDialog.vue')
+    )
   },
   setup() {
     const $q = useQuasar();

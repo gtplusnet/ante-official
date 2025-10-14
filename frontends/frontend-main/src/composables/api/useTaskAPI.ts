@@ -4,7 +4,7 @@ import { api } from 'src/boot/axios';
 export interface TaskAPIFilters {
   filter?: 'my' | 'quest' | 'all';
   projectId?: number;
-  boardLaneId?: number;
+  boardLaneId?: number | number[]; // Support both single value and array for "Ongoing Task" filter
   assignedToId?: string;
   companyId?: number;
   taskType?: string;
