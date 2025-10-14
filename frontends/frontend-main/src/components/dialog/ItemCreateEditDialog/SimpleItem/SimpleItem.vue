@@ -26,7 +26,7 @@
         </div>
       </div>
       <!-- Estimated buying price & Unit Size-->
-      <div class="row q-gutter-sm">
+      <div v-if="form.itemType !== 'ITEM_GROUP'" class="row q-gutter-sm">
         <div class="col">
           <GInput required type="text" label="Estimated Buying Price" class="text-body-small"
             v-model="form.estimatedBuyingPrice"></GInput>
@@ -43,12 +43,12 @@
       <!-- Selling Price & Stock Levels -->
       <div class="row q-gutter-sm">
         <div class="col">
-          <GInput required type="text" label="Selling Price" v-model="form.sellingPrice"></GInput>
+          <GInput required type="number" label="Selling Price" v-model="form.sellingPrice"></GInput>
         </div>
-        <div class="col">
+        <div v-if="form.itemType !== 'ITEM_GROUP'" class="col">
           <GInput required type="number" label="Minimum Stock Level" v-model="form.minimumStockLevel"></GInput>
         </div>
-        <div class="col">
+        <div v-if="form.itemType !== 'ITEM_GROUP'" class="col">
           <GInput required type="number" label="Maximum Stock Level" v-model="form.maximumStockLevel"></GInput>
         </div>
       </div>
