@@ -692,7 +692,7 @@ export default defineComponent({
     // Initialize WebSocket connection
     const initWebSocket = (importSessionId: string) => {
       // Get WebSocket URL from environment or fallback to localhost
-      const socketUrl = import.meta.env.VITE_SOCKET_URL || 'ws://localhost:4000';
+      const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
       
       // Convert ws:// to http:// or wss:// to https:// for socket.io
       const httpUrl = socketUrl.replace('ws://', 'http://').replace('wss://', 'https://');

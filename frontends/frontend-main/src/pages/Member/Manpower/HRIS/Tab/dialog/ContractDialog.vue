@@ -14,25 +14,54 @@
               <div class="rounded-borders q-px-md">
                 <div class="row">
                   <div class="rounded-borders full-width">
-                    <div>
-                      <g-input
-                        v-model="form.employmentStatus"
-                        label="Employment Status"
-                        type="select"
-                        apiUrl="hris/employee/contract/employment-status"
-                        class="full-width"
-                      />
-                    </div>
-                    <div class="q-mt-md E2">
-                      <g-input v-model="form.startDate" label="Start Date" type="date" class="full-width q-mb-md" />
-                      <g-input v-if="form.employmentStatus !== 'REGULAR'" v-model="form.endDate" label="End Date" type="date" class="full-width" />
-                    </div>
-                    <div class="q-mt-md">
-                      <g-input v-model="form.monthlyRate" label="Monthly Rate" type="number" class="full-width" />
-                    </div>
-                    <div>
-                      <g-input v-model="contractFile" label="Contract File" type="file" class="full-width" />
-                    </div>
+                    <!-- Show all fields in add mode -->
+                    <template v-if="mode === 'add'">
+                      <div>
+                        <g-input
+                          v-model="form.employmentStatus"
+                          label="Employment Status"
+                          type="select"
+                          apiUrl="hris/employee/contract/employment-status"
+                          class="full-width"
+                        />
+                      </div>
+                      <div class="q-mt-md E2">
+                        <g-input
+                          v-model="form.startDate"
+                          label="Start Date"
+                          type="date"
+                          class="full-width q-mb-md"
+                        />
+                        <g-input
+                          v-if="form.employmentStatus !== 'REGULAR'"
+                          v-model="form.endDate"
+                          label="End Date"
+                          type="date"
+                          class="full-width"
+                        />
+                      </div>
+                      <div class="q-mt-md">
+                        <g-input
+                          v-model="form.monthlyRate"
+                          label="Monthly Rate"
+                          type="number"
+                          class="full-width"
+                        />
+                      </div>
+                      <div>
+                        <g-input v-model="contractFile" label="Contract File" type="file" class="full-width" />
+                      </div>
+                    </template>
+
+                    <!-- Show only file field in edit mode -->
+                    <template v-else>
+                      <div class="q-mb-md text-body2 text-grey-7">
+                        Only the contract file can be updated. To change other details, please create a new contract.
+                      </div>
+                      <div>
+                        <g-input v-model="contractFile" label="Contract File" type="file" class="full-width" />
+                      </div>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -44,9 +73,9 @@
       <template #DialogSubmitActions>
         <g-button
           :label="mode === 'add' ? 'Save' : 'Update'"
-          type="submit"
           color="primary"
           :loading="isLoading"
+          @click="onSave"
         />
       </template>
     </TemplateDialog>
@@ -94,11 +123,11 @@ export default defineComponent({
     watch(internalModelValue, (v) => emit('update:modelValue', v));
 
     const form = ref({
-      employmentStatus: props.contract?.employmentStatus || 'REGULAR',
-      startDate: props.contract?.startDate || '',
-      endDate: props.contract?.endDate || '',
-      monthlyRate: props.contract?.monthlyRate || '',
-      contractFileId: props.contract?.contractFile,
+      employmentStatus: 'REGULAR',
+      startDate: '',
+      endDate: '',
+      monthlyRate: '',
+      contractFileId: undefined as number | undefined,
     });
 
     function close() {
@@ -126,15 +155,47 @@ export default defineComponent({
       return '';
     }
 
+    /**
+     * Populate form with contract data
+     * Handles complex date objects and employmentStatus structure
+     */
+    function populateForm() {
+      if (!props.contract) return;
+
+      // Handle employmentStatus - can be string or object with key property
+      if (typeof props.contract.employmentStatus === 'object' && props.contract.employmentStatus !== null) {
+        form.value.employmentStatus = (props.contract.employmentStatus as any).key || 'REGULAR';
+      } else {
+        form.value.employmentStatus = props.contract.employmentStatus || 'REGULAR';
+      }
+
+      // Handle dates - convert complex date objects to ISO strings
+      form.value.startDate = toISODate(props.contract.startDate);
+      form.value.endDate = toISODate(props.contract.endDate);
+
+      // Handle monthlyRate - can be number or object with value property
+      if (typeof props.contract.monthlyRate === 'object' && props.contract.monthlyRate !== null) {
+        form.value.monthlyRate = (props.contract.monthlyRate as any).value || '';
+      } else {
+        form.value.monthlyRate = props.contract.monthlyRate || '';
+      }
+
+      // Handle contract file
+      if (props.contract.contractFile && typeof props.contract.contractFile === 'object') {
+        form.value.contractFileId = (props.contract.contractFile as any).id;
+      }
+    }
+
     async function onSave() {
       isLoading.value = true;
       try {
-        const startDate = toISODate(form.value.startDate) || '';
-        let endDate: string | undefined = toISODate(form.value.endDate) || undefined;
-        if (form.value.employmentStatus === 'REGULAR') {
-          endDate = undefined;
-        }
         if (props.mode === 'add') {
+          const startDate = toISODate(form.value.startDate) || '';
+          let endDate: string | undefined = toISODate(form.value.endDate) || undefined;
+          if (form.value.employmentStatus === 'REGULAR') {
+            endDate = undefined;
+          }
+
           const req: ContractCreateRequest = {
             accountId: props.accountId,
             contractData: {
@@ -149,19 +210,21 @@ export default defineComponent({
           await api.post('/hris/employee/contract/add', req);
           notifySuccess('Contract added successfully');
         } else if (props.mode === 'edit' && props.contract) {
+          // In edit mode, only update the contract file
+          if (!contractFile.value) {
+            notifyError('Please upload a contract file to update');
+            return;
+          }
+
           const req: ContractEditRequest = {
             contractId: props.contract.id,
             contractData: {
-              monthlyRate: Number(form.value.monthlyRate),
-              employmentStatus: form.value.employmentStatus as EmploymentStatus,
-              startDate,
-              ...(endDate ? { endDate } : {}),
-              contractFileId: form.value.contractFileId ? Number(form.value.contractFileId) : undefined,
+              contractFileId: Number(contractFile.value['id']),
             },
           };
 
           await api.patch('/hris/employee/contract/edit', req);
-          notifySuccess('Contract updated successfully');
+          notifySuccess('Contract file updated successfully');
         }
         emit('saved');
         close();
@@ -172,18 +235,42 @@ export default defineComponent({
       }
     }
 
+    function notifyError(msg: string) {
+      $q.notify({ type: 'negative', message: msg });
+    }
+
     function notifySuccess(msg: string) {
       // @ts-expect-error Quasar $q is injected at runtime
       if (window.$q) window.$q.notify({ type: 'positive', message: msg });
     }
 
     function beforeShow() {
+      // Reset file input
       contractFile.value = null;
-      form.value.startDate = '';
-      form.value.endDate = '';
-      form.value.monthlyRate = '';
-      form.value.employmentStatus = 'REGULAR';
+
+      if (props.mode === 'edit') {
+        // Populate form with contract data when editing
+        populateForm();
+      } else {
+        // Reset form to defaults when adding new contract
+        form.value.employmentStatus = 'REGULAR';
+        form.value.startDate = '';
+        form.value.endDate = '';
+        form.value.monthlyRate = '';
+        form.value.contractFileId = undefined;
+      }
     }
+
+    // Watch for contract prop changes (when switching between contracts)
+    watch(
+      () => props.contract,
+      () => {
+        if (props.mode === 'edit' && props.contract) {
+          populateForm();
+        }
+      },
+      { deep: true }
+    );
 
     return { internalModelValue, form, close, onSave, isLoading, beforeShow, contractFile };
   },

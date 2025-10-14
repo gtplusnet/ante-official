@@ -40,7 +40,7 @@ export interface ImportResultData {
 }
 
 @Injectable()
-@WebSocketGateway(4000, {
+@WebSocketGateway({
   namespace: '/student-import',
   cors: {
     origin: true,

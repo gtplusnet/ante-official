@@ -41,7 +41,7 @@ import { DiscussionService } from '@modules/communication/discussion/discussion/
 @UseInterceptors(WsResponseInterceptor)
 @UseFilters(WsExceptionFilter)
 @UseGuards(WsAdminGuard)
-@WebSocketGateway(parseInt(process.env.SOCKET_PORT || '4000'), {
+@WebSocketGateway({
   cors: {
     origin: '*', // Allow all origins with explicit wildcard
     credentials: true,

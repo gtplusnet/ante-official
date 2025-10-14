@@ -89,6 +89,7 @@ jobs:
 
           if [ "${{ needs.detect-changes.outputs.backend-changed }}" == "true" ]; then
             MESSAGE="${MESSAGE}⚙️ Backend API will be deployed%0A"
+            MESSAGE="${MESSAGE}🗄️ Database migrations will be applied%0A"
           fi
 
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
@@ -96,9 +97,73 @@ jobs:
             -d "text=${MESSAGE}" \
             -d "parse_mode=Markdown"
 
-  deploy-frontend-main:
+  run-migrations:
     needs: [detect-changes, notify-start]
-    if: needs.detect-changes.outputs.frontend-main-changed == 'true'
+    if: needs.detect-changes.outputs.backend-changed == 'true'
+    runs-on: [self-hosted, staging]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          yarn install --frozen-lockfile --production=false
+
+      - name: Run Prisma migrations
+        run: |
+          cd backend
+          echo "🗄️ Applying Prisma migrations to staging database..."
+          npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.STAGING_DIRECT_URL }}
+
+      - name: Generate Prisma client
+        run: |
+          cd backend
+          echo "📦 Generating Prisma client..."
+          npx prisma generate
+
+      - name: Send migration success notification
+        if: success()
+        run: |
+          MESSAGE="✅ *Database Migration Successful*%0A%0A"
+          MESSAGE="${MESSAGE}📦 *Repository:* ${{ github.repository }}%0A"
+          MESSAGE="${MESSAGE}🗄️ All Prisma migrations applied to staging database%0A"
+          MESSAGE="${MESSAGE}📦 Prisma client generated successfully%0A"
+          MESSAGE="${MESSAGE}⏭️ Proceeding with backend deployment..."
+
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=${MESSAGE}" \
+            -d "parse_mode=Markdown"
+
+      - name: Send migration failure notification
+        if: failure()
+        run: |
+          MESSAGE="❌ *Database Migration FAILED*%0A%0A"
+          MESSAGE="${MESSAGE}📦 *Repository:* ${{ github.repository }}%0A"
+          MESSAGE="${MESSAGE}🚨 Failed to apply Prisma migrations to staging database%0A"
+          MESSAGE="${MESSAGE}🛑 Backend deployment will be blocked%0A"
+          MESSAGE="${MESSAGE}🔗 *Logs:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=${MESSAGE}" \
+            -d "parse_mode=Markdown"
+
+  deploy-frontend-main:
+    needs: [detect-changes, notify-start, run-migrations]
+    if: |
+      always() &&
+      needs.detect-changes.outputs.frontend-main-changed == 'true' &&
+      (needs.run-migrations.result == 'success' || needs.run-migrations.result == 'skipped')
     runs-on: [self-hosted, staging]
     steps:
       - uses: actions/checkout@v4
@@ -124,8 +189,11 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND_MAIN }}
 
   deploy-gate-app:
-    needs: [detect-changes, notify-start]
-    if: needs.detect-changes.outputs.gate-app-changed == 'true'
+    needs: [detect-changes, notify-start, run-migrations]
+    if: |
+      always() &&
+      needs.detect-changes.outputs.gate-app-changed == 'true' &&
+      (needs.run-migrations.result == 'success' || needs.run-migrations.result == 'skipped')
     runs-on: [self-hosted, staging]
     steps:
       - uses: actions/checkout@v4
@@ -144,8 +212,11 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_GATE_APP }}
 
   deploy-guardian-app:
-    needs: [detect-changes, notify-start]
-    if: needs.detect-changes.outputs.guardian-app-changed == 'true'
+    needs: [detect-changes, notify-start, run-migrations]
+    if: |
+      always() &&
+      needs.detect-changes.outputs.guardian-app-changed == 'true' &&
+      (needs.run-migrations.result == 'success' || needs.run-migrations.result == 'skipped')
     runs-on: [self-hosted, staging]
     steps:
       - uses: actions/checkout@v4
@@ -164,8 +235,11 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_GUARDIAN_APP }}
 
   deploy-website-multibook:
-    needs: [detect-changes, notify-start]
-    if: needs.detect-changes.outputs.website-multibook-changed == 'true'
+    needs: [detect-changes, notify-start, run-migrations]
+    if: |
+      always() &&
+      needs.detect-changes.outputs.website-multibook-changed == 'true' &&
+      (needs.run-migrations.result == 'success' || needs.run-migrations.result == 'skipped')
     runs-on: [self-hosted, staging]
     steps:
       - uses: actions/checkout@v4
@@ -184,7 +258,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEBSITE_MULTIBOOK }}
 
   build-and-deploy-backend:
-    needs: [detect-changes, notify-start]
+    needs: [detect-changes, notify-start, run-migrations]
     if: needs.detect-changes.outputs.backend-changed == 'true'
     runs-on: [self-hosted, staging]
     permissions:
@@ -249,7 +323,7 @@ jobs:
           echo "View deployment: https://cloud.digitalocean.com/apps/${{ secrets.DO_APP_ID_STAGING }}/deployments/$DEPLOYMENT_ID"
 
   notify:
-    needs: [detect-changes, deploy-frontend-main, deploy-gate-app, deploy-guardian-app, deploy-website-multibook, build-and-deploy-backend]
+    needs: [detect-changes, run-migrations, deploy-frontend-main, deploy-gate-app, deploy-guardian-app, deploy-website-multibook, build-and-deploy-backend]
     if: always()
     runs-on: [self-hosted, staging]
     steps:
@@ -258,6 +332,15 @@ jobs:
           MESSAGE="📊 *ANTE ERP - Deployment Results*%0A%0A"
           MESSAGE="${MESSAGE}📦 *Repository:* ${{ github.repository }}%0A"
           MESSAGE="${MESSAGE}🔗 *Workflow:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}%0A%0A"
+
+          # Database migration status
+          if [ "${{ needs.run-migrations.result }}" == "success" ]; then
+            MESSAGE="${MESSAGE}✅ *Database Migrations:* Successfully applied%0A%0A"
+          elif [ "${{ needs.run-migrations.result }}" == "failure" ]; then
+            MESSAGE="${MESSAGE}❌ *Database Migrations:* FAILED - Backend deployment blocked%0A%0A"
+          elif [ "${{ needs.run-migrations.result }}" == "skipped" ] && [ "${{ needs.detect-changes.outputs.backend-changed }}" == "true" ]; then
+            MESSAGE="${MESSAGE}⚠️ *Database Migrations:* Skipped (error in workflow)%0A%0A"
+          fi
 
           # Frontend Main deployment status
           if [ "${{ needs.deploy-frontend-main.result }}" == "success" ]; then
@@ -310,8 +393,8 @@ jobs:
           fi
 
           # Overall status
-          if [ "${{ needs.deploy-frontend-main.result }}" == "success" ] || [ "${{ needs.deploy-gate-app.result }}" == "success" ] || [ "${{ needs.deploy-guardian-app.result }}" == "success" ] || [ "${{ needs.deploy-website-multibook.result }}" == "success" ] || [ "${{ needs.build-and-deploy-backend.result }}" == "success" ]; then
-            if [ "${{ needs.deploy-frontend-main.result }}" == "failure" ] || [ "${{ needs.deploy-gate-app.result }}" == "failure" ] || [ "${{ needs.deploy-guardian-app.result }}" == "failure" ] || [ "${{ needs.deploy-website-multibook.result }}" == "failure" ] || [ "${{ needs.build-and-deploy-backend.result }}" == "failure" ]; then
+          if [ "${{ needs.run-migrations.result }}" == "success" ] || [ "${{ needs.deploy-frontend-main.result }}" == "success" ] || [ "${{ needs.deploy-gate-app.result }}" == "success" ] || [ "${{ needs.deploy-guardian-app.result }}" == "success" ] || [ "${{ needs.deploy-website-multibook.result }}" == "success" ] || [ "${{ needs.build-and-deploy-backend.result }}" == "success" ]; then
+            if [ "${{ needs.run-migrations.result }}" == "failure" ] || [ "${{ needs.deploy-frontend-main.result }}" == "failure" ] || [ "${{ needs.deploy-gate-app.result }}" == "failure" ] || [ "${{ needs.deploy-guardian-app.result }}" == "failure" ] || [ "${{ needs.deploy-website-multibook.result }}" == "failure" ] || [ "${{ needs.build-and-deploy-backend.result }}" == "failure" ]; then
               MESSAGE="${MESSAGE}⚠️ *Status:* Partial Success"
             else
               MESSAGE="${MESSAGE}🎉 *Status:* All deployments successful!"

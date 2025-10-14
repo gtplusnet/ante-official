@@ -231,12 +231,25 @@ export class AccountController {
 
   @ApiOperation({ summary: 'Delete an account' })
   @ApiQuery({ name: 'id', required: true, description: 'Account ID to delete' })
+  @ApiQuery({
+    name: 'reason',
+    required: false,
+    description: 'Optional reason for deletion',
+  })
   @ApiResponse({ status: 200, description: 'Account deleted successfully' })
   @ApiResponse({ status: 404, description: 'Account not found' })
   @Delete()
-  async delete(@Res() response, @Query() params: AccountDeleteDTO) {
+  async delete(
+    @Res() response,
+    @Query() params: AccountDeleteDTO,
+    @Query('reason') reason?: string,
+  ) {
     this.utility.responseHandler(
-      this.accountService.deleteUser(params),
+      this.accountService.deleteUser({
+        ...params,
+        deletedBy: this.utility.accountInformation.id,
+        reason,
+      }),
       response,
     );
   }

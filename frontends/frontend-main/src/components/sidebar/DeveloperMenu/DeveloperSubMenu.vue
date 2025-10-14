@@ -102,6 +102,7 @@ export default {
         child: [
           { icon: 'o_business', title: 'Company Management', key: 'member_developer_company_management' },
           { icon: 'o_people', title: 'User Management', key: 'member_developer_user_management' },
+          { icon: 'o_delete_sweep', title: 'Deletion Logs', key: 'member_developer_deletion_logs' },
         ],
       },
       {

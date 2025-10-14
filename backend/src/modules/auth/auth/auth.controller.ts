@@ -353,7 +353,10 @@ export class AuthController {
   @Delete('invite/:inviteId')
   async cancelInvite(@Res() response, @Param('inviteId') inviteId: string) {
     try {
-      await this.inviteService.cancelInvite(inviteId);
+      await this.inviteService.cancelInvite(
+        inviteId,
+        this.utility.accountInformation.id,
+      );
       return response.status(HttpStatus.OK).json({
         message: 'Invitation cancelled successfully',
       });
