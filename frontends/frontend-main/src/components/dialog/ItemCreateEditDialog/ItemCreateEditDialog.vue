@@ -1,6 +1,6 @@
 <template>
   <q-dialog v-model="dialogVisible" @before-show="initialize" ref="dialog">
-    <TemplateDialog size="sm" :icon="'inventory'" :iconColor="'primary'">
+    <TemplateDialog size="md" :icon="'inventory'" :iconColor="'primary'">
       <!-- Dialog Title -->
       <template #DialogTitle>
         {{ itemInformation ? 'Edit Item' : 'Create Item' }}

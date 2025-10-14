@@ -694,6 +694,82 @@ export class SelectBoxService {
     ];
   }
 
+  async getCategoryTreeList() {
+    // Fetch all categories in a single query
+    const allCategories = await this.prisma.itemCategory.findMany({
+      where: {
+        companyId: this.utilityService.companyId,
+        isActive: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    // Build a map for quick parent-child lookups
+    const categoryMap = new Map();
+    const childrenMap = new Map();
+
+    // Initialize maps
+    allCategories.forEach((category) => {
+      categoryMap.set(category.id, category);
+      childrenMap.set(category.id, []);
+    });
+
+    // Build parent-child relationships
+    allCategories.forEach((category) => {
+      if (category.parentId && childrenMap.has(category.parentId)) {
+        childrenMap.get(category.parentId).push(category);
+      }
+    });
+
+    // Function to count all descendants recursively
+    const countAllDescendants = (categoryId: number): number => {
+      const directChildren = childrenMap.get(categoryId) || [];
+      let count = directChildren.length;
+
+      directChildren.forEach((child) => {
+        count += countAllDescendants(child.id);
+      });
+
+      return count;
+    };
+
+    // Build flat list with tree information
+    const flattenCategories = (categories: any[], depth = 0): any[] => {
+      const result: any[] = [];
+      for (const category of categories) {
+        const children = childrenMap.get(category.id) || [];
+        const totalDescendants = countAllDescendants(category.id);
+
+        result.push({
+          key: category.id,
+          label: category.name,
+          depth,
+          hasChildren: children.length > 0,
+          childCount: totalDescendants, // Total count of all descendants
+          parentId: category.parentId,
+        });
+
+        if (children.length > 0) {
+          // Sort children by name before flattening
+          const sortedChildren = children.sort((a, b) =>
+            a.name.localeCompare(b.name),
+          );
+          result.push(...flattenCategories(sortedChildren, depth + 1));
+        }
+      }
+      return result;
+    };
+
+    // Filter to only root categories (no parent) and sort them
+    const rootCategories = allCategories
+      .filter((c) => !c.parentId)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    const treeList = flattenCategories(rootCategories);
+
+    return treeList;
+  }
+
   async getRoleListSimple() {
     const roles = await this.prisma.role.findMany({
       where: {

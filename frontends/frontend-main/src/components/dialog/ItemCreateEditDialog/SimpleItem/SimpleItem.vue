@@ -63,8 +63,16 @@
       <div v-if="!isTagHidden" class="row q-gutter-sm q-pb-md">
         <div class="col">
           <div class="label">Category</div>
-          <q-select v-model="form.categoryId" :options="categoryOptions" option-label="name" option-value="id" clearable
-            emit-value map-options outlined dense class="text-body-small" :loading="loadingCategories" />
+          <CustomCategoryTreeSelect
+            ref="categorySelect"
+            v-model="selectedCategoryIds"
+            placeholder="Select Category"
+            :showAllOption="false"
+            :includeChildren="false"
+            :showAddButton="true"
+            outlined
+            @show-add-dialog="showCategoryAddDialog"
+          />
         </div>
         <div class="col">
           <div class="label">Branch</div>
@@ -150,6 +158,9 @@
 
     <!-- Add Brand Dialog -->
     <AddEditBrandDialog v-if="isAddBrandDialogOpen" v-model="isAddBrandDialogOpen" @saveDone="selectNewBrand" />
+
+    <!-- Add Category Dialog -->
+    <AssetAddEditItemCategoryDialog v-if="isAddCategoryDialogOpen" v-model="isAddCategoryDialogOpen" @saveDone="selectNewCategory" />
   </div>
 </template>
 <script>
@@ -159,6 +170,7 @@ import GButton from "../../../../components/shared/buttons/GButton.vue";
 import TagsPartial from '../Partials/TagsPartial.vue';
 import KeywordsPartial from '../Partials/KeywordsPartial.vue';
 import CustomBranchTreeSelect from '../../../../components/selection/CustomBranchTreeSelect.vue';
+import CustomCategoryTreeSelect from '../../../../components/selection/CustomCategoryTreeSelect.vue';
 import { environment } from 'src/boot/axios';
 
 // Lazy-loaded dialog (ALL dialogs must be lazy loaded - CLAUDE.md)
@@ -167,6 +179,9 @@ const AddEditBrandDialog = defineAsyncComponent(() =>
 );
 const ChooseItemDialog = defineAsyncComponent(() =>
   import('../../../dialog/ChooseItemDialog.vue')
+);
+const AssetAddEditItemCategoryDialog = defineAsyncComponent(() =>
+  import('../../../../pages/Member/Asset/dialogs/AssetAddEditItemCategoryDialog.vue')
 );
 
 export default {
@@ -177,7 +192,9 @@ export default {
     TagsPartial,
     KeywordsPartial,
     CustomBranchTreeSelect,
+    CustomCategoryTreeSelect,
     AddEditBrandDialog,
+    AssetAddEditItemCategoryDialog,
     ChooseItemDialog,
   },
   props: {
@@ -217,9 +234,8 @@ export default {
     isTagPartialDisplayed: true,
     isKeywordsPartialDisplayed: true,
     isAddBrandDialogOpen: false,
+    isAddCategoryDialogOpen: false,
     isChooseItemDialogOpen: false,
-    categoryOptions: [],
-    loadingCategories: false,
   }),
   watch: {
     form: {
@@ -249,7 +265,6 @@ export default {
   },
   mounted() {
     this.isTagHidden = false;
-    this.fetchCategoryOptions();
     this.initialize()
   },
   computed: {
@@ -271,20 +286,28 @@ export default {
           this.form.branchId = value[0];
         }
       }
+    },
+    // Convert between single categoryId (for backend) and array format (for CustomCategoryTreeSelect)
+    selectedCategoryIds: {
+      get() {
+        // Convert single ID to array format for the component
+        if (this.form.categoryId === null || this.form.categoryId === undefined) {
+          return [];
+        }
+        return [this.form.categoryId];
+      },
+      set(value) {
+        // Convert array back to single ID for the form
+        if (!value || value.length === 0) {
+          this.form.categoryId = null;
+        } else {
+          // Take the first ID from the array (primary selected category)
+          this.form.categoryId = value[0];
+        }
+      }
     }
   },
   methods: {
-    async fetchCategoryOptions() {
-      this.loadingCategories = true;
-      try {
-        const response = await this.$api.get('/item-category/select-box');
-        this.categoryOptions = response.data;
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      } finally {
-        this.loadingCategories = false;
-      }
-    },
     // Helper function to safely extract raw value from currency objects
     extractRawValue(value, fallback = 0) {
       if (value === null || value === undefined) return fallback;
@@ -408,6 +431,14 @@ export default {
       const autoSelect = data.id;
       await this.$refs.brandSelect.refreshSelectOptions(autoSelect);
       this.form.brandId = autoSelect;
+    },
+    showCategoryAddDialog() {
+      this.isAddCategoryDialogOpen = true;
+    },
+    async selectNewCategory(data) {
+      const autoSelect = data.id;
+      await this.$refs.categorySelect.reloadAndSelect(autoSelect);
+      this.form.categoryId = autoSelect;
     },
     addGroupItem(item) {
       // Validate item type - only INDIVIDUAL_PRODUCT items can be added to groups

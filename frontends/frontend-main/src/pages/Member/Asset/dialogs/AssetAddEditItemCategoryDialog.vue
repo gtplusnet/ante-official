@@ -170,15 +170,17 @@ export default {
 
     const saveCategory = async () => {
       try {
+        let response;
         if (props.categoryData) {
           // Update
-          await api.put(`item-category/${props.categoryData.id}`, form.value);
+          response = await api.put(`item-category/${props.categoryData.id}`, form.value);
         } else {
           // Create
-          await api.post("item-category", form.value);
+          response = await api.post("item-category", form.value);
         }
         showDialog.value = false;
-        emit("saveDone");
+        // Emit the saved category data
+        emit("saveDone", response.data);
       } catch (error) {
         handleAxiosError($q, error);
       }
