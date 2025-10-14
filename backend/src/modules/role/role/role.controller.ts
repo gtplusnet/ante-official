@@ -90,14 +90,6 @@ export class RoleController {
     );
   }
 
-  @Post('populate-default')
-  async populateDefault(@Res() response) {
-    return this.utility.responseHandler(
-      this.roleService.populateDefaultRole(),
-      response,
-    );
-  }
-
   @Get('employees')
   async getEmployeesByRole(@Res() response, @Query('roleId') roleId: string) {
     return this.utility.responseHandler(
