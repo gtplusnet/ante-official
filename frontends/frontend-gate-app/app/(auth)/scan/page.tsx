@@ -130,28 +130,42 @@ export default function ScanPage() {
           }
           
           (window as any).checkIndexes = async () => {
-            const { dbManager } = await import('@/lib/db/db-manager')
-            const db = (dbManager as any).db
-            if (!db) {
-              console.log('Database not initialized')
-              return
-            }
-            
-            const tx = db.transaction(['students', 'guardians'], 'readonly')
-            const studentStore = tx.objectStore('students')
-            const guardianStore = tx.objectStore('guardians')
-            
-            console.log('Student indexes:', Array.from(studentStore.indexNames))
-            console.log('Guardian indexes:', Array.from(guardianStore.indexNames))
-            
-            // Check if qrCode index exists
-            if (studentStore.indexNames.contains('qrCode')) {
-              const index = studentStore.index('qrCode')
-              console.log('Student qrCode index properties:', {
-                name: index.name,
-                keyPath: index.keyPath,
-                unique: index.unique
-              })
+            try {
+              const { dbManager } = await import('@/lib/db/db-manager')
+              const db = (dbManager as any).db
+              if (!db) {
+                console.log('Database not initialized')
+                return
+              }
+
+              // Verify stores exist before accessing them
+              const requiredStores = ['students', 'guardians']
+              const missingStores = requiredStores.filter(store => !db.objectStoreNames.contains(store))
+
+              if (missingStores.length > 0) {
+                console.error('Missing required stores:', missingStores)
+                console.log('Available stores:', Array.from(db.objectStoreNames))
+                return
+              }
+
+              const tx = db.transaction(['students', 'guardians'], 'readonly')
+              const studentStore = tx.objectStore('students')
+              const guardianStore = tx.objectStore('guardians')
+
+              console.log('Student indexes:', Array.from(studentStore.indexNames))
+              console.log('Guardian indexes:', Array.from(guardianStore.indexNames))
+
+              // Check if qrCode index exists
+              if (studentStore.indexNames.contains('qrCode')) {
+                const index = studentStore.index('qrCode')
+                console.log('Student qrCode index properties:', {
+                  name: index.name,
+                  keyPath: index.keyPath,
+                  unique: index.unique
+                })
+              }
+            } catch (error) {
+              console.error('Error checking indexes:', error)
             }
           }
           
