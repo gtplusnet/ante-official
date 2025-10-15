@@ -8,7 +8,7 @@ import { test, expect, ConsoleMessage } from '@playwright/test';
  */
 
 test.describe('Gate App - Console Error Detection', () => {
-  const GATE_APP_URL = 'http://192.168.1.163:9002';
+  const GATE_APP_URL = 'http://localhost:9002';
   const consoleMessages: ConsoleMessage[] = [];
   const consoleErrors: ConsoleMessage[] = [];
   const consoleWarnings: ConsoleMessage[] = [];
