@@ -133,6 +133,130 @@ export class GuardianLogoutDto {
   reason?: string;
 }
 
+export class GuardianRegisterDto {
+  @ApiProperty({
+    description: 'Guardian first name',
+    example: 'Juan',
+    minLength: 2,
+    maxLength: 100,
+  })
+  @IsNotEmpty({ message: 'First name is required' })
+  @IsString({ message: 'First name must be a string' })
+  @MinLength(2, { message: 'First name must be at least 2 characters' })
+  @MaxLength(100, { message: 'First name must not exceed 100 characters' })
+  @Matches(/^[a-zA-Z\s-']+$/, {
+    message: 'First name can only contain letters, spaces, hyphens, and apostrophes',
+  })
+  @Transform(({ value }) => value?.trim())
+  firstName: string;
+
+  @ApiProperty({
+    description: 'Guardian last name',
+    example: 'Dela Cruz',
+    minLength: 2,
+    maxLength: 100,
+  })
+  @IsNotEmpty({ message: 'Last name is required' })
+  @IsString({ message: 'Last name must be a string' })
+  @MinLength(2, { message: 'Last name must be at least 2 characters' })
+  @MaxLength(100, { message: 'Last name must not exceed 100 characters' })
+  @Matches(/^[a-zA-Z\s-']+$/, {
+    message: 'Last name can only contain letters, spaces, hyphens, and apostrophes',
+  })
+  @Transform(({ value }) => value?.trim())
+  lastName: string;
+
+  @ApiPropertyOptional({
+    description: 'Guardian middle name',
+    example: 'Santos',
+    maxLength: 100,
+  })
+  @IsOptional()
+  @IsString({ message: 'Middle name must be a string' })
+  @MaxLength(100, { message: 'Middle name must not exceed 100 characters' })
+  @Matches(/^[a-zA-Z\s-']+$/, {
+    message: 'Middle name can only contain letters, spaces, hyphens, and apostrophes',
+  })
+  @Transform(({ value }) => value?.trim())
+  middleName?: string;
+
+  @ApiProperty({
+    description: 'Date of birth (ISO 8601 format)',
+    example: '1985-05-15',
+  })
+  @IsNotEmpty({ message: 'Date of birth is required' })
+  @IsISO8601({ strict: true }, { message: 'Date of birth must be in ISO 8601 format (YYYY-MM-DD)' })
+  dateOfBirth: string;
+
+  @ApiProperty({
+    description: 'Guardian email address',
+    example: 'juan.delacruz@gmail.com',
+  })
+  @IsNotEmpty({ message: 'Email is required' })
+  @Transform(({ value }) => value?.toLowerCase().trim())
+  @IsEmail({}, { message: 'Invalid email format' })
+  @MaxLength(100, { message: 'Email must not exceed 100 characters' })
+  email: string;
+
+  @ApiProperty({
+    description: 'Guardian password',
+    example: 'SecurePass123',
+    minLength: 6,
+    maxLength: 50,
+  })
+  @IsNotEmpty({ message: 'Password is required' })
+  @IsString({ message: 'Password must be a string' })
+  @MinLength(6, { message: 'Password must be at least 6 characters' })
+  @MaxLength(50, { message: 'Password must not exceed 50 characters' })
+  password: string;
+
+  @ApiProperty({
+    description: 'Guardian phone number (Philippine format: 10 digits starting with 9)',
+    example: '9171234567',
+  })
+  @IsNotEmpty({ message: 'Contact number is required' })
+  @IsString({ message: 'Contact number must be a string' })
+  @Matches(/^9\d{9}$/, {
+    message: 'Contact number must be 10 digits starting with 9 (e.g., 9171234567)',
+  })
+  @Transform(({ value }) => value?.replace(/[\s()-]/g, ''))
+  contactNumber: string;
+
+  @ApiPropertyOptional({
+    description: 'Alternate phone number',
+    example: '9181234567',
+  })
+  @IsOptional()
+  @IsString({ message: 'Alternate number must be a string' })
+  @Matches(/^9\d{9}$/, {
+    message: 'Alternate number must be 10 digits starting with 9 (e.g., 9181234567)',
+  })
+  @Transform(({ value }) => value?.replace(/[\s()-]/g, ''))
+  alternateNumber?: string;
+
+  @ApiPropertyOptional({
+    description: 'Guardian residential address',
+    example: '123 Main St, City, State',
+    maxLength: 500,
+  })
+  @IsOptional()
+  @IsString({ message: 'Address must be a string' })
+  @MaxLength(500, { message: 'Address must not exceed 500 characters' })
+  @Transform(({ value }) => value?.trim())
+  address?: string;
+
+  @ApiPropertyOptional({
+    description: 'Guardian occupation',
+    example: 'Software Engineer',
+    maxLength: 100,
+  })
+  @IsOptional()
+  @IsString({ message: 'Occupation must be a string' })
+  @MaxLength(100, { message: 'Occupation must not exceed 100 characters' })
+  @Transform(({ value }) => value?.trim())
+  occupation?: string;
+}
+
 export class AddStudentDto {
   @ApiPropertyOptional({
     description: 'Student ID (UUID)',
