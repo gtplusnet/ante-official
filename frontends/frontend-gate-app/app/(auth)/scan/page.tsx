@@ -334,7 +334,7 @@ export default function ScanPage() {
         
         // Only set up periodic refresh if realtime is NOT connected
         // This prevents unnecessary polling when realtime is working
-        if (!realtimeSuccess || !realtimeChannelRef.current) {
+        if (!realtimeSuccess) {
           console.log('⚠️ [ScanPage] Realtime not available, enabling polling fallback...')
           refreshInterval = setInterval(() => {
             // Only poll if realtime is still not connected
