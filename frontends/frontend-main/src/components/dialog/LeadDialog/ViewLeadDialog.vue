@@ -39,8 +39,16 @@
             :style="{ backgroundColor: currentStageColor }"
           >
             {{ currentStageDisplay }}
-            <q-icon name="keyboard_arrow_down" class="q-ml-xs stage-arrow" :class="{ 'rotate-arrow': isStageMenuOpen }" />
-            <q-menu auto-close @before-show="isStageMenuOpen = true" @before-hide="isStageMenuOpen = false">
+            <q-icon
+              name="keyboard_arrow_down"
+              class="q-ml-xs stage-arrow"
+              :class="{ 'rotate-arrow': isStageMenuOpen }"
+            />
+            <q-menu
+              auto-close
+              @before-show="isStageMenuOpen = true"
+              @before-hide="isStageMenuOpen = false"
+            >
               <q-list style="min-width: 200px">
                 <q-item
                   v-for="stage in stageOptions"
@@ -79,21 +87,7 @@
           <div class="col-8">
             <div class="details-container q-pr-sm">
               <div class="detail-three-card-container q-pb-lg">
-                <div
-                  class="detail-three-card column items-center justify-center"
-                >
-                  <div class="icon-div q-pa-sm">
-                    <q-icon
-                      name="o_beenhere"
-                      :style="{ color: 'var(--q-secondary)' }"
-                      size="18px"
-                    />
-                  </div>
-                  <span class="title">{{
-                    leadInformation.abc?.formatCurrency || "₱0.00"
-                  }}</span>
-                  <span class="subtitle">Approved Budget</span>
-                </div>
+                <!-- Total Contract -->
                 <div
                   class="detail-three-card column items-center justify-center"
                 >
@@ -107,8 +101,25 @@
                   <span class="title">{{
                     leadInformation.initialCosting?.formatCurrency || "₱0.00"
                   }}</span>
-                  <span class="subtitle">Initial Contract</span>
+                  <span class="subtitle">Total Contract</span>
                 </div>
+                <!-- Win Probability -->
+                <div
+                  class="detail-three-card column items-center justify-center"
+                >
+                  <div class="icon-div q-pa-sm">
+                    <q-icon
+                      name="o_beenhere"
+                      :style="{ color: 'var(--q-secondary)' }"
+                      size="18px"
+                    />
+                  </div>
+                  <span class="title">{{
+                    leadInformation.winProbability?.label || "0%"
+                  }}</span>
+                  <span class="subtitle">Win Probability</span>
+                </div>
+                <!-- Company -->
                 <div
                   class="detail-three-card column items-center justify-center"
                 >
@@ -124,12 +135,13 @@
                   }}</span>
                   <span class="subtitle">Company</span>
                 </div>
+                <!-- Relationship Owner -->
                 <div
                   class="detail-three-card column items-center justify-center"
                 >
                   <div class="icon-div q-pa-sm">
                     <q-icon
-                      name="pin_drop"
+                      name="o_account_circle"
                       :style="{ color: 'var(--q-secondary)' }"
                       size="18px"
                     />
@@ -165,6 +177,18 @@
                   </div>
                 </div>
 
+                <div v-if="leadInformation.abc?.raw !== 0" class="row">
+                  <q-icon
+                    name="my_location"
+                    size="16px"
+                    :style="{ color: 'var(--q-text-light-grey)' }"
+                  />
+                  <div class="column q-ml-sm">
+                    <span class="subtitle">Approved Budget Contract (ABC):</span>
+                    <span class="details-value">{{ leadInformation.abc?.formatCurrency || "₱0.00" }}</span>
+                  </div>
+                </div>
+
                 <div class="row">
                   <q-icon
                     name="today"
@@ -193,18 +217,6 @@
                       leadInformation.implementationFee?.formatCurrency ||
                       "₱0.00"
                     }}</span>
-                  </div>
-                </div>
-
-                <div class="row">
-                  <q-icon
-                    name="my_location"
-                    size="16px"
-                    :style="{ color: 'var(--q-text-light-grey)' }"
-                  />
-                  <div class="column q-ml-sm">
-                    <span class="subtitle">Probability:</span>
-                    <span class="details-value">{{ winProbabilityLabel }}</span>
                   </div>
                 </div>
 
@@ -249,7 +261,9 @@
                           size="18px"
                           :style="{ color: 'var(--q-text-light-grey)' }"
                         />
-                        <span class="details-value q-ml-xs">{{ closeDate }}</span>
+                        <span class="details-value q-ml-xs">{{
+                          closeDate
+                        }}</span>
                       </div>
                     </div>
                   </div>
@@ -1083,11 +1097,7 @@ export default {
         });
 
         // Call the API to move the lead
-        await APIRequests.moveLead(
-          $q,
-          props.leadViewId.toString(),
-          newStage
-        );
+        await APIRequests.moveLead($q, props.leadViewId.toString(), newStage);
 
         // Update local state immediately for smooth UX
         leadInformation.value.leadBoardStage = newStage;
