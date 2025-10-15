@@ -66,7 +66,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-6 pb-6">
             <div className="space-y-2">
               <label htmlFor="license" className="text-sm font-medium text-gray-700">
                 License Key
