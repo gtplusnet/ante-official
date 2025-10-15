@@ -396,7 +396,7 @@ export const Scanner = forwardRef<ScannerHandle, ScannerProps>(({ onScan, isActi
 
   // Show camera scanner mode
   return (
-    <div className="relative h-full w-full qr-scanner-container">
+    <div className={`relative h-full w-full qr-scanner-container ${useFrontCamera ? 'front-camera' : ''}`}>
       <div id="qr-reader" ref={scannerRef} className="h-full w-full"></div>
       
       {/* Mode toggle button */}
