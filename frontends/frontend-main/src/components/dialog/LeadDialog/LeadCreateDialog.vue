@@ -26,22 +26,19 @@
             <!-- Row 2: Approved Budget for Contract (ABC) | Monthly Recurring Revenue (MRR) -->
             <div class="row justify-center col-12 q-px-sm q-mt-sm">
               <div class="col-6 q-pr-sm">
-                <g-input v-model="form.approvedBudgetContract" label="Approved Budget for Contract (ABC)" type="number"
-                  :min="0" />
+                <g-input v-model="form.approvedBudgetContract" label="Approved Budget for Contract (ABC)" type="currency" />
               </div>
               <div class="col-6 q-pl-sm">
-                <g-input v-model="form.monthlyRecurringRevenue" label="Monthly Recurring Revenue (MRR)" type="number"
-                  :min="0" />
+                <g-input v-model="form.monthlyRecurringRevenue" label="Monthly Recurring Revenue (MRR)" type="currency" />
               </div>
             </div>
-
             <!-- Row 3: Implementation Fee | Total Contract -->
             <div class="row justify-center col-12 q-px-sm">
               <div class="col-6 q-pr-sm">
-                <g-input v-model="form.implementationFee" label="Implementation Fee" type="number" :min="0" />
+                <g-input v-model="form.implementationFee" label="Implementation Fee" type="currency" />
               </div>
               <div class="col-6 q-pl-sm">
-                <g-input v-model="form.totalContract" label="Total Contract" type="number" :min="0" />
+                <g-input v-model="form.totalContract" label="Total Contract" type="currency" />
               </div>
             </div>
 
