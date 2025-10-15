@@ -203,6 +203,13 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Prepare staging environment
+        run: |
+          cd frontends/frontend-gate-app
+          cp .env.staging .env
+          echo "✅ Copied .env.staging to .env"
+          cat .env
+
       - name: Deploy Gate App to Vercel (Staging Environment)
         run: |
           cd frontends/frontend-gate-app
@@ -225,6 +232,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Prepare staging environment
+        run: |
+          cd frontends/frontend-guardian-app
+          if [ -f .env.staging ]; then
+            cp .env.staging .env
+            echo "✅ Copied .env.staging to .env"
+            cat .env
+          else
+            echo "⚠️ No .env.staging file found, using Vercel environment variables"
+          fi
 
       - name: Deploy Guardian App to Vercel (Staging Environment)
         run: |
