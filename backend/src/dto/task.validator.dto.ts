@@ -55,6 +55,10 @@ export class TaskCreateDto {
   @IsOptional()
   @IsDateString()
   readonly dueDate?: string;
+
+  @IsOptional()
+  @IsNumber()
+  readonly goalId?: number;
 }
 export class TaskUpdateDto {
   @IsOptional()

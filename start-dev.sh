@@ -23,7 +23,7 @@ docker rm -f ante-postgres ante-redis-dev ante-mongodb-dev 2>/dev/null || true
 
 # Start database services (PostgreSQL, Redis & MongoDB) via Docker Compose
 echo "🔧 Starting PostgreSQL, Redis and MongoDB via Docker Compose..."
-docker compose -f docker/docker-compose-databases.yml up -d
+docker-compose -f docker/docker-compose-databases.yml up -d
 
 # Wait for services to be healthy
 echo "⏳ Waiting for services to be ready..."
@@ -60,8 +60,11 @@ echo "✅ ANTE development environment started successfully!"
 echo ""
 echo "🔗 Services available at:"
 echo "  - Backend API: http://localhost:3000"
-echo "  - WebSocket: ws://localhost:4000" 
+echo "  - WebSocket: ws://localhost:4000"
 echo "  - Frontend Main: http://localhost:9000"
+echo "  - Guardian App: http://localhost:9001"
+echo "  - Gate App: http://localhost:9002"
+echo "  - Website Multibook: http://localhost:5001"
 echo ""
 echo "🔗 Database services available at:"
 echo "  - PostgreSQL: localhost:5432 (ante/ante_password)"

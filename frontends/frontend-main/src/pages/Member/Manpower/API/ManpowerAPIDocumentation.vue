@@ -51,23 +51,20 @@
 <script setup>
 import { computed } from 'vue';
 import { useQuasar } from 'quasar';
+import { api } from 'src/boot/axios';
 import ExpandedNavPageContainer from '../../../../components/shared/ExpandedNavPageContainer.vue';
 
 const $q = useQuasar();
 
-// Compute the documentation URL
+// Compute the documentation URL using dynamic API base URL
 const documentationUrl = computed(() => {
-  const baseUrl = process.env.VUE_APP_API_URL || 'http://localhost:3000';
+  const baseUrl = api.defaults.baseURL || 'http://localhost:3000';
   return `${baseUrl}/api/public/manpower`;
 });
 
 // Function to open documentation in a new tab
 const openInNewTab = () => {
-  const fullUrl = window.location.origin.includes('localhost')
-    ? documentationUrl.value
-    : documentationUrl.value.replace('http://localhost:3000', window.location.origin.replace(/:\d+$/, ':3000'));
-
-  window.open(fullUrl, '_blank');
+  window.open(documentationUrl.value, '_blank');
 
   $q.notify({
     type: 'info',
@@ -81,12 +78,7 @@ const openInNewTab = () => {
 // Function to copy documentation link to clipboard
 const copyDocumentationLink = async () => {
   try {
-    // Get the full URL including the current host if needed
-    const fullUrl = window.location.origin.includes('localhost')
-      ? documentationUrl.value
-      : documentationUrl.value.replace('http://localhost:3000', window.location.origin.replace(/:\d+$/, ':3000'));
-
-    await navigator.clipboard.writeText(fullUrl);
+    await navigator.clipboard.writeText(documentationUrl.value);
 
     $q.notify({
       type: 'positive',

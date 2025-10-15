@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { getAuthSupabaseService } from '@/lib/services/auth-supabase.service'
+import { getAuthHelperService } from '@/lib/services/auth-helper.service'
 import { useRouter } from 'next/navigation'
 
 interface AuthContextType {
@@ -36,51 +36,44 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [companyId, setCompanyId] = useState<number | null>(null)
   const [licenseKey, setLicenseKey] = useState<string | null>(null)
   const router = useRouter()
-  const authService = getAuthSupabaseService()
+  const authService = getAuthHelperService()
 
   const restoreSession = async (): Promise<boolean> => {
     try {
       console.log('[AuthProvider] Attempting to restore session...')
-      
+
       // Check for stored license key
       const storedLicenseKey = localStorage.getItem('licenseKey')
       const storedCompanyId = localStorage.getItem('companyId')
-      
+
       if (!storedLicenseKey || !storedCompanyId) {
         console.log('[AuthProvider] No stored credentials found')
         return false
       }
 
-      // Try to restore Supabase session
-      const sessionRestored = await authService.restoreSession()
-      
-      if (!sessionRestored) {
-        // Session expired or invalid, try to re-authenticate
-        console.log('[AuthProvider] Session expired, re-authenticating...')
-        
-        const authResult = await authService.authenticateGateApp(
-          storedLicenseKey,
-          parseInt(storedCompanyId)
-        )
-        
-        if (!authResult.success) {
-          console.error('[AuthProvider] Re-authentication failed:', authResult.error)
-          return false
-        }
+      // Validate license key with backend
+      console.log('[AuthProvider] Validating license key with backend...')
+      const licenseInfo = await authService.validateLicense(storedLicenseKey)
+
+      if (!licenseInfo) {
+        console.error('[AuthProvider] License validation failed')
+        return false
       }
 
-      // Verify session is working
-      const isAuth = await authService.isAuthenticated()
-      
-      if (isAuth) {
-        setLicenseKey(storedLicenseKey)
-        setCompanyId(parseInt(storedCompanyId))
-        setIsAuthenticated(true)
-        console.log('[AuthProvider] Session restored successfully')
-        return true
+      // Update stored info with latest from backend
+      if (licenseInfo.companyId) {
+        localStorage.setItem('companyId', licenseInfo.companyId.toString())
+        setCompanyId(licenseInfo.companyId)
       }
-      
-      return false
+      if (licenseInfo.gateName) {
+        localStorage.setItem('gateName', licenseInfo.gateName)
+      }
+
+      setLicenseKey(storedLicenseKey)
+      setIsAuthenticated(true)
+      console.log('[AuthProvider] Session restored successfully')
+      return true
+
     } catch (error) {
       console.error('[AuthProvider] Error restoring session:', error)
       return false
@@ -89,16 +82,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signOut = async () => {
     try {
-      await authService.signOut()
-      
       // Clear all auth state
       setIsAuthenticated(false)
       setCompanyId(null)
       setLicenseKey(null)
-      
+
+      // Clear localStorage
+      localStorage.removeItem('licenseKey')
+      localStorage.removeItem('companyId')
+      localStorage.removeItem('gateName')
+      localStorage.removeItem('companyName')
+      localStorage.removeItem('licenseType')
+
       // Clear cookies
       document.cookie = 'licenseKey=; path=/; max-age=0'
-      
+
       // Redirect to login
       router.push('/login')
     } catch (error) {

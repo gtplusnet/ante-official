@@ -1059,6 +1059,11 @@ export class TaskService {
       newTaskData.project = { connect: { id: createTaskDto.projectId } };
     }
 
+    // Add goal if provided (for goal inheritance in inline task creation)
+    if (createTaskDto.goalId) {
+      newTaskData.goal = { connect: { id: createTaskDto.goalId } };
+    }
+
     // assign task to user if assignee is provided
     if (assignedToId) {
       newTaskData.assignedTo = { connect: { id: assignedToId } };

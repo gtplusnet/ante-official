@@ -39,6 +39,7 @@ export interface QuickTaskData {
   dueDate?: string;
   boardLaneId?: number;
   order?: number;
+  goalId?: number;  // For goal inheritance in inline task creation
 }
 
 export type TaskCustomSection = 'do_today' | 'do_later' | 'do_next_week' | null;
@@ -202,7 +203,8 @@ export const useTaskStore = defineStore('task', () => {
         assignedMode: determineAssignMode(taskData.assignedTo),
         dueDate: taskData.dueDate || undefined,
         boardLaneId: taskData.boardLaneId || undefined,
-        order: taskData.order || undefined
+        order: taskData.order || undefined,
+        goalId: taskData.goalId || undefined  // For goal inheritance in inline task creation
       };
 
       console.log('[TaskStore] Creating task via backend API:', createPayload);

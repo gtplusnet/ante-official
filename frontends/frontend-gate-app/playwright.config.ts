@@ -8,21 +8,23 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:3001',
+    baseURL: 'http://localhost:9002',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    headless: true, // CRITICAL: Always run headless
   },
 
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], headless: true },
     },
   ],
 
-  webServer: {
-    command: 'yarn dev',
-    port: 3001,
-    reuseExistingServer: !process.env.CI,
-  },
+  // Gate app runs on PM2 (port 9002) - no need to start server
+  // webServer: {
+  //   command: 'yarn dev',
+  //   port: 9002,
+  //   reuseExistingServer: !process.env.CI,
+  // },
 });

@@ -8,8 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { AttendanceLogDetailModal } from '@/components/features/AttendanceLogDetailModal';
 import { AttendanceLog } from '@/types';
 import { FiCalendar, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
-// attendanceApi removed - using Supabase
-import { AttendanceLogDto } from '@/types/api.types';
+import { guardianPublicApi } from '@/lib/api/guardian-public-api';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { PullToRefresh } from '@/components/ui/PullToRefresh';
 
@@ -40,24 +39,30 @@ export default function LogHistoryPage() {
     try {
       setIsLoading(true);
       setError(null);
-      // Fetch logs for the last 30 days (API limit is 100)
-      // TODO: Replace with Supabase implementation
-      const response = { logs: [] as AttendanceLogDto[] };
-      
+
+      console.log('[LogHistory] Fetching attendance logs from Public API');
+
+      // Fetch logs for the last 30 days using guardianPublicApi
+      const logs = await guardianPublicApi.getAttendanceLogs({
+        limit: 100,
+        days: 30,
+      });
+
       // Convert API logs to our AttendanceLog format
-      const convertedLogs: AttendanceLog[] = response.logs.map((log: AttendanceLogDto) => ({
+      const convertedLogs: AttendanceLog[] = logs.map((log) => ({
         id: log.id,
         studentId: log.studentId,
         studentName: log.studentName,
         timestamp: new Date(log.timestamp),
-        type: log.action === 'check_in' ? 'entry' : 'exit',
-        location: log.location || 'Main Gate',
+        type: log.type === 'check-in' ? 'entry' : 'exit',
+        location: log.gate.name,
       }));
-      
+
       setAllLogs(convertedLogs);
+      console.log(`[LogHistory] Loaded ${convertedLogs.length} attendance logs`);
     } catch (err: any) {
-      console.error('Failed to fetch attendance logs:', err);
-      setError('Failed to load attendance logs');
+      console.error('[LogHistory] Failed to fetch attendance logs:', err);
+      setError(err.message || 'Failed to load attendance logs');
     } finally {
       setIsLoading(false);
     }

@@ -1,80 +1,143 @@
 /**
  * Authentication helper for gate app
- * Handles authentication with backend and Supabase
+ * Handles license key validation with backend API
  */
+
+export interface LicenseValidationResult {
+  licenseId: string;
+  gateId: string;
+  gateName: string;
+  companyId: number;
+  isActive: boolean;
+}
 
 export class AuthHelperService {
   private baseUrl: string;
-  
+  private apiBase: string;
+
   constructor() {
     this.baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    this.apiBase = `${this.baseUrl}/api/public/school-gate`;
   }
 
   /**
-   * Authenticate with backend and get Supabase tokens
-   * Uses a service account for the gate app
+   * Validate license key with backend
+   * Replaces Supabase authentication with license-based authentication
    */
-  async authenticateGateApp(companyId: number): Promise<{
-    supabaseToken: string;
-    supabaseRefreshToken: string;
-  } | null> {
+  async validateLicense(licenseKey: string): Promise<LicenseValidationResult | null> {
     try {
-      // Use a service account for the gate app
-      // In production, this should be properly configured per company
-      const credentials = this.getServiceAccountCredentials(companyId);
-      
-      if (!credentials) {
-        console.error('[AuthHelper] No service account configured for company:', companyId);
-        return null;
-      }
+      console.log('[AuthHelper] Validating license key...');
 
-      // Authenticate with backend
-      const response = await fetch(`${this.baseUrl}/auth/login`, {
+      const response = await fetch(`${this.apiBase}/validate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-license-key': licenseKey,
         },
-        body: JSON.stringify(credentials),
+        body: JSON.stringify({
+          deviceInfo: {
+            deviceName: localStorage.getItem('deviceName') || 'Unknown Device',
+            userAgent: navigator.userAgent,
+          }
+        }),
       });
 
       if (!response.ok) {
-        console.error('[AuthHelper] Authentication failed:', response.status);
+        const error = await response.json();
+        console.error('[AuthHelper] License validation failed:', error.message);
         return null;
       }
 
       const result = await response.json();
-      
-      if (result.supabaseToken && result.supabaseRefreshToken) {
-        console.log('[AuthHelper] Successfully authenticated and received Supabase tokens');
+
+      if (result.success && result.data) {
+        console.log('[AuthHelper] License validated successfully:', result.data);
+
+        // Store license info in localStorage
+        localStorage.setItem('licenseKey', licenseKey);
+        localStorage.setItem('licenseId', result.data.licenseId);
+        localStorage.setItem('gateId', result.data.gateId);
+        localStorage.setItem('gateName', result.data.gateName || 'Main Gate');
+        localStorage.setItem('companyId', result.data.companyId.toString());
+        localStorage.setItem('deviceId', result.data.gateId); // Use gateId as deviceId
+
         return {
-          supabaseToken: result.supabaseToken,
-          supabaseRefreshToken: result.supabaseRefreshToken,
+          licenseId: result.data.licenseId,
+          gateId: result.data.gateId,
+          gateName: result.data.gateName,
+          companyId: result.data.companyId,
+          isActive: result.data.isActive,
         };
       }
 
-      console.error('[AuthHelper] No Supabase tokens in response');
+      console.error('[AuthHelper] Invalid response format');
       return null;
     } catch (error) {
-      console.error('[AuthHelper] Authentication error:', error);
+      console.error('[AuthHelper] License validation error:', error);
       return null;
     }
   }
 
   /**
-   * Get service account credentials for a company
-   * In production, this should be stored securely
+   * Check if user is authenticated (has valid license key)
    */
-  private getServiceAccountCredentials(companyId: number): { username: string; password: string } | null {
-    // For development/testing, use known test accounts
-    const serviceAccounts: Record<number, { username: string; password: string }> = {
-      16: {
-        username: 'guillermotabligan',
-        password: 'water123',
-      },
-      // Add more company service accounts as needed
-    };
+  isAuthenticated(): boolean {
+    const licenseKey = localStorage.getItem('licenseKey');
+    const companyId = localStorage.getItem('companyId');
+    return !!(licenseKey && companyId);
+  }
 
-    return serviceAccounts[companyId] || null;
+  /**
+   * Logout - clear license data
+   */
+  logout(): void {
+    localStorage.removeItem('licenseKey');
+    localStorage.removeItem('licenseId');
+    localStorage.removeItem('gateId');
+    localStorage.removeItem('gateName');
+    localStorage.removeItem('companyId');
+    localStorage.removeItem('deviceId');
+    localStorage.removeItem('cached_students');
+    localStorage.removeItem('cached_guardians');
+    localStorage.removeItem('last_student_sync');
+    localStorage.removeItem('last_guardian_sync');
+    console.log('[AuthHelper] Logged out - cleared license data');
+  }
+
+  /**
+   * Get current license info from localStorage
+   */
+  getLicenseInfo(): LicenseValidationResult | null {
+    const licenseKey = localStorage.getItem('licenseKey');
+    const licenseId = localStorage.getItem('licenseId');
+    const gateId = localStorage.getItem('gateId');
+    const gateName = localStorage.getItem('gateName');
+    const companyId = localStorage.getItem('companyId');
+
+    if (!licenseKey || !licenseId || !gateId || !companyId) {
+      return null;
+    }
+
+    return {
+      licenseId,
+      gateId,
+      gateName: gateName || 'Main Gate',
+      companyId: parseInt(companyId),
+      isActive: true,
+    };
+  }
+
+  /**
+   * Legacy method for backward compatibility
+   * @deprecated Use validateLicense() instead
+   */
+  async authenticateGateApp(companyId: number): Promise<{
+    supabaseToken: string;
+    supabaseRefreshToken: string;
+  } | null> {
+    console.warn('[AuthHelper] authenticateGateApp() is deprecated');
+    console.warn('[AuthHelper] Use validateLicense() instead');
+    return null;
   }
 }
 

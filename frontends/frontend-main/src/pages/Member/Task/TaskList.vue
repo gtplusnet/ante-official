@@ -929,6 +929,11 @@ export default defineComponent({
             taskData.status = 'done';
             taskData.boardLaneId = 3;
           }
+        } else if (groupingMode === 'goals') {
+          // Set goal based on section metadata
+          if (metadata && metadata.goalId) {
+            taskData.goalId = metadata.goalId;
+          }
         }
 
         // Always use Supabase for quick task creation (all grouping modes)
@@ -967,7 +972,8 @@ export default defineComponent({
           status: mapStatusToString(taskData.status),
           dueDate: taskData.dueDate || null,
           boardLaneId: taskData.boardLaneId || 1,
-          order: taskData.order || newTaskOrder
+          order: taskData.order || newTaskOrder,
+          goalId: taskData.goalId || null  // Include goal ID for goal inheritance
         };
 
         console.log('[DEBUG] Creating task via backend API (all groups):', quickTaskData);
