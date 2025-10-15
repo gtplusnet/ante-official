@@ -25,6 +25,8 @@ import {
   ExternalLink,
   UserCheck,
   Camera,
+  Maximize,
+  Minimize,
 } from "lucide-react";
 import { useNetworkStatus } from "@/lib/hooks/useNetworkStatus";
 import Link from "next/link";
@@ -61,6 +63,7 @@ export default function ScanPage() {
     status: "success" | "error" | "processing";
     message?: string;
   } | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const lastScanRef = useRef<string>("");
   const lastScanTimeRef = useRef<number>(0);
   const scannerRef = useRef<ScannerHandle>(null);
@@ -731,6 +734,34 @@ export default function ScanPage() {
     console.log("Switching to", !manualInputMode ? "manual" : "camera", "mode");
   };
 
+  // Toggle fullscreen mode
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (error) {
+      console.error("Error toggling fullscreen:", error);
+    }
+  };
+
+  // Listen for fullscreen changes (handles ESC key and F11)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
   console.log("ScanPage rendering, isInitialized:", isInitialized);
 
   return (
@@ -764,6 +795,18 @@ export default function ScanPage() {
                   <span className="text-sm font-medium text-gray-600">
                     Gate: <span className="text-gray-900">{gateName}</span>
                   </span>
+                  <button
+                    onClick={toggleFullscreen}
+                    className="ml-2 p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+                    title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                    suppressHydrationWarning
+                  >
+                    {isFullscreen ? (
+                      <Minimize className="h-4 w-4" />
+                    ) : (
+                      <Maximize className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
@@ -968,7 +1011,7 @@ export default function ScanPage() {
               </div>
             </CardHeader>
             <CardContent>
-            <div className="space-y-4 max-h-[400px] overflow-y-auto">
+            <div className="space-y-4 max-h-[410px] overflow-y-auto">
                 {recentScans.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <Clock className="h-12 w-12 mx-auto mb-2 text-gray-400" />
