@@ -195,10 +195,17 @@ export default defineComponent({
       pointOfContactId: "",
     });
 
+    // State tracking for Total Contract computation
+    const isTotalContractManual = ref(false);
+    const isComputingTotalContract = ref(false);
+
     const initForm = async () => {
       if (props.leadData && Object.keys(props.leadData).length > 0 && props.leadData.id) {
         // Edit mode - populate form with existing data
         const endDate = props.leadData.endDate?.raw ? new Date(props.leadData.endDate.raw) : new Date();
+
+        // Disable watchers during initialization
+        isComputingTotalContract.value = true;
 
         // Set non-select fields immediately
         form.value.dealName = props.leadData.name || "";
@@ -220,9 +227,28 @@ export default defineComponent({
         form.value.dealSourceId = props.leadData.leadSource ? Number(props.leadData.leadSource) : "";
         form.value.relationshipOwnerId = props.leadData.relationshipOwnerId || "";
         form.value.pointOfContactId = props.leadData.clientId ? Number(props.leadData.clientId) : "";
+
+        // For existing leads: Check if Total Contract matches the formula
+        const mrr = Number(form.value.monthlyRecurringRevenue) || 0;
+        const implFee = Number(form.value.implementationFee) || 0;
+        const computedTotal = (mrr * 12) + implFee;
+        const currentTotal = Number(form.value.totalContract) || 0;
+
+        // If the values match (within a small tolerance), use auto-computation
+        // Otherwise, treat it as manually set
+        isTotalContractManual.value = Math.abs(computedTotal - currentTotal) > 0.01;
+
+        // Re-enable watchers after a delay
+        setTimeout(() => {
+          isComputingTotalContract.value = false;
+        }, 100);
       } else {
         // Create mode - set defaults
         const today = new Date();
+
+        // Disable watchers during initialization
+        isComputingTotalContract.value = true;
+
         form.value.dealName = "";
         form.value.dealType = "";
         form.value.approvedBudgetContract = 0;
@@ -236,6 +262,14 @@ export default defineComponent({
         form.value.dealSourceId = "";
         form.value.relationshipOwnerId = "";
         form.value.pointOfContactId = "";
+
+        // For new leads, enable auto-computation
+        isTotalContractManual.value = false;
+
+        // Re-enable watchers after a delay
+        setTimeout(() => {
+          isComputingTotalContract.value = false;
+        }, 100);
       }
     };
 
@@ -319,6 +353,42 @@ export default defineComponent({
       async (newContactId) => {
         if (newContactId && newContactId !== "") {
           // Future: Auto-populate additional fields from point of contact if needed
+        }
+      }
+    );
+
+    // Auto-compute Total Contract when MRR or Implementation Fee changes
+    watch(
+      [() => form.value.monthlyRecurringRevenue, () => form.value.implementationFee],
+      ([newMRR, newImplFee]) => {
+        // Only auto-compute if user hasn't manually overridden
+        if (!isTotalContractManual.value) {
+          isComputingTotalContract.value = true;
+
+          const mrr = Number(newMRR) || 0;
+          const implFee = Number(newImplFee) || 0;
+
+          // Formula: Total Contract = (MRR × 12) + Implementation Fee
+          form.value.totalContract = (mrr * 12) + implFee;
+
+          // Small delay to allow the value to propagate
+          setTimeout(() => {
+            isComputingTotalContract.value = false;
+          }, 100);
+        }
+      }
+    );
+
+    // Detect manual override of Total Contract
+    watch(
+      () => form.value.totalContract,
+      (newValue, oldValue) => {
+        // Only mark as manual if:
+        // 1. We're not currently computing it programmatically
+        // 2. The value actually changed
+        // 3. It's not the initial load
+        if (!isComputingTotalContract.value && newValue !== oldValue && oldValue !== undefined) {
+          isTotalContractManual.value = true;
         }
       }
     );
