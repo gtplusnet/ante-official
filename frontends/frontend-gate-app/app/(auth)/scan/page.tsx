@@ -252,7 +252,7 @@ export default function ScanPage() {
             todayTotal: prev.todayTotal + 1,
             checkIns: newRecord.action === 'check_in' ? prev.checkIns + 1 : prev.checkIns,
             checkOuts: newRecord.action === 'check_out' ? prev.checkOuts + 1 : prev.checkOuts,
-            lastScanTime: newRecord.timestamp
+            lastScanTime: newRecord.timestamp instanceof Date ? newRecord.timestamp : new Date(newRecord.timestamp)
           }))
 
           // Play sound for new scans from other devices
