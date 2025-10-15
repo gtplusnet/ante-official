@@ -5,75 +5,144 @@
 
   <template v-else>
     <div class="board-container q-pa-sm" v-dragscroll.x="!isDragging">
-      <div v-for="column in boardColumns" :key="column.boardKey" class="board-column"
+      <div
+        v-for="column in boardColumns"
+        :key="column.boardKey"
+        class="board-column"
         :class="{ 'drop-active': dragOverColumn === column.boardKey }"
-        @dragover.prevent="handleDragOver(column.boardKey)" @dragleave="handleDragLeave"
-        @drop="handleDrop($event, column.boardKey)">
+        @dragover.prevent="handleDragOver(column.boardKey)"
+        @dragleave="handleDragLeave"
+        @drop="handleDrop($event, column.boardKey)"
+      >
         <div class="column-header">
           <div class="column-header-top">
-            <h6 class="column-title text-title-small">{{ column.boardName }}</h6>
-            <div class="q-badge text-title-small" :class="column.boardProjects?.length === 0 ? 'q-badge-zero' : ''">{{
-              column.boardProjects?.length || 0 }}</div>
+            <h6 class="column-title text-title-small">
+              {{ column.boardName }}
+            </h6>
+            <div
+              class="q-badge text-title-small"
+              :class="column.boardProjects?.length === 0 ? 'q-badge-zero' : ''"
+            >
+              {{ column.boardProjects?.length || 0 }}
+            </div>
           </div>
           <div class="divider q-my-sm"></div>
           <div class="column-total text-title-small">
             {{ formatColumnTotal(column.boardProjects) }}
           </div>
           <div class="q-mt-sm">
-            <g-button icon="add" icon-size="md" class="full-width" color="grey" label="Add Lead" variant="tonal"
-              @click="openLeadCreateDialog(column.boardKey)" />
+            <g-button
+              icon="add"
+              icon-size="md"
+              class="full-width"
+              color="grey"
+              label="Add Lead"
+              variant="tonal"
+              @click="openLeadCreateDialog(column.boardKey)"
+            />
           </div>
         </div>
         <div class="column-content">
-          <div v-for="lead in column.boardProjects" :key="lead.id" class="lead-card" :class="{
-            'drag-source': draggedLead?.id === lead.id && isDragging,
-            'active-card': lead.id === leadViewId
-          }" draggable="true" @dragstart="handleDragStart($event, lead)" @dragend="handleDragEnd"
-            @click="openLead(lead.id, lead.id === leadViewId)">
+          <div
+            v-for="lead in column.boardProjects"
+            :key="lead.id"
+            class="lead-card"
+            :class="{
+              'drag-source': draggedLead?.id === lead.id && isDragging,
+              'active-card': lead.id === leadViewId,
+            }"
+            draggable="true"
+            @dragstart="handleDragStart($event, lead)"
+            @dragend="handleDragEnd"
+            @click="openLead(lead.id, lead.id === leadViewId)"
+          >
             <div class="lead-card-header">
               <div class="lead-name text-title-small">{{ lead.name }}</div>
               <q-btn flat round dense size="sm" icon="more_vert" @click.stop>
                 <q-menu anchor="bottom right" self="top right" auto-close>
                   <div class="q-pa-sm">
-                    <div clickable @click="editLead(lead)" class="row q-pa-xs cursor-pointer">
+                    <div
+                      clickable
+                      @click="editLead(lead)"
+                      class="row q-pa-xs cursor-pointer"
+                    >
                       <div><q-icon name="edit" color="grey" size="20px" /></div>
-                      <div class="text-blue q-pa-xs text-label-medium">Edit</div>
+                      <div class="text-blue q-pa-xs text-label-medium">
+                        Edit
+                      </div>
                     </div>
-                    <div clickable @click="deleteLead(lead)" class="row q-pa-xs cursor-pointer">
-                      <div><q-icon name="delete" color="grey" size="20px" /></div>
-                      <div class="text-blue q-pa-xs text-label-medium">Delete</div>
+                    <div
+                      clickable
+                      @click="deleteLead(lead)"
+                      class="row q-pa-xs cursor-pointer"
+                    >
+                      <div>
+                        <q-icon name="delete" color="grey" size="20px" />
+                      </div>
+                      <div class="text-blue q-pa-xs text-label-medium">
+                        Delete
+                      </div>
                     </div>
                   </div>
                 </q-menu>
               </q-btn>
             </div>
-
             <div class="lead-card-body text-label-small">
               <div class="deal-badge row items-center">
-                <span class="deal-type row items-center justify-center">{{ lead.leadType?.label || 'No Deal Type' }}</span>
-                <span class="deal-status row items-center justify-center" :class="getProbabilityClass(lead)">{{
-                  getProbabilityLetter(lead) }}</span>
+                <span class="deal-type row items-center justify-center">{{
+                  lead.leadType?.label || "No Deal Type"
+                }}</span>
+                <span
+                  class="deal-status row items-center justify-center"
+                  :class="getProbabilityClass(lead)"
+                  >{{ getProbabilityLetter(lead) }}</span
+                >
+                <!-- Proposal Status Badge (only show when in Proposal stage) -->
+                <span
+                  class="proposal-status row items-center justify-center"
+                  :class="getProposalStatusClass(lead.proposalStatus)"
+                  v-if="lead.leadBoardStage === 'proposal'"
+                  >{{ getProposalStatusLabel(lead.proposalStatus) }}</span
+                >
               </div>
+
               <div class="avatar-container row items-center">
                 <q-avatar size="md">
-                  <img src="/lead-avatar.png">
+                  <img src="/lead-avatar.png" />
                 </q-avatar>
-                <div class="text-grey text-label-medium q-ml-sm">{{ `${formatWord(lead.personInCharge.firstName)}
-                  ${formatWord(lead.personInCharge.lastName)}` }}
+                <div class="text-grey text-label-medium q-ml-sm">
+                  {{
+                    `${formatWord(lead.personInCharge.firstName)}
+                  ${formatWord(lead.personInCharge.lastName)}`
+                  }}
                 </div>
               </div>
-              <div class="abc-item row justify-between" v-if="lead.initialCosting">
+              <div
+                class="abc-item row justify-between"
+                v-if="lead.initialCosting"
+              >
                 <div class="row items-center">
-                  <div class="row items-center q-mr-sm" :style="{ color: '#747786' }">
+                  <div
+                    class="row items-center q-mr-sm"
+                    :style="{ color: '#747786' }"
+                  >
                     <q-icon name="payments" size="18px" />
-                    <span class="text-label-medium q-ml-xs">Total Contract:</span>
+                    <span class="text-label-medium q-ml-xs"
+                      >Total Contract:</span
+                    >
                   </div>
-                  <div class="text-bold text-label-medium" :style="{ color: 'var(--q-text-dark)' }">{{
-                    lead.initialCosting.formatCurrency }}</div>
+                  <div
+                    class="text-bold text-label-medium"
+                    :style="{ color: 'var(--q-text-dark)' }"
+                  >
+                    {{ lead.initialCosting.formatCurrency }}
+                  </div>
                 </div>
               </div>
               <div class="detail-item row justify-between">
-                <div class="time-stage row items-center text-label-small text-dark">
+                <div
+                  class="time-stage row items-center text-label-small text-dark"
+                >
                   <q-icon name="history" size="16px" />
                   <span class="q-ml-xs">{{ calculateTimeInStage(lead) }}</span>
                 </div>
@@ -93,32 +162,50 @@
             </div>
           </div>
 
-          <div v-if="!column.boardProjects?.length" class="empty-column">No leads in this stage</div>
+          <div v-if="!column.boardProjects?.length" class="empty-column">
+            No leads in this stage
+          </div>
         </div>
       </div>
     </div>
   </template>
 
   <!-- Lead Dialog for Create/Edit -->
-  <lead-create-dialog v-model="isLeadDialogOpen" :leadData="leadData" @close="handleLeadSaved" />
+  <lead-create-dialog
+    v-model="isLeadDialogOpen"
+    :leadData="leadData"
+    @close="handleLeadSaved"
+  />
 
-  <view-lead-dialog v-model="isViewLeadDialogOpen" @close="handleCloseDialog"
-    @stageChanged="handleStageChanged" :leadViewId="leadViewId"></view-lead-dialog>
+  <view-lead-dialog
+    v-model="isViewLeadDialogOpen"
+    @close="handleCloseDialog"
+    @stageChanged="handleStageChanged"
+    @proposalStatusChanged="handleProposalStatusChanged"
+    :leadViewId="leadViewId"
+  ></view-lead-dialog>
 </template>
 
 <style scoped src="../Leads.scss"></style>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
-import { useQuasar } from 'quasar';
-import { useRoute } from 'vue-router';
-import { APIRequests } from 'src/utility/api.handler';
-import LeadCreateDialog from 'src/components/dialog/LeadDialog/LeadCreateDialog.vue';
-import ViewLeadDialog from 'src/components/dialog/LeadDialog/ViewLeadDialog.vue';
-import { LeadDataResponse } from '@shared/response';
-import { formatWord } from 'src/utility/formatter';
-import { dragscroll } from 'vue-dragscroll';
-import GButton from 'src/components/shared/buttons/GButton.vue';
+import {
+  defineComponent,
+  ref,
+  onMounted,
+  onBeforeUnmount,
+  nextTick,
+  watch,
+} from "vue";
+import { useQuasar } from "quasar";
+import { useRoute } from "vue-router";
+import { APIRequests } from "src/utility/api.handler";
+import LeadCreateDialog from "src/components/dialog/LeadDialog/LeadCreateDialog.vue";
+import ViewLeadDialog from "src/components/dialog/LeadDialog/ViewLeadDialog.vue";
+import { LeadDataResponse } from "@shared/response";
+import { formatWord } from "src/utility/formatter";
+import { dragscroll } from "vue-dragscroll";
+import GButton from "src/components/shared/buttons/GButton.vue";
 
 interface Lead {
   id: number;
@@ -134,7 +221,12 @@ interface Lead {
   winProbability: { label: string };
   leadType?: { key: string; label: string };
   updatedAt?: { raw: Date; timeAgo: string };
-  initialCosting?: { formatCurrency: string; formatNumber: string; raw: number };
+  initialCosting?: {
+    formatCurrency: string;
+    formatNumber: string;
+    raw: number;
+  };
+  proposalStatus?: string;
 }
 
 interface BoardColumn {
@@ -146,7 +238,7 @@ interface BoardColumn {
 }
 
 export default defineComponent({
-  name: 'MemberLeadsBoardView',
+  name: "MemberLeadsBoardView",
   components: {
     LeadCreateDialog,
     ViewLeadDialog,
@@ -158,15 +250,15 @@ export default defineComponent({
   props: {
     filterRelationshipOwner: {
       type: String,
-      default: 'all',
+      default: "all",
     },
     filterDealType: {
       type: String,
-      default: 'all',
+      default: "all",
     },
     filterStage: {
       type: String,
-      default: 'all',
+      default: "all",
     },
   },
   setup(props) {
@@ -179,7 +271,7 @@ export default defineComponent({
     const isLeadDialogOpen = ref(false);
     const leadData = ref<LeadDataResponse | undefined>(undefined);
     const openDropdowns = ref<Record<string | number, boolean>>({});
-    const textareaModel = ref('');
+    const textareaModel = ref("");
     const isViewLeadDialogOpen = ref(false);
     const leadViewId = ref<number>(0);
     const activeCard = ref<boolean>(false);
@@ -214,14 +306,16 @@ export default defineComponent({
         const response = await APIRequests.getLeadBoard($q, filters);
 
         if (Array.isArray(response)) {
-          boardColumns.value = response.sort((a, b) => a.boardOrder - b.boardOrder);
+          boardColumns.value = response.sort(
+            (a, b) => a.boardOrder - b.boardOrder
+          );
         }
       } catch (error) {
-        console.error('Failed to fetch lead board data:', error);
+        console.error("Failed to fetch lead board data:", error);
         $q.notify({
-          color: 'negative',
-          message: 'Failed to load board data',
-          icon: 'report_problem',
+          color: "negative",
+          message: "Failed to load board data",
+          icon: "report_problem",
         });
       } finally {
         isLoading.value = false;
@@ -244,9 +338,9 @@ export default defineComponent({
         const cardElement = document.querySelector(`.lead-card.active-card`);
         if (cardElement) {
           cardElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-            inline: 'center'
+            behavior: "smooth",
+            block: "center",
+            inline: "center",
           });
         }
       }
@@ -256,18 +350,18 @@ export default defineComponent({
       draggedLead.value = lead;
       isDragging.value = true;
       if (event.dataTransfer) {
-        event.dataTransfer.effectAllowed = 'move';
-        event.dataTransfer.setData('text/plain', lead.id.toString());
-        event.dataTransfer.dropEffect = 'move';
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", lead.id.toString());
+        event.dataTransfer.dropEffect = "move";
       }
       // Add dragging class to the element
       const target = event.target as HTMLElement;
-      target.classList.add('dragging');
+      target.classList.add("dragging");
     };
 
     const handleDragEnd = (event: DragEvent) => {
       const target = event.target as HTMLElement;
-      target.classList.remove('dragging');
+      target.classList.remove("dragging");
       draggedLead.value = null;
       dragOverColumn.value = null;
       isDragging.value = false;
@@ -285,7 +379,10 @@ export default defineComponent({
       event.preventDefault();
       dragOverColumn.value = null;
 
-      if (!draggedLead.value || draggedLead.value.leadBoardStage === targetColumnKey) {
+      if (
+        !draggedLead.value ||
+        draggedLead.value.leadBoardStage === targetColumnKey
+      ) {
         draggedLead.value = null;
         isDragging.value = false;
         return;
@@ -302,18 +399,25 @@ export default defineComponent({
 
       try {
         // Optimistically update the UI first
-        const sourceColumn = boardColumns.value.find((col) => col.boardProjects?.some((lead) => lead.id === leadToMove.id));
-        const targetColumn = boardColumns.value.find((col) => col.boardKey === targetColumnKey);
+        const sourceColumn = boardColumns.value.find((col) =>
+          col.boardProjects?.some((lead) => lead.id === leadToMove.id)
+        );
+        const targetColumn = boardColumns.value.find(
+          (col) => col.boardKey === targetColumnKey
+        );
 
         if (sourceColumn && targetColumn) {
           // Remove from source
-          sourceColumn.boardProjects = sourceColumn.boardProjects?.filter((lead) => lead.id !== leadToMove.id) || [];
+          sourceColumn.boardProjects =
+            sourceColumn.boardProjects?.filter(
+              (lead) => lead.id !== leadToMove.id
+            ) || [];
 
           // Update lead stage and timestamp
           leadToMove.leadBoardStage = targetColumnKey;
           leadToMove.updatedAt = {
             raw: new Date(),
-            timeAgo: 'just now'
+            timeAgo: "just now",
           };
 
           // Add to target
@@ -324,19 +428,30 @@ export default defineComponent({
         }
 
         // Then update the database
-        await APIRequests.moveLead($q, leadToMove.id.toString(), targetColumnKey);
+        await APIRequests.moveLead(
+          $q,
+          leadToMove.id.toString(),
+          targetColumnKey
+        );
 
         // Silent success - no notification needed for smooth UX
       } catch (error) {
-        console.error('Failed to move lead:', error);
+        console.error("Failed to move lead:", error);
 
         // Rollback on error - restore to original state
-        const sourceColumn = boardColumns.value.find((col) => col.boardKey === originalStage);
-        const targetColumn = boardColumns.value.find((col) => col.boardProjects?.some((lead) => lead.id === leadToMove.id));
+        const sourceColumn = boardColumns.value.find(
+          (col) => col.boardKey === originalStage
+        );
+        const targetColumn = boardColumns.value.find((col) =>
+          col.boardProjects?.some((lead) => lead.id === leadToMove.id)
+        );
 
         if (sourceColumn && targetColumn) {
           // Remove from incorrect target
-          targetColumn.boardProjects = targetColumn.boardProjects?.filter((lead) => lead.id !== leadToMove.id) || [];
+          targetColumn.boardProjects =
+            targetColumn.boardProjects?.filter(
+              (lead) => lead.id !== leadToMove.id
+            ) || [];
 
           // Restore to original source and timestamp
           leadToMove.leadBoardStage = originalStage;
@@ -348,9 +463,9 @@ export default defineComponent({
         }
 
         $q.notify({
-          color: 'negative',
-          message: 'Failed to move lead',
-          icon: 'report_problem',
+          color: "negative",
+          message: "Failed to move lead",
+          icon: "report_problem",
         });
       }
     };
@@ -361,7 +476,10 @@ export default defineComponent({
       activeCard.value = false;
     };
 
-    const handleStageChanged = (event: { leadId: number; newStage: string }) => {
+    const handleStageChanged = (event: {
+      leadId: number;
+      newStage: string;
+    }) => {
       // Find the lead in the current board columns
       let leadToMove: Lead | null = null;
       let sourceColumn: BoardColumn | null = null;
@@ -376,7 +494,7 @@ export default defineComponent({
       }
 
       if (!leadToMove || !sourceColumn) {
-        console.error('Lead not found in board columns');
+        console.error("Lead not found in board columns");
         return;
       }
 
@@ -386,21 +504,26 @@ export default defineComponent({
       }
 
       // Find the target column
-      const targetColumn = boardColumns.value.find((col) => col.boardKey === event.newStage);
+      const targetColumn = boardColumns.value.find(
+        (col) => col.boardKey === event.newStage
+      );
       if (!targetColumn) {
-        console.error('Target column not found');
+        console.error("Target column not found");
         return;
       }
 
       // Optimistically update the UI
       // Remove from source column
-      sourceColumn.boardProjects = sourceColumn.boardProjects?.filter((lead) => lead.id !== event.leadId) || [];
+      sourceColumn.boardProjects =
+        sourceColumn.boardProjects?.filter(
+          (lead) => lead.id !== event.leadId
+        ) || [];
 
       // Update lead stage and timestamp
       leadToMove.leadBoardStage = event.newStage;
       leadToMove.updatedAt = {
         raw: new Date(),
-        timeAgo: 'just now'
+        timeAgo: "just now",
       };
 
       // Add to target column
@@ -408,6 +531,20 @@ export default defineComponent({
         targetColumn.boardProjects = [];
       }
       targetColumn.boardProjects.push(leadToMove);
+    };
+
+    const handleProposalStatusChanged = (event: {
+      leadId: number;
+      newProposalStatus: string;
+    }) => {
+      // Find the lead in the current board columns and update its proposal status
+      for (const column of boardColumns.value) {
+        const lead = column.boardProjects?.find((l) => l.id === event.leadId);
+        if (lead) {
+          lead.proposalStatus = event.newProposalStatus;
+          break;
+        }
+      }
     };
 
     const openLead = (id: number, active: boolean) => {
@@ -420,15 +557,17 @@ export default defineComponent({
     const editLead = async (lead: Lead) => {
       try {
         // Fetch full lead details
-        const response = await APIRequests.getLeadInformation($q, { id: lead.id.toString() });
+        const response = await APIRequests.getLeadInformation($q, {
+          id: lead.id.toString(),
+        });
         leadData.value = response;
         isLeadDialogOpen.value = true;
       } catch (error) {
-        console.error('Failed to fetch lead details:', error);
+        console.error("Failed to fetch lead details:", error);
         $q.notify({
-          color: 'negative',
-          message: 'Failed to load lead details',
-          icon: 'report_problem',
+          color: "negative",
+          message: "Failed to load lead details",
+          icon: "report_problem",
         });
       }
     };
@@ -437,7 +576,7 @@ export default defineComponent({
       try {
         await $q
           .dialog({
-            title: 'Delete Lead',
+            title: "Delete Lead",
             message: `Are you sure you want to delete "${lead.name}"?`,
             cancel: true,
             persistent: true,
@@ -446,30 +585,33 @@ export default defineComponent({
             await APIRequests.deleteLead($q, lead.id.toString());
 
             // Remove from UI
-            const column = boardColumns.value.find((col) => col.boardProjects?.some((l) => l.id === lead.id));
+            const column = boardColumns.value.find((col) =>
+              col.boardProjects?.some((l) => l.id === lead.id)
+            );
             if (column) {
-              column.boardProjects = column.boardProjects?.filter((l) => l.id !== lead.id) || [];
+              column.boardProjects =
+                column.boardProjects?.filter((l) => l.id !== lead.id) || [];
             }
 
             $q.notify({
-              color: 'positive',
-              message: 'Lead deleted successfully',
-              icon: 'check',
+              color: "positive",
+              message: "Lead deleted successfully",
+              icon: "check",
             });
           });
       } catch (error) {
-        console.error('Failed to delete lead:', error);
+        console.error("Failed to delete lead:", error);
         $q.notify({
-          color: 'negative',
-          message: 'Failed to delete lead',
-          icon: 'report_problem',
+          color: "negative",
+          message: "Failed to delete lead",
+          icon: "report_problem",
         });
       }
     };
 
     const formatColumnTotal = (projects?: Lead[]) => {
       if (!projects || projects.length === 0) {
-        return '₱0.00';
+        return "₱0.00";
       }
 
       const total = projects.reduce((sum, lead) => {
@@ -479,19 +621,24 @@ export default defineComponent({
       }, 0);
 
       // Format as currency
-      return new Intl.NumberFormat('en-PH', {
-        style: 'currency',
-        currency: 'PHP',
+      return new Intl.NumberFormat("en-PH", {
+        style: "currency",
+        currency: "PHP",
       }).format(total);
     };
 
     const calculateGrandTotal = () => {
-      const allLeads = boardColumns.value.flatMap((col) => col.boardProjects || []);
+      const allLeads = boardColumns.value.flatMap(
+        (col) => col.boardProjects || []
+      );
       return formatColumnTotal(allLeads);
     };
 
     const getTotalLeadsCount = () => {
-      return boardColumns.value.reduce((count, col) => count + (col.boardProjects?.length || 0), 0);
+      return boardColumns.value.reduce(
+        (count, col) => count + (col.boardProjects?.length || 0),
+        0
+      );
     };
 
     const handleLeadSaved = () => {
@@ -508,14 +655,14 @@ export default defineComponent({
 
     const openLeadCreateDialog = (boardKey: string) => {
       leadData.value = {
-        leadBoardStage: boardKey
+        leadBoardStage: boardKey,
       } as LeadDataResponse;
       isLeadDialogOpen.value = true;
     };
 
     const calculateTimeInStage = (lead: Lead) => {
       if (!lead.updatedAt?.raw) {
-        return 'Recently added';
+        return "Recently added";
       }
 
       // Reference currentTime.value to make this reactive
@@ -529,17 +676,17 @@ export default defineComponent({
       const diffInMonths = Math.floor(diffInDays / 30);
 
       if (diffInMinutes < 1) {
-        return 'Just now';
+        return "Just now";
       } else if (diffInMinutes < 60) {
-        return `${diffInMinutes}min${diffInMinutes === 1 ? '' : 's'} ago`;
+        return `${diffInMinutes}min${diffInMinutes === 1 ? "" : "s"} ago`;
       } else if (diffInHours < 24) {
-        return `${diffInHours}hr${diffInHours === 1 ? '' : 's'} ago`;
+        return `${diffInHours}hr${diffInHours === 1 ? "" : "s"} ago`;
       } else if (diffInDays < 7) {
-        return `${diffInDays} ${diffInDays === 1 ? 'day' : 'days'}`;
+        return `${diffInDays} ${diffInDays === 1 ? "day" : "days"}`;
       } else if (diffInWeeks < 4) {
-        return `${diffInWeeks} ${diffInWeeks === 1 ? 'week' : 'weeks'}`;
+        return `${diffInWeeks} ${diffInWeeks === 1 ? "week" : "weeks"}`;
       } else {
-        return `${diffInMonths} ${diffInMonths === 1 ? 'month' : 'months'}`;
+        return `${diffInMonths} ${diffInMonths === 1 ? "month" : "months"}`;
       }
     };
 
@@ -547,66 +694,94 @@ export default defineComponent({
       // Extract numeric value from label (e.g., "50%" -> 50)
       const label = lead.winProbability?.label;
       if (!label) {
-        return 'probability-unknown';
+        return "probability-unknown";
       }
 
       // Parse percentage from label (remove "%" and convert to number)
-      const probability = parseInt(label.replace('%', ''));
+      const probability = parseInt(label.replace("%", ""));
 
       // Return unknown if parsing failed or probability is 0/null
       if (isNaN(probability) || probability === 0) {
-        return 'probability-unknown';
+        return "probability-unknown";
       }
 
       // Map to probability ranges matching Sales Probability Widget
       if (probability >= 90 && probability <= 100) {
-        return 'probability-a'; // A: 90-100%
+        return "probability-a"; // A: 90-100%
       } else if (probability >= 70 && probability <= 89) {
-        return 'probability-b'; // B: 70-89%
+        return "probability-b"; // B: 70-89%
       } else if (probability >= 50 && probability <= 69) {
-        return 'probability-c'; // C: 50-69%
+        return "probability-c"; // C: 50-69%
       } else if (probability >= 30 && probability <= 49) {
-        return 'probability-d'; // D: 30-49%
+        return "probability-d"; // D: 30-49%
       } else if (probability >= 10 && probability <= 29) {
-        return 'probability-e'; // E: 10-29%
+        return "probability-e"; // E: 10-29%
       } else if (probability >= 0 && probability <= 9) {
-        return 'probability-f'; // F: 0-9%
+        return "probability-f"; // F: 0-9%
       }
 
-      return 'probability-unknown';
+      return "probability-unknown";
     };
 
     const getProbabilityLetter = (lead: Lead) => {
       // Extract numeric value from label (e.g., "50%" -> 50)
       const label = lead.winProbability?.label;
       if (!label) {
-        return 'Unknown';
+        return "Unknown";
       }
 
       // Parse percentage from label (remove "%" and convert to number)
-      const probability = parseInt(label.replace('%', ''));
+      const probability = parseInt(label.replace("%", ""));
 
       // Return unknown if parsing failed or probability is 0/null
       if (isNaN(probability) || probability === 0) {
-        return 'Unknown';
+        return "Unknown";
       }
 
       // Map to letter grades matching Sales Probability Widget
       if (probability >= 90 && probability <= 100) {
-        return 'A'; // A: 90-100%
+        return "A"; // A: 90-100%
       } else if (probability >= 70 && probability <= 89) {
-        return 'B'; // B: 70-89%
+        return "B"; // B: 70-89%
       } else if (probability >= 50 && probability <= 69) {
-        return 'C'; // C: 50-69%
+        return "C"; // C: 50-69%
       } else if (probability >= 30 && probability <= 49) {
-        return 'D'; // D: 30-49%
+        return "D"; // D: 30-49%
       } else if (probability >= 10 && probability <= 29) {
-        return 'E'; // E: 10-29%
+        return "E"; // E: 10-29%
       } else if (probability >= 0 && probability <= 9) {
-        return 'F'; // F: 0-9%
+        return "F"; // F: 0-9%
       }
 
-      return 'Unknown';
+      return "Unknown";
+    };
+
+    const getProposalStatusClass = (status?: string): string => {
+      if (!status) return "proposal-status-preparing"; // Default: Preparing
+
+      const classMap: Record<string, string> = {
+        PREPARING: "proposal-status-preparing",
+        READY: "proposal-status-ready",
+        SENT: "proposal-status-sent",
+        FOR_REVISION: "proposal-status-for-revision",
+        FINALIZED: "proposal-status-finalized",
+      };
+
+      return classMap[status] || "proposal-status-preparing";
+    };
+
+    const getProposalStatusLabel = (status?: string): string => {
+      if (!status) return "Preparing";
+
+      const labelMap: Record<string, string> = {
+        PREPARING: "Preparing",
+        READY: "Ready",
+        SENT: "Sent",
+        FOR_REVISION: "For Revision",
+        FINALIZED: "Finalized",
+      };
+
+      return labelMap[status] || "Preparing";
     };
 
     // Watch for filter changes
@@ -652,6 +827,7 @@ export default defineComponent({
       handleDrop,
       handleCloseDialog,
       handleStageChanged,
+      handleProposalStatusChanged,
       openLead,
       editLead,
       deleteLead,
@@ -666,6 +842,8 @@ export default defineComponent({
       calculateTimeInStage,
       getProbabilityClass,
       getProbabilityLetter,
+      getProposalStatusClass,
+      getProposalStatusLabel,
     };
   },
 });
