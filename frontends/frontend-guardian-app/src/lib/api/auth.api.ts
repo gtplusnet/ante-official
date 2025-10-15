@@ -1,12 +1,12 @@
-import { apiClient, ApiResponse } from './api-client';
+import { guardianPublicApi, GuardianLoginRequest } from './guardian-public-api';
 import { storeTokens, storeUserInfo, storeCompanyInfo, clearStoredTokens } from '@/lib/utils/storage';
-import { getSupabaseService } from '@/lib/services/supabase.service';
 
 export interface LoginRequest {
   email: string;
   password: string;
   deviceId?: string;
   deviceInfo?: string;
+  deviceToken?: string; // FCM/APNS token for push notifications (optional)
 }
 
 export interface RegisterRequest {
@@ -59,66 +59,58 @@ export interface GuardianAuthResponse {
 class AuthApi {
   async login(data: LoginRequest): Promise<GuardianAuthResponse> {
     try {
-      // Add device info if running on mobile
-      const deviceInfo = {
+      // Use Guardian Public API for login
+      const loginRequest: GuardianLoginRequest = {
+        email: data.email,
+        password: data.password,
+        deviceId: data.deviceId,
+        deviceToken: data.deviceToken, // Pass through device token if provided (for push notifications)
         platform: 'web', // This will be updated when running on Capacitor
-        appVersion: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
-        userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : '',
       };
 
-      const response = await apiClient.post<GuardianAuthResponse>('/api/guardian/auth/login', {
-        ...data,
-        deviceInfo: JSON.stringify(deviceInfo),
-      });
+      const response = await guardianPublicApi.login(loginRequest);
 
-      if (response.success && response.data) {
-        // Store tokens, user info, and company info
-        await storeTokens(response.data.tokens);
-        await storeUserInfo(response.data.guardian);
-        await storeCompanyInfo(response.data.company);
-        
-        // Initialize Supabase session if tokens are provided
-        console.log('[AuthApi] Checking for Supabase tokens:', {
-          hasSupabaseToken: !!response.data.tokens.supabaseToken,
-          hasSupabaseRefreshToken: !!response.data.tokens.supabaseRefreshToken,
-          tokenKeys: Object.keys(response.data.tokens)
-        });
-        
-        if (response.data.tokens.supabaseToken && response.data.tokens.supabaseRefreshToken) {
-          const supabaseService = getSupabaseService();
-          const sessionResult = await supabaseService.setSession(
-            response.data.tokens.supabaseToken,
-            response.data.tokens.supabaseRefreshToken
-          );
-          console.log('[AuthApi] Supabase session result:', sessionResult);
-          console.log('[AuthApi] Supabase session initialized after login');
-        } else {
-          console.warn('[AuthApi] No Supabase tokens received from backend');
-        }
-        
-        return response.data;
-      }
+      // Transform response to match expected format
+      const authResponse: GuardianAuthResponse = {
+        guardian: {
+          id: response.guardian.id,
+          email: response.guardian.email,
+          firstName: response.guardian.firstName,
+          lastName: response.guardian.lastName,
+          middleName: '',
+          contactNumber: response.guardian.phoneNumber || '',
+          students: response.students.map(s => ({
+            id: s.id,
+            studentNumber: s.studentCode,
+            firstName: s.firstName,
+            lastName: s.lastName,
+            middleName: s.middleName,
+            grade: s.gradeLevel,
+            section: s.section,
+            relationship: s.relationship || 'Guardian',
+            isPrimary: s.isPrimary || false,
+          })),
+        },
+        tokens: {
+          accessToken: response.token,
+          refreshToken: response.token, // Public API uses single token
+          expiresIn: 900, // 15 minutes default
+        },
+        company: {
+          id: parseInt(process.env.NEXT_PUBLIC_COMPANY_ID || '1'),
+          name: 'School',
+        },
+      };
 
-      throw new Error('Login failed');
+      // Store tokens, user info, and company info
+      await storeTokens(authResponse.tokens);
+      await storeUserInfo(authResponse.guardian);
+      await storeCompanyInfo(authResponse.company);
+
+      console.log('[AuthApi] Login successful via Public API');
+      return authResponse;
     } catch (error: any) {
-      // Handle specific error cases
-      if (error.response?.status === 401) {
-        throw {
-          code: 'INVALID_CREDENTIALS',
-          message: 'Invalid email or password. Please check your credentials and try again.',
-          details: error.response?.data,
-        };
-      }
-      
-      if (error.response?.status === 400) {
-        const errorMessage = error.response?.data?.message;
-        throw {
-          code: 'VALIDATION_ERROR',
-          message: Array.isArray(errorMessage) ? errorMessage[0] : errorMessage || 'Invalid request',
-          details: error.response?.data,
-        };
-      }
-      
+      console.error('[AuthApi] Login error:', error);
       throw {
         code: error.code || 'LOGIN_ERROR',
         message: error.message || 'Unable to login. Please try again later.',
@@ -128,75 +120,26 @@ class AuthApi {
   }
 
   async register(data: RegisterRequest): Promise<GuardianAuthResponse> {
-    try {
-      const companyId = process.env.NEXT_PUBLIC_COMPANY_ID ? parseInt(process.env.NEXT_PUBLIC_COMPANY_ID) : 1;
-      
-      const response = await apiClient.post<GuardianAuthResponse>('/api/guardian/auth/register', {
-        ...data,
-        companyId,
-      });
-
-      if (response.success && response.data) {
-        // Store tokens, user info, and company info
-        await storeTokens(response.data.tokens);
-        await storeUserInfo(response.data.guardian);
-        await storeCompanyInfo(response.data.company);
-        
-        // Initialize Supabase session if tokens are provided
-        if (response.data.tokens.supabaseToken && response.data.tokens.supabaseRefreshToken) {
-          const supabaseService = getSupabaseService();
-          await supabaseService.setSession(
-            response.data.tokens.supabaseToken,
-            response.data.tokens.supabaseRefreshToken
-          );
-          console.log('[AuthApi] Supabase session initialized after registration');
-        }
-        
-        return response.data;
-      }
-
-      throw new Error('Registration failed');
-    } catch (error: any) {
-      // Handle specific error cases
-      if (error.response?.status === 409) {
-        throw {
-          code: 'EMAIL_EXISTS',
-          message: 'This email address is already registered. Please use a different email or sign in to your existing account.',
-          details: error.response?.data,
-        };
-      }
-      
-      if (error.response?.status === 400) {
-        const errorMessage = error.response?.data?.message;
-        throw {
-          code: 'VALIDATION_ERROR',
-          message: Array.isArray(errorMessage) ? errorMessage[0] : errorMessage || 'Invalid request',
-          details: error.response?.data,
-        };
-      }
-      
-      throw {
-        code: error.code || 'REGISTRATION_ERROR',
-        message: error.message || 'Registration failed. Please try again later.',
-        details: error.details,
-      };
-    }
+    // TODO: Registration endpoint not yet implemented in Public API
+    // Registration should be done through school admin portal
+    throw {
+      code: 'NOT_IMPLEMENTED',
+      message: 'Guardian registration is handled by the school administration. Please contact your school to create an account.',
+      details: 'Public API does not expose guardian registration endpoint',
+    };
   }
 
   async logout(): Promise<void> {
     try {
-      // Call logout endpoint (optional, depends on backend implementation)
-      await apiClient.post('/api/guardian/auth/logout', {});
+      // Call logout endpoint via Public API
+      await guardianPublicApi.logout();
     } catch (error) {
       // Even if the API call fails, clear local storage
-      console.error('Logout API error:', error);
+      console.error('[AuthApi] Logout API error:', error);
     } finally {
       // Clear stored tokens and user info
       await clearStoredTokens();
-      
-      // Clear Supabase session
-      const supabaseService = getSupabaseService();
-      await supabaseService.clearSession();
+      console.log('[AuthApi] Logout successful - tokens cleared');
     }
   }
 }

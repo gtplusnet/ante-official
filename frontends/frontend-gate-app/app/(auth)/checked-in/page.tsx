@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { getAttendanceSupabaseService } from '@/lib/services/attendance-supabase.service'
-import type { AttendanceRecord } from '@/lib/services/attendance-supabase.service'
+import { getAttendanceAPIService } from '@/lib/services/attendance-api.service'
+import type { AttendanceRecord } from '@/lib/services/attendance-api.service'
 import { format } from 'date-fns'
 import { Clock, Users, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -11,7 +11,7 @@ import Link from 'next/link'
 export default function CheckedInPage() {
   const [checkedIn, setCheckedIn] = useState<AttendanceRecord[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const attendanceSupabaseService = getAttendanceSupabaseService()
+  const attendanceService = getAttendanceAPIService()
 
   useEffect(() => {
     loadCheckedIn()
@@ -23,11 +23,11 @@ export default function CheckedInPage() {
 
   const loadCheckedIn = async () => {
     try {
-      await attendanceSupabaseService.init()
-      const records = await attendanceSupabaseService.getCurrentlyCheckedIn()
+      await attendanceService.init()
+      const records = await attendanceService.getCurrentlyCheckedIn()
       setCheckedIn(records)
     } catch (error) {
-      console.error('Failed to load checked-in students:', error)
+      console.error('Failed to load checked-in people:', error)
     } finally {
       setIsLoading(false)
     }

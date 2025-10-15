@@ -3,14 +3,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/api/auth.api';
+import { guardianPublicApi } from '@/lib/api/guardian-public-api';
 import { getStoredTokens, getStoredUserInfo, getStoredCompanyInfo, clearStoredTokens, storeUserInfo } from '@/lib/utils/storage';
-import { getSupabaseService } from '@/lib/services/supabase.service';
-import { getStudentsSupabaseService } from '@/lib/services/students.service';
-import { 
-  GuardianAuthInfo, 
-  LoginRequest, 
+import {
+  GuardianAuthInfo,
+  LoginRequest,
   RegisterRequest,
-  ApiError 
+  ApiError
 } from '@/types/api.types';
 
 interface AuthContextType {
@@ -136,67 +135,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const tokens = await getStoredTokens();
       const storedUser = await getStoredUserInfo();
-      
+
       if (!tokens || !storedUser) {
         throw new Error('No tokens or user found');
       }
-      
-      // Set Supabase session with tokens from backend
-      const supabaseService = getSupabaseService();
-      const sessionResult = await supabaseService.setSession(
-        tokens.accessToken, 
-        tokens.refreshToken
-      );
-      
-      if (sessionResult.error) {
-        console.error('Failed to set Supabase session:', sessionResult.error);
-        throw new Error('Invalid session');
-      }
-      
-      // Fetch fresh profile data from Supabase
-      const { data: profileData, error: profileError } = await supabaseService.getGuardianProfile(storedUser.id);
-      
-      if (profileError || !profileData) {
-        console.error('Failed to fetch profile:', profileError);
-        // Fallback to stored user info if profile fetch fails
-        setUser(storedUser);
-        return;
-      }
-      
-      // Get students data via Supabase
-      const studentsService = getStudentsSupabaseService();
-      const students = await studentsService.getGuardianStudents(storedUser.id);
-      
-      // Update user with fresh Supabase data
+
+      // Fetch fresh profile data from Public API
+      const profileData = await guardianPublicApi.getProfile();
+
+      // Update user with fresh API data
       const refreshedUser: GuardianAuthInfo = {
-        ...storedUser,
-        firstName: (profileData as any).firstName,
-        lastName: (profileData as any).lastName,
-        middleName: (profileData as any).middleName,
-        email: (profileData as any).email,
-        contactNumber: (profileData as any).contactNumber,
-        alternateNumber: (profileData as any).alternateNumber,
-        address: (profileData as any).address,
-        occupation: (profileData as any).occupation,
-        students: students.map(s => ({
+        id: profileData.id,
+        email: profileData.email,
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        middleName: profileData.middleName,
+        contactNumber: profileData.phoneNumber || '',
+        alternateNumber: '',
+        address: profileData.address,
+        occupation: profileData.occupation,
+        lastLogin: profileData.lastLogin ? new Date(profileData.lastLogin) : undefined,
+        students: profileData.students.map(s => ({
           id: s.id,
-          studentNumber: s.studentNumber,
+          studentNumber: s.studentCode,
           firstName: s.firstName,
           lastName: s.lastName,
           middleName: s.middleName,
-          grade: s.gradeLevel || undefined,
-          section: s.section || undefined,
+          grade: s.gradeLevel,
+          section: s.section,
           relationship: s.relationship || 'Parent',
           isPrimary: s.isPrimary || true
         }))
       };
-      
+
       setUser(refreshedUser);
       // Update stored user info with fresh data
       await storeUserInfo(refreshedUser);
-      
+
+      console.log('[AuthContext] Refreshed user data from Public API');
     } catch (error) {
-      console.error('Refresh auth error:', error);
+      console.error('[AuthContext] Refresh auth error:', error);
       // Only logout if tokens are actually invalid
       const tokens = await getStoredTokens();
       if (!tokens) {

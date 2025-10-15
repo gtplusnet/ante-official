@@ -24,12 +24,9 @@ class ApiClient {
   private refreshSubscribers: ((token: string) => void)[] = [];
 
   constructor() {
-    // Backend authentication endpoints - only for login/register/logout
-    // Data operations now use Supabase directly
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'production' 
-      ? 'https://backend-ante.geertest.com'
-      : 'http://localhost:3000');
-      
+    // Use Public API endpoint for all Guardian operations
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://100.109.133.12:3000';
+
     this.instance = axios.create({
       baseURL: backendUrl,
       timeout: 30000,
@@ -92,7 +89,7 @@ class ApiClient {
             }
 
             const response = await this.instance.post<ApiResponse<{ accessToken: string; refreshToken: string }>>(
-              '/api/guardian/auth/refresh-token',
+              '/api/public/school-guardian/auth/refresh-token',
               { refreshToken: tokens.refreshToken }
             );
 

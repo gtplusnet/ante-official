@@ -5,14 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Scanner, ScannerHandle } from './components/Scanner'
 import { useNavigationGuard } from '@/lib/hooks/useNavigationGuard'
 import { playSound, cleanupAudio, resetAudio } from '@/lib/utils/sound'
-import { getAttendanceSupabaseService, AttendanceRecord, AttendanceStats } from '@/lib/services/attendance-supabase.service'
+import { getAttendanceAPIService, AttendanceRecord, AttendanceStats } from '@/lib/services/attendance-api.service'
+import { websocketService } from '@/lib/services/websocket.service'
 import { getStorageManager, Student, Guardian } from '@/lib/utils/storage'
 import { format } from 'date-fns'
 import { formatLocalTime, debugTimezone } from '@/lib/utils/date'
 import { AlertCircle, CheckCircle, Clock, Users, Wifi, WifiOff, RefreshCw, ExternalLink, UserCheck, Camera } from 'lucide-react'
 import { useNetworkStatus } from '@/lib/hooks/useNetworkStatus'
 import Link from 'next/link'
-import type { RealtimeChannel } from '@supabase/supabase-js'
 import ScanDialog from '@/components/ui/ScanDialog'
 
 export default function ScanPage() {
@@ -47,12 +47,12 @@ export default function ScanPage() {
   const lastScanRef = useRef<string>('')
   const lastScanTimeRef = useRef<number>(0)
   const scannerRef = useRef<ScannerHandle>(null)
-  const attendanceSupabaseService = useRef(getAttendanceSupabaseService())
-  const realtimeChannelRef = useRef<RealtimeChannel | null>(null)
+  const attendanceService = useRef(getAttendanceAPIService())
+  const wsUnsubscribeRef = useRef<(() => void) | null>(null)
   const initializationRef = useRef<boolean>(false)
   const initializingRef = useRef<boolean>(false)
   const storageManager = getStorageManager()
-  // Note: Using Supabase realtime for sync status
+  // Note: Using WebSocket for realtime updates
   const isOnline = useNetworkStatus()
   
   // Navigation guard to stop camera when leaving the page
@@ -87,8 +87,8 @@ export default function ScanPage() {
         // Reset audio when component mounts
         resetAudio()
         await storageManager.init()
-        await attendanceSupabaseService.current.init()
-        // Recent scans will be loaded from Supabase realtime connection
+        await attendanceService.current.init()
+        // Recent scans will be loaded from API and WebSocket updates
         
         // Load gate name
         const savedGateName = localStorage.getItem('gateName')
@@ -105,7 +105,7 @@ export default function ScanPage() {
           if (counts.students === 0 && counts.guardians === 0) {
             console.log('Database is empty, triggering automatic sync...')
             try {
-              const syncResult = await storageManager.syncFromSupabase()
+              const syncResult = await storageManager.syncFromAPI()
               console.log('Auto-sync completed:', syncResult)
             } catch (error) {
               console.error('Auto-sync failed:', error)
@@ -157,11 +157,11 @@ export default function ScanPage() {
           
           // Add data sync function
           (window as any).forceDataSync = async () => {
-            console.log('Forcing data sync from Supabase...')
+            console.log('Forcing data sync from API...')
             try {
-              const syncResult = await storageManager.syncFromSupabase()
+              const syncResult = await storageManager.syncFromAPI()
               console.log('Data sync completed:', syncResult)
-              
+
               // Re-check database contents
               const newCounts = await storageManager.getRecordCounts()
               console.log('Updated database counts:', newCounts)
@@ -176,7 +176,7 @@ export default function ScanPage() {
           console.log('- debugDatabase() - Check database contents');
           console.log('- testScan("student:uuid") - Test QR code lookup');
           console.log('- checkIndexes() - Check database indexes');
-          console.log('- forceDataSync() - Sync students/guardians from Supabase');
+          console.log('- forceDataSync() - Sync students/guardians from API');
           
           // Test the scan handler directly
           (window as any).testScanHandler = (data: string) => {
@@ -196,121 +196,103 @@ export default function ScanPage() {
     
     // Define setupRealtime function - returns true if successful
     const setupRealtime = async (): Promise<boolean> => {
-      console.log('🔌 [ScanPage] Starting realtime setup...')
-      
+      console.log('🔌 [ScanPage] Starting WebSocket realtime setup...')
+
       try {
-        console.log('🔌 [ScanPage] Initializing attendance service...')
-        
-        // Initialize Supabase attendance service
-        // Since polling works, the client is already authenticated
-        await attendanceSupabaseService.current.init()
-        
-        console.log('🔌 [ScanPage] Creating realtime subscription...')
-        
-        // Subscribe to realtime attendance updates
-        const channel = attendanceSupabaseService.current.subscribeToAttendance((payload) => {
-          console.log('📺 [ScanPage] Received realtime attendance update:', payload)
-          
-          if (payload.eventType === 'INSERT' && payload.new) {
-            const supabaseRecord = payload.new
-            
-            // Convert to local AttendanceRecord format
-            const newRecord: AttendanceRecord = {
-              ...supabaseRecord,
-              timestamp: typeof supabaseRecord.timestamp === 'string' ? new Date(supabaseRecord.timestamp) : supabaseRecord.timestamp,
-              syncStatus: 'synced' as const,
-              firstName: supabaseRecord.firstName || undefined,
-              lastName: supabaseRecord.lastName || undefined,
-              profilePhotoUrl: supabaseRecord.profilePhotoUrl || undefined,
-              deviceId: supabaseRecord.deviceId || undefined,
-              location: supabaseRecord.location || undefined
-            }
-            
-            // Add to recent scans (avoid duplicates)
-            setRecentScans(prev => {
-              // Check if this record already exists
-              const exists = prev.some(scan => scan.id === newRecord.id)
-              if (exists) return prev
-              
-              // Add new record at the beginning and keep max 100
-              const updated = [newRecord, ...prev].slice(0, 100)
-              return updated
-            })
-            
-            // Update stats
-            setStats(prev => ({
-              ...prev,
-              todayTotal: prev.todayTotal + 1,
-              checkIns: newRecord.action === 'check_in' ? prev.checkIns + 1 : prev.checkIns,
-              checkOuts: newRecord.action === 'check_out' ? prev.checkOuts + 1 : prev.checkOuts,
-              lastScanTime: typeof newRecord.timestamp === 'string' ? new Date(newRecord.timestamp) : newRecord.timestamp
-            }))
-            
-            // Play sound for new scans from other devices
-            // Only play if this isn't the scan we just made
-            if (newRecord.qrCode !== lastScanRef.current) {
-              try {
-                playSound(newRecord.action)
-              } catch (error) {
-                console.error('Failed to play sound:', error)
-              }
+        // Get companyId from localStorage
+        const companyIdStr = localStorage.getItem('companyId')
+        if (!companyIdStr) {
+          console.error('❌ [ScanPage] No companyId found in localStorage')
+          setRealtimeConnected(false)
+          return false
+        }
+
+        const companyId = parseInt(companyIdStr)
+        console.log('🔌 [ScanPage] Connecting to WebSocket with companyId:', companyId)
+
+        // Connect to WebSocket
+        await websocketService.connect(companyId)
+
+        // Subscribe to attendance updates
+        console.log('🔌 [ScanPage] Subscribing to attendance updates...')
+        const unsubscribe = websocketService.subscribeToAttendance((data) => {
+          console.log('📺 [ScanPage] Received WebSocket attendance update:', data)
+
+          // Convert to local AttendanceRecord format
+          const newRecord: AttendanceRecord = {
+            id: data.id,
+            qrCode: data.qrCode,
+            personId: data.personId,
+            personType: data.personType,
+            personName: data.personName,
+            firstName: undefined,
+            lastName: undefined,
+            profilePhotoUrl: data.profilePhoto || undefined,
+            action: data.action,
+            timestamp: new Date(data.timestamp),
+            deviceId: data.deviceId || undefined,
+            location: undefined,
+            companyId: data.companyId
+          }
+
+          // Add to recent scans (avoid duplicates)
+          setRecentScans(prev => {
+            // Check if this record already exists
+            const exists = prev.some(scan => scan.id === newRecord.id)
+            if (exists) return prev
+
+            // Add new record at the beginning and keep max 100
+            const updated = [newRecord, ...prev].slice(0, 100)
+            return updated
+          })
+
+          // Update stats
+          setStats(prev => ({
+            ...prev,
+            todayTotal: prev.todayTotal + 1,
+            checkIns: newRecord.action === 'check_in' ? prev.checkIns + 1 : prev.checkIns,
+            checkOuts: newRecord.action === 'check_out' ? prev.checkOuts + 1 : prev.checkOuts,
+            lastScanTime: newRecord.timestamp
+          }))
+
+          // Play sound for new scans from other devices
+          // Only play if this isn't the scan we just made
+          if (newRecord.qrCode !== lastScanRef.current) {
+            try {
+              playSound(newRecord.action)
+            } catch (error) {
+              console.error('Failed to play sound:', error)
             }
           }
         })
-        
-        if (channel) {
-          console.log('🔌 [ScanPage] Channel created, checking status...')
-          realtimeChannelRef.current = channel
-          
-          // Check the subscription status
-          const status = channel.state
-          console.log('📡 [ScanPage] Channel state:', status)
-          
-          // Add status change listener
-          channel.on('system', {}, (payload) => {
-            console.log('📡 [ScanPage] Channel status change:', payload)
-          })
-          
-          setRealtimeConnected(true)
-          console.log('✅ [ScanPage] Realtime subscription setup complete')
-          return true  // Success
-        } else {
-          console.log('❌ [ScanPage] Failed to create realtime channel')
-          setRealtimeConnected(false)
-          return false  // Failed
-        }
-        
-        // Always try to load initial data from Supabase
-        // This works regardless of realtime connection status
+
+        // Store unsubscribe function for cleanup
+        wsUnsubscribeRef.current = unsubscribe
+
+        setRealtimeConnected(true)
+        console.log('✅ [ScanPage] WebSocket subscription setup complete')
+
+        // Load initial data from API
         try {
-          const supabaseRecent = await attendanceSupabaseService.current.getTodayAttendance(100)
-          if (supabaseRecent && supabaseRecent.length > 0) {
-            const formattedRecent = supabaseRecent.map(record => ({
-              ...record,
-              timestamp: typeof record.timestamp === 'string' ? new Date(record.timestamp) : record.timestamp,
-              syncStatus: 'synced' as const,
-              firstName: record.firstName || undefined,
-              lastName: record.lastName || undefined,
-              profilePhotoUrl: record.profilePhotoUrl || undefined,
-              deviceId: record.deviceId || undefined,
-              location: record.location || undefined
-            }))
-            setRecentScans(formattedRecent)
-            
-            const supabaseStats = await attendanceSupabaseService.current.getAttendanceStats()
-            setStats(supabaseStats)
-            
-            console.log(`✅ [ScanPage] Loaded ${formattedRecent.length} records from Supabase`)
+          const apiRecent = await attendanceService.current.getTodayAttendance(100)
+          if (apiRecent && apiRecent.length > 0) {
+            setRecentScans(apiRecent)
+            console.log(`✅ [ScanPage] Loaded ${apiRecent.length} records from API`)
           } else {
             console.log('📋 [ScanPage] No attendance records found for today')
           }
+
+          const apiStats = await attendanceService.current.getAttendanceStats()
+          setStats(apiStats)
         } catch (error) {
-          console.error('❌ [ScanPage] Failed to load initial Supabase data:', error)
+          console.error('❌ [ScanPage] Failed to load initial API data:', error)
           // Try again after a delay
           setTimeout(() => loadRecentScans(), 2000)
         }
+
+        return true  // Success
       } catch (error) {
-        console.error('❌ [ScanPage] Failed to setup realtime:', error)
+        console.error('❌ [ScanPage] Failed to setup WebSocket:', error)
         setRealtimeConnected(false)
         return false  // Failed
       }
@@ -383,18 +365,21 @@ export default function ScanPage() {
       mounted = false;
       setIsScannerActive(false)
       cleanupAudio()
-      
+
       // Clear refresh interval
       if (refreshInterval) {
         clearInterval(refreshInterval)
       }
-      
-      // Unsubscribe from realtime
-      if (realtimeChannelRef.current) {
-        console.log('🔌 [ScanPage] Unsubscribing from realtime...')
-        realtimeChannelRef.current.unsubscribe()
-        realtimeChannelRef.current = null
+
+      // Unsubscribe from WebSocket
+      if (wsUnsubscribeRef.current) {
+        console.log('🔌 [ScanPage] Unsubscribing from WebSocket...')
+        wsUnsubscribeRef.current()
+        wsUnsubscribeRef.current = null
       }
+
+      // Disconnect WebSocket
+      websocketService.disconnect()
     }
   }, [])
 
@@ -430,45 +415,33 @@ export default function ScanPage() {
     }
   }, [realtimeConnected, isInitialized])
 
-  // Realtime updates are handled by Supabase subscription above
+  // Realtime updates are handled by WebSocket subscription above
 
   const loadRecentScans = async () => {
-    console.log('📊 [loadRecentScans] Loading recent scans from Supabase...')
+    console.log('📊 [loadRecentScans] Loading recent scans from API...')
     try {
-      // Try to load from Supabase regardless of realtime connection status
-      // This allows us to show recent scans even if realtime is not working
+      // Try to load from API regardless of WebSocket connection status
+      // This allows us to show recent scans even if WebSocket is not working
       try {
-        const supabaseRecent = await attendanceSupabaseService.current.getTodayAttendance(100)
-        console.log(`📊 [loadRecentScans] Received ${supabaseRecent?.length || 0} records from Supabase`)
-        if (supabaseRecent && supabaseRecent.length > 0) {
-          // Convert timestamps to Date objects
-          const formattedRecent = supabaseRecent.map(record => ({
-            ...record,
-            timestamp: typeof record.timestamp === 'string' ? new Date(record.timestamp) : record.timestamp,
-            syncStatus: 'synced' as const,
-            firstName: record.firstName || undefined,
-            lastName: record.lastName || undefined,
-            profilePhotoUrl: record.profilePhotoUrl || undefined,
-            deviceId: record.deviceId || undefined,
-            location: record.location || undefined
-          }))
-          
+        const apiRecent = await attendanceService.current.getTodayAttendance(100)
+        console.log(`📊 [loadRecentScans] Received ${apiRecent?.length || 0} records from API`)
+        if (apiRecent && apiRecent.length > 0) {
           // Only update if different from current state (avoid unnecessary re-renders)
           setRecentScans(prev => {
             // Check if the data has actually changed
-            if (prev.length !== formattedRecent.length || 
-                (prev.length > 0 && formattedRecent.length > 0 && prev[0].id !== formattedRecent[0].id)) {
-              console.log(`📊 [ScanPage] Updated recent scans: ${formattedRecent.length} records`)
-              return formattedRecent
+            if (prev.length !== apiRecent.length ||
+                (prev.length > 0 && apiRecent.length > 0 && prev[0].id !== apiRecent[0].id)) {
+              console.log(`📊 [ScanPage] Updated recent scans: ${apiRecent.length} records`)
+              return apiRecent
             }
             return prev
           })
-          
-          // Get stats from Supabase
-          const supabaseStats = await attendanceSupabaseService.current.getAttendanceStats()
-          setStats(supabaseStats)
+
+          // Get stats from API
+          const apiStats = await attendanceService.current.getAttendanceStats()
+          setStats(apiStats)
         } else {
-          // No records from Supabase
+          // No records from API
           console.log('No attendance records found for today')
           setRecentScans([])
           setStats({
@@ -482,10 +455,10 @@ export default function ScanPage() {
       } catch (error) {
         // Only log errors occasionally to avoid spam during periodic refresh
         if (Math.random() < 0.1) { // Log 10% of errors
-          console.error('❌ [ScanPage] Failed to load from Supabase:', error)
+          console.error('❌ [ScanPage] Failed to load from API:', error)
         }
       }
-      
+
     } catch (error) {
       console.error('Failed to load recent scans:', error)
     }
@@ -593,9 +566,9 @@ export default function ScanPage() {
       })
       setShowScanDialog(true)
 
-      // Record attendance directly to Supabase
+      // Record attendance via API
       console.log('Recording attendance for:', personData)
-      const record = await attendanceSupabaseService.current.recordAttendance(data, personData)
+      const record = await attendanceService.current.recordAttendance(data, personData)
       console.log('Attendance record created:', record)
       debugTimezone(record.timestamp, 'New attendance record')
       
@@ -617,9 +590,9 @@ export default function ScanPage() {
       
       // Reload recent scans and stats
       await loadRecentScans()
-      
-      // Data automatically syncs to Supabase in realtime
-      
+
+      // Data automatically broadcasts to all devices via WebSocket
+
       // Clear status after 3 seconds
       setTimeout(() => setScanStatus(null), 3000)
       
