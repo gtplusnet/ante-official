@@ -396,14 +396,14 @@ export const Scanner = forwardRef<ScannerHandle, ScannerProps>(({ onScan, isActi
 
   // Show camera scanner mode
   return (
-    <div className="relative h-full w-full qr-scanner-container">
+    <div className={`relative h-full w-full qr-scanner-container ${useFrontCamera ? 'front-camera' : ''}`}>
       <div id="qr-reader" ref={scannerRef} className="h-full w-full"></div>
       
       {/* Mode toggle button */}
       {onToggleMode && (
         <button
           onClick={onToggleMode}
-          className="absolute top-4 left-4 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors flex items-center gap-2"
+          className="absolute top-4 left-4 bg-blue-600/70 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors flex items-center gap-2"
         >
           <Keyboard className="w-4 h-4" />
           <span>Manual Input</span>
@@ -411,7 +411,7 @@ export const Scanner = forwardRef<ScannerHandle, ScannerProps>(({ onScan, isActi
       )}
       
       {/* Camera type indicator */}
-      <div className="absolute top-4 right-4 bg-black bg-opacity-50 text-white px-3 py-2 rounded-lg text-sm camera-type-indicator">
+      <div className="absolute top-4 right-4 bg-black/30 text-white px-3 py-2 rounded-lg text-sm camera-type-indicator">
         <div className="flex items-center gap-2">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586l-.707-.707A1 1 0 0013 4h-6a1 1 0 00-.707.293L5.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />

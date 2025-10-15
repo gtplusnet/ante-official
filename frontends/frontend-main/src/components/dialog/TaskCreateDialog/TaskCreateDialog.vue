@@ -89,6 +89,19 @@
             </GInput>
           </div>
 
+          <!-- Goal -->
+          <div class="form-field q-pb-md">
+            <GInput
+              type="select-search"
+              apiUrl="/task/goal?status=PENDING"
+              label="Goal (Optional)"
+              nullOption="No Goal"
+              v-model="form.goalId"
+              :mapData="mapGoalData"
+            >
+            </GInput>
+          </div>
+
           <!-- Due Date -->
           <div class="form-field q-pb-md">
             <GInput type="date" label="Due Date" v-model="form.dueDate"></GInput>
@@ -457,7 +470,8 @@ import { defineAsyncComponent } from 'vue';
 import GInput from '../../../components/shared/form/GInput.vue';
 import { api, environment } from 'src/boot/axios';
 import { useGlobalMethods } from 'src/composables/useGlobalMethods';
-import { useAssigneeList } from 'src/composables/useAssigneeList';
+import { useAssigneeStore } from 'src/stores/assignee';
+import { useProjectStore } from 'src/stores/project';
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
 const ChooseUserDialog = defineAsyncComponent(() =>
@@ -472,11 +486,13 @@ export default {
   },
   props: {},
   setup() {
-    // Get all assignees including current user
-    const { assignees, loading: assigneesLoading } = useAssigneeList();
+    // Get stores
+    const assigneeStore = useAssigneeStore();
+    const projectStore = useProjectStore();
+
     return {
-      assignees,
-      assigneesLoading
+      assigneeStore,
+      projectStore
     };
   },
   data: () => ({
@@ -489,11 +505,17 @@ export default {
   }),
   computed: {
     assigneeOptions() {
-      // Format assignees for GInput select component
-      if (!this.assignees) return [];
-      return this.assignees.map(assignee => ({
+      // Format assignees for GInput select component from store
+      return this.assigneeStore.formattedAssignees.map(assignee => ({
         label: assignee.label || assignee.name,
         value: assignee.value || assignee.id
+      }));
+    },
+    projectOptions() {
+      // Format projects for GInput select component from store
+      return this.projectStore.formattedProjects.map(project => ({
+        label: project.label || project.name,
+        value: project.value || project.id
       }));
     },
   },
@@ -520,6 +542,7 @@ export default {
         assignMode: 'SELF',
         difficulty: 1,
         dueDate: null,
+        goalId: null,
         collaborators: [],
       };
     },
@@ -561,6 +584,11 @@ export default {
           param.dueDate = new Date(this.form.dueDate).toISOString();
         }
 
+        // add goal
+        if (this.form.goalId) {
+          param.goalId = this.form.goalId;
+        }
+
         // add collaborators
         if (this.form.collaborators && this.form.collaborators.length > 0) {
           param.collaboratorAccountIds = this.form.collaborators.map(
@@ -585,6 +613,13 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+    mapGoalData(response) {
+      // Map API response to GInput select format
+      return response.map((goal) => ({
+        label: goal.name,
+        value: goal.id,
+      }));
     },
   },
 };

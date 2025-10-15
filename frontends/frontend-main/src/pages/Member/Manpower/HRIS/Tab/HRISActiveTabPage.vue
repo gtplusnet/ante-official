@@ -1,10 +1,11 @@
 <template>
   <div>
-    <!-- Use Supabase-enabled table for direct database access -->
-    <supabase-g-table 
-    :isRowActionEnabled="true" 
-    tableKey="employeeListTable" 
-    supabaseTab="active"
+    <!-- Use API-based table -->
+    <g-table
+    :isRowActionEnabled="true"
+    tableKey="employeeListTable"
+    apiUrl="/hris/employee/table-lite"
+    :apiFilters="[{ isActive: true }]"
     ref="table">
     <template v-slot:accountDetails="props">
       <div class="clickable-code text-body-small" style="display: flex; gap: 2px" @click="editEmployee(props)" data-testid="employee-name-link">
@@ -33,14 +34,14 @@
         </q-menu>
       </g-button>
     </template>
-    </supabase-g-table>
+    </g-table>
 
     <EditCreateEmployee @saveDone="handleSaveDone" @close="openEditEmployeeGroupDialog = false" :employeeId="selectedEmployeeId" v-model="openEditEmployeeGroupDialog" />
   </div>
 </template>
 
 <script>
-import SupabaseGTable from "../../../../../components/shared/display/SupabaseGTable.vue";
+import GTable from "../../../../../components/shared/display/GTable.vue";
 import EditCreateEmployee from './dialog/EditCreateEmployee.vue';
 import { api } from 'src/boot/axios';
 import GButton from 'src/components/shared/buttons/GButton.vue';
@@ -48,7 +49,7 @@ import GButton from 'src/components/shared/buttons/GButton.vue';
 export default {
   name: 'HRISActiveTabPage',
   components: {
-    SupabaseGTable,
+    GTable,
     EditCreateEmployee,
     GButton,
   },

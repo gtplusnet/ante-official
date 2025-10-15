@@ -191,16 +191,18 @@ export class GateService {
       where.OR = [
         { firstName: { contains: params.search, mode: 'insensitive' } },
         { lastName: { contains: params.search, mode: 'insensitive' } },
-        { studentId: { contains: params.search, mode: 'insensitive' } },
+        { studentNumber: { contains: params.search, mode: 'insensitive' } },
       ];
     }
 
     if (params.gradeLevel) {
-      where.gradeLevel = params.gradeLevel;
+      where.section = {
+        gradeLevelId: params.gradeLevel,
+      };
     }
 
     if (params.section) {
-      where.section = params.section;
+      where.sectionId = params.section;
     }
 
     const students = await this.prisma.student.findMany({
@@ -218,12 +220,208 @@ export class GateService {
     });
 
     return students.map(student => ({
-      studentId: student.studentNumber,
+      id: student.id, // UUID for QR code generation
+      studentNumber: student.studentNumber, // Actual student number
       firstName: student.firstName,
       lastName: student.lastName,
-      gradeLevel: student.section?.gradeLevel?.name || '',
-      section: student.section?.name || '',
-      photo: student.profilePhoto?.url || null,
+      middleName: student.middleName,
+      dateOfBirth: student.dateOfBirth,
+      gender: student.gender,
+      lrn: student.lrn,
+      isActive: student.isActive,
+      section: student.section ? {
+        id: student.section.id,
+        name: student.section.name,
+        gradeLevelId: student.section.gradeLevelId,
+        gradeLevel: student.section.gradeLevel ? {
+          id: student.section.gradeLevel.id,
+          code: student.section.gradeLevel.code,
+          name: student.section.gradeLevel.name,
+          educationLevel: student.section.gradeLevel.educationLevel,
+        } : null,
+        adviserName: student.section.adviserName,
+        schoolYear: student.section.schoolYear,
+        capacity: student.section.capacity,
+      } : null,
+      profilePhotoUrl: student.profilePhoto?.url || null,
+      createdAt: student.createdAt,
+      updatedAt: student.updatedAt,
     }));
+  }
+
+  async getGuardiansForGate(params: {
+    companyId: number;
+    search?: string;
+    limit: number;
+    offset: number;
+  }) {
+    const where: any = {
+      companyId: params.companyId,
+      isDeleted: false,
+    };
+
+    if (params.search) {
+      where.OR = [
+        { firstName: { contains: params.search, mode: 'insensitive' } },
+        { lastName: { contains: params.search, mode: 'insensitive' } },
+        { email: { contains: params.search, mode: 'insensitive' } },
+      ];
+    }
+
+    const guardians = await this.prisma.guardian.findMany({
+      where,
+      take: params.limit,
+      skip: params.offset,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        contactNumber: true,
+      },
+    });
+
+    return guardians.map(guardian => ({
+      id: guardian.id,
+      firstName: guardian.firstName,
+      lastName: guardian.lastName,
+      email: guardian.email,
+      contactNumber: guardian.contactNumber,
+    }));
+  }
+
+  async getAttendanceByDate(params: {
+    companyId: number;
+    date: string;
+    limit: number;
+  }) {
+    const dateFilter = new Date(params.date);
+    const startOfDay = new Date(dateFilter);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(dateFilter);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const attendance = await this.prisma.schoolAttendance.findMany({
+      where: {
+        companyId: params.companyId,
+        timestamp: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+      take: params.limit,
+      orderBy: {
+        timestamp: 'desc',
+      },
+    });
+
+    return attendance.map(record => ({
+      id: record.id,
+      qrCode: record.qrCode,
+      personId: record.personId,
+      personName: record.personName,
+      personType: record.personType,
+      action: record.action,
+      timestamp: record.timestamp.toISOString(),
+      deviceId: record.deviceId,
+      profilePhoto: record.profilePhoto,
+    }));
+  }
+
+  async processScan(params: {
+    qrCode: string;
+    gateId: string;
+    timestamp: string;
+    photo?: string;
+    temperature?: number;
+    companyId: number;
+  }) {
+    // Parse QR code format: "student:uuid" or "guardian:uuid"
+    const [type, personId] = params.qrCode.split(':');
+
+    if (!type || !personId) {
+      throw new Error('Invalid QR code format. Expected format: student:id or guardian:id');
+    }
+
+    // Find person by QR code type and ID
+    let student = null;
+    let guardian = null;
+
+    if (type === 'student') {
+      student = await this.prisma.student.findFirst({
+        where: {
+          id: personId,
+          companyId: params.companyId,
+          isDeleted: false,
+        },
+      });
+    } else if (type === 'guardian') {
+      guardian = await this.prisma.guardian.findFirst({
+        where: {
+          id: personId,
+          companyId: params.companyId,
+          isDeleted: false,
+        },
+      });
+    } else {
+      throw new Error(`Invalid QR code type: ${type}. Expected 'student' or 'guardian'`);
+    }
+
+    if (!student && !guardian) {
+      throw new Error('Invalid QR code - person not found');
+    }
+
+    const person = student || guardian;
+    const personType = student ? 'student' : 'guardian';
+    const personName = `${person.firstName} ${person.lastName}`;
+
+    // Check last action for this person today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const lastAction = await this.prisma.schoolAttendance.findFirst({
+      where: {
+        personId: person.id,
+        companyId: params.companyId,
+        timestamp: {
+          gte: today,
+        },
+      },
+      orderBy: {
+        timestamp: 'desc',
+      },
+    });
+
+    // Determine action (auto check-in/check-out)
+    const action = (!lastAction || lastAction.action === 'check_out')
+      ? 'check_in'
+      : 'check_out';
+
+    // Create attendance record
+    const attendance = await this.prisma.schoolAttendance.create({
+      data: {
+        qrCode: params.qrCode,
+        personId: person.id,
+        personType,
+        personName,
+        action,
+        timestamp: new Date(params.timestamp),
+        deviceId: params.gateId,
+        companyId: params.companyId,
+        profilePhoto: params.photo,
+      },
+    });
+
+    return {
+      id: attendance.id,
+      qrCode: attendance.qrCode,
+      personId: attendance.personId,
+      personName: attendance.personName,
+      personType: attendance.personType,
+      action: attendance.action,
+      timestamp: attendance.timestamp.toISOString(),
+      deviceId: attendance.deviceId,
+      profilePhoto: attendance.profilePhoto,
+    };
   }
 }

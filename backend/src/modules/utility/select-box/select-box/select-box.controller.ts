@@ -500,12 +500,14 @@ export class SelectBoxController {
     @Query('search') search?: string,
     @Query('role') role?: string,
     @Query('department') department?: string,
+    @Query('excludeAccountIds') excludeAccountIds?: string,
   ) {
     try {
       const list = await this.selectBoxService.getAccountList({
         search,
         role,
         department,
+        excludeAccountIds,
       });
       return response.status(HttpStatus.OK).json({
         list,
@@ -562,6 +564,20 @@ export class SelectBoxController {
         response,
         err,
         'Branch tree list fetched failed',
+      );
+    }
+  }
+
+  @Get('category-tree')
+  async getCategoryTreeList(@Res() response: Response) {
+    try {
+      const list = await this.selectBoxService.getCategoryTreeList();
+      return response.status(HttpStatus.OK).json({ list });
+    } catch (err) {
+      return this.utilityService.errorResponse(
+        response,
+        err,
+        'Category tree list fetched failed',
       );
     }
   }

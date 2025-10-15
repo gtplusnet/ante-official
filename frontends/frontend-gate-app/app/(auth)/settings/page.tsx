@@ -5,11 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { formatDistanceToNow } from 'date-fns'
-import { getSyncService } from '@/lib/services/sync.service'
+import { getSyncAPIService } from '@/lib/services/sync-api.service'
+import { getAuthHelperService } from '@/lib/services/auth-helper.service'
 import { dbManager } from '@/lib/db/db-manager'
 
 export default function SettingsPage() {
-  // Note: Using Supabase directly for data access, authentication only
+  // Note: Using API services for data access and license authentication
   const [syncInterval, setSyncInterval] = useState('5')
   const [schoolName, setSchoolName] = useState('Sample School')
   const [cameraPreference, setCameraPreference] = useState('environment')
@@ -43,20 +44,17 @@ export default function SettingsPage() {
     const savedLicenseKey = localStorage.getItem('licenseKey')
     if (savedLicenseKey) {
       setLicenseKey(savedLicenseKey)
-      
+
       // Refresh license info from backend
-      const syncService = getSyncService()
-      syncService.validateLicense(savedLicenseKey).then(licenseInfo => {
-        if (licenseInfo && licenseInfo.valid) {
+      const authService = getAuthHelperService()
+      authService.validateLicense(savedLicenseKey).then(licenseInfo => {
+        if (licenseInfo) {
           setCompanyId(licenseInfo.companyId?.toString() || '')
-          setCompanyName(licenseInfo.companyName || '')
-          setLicenseType(licenseInfo.licenseType || '')
           setGateName(licenseInfo.gateName || '')
-          
+          setLicenseType('Gate License')  // API doesn't return this field
+
           // Update localStorage with latest info
           localStorage.setItem('companyId', licenseInfo.companyId?.toString() || '')
-          localStorage.setItem('companyName', licenseInfo.companyName || '')
-          localStorage.setItem('licenseType', licenseInfo.licenseType || '')
           localStorage.setItem('gateName', licenseInfo.gateName || '')
         }
       }).catch(err => {
@@ -64,29 +62,30 @@ export default function SettingsPage() {
         // Fall back to saved values
         const savedCompanyId = localStorage.getItem('companyId')
         if (savedCompanyId) setCompanyId(savedCompanyId)
-        
-        const savedCompanyName = localStorage.getItem('companyName')
-        if (savedCompanyName) setCompanyName(savedCompanyName)
-        
-        const savedLicenseType = localStorage.getItem('licenseType')
-        if (savedLicenseType) setLicenseType(savedLicenseType)
-        
+
         const savedGateName = localStorage.getItem('gateName')
         if (savedGateName) setGateName(savedGateName)
+
+        setLicenseType('Gate License')
       })
     }
     
     // Load database counts
+    // Note: attendance store was removed in DB v6, only students/guardians remain
     Promise.all([
-      dbManager.count('attendance'),
       dbManager.count('students'),
       dbManager.count('guardians')
-    ]).then(([attendanceCount, studentCount, guardianCount]) => {
-      setAttendanceCount(attendanceCount)
+    ]).then(([studentCount, guardianCount]) => {
       setStudentCount(studentCount)
       setGuardianCount(guardianCount)
+      // Attendance count set to 0 as the store no longer exists
+      setAttendanceCount(0)
     }).catch(err => {
       console.error('Failed to get counts:', err)
+      // Set default values on error
+      setStudentCount(0)
+      setGuardianCount(0)
+      setAttendanceCount(0)
     })
   }, [])
 
@@ -106,19 +105,18 @@ export default function SettingsPage() {
   const handleForceSync = async () => {
     setIsForceSyncing(true)
     try {
-      // Import storage manager and perform sync
-      const { getStorageManager } = await import('@/lib/utils/storage')
-      const storageManager = getStorageManager()
-      
       console.log('Starting force sync from settings...')
-      const result = await storageManager.syncFromSupabase()
-      
+      const syncService = getSyncAPIService()
+      await syncService.init()
+
+      const result = await syncService.syncAll()
+
       // Update counts
-      setStudentCount(result.studentsSync)
-      setGuardianCount(result.guardiansSync)
+      setStudentCount(result.students.length)
+      setGuardianCount(result.guardians.length)
       setLastDataRefresh(new Date())
-      
-      alert(`Sync completed successfully!\nStudents: ${result.studentsSync}\nGuardians: ${result.guardiansSync}`)
+
+      alert(`Sync completed successfully!\nStudents: ${result.students.length}\nGuardians: ${result.guardians.length}`)
     } catch (error) {
       console.error('Force sync failed:', error)
       alert('Sync failed. Please check console for details.')
@@ -161,7 +159,6 @@ export default function SettingsPage() {
   const handleConnectDevice = async () => {
     setIsConnectingDevice(true)
     try {
-      const syncService = getSyncService()
       const savedLicenseKey = localStorage.getItem('licenseKey')
       if (!savedLicenseKey) {
         alert('No license key found. Please login again.')
@@ -169,22 +166,21 @@ export default function SettingsPage() {
         return
       }
 
-      const deviceInfo = {
-        deviceName: `School Gatekeep - ${navigator.userAgent.substring(0, 50)}`,
-        macAddress: 'WEB-' + Math.random().toString(36).substring(2, 15),
-        ipAddress: 'Web Client',
-        deviceInfo: {
-          userAgent: navigator.userAgent,
-          platform: navigator.platform,
-          language: navigator.language
-        }
+      // License validation serves as device connection
+      const authService = getAuthHelperService()
+      const licenseInfo = await authService.validateLicense(savedLicenseKey)
+
+      if (licenseInfo) {
+        alert('Device connected successfully! Gate: ' + licenseInfo.gateName)
+        // Update local info
+        setCompanyId(licenseInfo.companyId.toString())
+        setGateName(licenseInfo.gateName)
+      } else {
+        alert('Failed to connect device. Invalid license key.')
       }
-      
-      // Device connection not needed in authentication-only mode
-      alert('Device connection is not needed. All data is handled through Supabase.')
     } catch (error: any) {
-      console.error('Device connection not available:', error)
-      alert('Device connection is not available in authentication-only mode.')
+      console.error('Device connection failed:', error)
+      alert('Device connection failed: ' + error.message)
     } finally {
       setIsConnectingDevice(false)
     }
@@ -201,7 +197,7 @@ export default function SettingsPage() {
             <CardTitle>General Settings</CardTitle>
             <CardDescription>Configure basic application settings</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-6 pb-6">
             <div>
               <label htmlFor="schoolName" className="block text-sm font-medium text-gray-700">
                 School Name
@@ -241,7 +237,7 @@ export default function SettingsPage() {
             <CardTitle>Scanner Settings</CardTitle>
             <CardDescription>Configure QR code scanner preferences</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-6 pb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Camera Preference
@@ -284,7 +280,7 @@ export default function SettingsPage() {
             <CardTitle>Data Management</CardTitle>
             <CardDescription>Manage local data and sync status</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-6 pb-6">
             {/* Sync Status */}
             <div className="rounded-lg bg-gray-50 p-4">
               <h4 className="mb-3 font-medium">Sync Status</h4>
@@ -306,7 +302,7 @@ export default function SettingsPage() {
                 <div className="flex justify-between">
                   <span className="text-sm font-medium">Data Source</span>
                   <span className="text-sm font-medium text-green-600">
-                    Supabase Realtime
+                    API + WebSocket
                   </span>
                 </div>
               </div>
@@ -329,19 +325,19 @@ export default function SettingsPage() {
                 <div className="flex justify-between">
                   <span className="text-sm font-medium">Database Status</span>
                   <span className="text-sm text-green-600">
-                    Ready (Supabase)
+                    Ready (IndexedDB)
                   </span>
                 </div>
               </div>
             </div>
             
             <div className="flex space-x-4">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={handleForceSync}
                 disabled={isForcesyncing}
               >
-                {isForcesyncing ? 'Processing...' : 'Supabase Info'}
+                {isForcesyncing ? 'Syncing...' : 'Force Sync'}
               </Button>
               <Button 
                 variant="outline" 
@@ -360,7 +356,7 @@ export default function SettingsPage() {
             <CardTitle>Account</CardTitle>
             <CardDescription>Manage your license and account</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-6 pb-6">
             <div className="rounded-lg bg-gray-50 p-4 space-y-3">
               <div>
                 <p className="text-sm font-medium">License Key</p>

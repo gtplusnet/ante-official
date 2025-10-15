@@ -8,7 +8,6 @@ import { StudentModule } from '../student/student.module';
 import { GuardianModule } from '../guardian/guardian.module';
 import { GuardianAttendanceModule } from '../guardian-mobile/attendance/guardian-attendance.module';
 import { GuardianMobileAuthModule } from '../guardian-mobile/auth/guardian-mobile-auth.module';
-import { SupabaseAuthService } from '@modules/auth/supabase-auth/supabase-auth.service';
 
 @Module({
   imports: [
@@ -20,7 +19,7 @@ import { SupabaseAuthService } from '@modules/auth/supabase-auth/supabase-auth.s
     GuardianMobileAuthModule,
   ],
   controllers: [SyncController],
-  providers: [SyncService, DeviceLicenseMiddleware, SupabaseAuthService],
+  providers: [SyncService, DeviceLicenseMiddleware],
   exports: [SyncService],
 })
 export class SyncModule implements NestModule {

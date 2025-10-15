@@ -1,9 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
-// notificationsApi removed - using Supabase
-import { getNotificationsSupabaseService, GuardianNotification, SchoolNotification } from '@/lib/services/notifications.service';
-type NotificationListResponse = { notifications: Notification[]; hasMore: boolean; unreadCount: number };
+import { guardianPublicApi, NotificationDto } from '@/lib/api/guardian-public-api';
 import { Notification, NotificationType } from '@/types';
 import { useAuth } from './AuthContext';
 
@@ -13,7 +11,7 @@ interface InAppNotificationContextValue {
   loading: boolean;
   error: string | null;
   hasMore: boolean;
-  
+
   // Actions
   fetchNotifications: (filters?: { type?: NotificationType; studentId?: string; read?: boolean }, reset?: boolean) => Promise<void>;
   markAsRead: (id: string) => Promise<void>;
@@ -21,8 +19,8 @@ interface InAppNotificationContextValue {
   deleteNotification: (id: string) => Promise<void>;
   refreshUnreadCount: () => Promise<void>;
   loadMore: () => Promise<void>;
-  
-  // Real-time updates
+
+  // Real-time updates (polling-based for PWA)
   subscribe: (filters?: { type?: NotificationType; studentId?: string }) => void;
   unsubscribe: () => void;
 }
@@ -39,13 +37,25 @@ export const InAppNotificationProvider: React.FC<InAppNotificationProviderProps>
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [subscriptionCleanup, setSubscriptionCleanup] = useState<(() => void) | null>(null);
-  
+  const [currentOffset, setCurrentOffset] = useState(0);
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+
   const { user } = useAuth();
   const NOTIFICATIONS_PER_PAGE = 20;
 
-  // Fetch notifications from Supabase
+  // Convert Public API NotificationDto to our Notification format
+  const convertNotification = (dto: NotificationDto): Notification => ({
+    id: dto.id,
+    type: dto.type as NotificationType,
+    title: dto.title,
+    message: dto.message,
+    read: dto.isRead,
+    timestamp: new Date(dto.timestamp),
+    studentId: dto.studentId,
+    studentName: dto.studentName,
+  });
+
+  // Fetch notifications from Public API
   const fetchNotifications = useCallback(async (
     filters: { type?: NotificationType; studentId?: string; read?: boolean } = {},
     reset = false
@@ -55,171 +65,127 @@ export const InAppNotificationProvider: React.FC<InAppNotificationProviderProps>
     try {
       setLoading(true);
       setError(null);
-      
-      const notificationsService = getNotificationsSupabaseService();
-      const limit = NOTIFICATIONS_PER_PAGE;
-      
-      // Use callback to get current page value
-      let page = 1;
-      if (!reset) {
-        setCurrentPage(prev => {
-          page = prev;
-          return prev;
-        });
-      }
-      
-      // Get both guardian and school notifications
-      const [guardianNotifications, schoolNotifications, unreadCount] = await Promise.all([
-        notificationsService.getGuardianNotifications(user.id, limit),
-        notificationsService.getSchoolNotifications(user.id, limit), 
-        notificationsService.getUnreadCount(user.id)
-      ]);
-      
-      // Convert to common Notification format and combine
-      const combinedNotifications: Notification[] = [
-        ...guardianNotifications.map((n): Notification => ({
-          id: n.id,
-          type: n.type as NotificationType,
-          title: n.title,
-          message: n.body,
-          read: !!n.readAt,
-          timestamp: new Date(n.createdAt),
-          studentId: undefined,
-          studentName: undefined
-        })),
-        ...schoolNotifications.map((n): Notification => ({
-          id: n.id,
-          type: 'attendance' as NotificationType,
-          title: n.action ? `${n.action} notification` : 'School notification',
-          message: `${n.studentName || 'Student'} - ${n.action || 'Update'}`,
-          read: n.read,
-          timestamp: new Date(n.timestamp),
-          studentId: n.studentId || undefined,
-          studentName: n.studentName || undefined
-        }))
-      ];
-      
-      // Sort by creation date (newest first)
-      combinedNotifications.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-      
-      // Apply filtering if specified
-      let filteredNotifications = combinedNotifications;
-      if (filters.read !== undefined) {
-        filteredNotifications = filteredNotifications.filter(n => n.read === filters.read);
-      }
-      if (filters.studentId) {
-        filteredNotifications = filteredNotifications.filter(n => n.studentId === filters.studentId);
-      }
-      if (filters.type) {
-        filteredNotifications = filteredNotifications.filter(n => n.type === filters.type);
-      }
+
+      const offset = reset ? 0 : currentOffset;
+
+      console.log('[InAppNotifications] Fetching notifications from Public API', { offset, reset, filters });
+
+      // Fetch notifications from guardianPublicApi
+      const apiNotifications = await guardianPublicApi.getNotifications({
+        limit: NOTIFICATIONS_PER_PAGE,
+        offset,
+        type: filters.type as any,
+        unreadOnly: filters.read === false ? true : false,
+        studentId: filters.studentId,
+      });
+
+      // Convert to our Notification format
+      const convertedNotifications = apiNotifications.map(convertNotification);
 
       if (reset) {
-        setNotifications(filteredNotifications);
-        setCurrentPage(1);
+        setNotifications(convertedNotifications);
+        setCurrentOffset(0);
       } else {
-        setNotifications(prev => [...prev, ...filteredNotifications]);
+        setNotifications(prev => [...prev, ...convertedNotifications]);
       }
-      
-      setUnreadCount(unreadCount);
-      setHasMore(filteredNotifications.length === limit); // Simple check for more
-      
+
+      // Calculate unread count from the notifications
+      const unread = convertedNotifications.filter(n => !n.read).length;
+      setUnreadCount(reset ? unread : prev => prev + unread);
+
+      setHasMore(apiNotifications.length === NOTIFICATIONS_PER_PAGE);
+
       if (!reset) {
-        setCurrentPage(prev => prev + 1);
+        setCurrentOffset(prev => prev + NOTIFICATIONS_PER_PAGE);
       }
+
+      console.log(`[InAppNotifications] Loaded ${convertedNotifications.length} notifications`);
     } catch (err: any) {
-      console.error('Failed to fetch notifications:', err);
+      console.error('[InAppNotifications] Failed to fetch notifications:', err);
       setError(err.message || 'Failed to fetch notifications');
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, currentOffset]);
 
   // Load more notifications (pagination)
   const loadMore = useCallback(async () => {
     if (!hasMore || loading) return;
     await fetchNotifications({}, false);
-  }, [hasMore, loading]);
+  }, [hasMore, loading, fetchNotifications]);
 
   // Mark notification as read
   const markAsRead = useCallback(async (id: string) => {
     try {
-      const notificationsService = getNotificationsSupabaseService();
-      
-      // Determine notification type by checking which table it belongs to
-      const notification = notifications.find(n => n.id === id);
-      if (!notification) return;
-      
-      let success = false;
-      if (notification.studentId) {
-        // School notification
-        success = await notificationsService.markSchoolNotificationAsRead(id);
-      } else {
-        // Guardian notification
-        success = await notificationsService.markGuardianNotificationAsRead(id);
-      }
-      
-      if (success) {
-        // Update local state
-        setNotifications(prev => 
-          prev.map(notification => 
-            notification.id === id 
-              ? { ...notification, read: true, readAt: new Date() }
-              : notification
-          )
-        );
-        
-        // Update unread count
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }
+      console.log('[InAppNotifications] Marking notification as read:', id);
+
+      // Call Public API to mark as read
+      await guardianPublicApi.markNotificationsRead([id]);
+
+      // Update local state
+      setNotifications(prev =>
+        prev.map(notification =>
+          notification.id === id
+            ? { ...notification, read: true, readAt: new Date() }
+            : notification
+        )
+      );
+
+      // Update unread count
+      setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err: any) {
-      console.error('Failed to mark notification as read:', err);
+      console.error('[InAppNotifications] Failed to mark notification as read:', err);
       setError(err.message || 'Failed to mark notification as read');
     }
-  }, [notifications]);
+  }, []);
 
   // Mark all notifications as read
   const markAllAsRead = useCallback(async () => {
     try {
-      if (!user) return;
-      
-      const notificationsService = getNotificationsSupabaseService();
-      const success = await notificationsService.markAllAsRead(user.id);
-      
-      if (success) {
-        // Update local state
-        setNotifications(prev => 
-          prev.map(notification => ({ 
-            ...notification, 
-            read: true, 
-            readAt: new Date() 
-          }))
-        );
-        
-        setUnreadCount(0);
-      }
+      if (!user || notifications.length === 0) return;
+
+      console.log('[InAppNotifications] Marking all notifications as read');
+
+      // Get all unread notification IDs
+      const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+
+      if (unreadIds.length === 0) return;
+
+      // Call Public API to mark all as read
+      await guardianPublicApi.markNotificationsRead(unreadIds);
+
+      // Update local state
+      setNotifications(prev =>
+        prev.map(notification => ({
+          ...notification,
+          read: true,
+          readAt: new Date()
+        }))
+      );
+
+      setUnreadCount(0);
     } catch (err: any) {
-      console.error('Failed to mark all notifications as read:', err);
+      console.error('[InAppNotifications] Failed to mark all notifications as read:', err);
       setError(err.message || 'Failed to mark all notifications as read');
     }
-  }, [user]);
+  }, [user, notifications]);
 
   // Delete notification
   const deleteNotification = useCallback(async (id: string) => {
     try {
-      // TODO: Replace with Supabase implementation
-      await Promise.resolve();
-      
-      // Update local state
+      console.log('[InAppNotifications] Delete notification not implemented yet:', id);
+
+      // TODO: Implement delete endpoint in backend
+      // For now, just remove from local state
       const notification = notifications.find(n => n.id === id);
       setNotifications(prev => prev.filter(n => n.id !== id));
-      
+
       // Update unread count if the deleted notification was unread
       if (notification && !notification.read) {
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
     } catch (err: any) {
-      console.error('Failed to delete notification:', err);
+      console.error('[InAppNotifications] Failed to delete notification:', err);
       setError(err.message || 'Failed to delete notification');
     }
   }, [notifications]);
@@ -229,135 +195,78 @@ export const InAppNotificationProvider: React.FC<InAppNotificationProviderProps>
     if (!user) return;
 
     try {
-      const notificationsService = getNotificationsSupabaseService();
-      const count = await notificationsService.getUnreadCount(user.id);
-      setUnreadCount(count);
+      console.log('[InAppNotifications] Refreshing unread count');
+
+      // Fetch unread notifications to get count
+      const unreadNotifications = await guardianPublicApi.getNotifications({
+        limit: 100, // Get a reasonable number to count
+        offset: 0,
+        unreadOnly: true,
+      });
+
+      setUnreadCount(unreadNotifications.length);
     } catch (err: any) {
-      console.error('Failed to refresh unread count:', err);
+      console.error('[InAppNotifications] Failed to refresh unread count:', err);
     }
   }, [user]);
 
-  // Handle real-time notification events
-  const handleNewNotification = useCallback((notification: Notification) => {
-    console.log('Received new notification:', notification);
-    
-    // Add new notification to the beginning of the list
-    setNotifications(prev => {
-      // Check if notification already exists
-      if (prev.some(n => n.id === notification.id)) {
-        return prev;
-      }
-      return [notification, ...prev];
-    });
-    
-    // Increment unread count if notification is unread
-    if (!notification.read) {
-      setUnreadCount(prev => prev + 1);
-    }
-  }, []);
-
-  // Handle notification read events
-  const handleNotificationRead = useCallback((data: { notificationId: string; readAt: string }) => {
-    console.log('Notification marked as read:', data);
-    
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === data.notificationId 
-          ? { ...notification, read: true, readAt: new Date(data.readAt) }
-          : notification
-      )
-    );
-    
-    // Decrement unread count
-    setUnreadCount(prev => Math.max(0, prev - 1));
-  }, []);
-
-  // Real-time notifications via Supabase
+  // Real-time notifications via polling (PWA-friendly)
   const subscribe = useCallback((filters: { type?: NotificationType; studentId?: string } = {}) => {
     if (!user) return;
-    
-    // Clean up existing subscription
-    setSubscriptionCleanup(prev => {
-      if (prev) {
-        prev();
-      }
-      return null;
-    });
-    
-    const notificationsService = getNotificationsSupabaseService();
-    
-    const setupSubscription = async () => {
-      const cleanup = await notificationsService.subscribeToNotifications(
-        user.id,
-        (payload) => {
-          console.log('New realtime notification:', payload);
-          // Refresh notifications when new ones arrive
-          fetchNotifications({}, true);
-        }
-      );
-      
-      setSubscriptionCleanup(() => cleanup);
-    };
-    
-    setupSubscription();
-  }, [user, fetchNotifications]);
 
-  // Unsubscribe from real-time notifications
-  const unsubscribe = useCallback(() => {
-    if (subscriptionCleanup) {
-      subscriptionCleanup();
-      setSubscriptionCleanup(null);
+    console.log('[InAppNotifications] Starting notification polling (every 30 seconds)');
+
+    // Clean up existing polling
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
     }
-  }, [subscriptionCleanup]);
+
+    // Set up polling interval (every 30 seconds)
+    const interval = setInterval(() => {
+      console.log('[InAppNotifications] Polling for new notifications');
+      fetchNotifications(filters, true);
+    }, 30000); // 30 seconds
+
+    setPollingInterval(interval);
+  }, [user, pollingInterval, fetchNotifications]);
+
+  // Unsubscribe from polling
+  const unsubscribe = useCallback(() => {
+    console.log('[InAppNotifications] Stopping notification polling');
+
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+  }, [pollingInterval]);
 
   // Initialize notifications when user logs in
   useEffect(() => {
     if (user) {
-      // Initialize notifications and set up realtime subscriptions
+      console.log('[InAppNotifications] Initializing notifications for user:', user.id);
+
+      // Initialize notifications
       fetchNotifications({}, true);
-      
-      // Set up subscription
-      const notificationsService = getNotificationsSupabaseService();
-      
-      const setupNotificationSubscription = async () => {
-        const cleanup = await notificationsService.subscribeToNotifications(
-          user.id,
-          (payload) => {
-            console.log('New realtime notification:', payload);
-            // Refresh notifications when new ones arrive
-            fetchNotifications({}, true);
-          }
-        );
-        
-        setSubscriptionCleanup(() => cleanup);
-      };
-      
-      setupNotificationSubscription();
-      
+
+      // Start polling for new notifications
+      subscribe();
+
       // Cleanup function
       return () => {
-        if (subscriptionCleanup) {
-          subscriptionCleanup();
-        }
+        unsubscribe();
       };
     } else {
       // Clear state when user logs out
+      console.log('[InAppNotifications] Clearing notifications (user logged out)');
       setNotifications([]);
       setUnreadCount(0);
-      setCurrentPage(1);
+      setCurrentOffset(0);
       setHasMore(false);
-      
-      // Clean up any existing subscription
-      setSubscriptionCleanup(prev => {
-        if (prev) {
-          prev();
-        }
-        return null;
-      });
+      unsubscribe();
     }
-  }, [user, fetchNotifications]);
+  }, [user?.id]); // Only depend on user.id to avoid re-running on every user object change
 
-  // Refresh unread count periodically
+  // Refresh unread count periodically (in addition to polling)
   useEffect(() => {
     if (!user) return;
 
@@ -399,7 +308,7 @@ export const useInAppNotifications = () => {
 // Hook for notification badge count (for header/navigation)
 export const useNotificationBadge = () => {
   const { unreadCount, refreshUnreadCount } = useInAppNotifications();
-  
+
   return {
     count: unreadCount,
     refresh: refreshUnreadCount,

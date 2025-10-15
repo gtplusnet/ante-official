@@ -57,6 +57,17 @@ export class EmployeeListController {
     );
   }
 
+  @Get('info-lite')
+  async employeeInfoLite(
+    @Query() params: EmployeeGetDTO,
+    @Res() response: Response,
+  ) {
+    return this.utilityService.responseHandler(
+      this.employeeListService.infoLite(params.accountId),
+      response,
+    );
+  }
+
   @Put('table')
   async employeeList(
     @Query() query: TableQueryDTO,
@@ -65,6 +76,18 @@ export class EmployeeListController {
   ) {
     return this.utilityService.responseHandler(
       this.employeeListService.employeeTable(query, body),
+      response,
+    );
+  }
+
+  @Put('table-lite')
+  async employeeListLite(
+    @Query() query: TableQueryDTO,
+    @Body() body: TableBodyDTO,
+    @Res() response: Response,
+  ) {
+    return this.utilityService.responseHandler(
+      this.employeeListService.employeeTableLite(query, body),
       response,
     );
   }

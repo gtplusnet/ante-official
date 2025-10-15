@@ -62,9 +62,17 @@ export class DeveloperAccountController {
   }
 
   @Delete()
-  async delete(@Res() response, @Query() params: DeveloperAccountDeleteDTO) {
+  async delete(
+    @Res() response,
+    @Query() params: DeveloperAccountDeleteDTO,
+    @Query('reason') reason?: string,
+  ) {
     return this.utility.responseHandler(
-      this.developerAccountService.deleteDeveloperAccount(params),
+      this.developerAccountService.deleteDeveloperAccount({
+        ...params,
+        deletedBy: this.utility.accountInformation.id,
+        reason,
+      }),
       response,
     );
   }
@@ -93,6 +101,18 @@ export class DeveloperAccountController {
     const parsedCompanyId = companyId ? parseInt(companyId, 10) : undefined;
     return this.utility.responseHandler(
       this.developerAccountService.getRoles(parsedCompanyId),
+      response,
+    );
+  }
+
+  @Put('deletion-logs')
+  async getDeletionLogs(
+    @Res() response,
+    @Query() query: TableQueryDTO,
+    @Body() body: TableBodyDTO,
+  ) {
+    return this.utility.responseHandler(
+      this.developerAccountService.getDeletionLogsTable(query, body),
       response,
     );
   }

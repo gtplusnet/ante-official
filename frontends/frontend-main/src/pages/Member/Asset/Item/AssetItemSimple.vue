@@ -22,7 +22,7 @@
         </div>
       </div>
       <g-card class="q-pa-md q-mt-sm text-body-small">
-        <SimpleItemTable ref="table" :tab="'simple'"></SimpleItemTable>
+        <SimpleItemTable ref="table" :tab="'simple'" :hideItemGroups="true"></SimpleItemTable>
       </g-card>
 
       <!-- item information dialog -->

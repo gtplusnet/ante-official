@@ -76,6 +76,15 @@ export class SocketGateway
 
   async handleConnection(client: Socket) {
     this.utilityService.log('Socket connected: ' + client.id);
+
+    // Add a catch-all listener to log all events
+    client.onAny((eventName, ...args) => {
+      this.logger.log(`[SOCKET EVENT] Received event: ${eventName} from client: ${client.id}`);
+      if (eventName === 'ai_chat_message') {
+        this.logger.log(`[SOCKET EVENT] AI Chat message data: ${JSON.stringify(args)}`);
+      }
+    });
+
     await this.socketService.handleConnection(client);
   }
 
@@ -390,17 +399,34 @@ export class SocketGateway
     @MessageBody() dataPayload: payload<AiChatMessagePayload>,
     @ConnectedSocket() client: Socket,
   ) {
+    this.logger.log(`[AI CHAT] Received message from client ${client.id}`);
+    this.logger.log(`[AI CHAT] Payload: ${JSON.stringify(dataPayload)}`);
+
     try {
-      // Get account info from socket (assume utilityService can extract it)
-      const account = await this.utilityService.accountInformation;
-      if (!account) throw new Error('Unauthorized');
+      // Get account info from socket client data (set by WsAdminGuard)
+      const account = client.data?.account;
+      this.logger.log(`[AI CHAT] Account info: ${account ? account.id : 'null'}`);
+
+      if (!account) {
+        this.logger.error('[AI CHAT] No account information found in client data');
+        throw new Error('Unauthorized - account information not available');
+      }
+
+      this.logger.log(`[AI CHAT] Calling AI service...`);
       // Store user message and get AI response
+      // Pass account info to avoid CLS dependency in WebSocket context
       const { userMessage, aiMessage } =
         await this.aiChatService.addMessageForAccount(
           dataPayload.data.role,
           dataPayload.data.content,
           account.id,
+          'gemini', // default provider
+          undefined, // default model
+          account, // pass account info directly
         );
+
+      this.logger.log(`[AI CHAT] Got response from AI service`);
+
       // Emit user message
       this.server.to(client.id).emit('ai_chat_message', {
         message: 'user',
@@ -411,6 +437,7 @@ export class SocketGateway
         },
       });
 
+      this.logger.log(`[AI CHAT] Emitting assistant message`);
       this.server.to(client.id).emit('ai_chat_message', {
         message: 'assistant',
         data: {
@@ -419,7 +446,10 @@ export class SocketGateway
           createdAt: aiMessage.createdAt.toISOString(),
         },
       });
+
+      this.logger.log(`[AI CHAT] Message handling completed successfully`);
     } catch (error) {
+      this.logger.error(`[AI CHAT] Error: ${error.message}`);
       this.utilityService.error(`AI chat error: ${error.stack}`);
       this.server.to(client.id).emit('ai_chat_message', {
         message: 'error',
@@ -559,5 +589,99 @@ export class SocketGateway
         'RECONNECT_DISCUSSIONS_ERROR',
       );
     }
+  }
+
+  /**
+   * ==========================================
+   * Gate App WebSocket Events
+   * ==========================================
+   */
+
+  /**
+   * Handle joining a gate room (by companyId)
+   * Gate app clients join room to receive real-time attendance updates
+   */
+  @SubscribeMessage('gate:join-room')
+  async handleGateJoinRoom(
+    @MessageBody() payload: { companyId: number },
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const roomName = `gate:${payload.companyId}`;
+      await client.join(roomName);
+
+      // Track room membership
+      if (!this.socketRooms.has(client.id)) {
+        this.socketRooms.set(client.id, new Set());
+      }
+      this.socketRooms.get(client.id).add(roomName);
+
+      this.logger.log(
+        `Client ${client.id} joined gate room: ${roomName}`,
+      );
+      return { status: 'joined', companyId: payload.companyId };
+    } catch (error) {
+      this.logger.error(`Error joining gate room: ${error.message}`);
+      throw new CustomWsException(403, error.message, 'GATE_JOIN_ROOM_ERROR');
+    }
+  }
+
+  /**
+   * Handle leaving a gate room
+   */
+  @SubscribeMessage('gate:leave-room')
+  async handleGateLeaveRoom(
+    @MessageBody() payload: { companyId: number },
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const roomName = `gate:${payload.companyId}`;
+      await client.leave(roomName);
+
+      // Remove from tracked rooms
+      if (this.socketRooms.has(client.id)) {
+        this.socketRooms.get(client.id).delete(roomName);
+      }
+
+      this.logger.log(`Client ${client.id} left gate room: ${roomName}`);
+      return { status: 'left', companyId: payload.companyId };
+    } catch (error) {
+      this.logger.error(`Error leaving gate room: ${error.message}`);
+      throw new CustomWsException(500, error.message, 'GATE_LEAVE_ROOM_ERROR');
+    }
+  }
+
+  /**
+   * Public methods for emitting gate events (called by services)
+   * These are not WebSocket message handlers but utility methods
+   */
+
+  /**
+   * Broadcast new attendance record to all gate clients in company room
+   */
+  public emitAttendanceRecorded(companyId: number, attendanceData: any) {
+    const roomName = `gate:${companyId}`;
+    this.server.to(roomName).emit('gate:attendance:recorded', attendanceData);
+    this.logger.log(
+      `Emitted attendance recorded to room ${roomName}: ${attendanceData.id}`,
+    );
+  }
+
+  /**
+   * Broadcast updated stats to all gate clients in company room
+   */
+  public emitStatsUpdate(companyId: number, stats: any) {
+    const roomName = `gate:${companyId}`;
+    this.server.to(roomName).emit('gate:stats:update', stats);
+    this.logger.log(`Emitted stats update to room ${roomName}`);
+  }
+
+  /**
+   * Broadcast student/guardian sync update
+   */
+  public emitSyncUpdate(companyId: number, syncData: any) {
+    const roomName = `gate:${companyId}`;
+    this.server.to(roomName).emit('gate:sync:update', syncData);
+    this.logger.log(`Emitted sync update to room ${roomName}`);
   }
 }

@@ -26,7 +26,7 @@ RUN apk add --no-cache \
     && rm -rf /var/cache/apk/*
 
 # Copy package files (force rebuild on package changes - v3)
-COPY package.json yarn.lock* ./
+COPY package.json yarn.lock ./
 
 # Copy prisma folder for installation
 COPY prisma ./prisma
@@ -66,7 +66,7 @@ RUN apk add --no-cache \
     && rm -rf /var/cache/apk/*
 
 # Copy package files and prisma schema first for better caching (v3)
-COPY package.json yarn.lock* ./
+COPY package.json yarn.lock ./
 COPY prisma ./prisma
 
 # Copy New Relic config

@@ -7,7 +7,8 @@ export interface ProjectCreateRequest {
   startDate: string;
   endDate: string;
   status: ProjectStatus;
-  clientId: number;
+  clientId?: number;
+  pointOfContactId?: number;
   locationId: string;
   downpaymentAmount: number;
   retentionAmount: number;
@@ -18,10 +19,12 @@ export interface ProjectCreateRequest {
   relationshipOwnerId?: string;
   abc?: number;
   mmr?: number;
+  implementationFee?: number;
   initialCosting?: number;
   contactDetails?: string;
   leadSource?: string;
   leadType?: string;
+  leadBoardStage?: string;
 }
 
 export interface ProjectEditRequest {
@@ -39,6 +42,7 @@ export interface ProjectEditRequest {
   relationshipOwnerId?: string;
   abc?: number;
   mmr?: number;
+  implementationFee?: number;
   initialCosting?: number;
   contactDetails?: string;
   leadSource?: string;

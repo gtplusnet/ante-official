@@ -1,48 +1,92 @@
 <template>
-  <div 
-    class="custom-branch-select" 
-    :class="{ 
-      'is-focused': isFocused, 
+  <div
+    class="custom-branch-select"
+    :class="{
+      'is-focused': isFocused,
       'is-disabled': disable,
       [`variant-${variant}`]: true,
       'is-dense': dense,
       'is-outlined': outlined
     }"
-    @click="toggleDropdown"
     tabindex="0"
     @focus="isFocused = true"
     @blur="handleBlur"
   >
     <!-- Business icon for standalone and md3-filter variants -->
-    <q-icon 
-      v-if="(showIcon && variant === 'standalone') || variant === 'md3-filter'" 
-      name="business" 
-      class="variant-icon" 
+    <q-icon
+      v-if="(showIcon && variant === 'standalone') || variant === 'md3-filter'"
+      name="business"
+      class="variant-icon"
     />
-    
-    <div 
+
+    <!-- Wrapper for select and add button (when showAddButton is true) -->
+    <div v-if="showAddButton" class="branch-select-wrapper">
+      <div
+        class="select-container"
+        @click="toggleDropdown"
+      >
+        <div class="select-label" v-if="label && !selectedBranch">{{ label }}</div>
+        <div class="select-value" v-if="selectedBranch && selectedOption">
+          <q-icon
+            v-if="selectedOption.hasChildren"
+            name="account_tree"
+            size="14px"
+            color="primary"
+            class="branch-icon"
+          />
+          <span class="branch-name">{{ selectedOption.label }}</span>
+          <span
+            v-if="includeChildren && selectedOption.childCount && selectedOption.childCount > 0"
+            class="child-count"
+          >
+            (+{{ selectedOption.childCount }})
+          </span>
+        </div>
+        <div class="select-placeholder" v-else-if="!label">{{ placeholder }}</div>
+        <q-icon
+          name="arrow_drop_down"
+          size="20px"
+          class="dropdown-icon"
+          :class="{ 'rotate': showDropdown }"
+        />
+      </div>
+      <q-btn
+        @click.stop="showAddDialog"
+        class="add-button"
+        color="dark"
+        outline
+        style="border-width: 0.5px !important;"
+      >
+        <q-icon size="16px" name="add"></q-icon>
+      </q-btn>
+    </div>
+
+    <!-- Select container without add button -->
+    <div
+      v-else
       class="select-container"
+      @click="toggleDropdown"
     >
       <div class="select-label" v-if="label && !selectedBranch">{{ label }}</div>
       <div class="select-value" v-if="selectedBranch && selectedOption">
-        <q-icon 
-          v-if="selectedOption.hasChildren" 
-          name="account_tree" 
-          size="14px" 
-          color="primary" 
+        <q-icon
+          v-if="selectedOption.hasChildren"
+          name="account_tree"
+          size="14px"
+          color="primary"
           class="branch-icon"
         />
         <span class="branch-name">{{ selectedOption.label }}</span>
-        <span 
-          v-if="includeChildren && selectedOption.childCount && selectedOption.childCount > 0" 
+        <span
+          v-if="includeChildren && selectedOption.childCount && selectedOption.childCount > 0"
           class="child-count"
         >
           (+{{ selectedOption.childCount }})
         </span>
       </div>
       <div class="select-placeholder" v-else-if="!label">{{ placeholder }}</div>
-      <q-icon 
-        name="arrow_drop_down" 
+      <q-icon
+        name="arrow_drop_down"
         size="20px"
         class="dropdown-icon"
         :class="{ 'rotate': showDropdown }"
@@ -122,14 +166,25 @@
         </div>
       </div>
     </teleport>
-    
+
     <q-linear-progress v-if="loading" indeterminate color="primary" class="loading-bar" />
+
+    <!-- Add Branch Dialog -->
+    <ManpowerAddEditBranchDialog
+      v-if="showAddButton"
+      v-model="showBranchDialog"
+      @saveDone="handleBranchSaved"
+    />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, onUnmounted, computed, watch, getCurrentInstance } from 'vue';
+import { defineComponent, defineAsyncComponent, ref, onMounted, onUnmounted, computed, watch, getCurrentInstance } from 'vue';
 import type { ComponentInternalInstance, PropType } from 'vue';
+
+const ManpowerAddEditBranchDialog = defineAsyncComponent(() =>
+  import('../../pages/Member/Manpower/dialogs/configuration/ManpowerAddEditBranchDialog.vue')
+);
 
 interface BranchOption {
   key: number | string;
@@ -143,6 +198,9 @@ interface BranchOption {
 
 export default defineComponent({
   name: 'CustomBranchTreeSelect',
+  components: {
+    ManpowerAddEditBranchDialog,
+  },
   props: {
     modelValue: {
       type: Array,
@@ -189,6 +247,14 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    showAddButton: {
+      type: Boolean,
+      default: false,
+    },
+    addButtonTooltip: {
+      type: String,
+      default: 'Add Branch',
+    },
   },
   emits: ['update:modelValue'],
   setup(props, { emit }) {
@@ -199,6 +265,7 @@ export default defineComponent({
     const showDropdown = ref(false);
     const isFocused = ref(false);
     const dropdownPosition = ref({ top: 0, left: 0, width: 0 });
+    const showBranchDialog = ref(false);
     
     // Get the $api instance
     const instance = getCurrentInstance() as ComponentInternalInstance;
@@ -402,6 +469,26 @@ export default defineComponent({
       document.removeEventListener('click', handleClickOutside);
     });
 
+    // Public method for reloading branches and selecting a specific one
+    const reloadAndSelect = async (branchId: number | string) => {
+      await loadBranches();
+      if (branchId) {
+        selectOption(branchId);
+      }
+    };
+
+    // Show add branch dialog
+    const showAddDialog = () => {
+      showBranchDialog.value = true;
+    };
+
+    // Handle when a new branch is saved
+    const handleBranchSaved = async (data: any) => {
+      if (data && data.id) {
+        await reloadAndSelect(data.id);
+      }
+    };
+
     return {
       loading,
       options,
@@ -415,6 +502,10 @@ export default defineComponent({
       toggleDropdown,
       selectOption,
       handleBlur,
+      reloadAndSelect,
+      showBranchDialog,
+      showAddDialog,
+      handleBranchSaved,
     };
   },
 });
@@ -426,11 +517,22 @@ export default defineComponent({
   width: 100%;
   cursor: pointer;
   outline: none;
-  
+
   &.is-disabled {
     opacity: 0.6;
     pointer-events: none;
     cursor: not-allowed;
+  }
+}
+
+.branch-select-wrapper {
+  display: grid;
+  grid-gap: 10px;
+  grid-template-columns: 1fr auto;
+
+  .add-button {
+    width: 40px;
+    min-height: 40px;
   }
 }
 
@@ -443,11 +545,12 @@ export default defineComponent({
   display: flex;
   align-items: center;
   transition: all 0.2s ease;
-  
+  cursor: pointer;
+
   .custom-branch-select:hover:not(.is-disabled) & {
     background: #ebebeb;
   }
-  
+
   .custom-branch-select.is-focused & {
     background: #e8e8e8;
   }

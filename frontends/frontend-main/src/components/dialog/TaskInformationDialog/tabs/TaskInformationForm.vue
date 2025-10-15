@@ -84,6 +84,20 @@
           </div>
         </div>
 
+        <div class="row q-col-gutter-x-md">
+          <div class="col-12 q-mb-md">
+            <GInput
+              :isDisabled="!permissions.isAllowedEditTask"
+              type="select-search"
+              apiUrl="/task/goal?status=PENDING"
+              null-option="No Goal"
+              label="Goal (Optional)"
+              v-model="form.goalId"
+              :mapData="mapGoalData"
+            />
+          </div>
+        </div>
+
         <div class="col-12">
           <GInput
             :isDisabled="!permissions.isAllowedEditTask"
@@ -227,7 +241,8 @@
 import GInput from '../../../../components/shared/form/GInput.vue';
 import WorkflowActionButtons from '../../../../components/workflow/WorkflowActionButtons.vue';
 import { api } from 'src/boot/axios';
-import { useAssigneeList } from 'src/composables/useAssigneeList';
+import { useAssigneeStore } from 'src/stores/assignee';
+import { useProjectStore } from 'src/stores/project';
 import { useAuthStore } from 'src/stores/auth';
 
 export default {
@@ -243,10 +258,13 @@ export default {
     },
   },
   setup() {
-    const { assignees, loading: assigneesLoading } = useAssigneeList();
+    // Get stores
+    const assigneeStore = useAssigneeStore();
+    const projectStore = useProjectStore();
+
     return {
-      assignees,
-      assigneesLoading
+      assigneeStore,
+      projectStore
     };
   },
   data: () => ({
@@ -261,11 +279,17 @@ export default {
   }),
   computed: {
     assigneeOptions() {
-      // Format assignees for GInput select component
-      if (!this.assignees) return [];
-      return this.assignees.map(assignee => ({
+      // Format assignees for GInput select component from store
+      return this.assigneeStore.formattedAssignees.map(assignee => ({
         label: assignee.label || assignee.name,
         value: assignee.value || assignee.id
+      }));
+    },
+    projectOptions() {
+      // Format projects for GInput select component from store
+      return this.projectStore.formattedProjects.map(project => ({
+        label: project.label || project.name,
+        value: project.value || project.id
       }));
     },
     hasWorkflowInstance() {
@@ -328,6 +352,7 @@ export default {
         difficultyLevel: this.taskInformation.assignedToDifficultySet?.key ?? null,
         dueDateString: this.taskInformation.dueDate?.dateStandard || null,
         project: this.taskInformation.project?.id ?? this.taskInformation.projectId ?? 0,
+        goalId: this.taskInformation.goalId ?? null,
       };
 
       this.isInitialized = true;
@@ -555,6 +580,7 @@ export default {
         assignee: this.form.assignee,
         dueDate: this.form.dueDateString || null,
         projectId: this.form.project || null,
+        goalId: this.form.goalId || null,
         // Convert to numbers - API expects numbers for these fields
         priorityLevel: this.form.priorityLevel !== null ? Number(this.form.priorityLevel) : null,
         difficultyLevel:
@@ -584,7 +610,7 @@ export default {
     handleWorkflowAction(event) {
       // Refresh task data after workflow action
       this.$emit('refreshTask');
-      
+
       // Show notification (skip for liquidation approvals - handled by LiquidationApprovalDialog)
       const isLiquidationApproval = event.transition?.dialogType === 'liquidation_approval';
       if (!isLiquidationApproval) {
@@ -594,11 +620,18 @@ export default {
           icon: 'check_circle'
         });
       }
-      
+
       // Mark task as completed if workflow transition was performed (skip for liquidation approvals)
       if (event.transition && !isLiquidationApproval) {
         this.updateTaskStatus('complete');
       }
+    },
+    mapGoalData(response) {
+      // Map API response to GInput select format
+      return response.map((goal) => ({
+        label: goal.name,
+        value: goal.id,
+      }));
     },
   },
 };

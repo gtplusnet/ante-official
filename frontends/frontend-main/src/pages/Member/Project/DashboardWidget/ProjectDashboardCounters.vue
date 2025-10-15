@@ -44,7 +44,7 @@
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, onUnmounted } from 'vue';
 import GlobalWidgetCounter from '../../../../components/shared/global/GlobalWidgetCounter.vue';
-import supabaseService from '../../../../services/supabase';
+import { api } from '../../../../boot/axios';
 
 interface ProjectStats {
   totalProjects: number;
@@ -103,21 +103,26 @@ export default defineComponent({
     const fetchProjectStats = async () => {
       loading.value = true;
       try {
-        // Fetch all projects with their status and budget
-        const { data: projects, error: fetchError } = await supabaseService.getClient()
-          .from('Project')
-          .select('id, status, projectBoardStage, budget, isDeleted, isLead')
-          .eq('isDeleted', false)
-          .eq('isLead', false)
-          .eq('status', 'PROJECT');
+        // Use backend API with table endpoint (PUT /project)
+        const response = await api.put('/project', {
+          // TableBodyDTO
+          filters: [
+            { field: 'isDeleted', operator: '=', value: false },
+            { field: 'isLead', operator: '=', value: false },
+            { field: 'status', operator: '=', value: 'PROJECT' }
+          ],
+          sorts: []
+        }, {
+          params: {
+            // TableQueryDTO
+            page: 1,
+            pageSize: 500 // Get all for stats
+          }
+        });
 
-        if (fetchError) {
-          console.error('Error fetching project stats:', fetchError);
-          error.value = 'Failed to fetch project statistics';
-          return;
-        }
+        const projects = response.data?.list || [];
 
-        if (projects) {
+        if (projects.length >= 0) {
           // Calculate statistics
           const stats: ProjectStats = {
             totalProjects: projects.length,
@@ -135,8 +140,10 @@ export default defineComponent({
               stats.completed++;
             }
 
-            // Sum budgets
-            if (project.budget) {
+            // Sum budgets - backend returns formatted budget object with raw value
+            if (project.budget && typeof project.budget === 'object' && 'raw' in project.budget) {
+              stats.totalBudget += Number(project.budget.raw);
+            } else if (typeof project.budget === 'number') {
               stats.totalBudget += Number(project.budget);
             }
           });

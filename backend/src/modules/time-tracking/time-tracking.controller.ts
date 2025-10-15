@@ -16,6 +16,7 @@ import { StartTimerDto } from './dto/start-timer.dto';
 import { StopTimerDto } from './dto/stop-timer.dto';
 import { GetHistoryDto } from './dto/get-history.dto';
 import { CreateTaskAndStartDto } from './dto/create-task-and-start.dto';
+import { TagTimerDto } from './dto/tag-timer.dto';
 import { UtilityService } from '@common/utility.service';
 
 @Controller('time-tracking')
@@ -135,6 +136,37 @@ export class TimeTrackingController {
     const timeInIpAddress = this.getClientIp(req);
 
     const result = await this.timeTrackingService.createTaskAndStart(accountId, dto, timeInIpAddress);
+    return this.utilityService.responseHandler(Promise.resolve(result), res);
+  }
+
+  @Post('tag')
+  async tagTimer(
+    @Body() dto: TagTimerDto,
+    @NestResponse() res: Response,
+  ) {
+    const accountId = this.utilityService.accountInformation?.id;
+    if (!accountId) {
+      throw new BadRequestException('User not authenticated');
+    }
+    const result = await this.timeTrackingService.tagTimerWithTask(accountId, dto);
+    return this.utilityService.responseHandler(Promise.resolve(result), res);
+  }
+
+  @Get('task-summary/:taskId')
+  async getTaskSummary(
+    @Query('taskId') taskId: string,
+    @Query('date') date: string,
+    @NestResponse() res: Response,
+  ) {
+    const accountId = this.utilityService.accountInformation?.id;
+    if (!accountId) {
+      throw new BadRequestException('User not authenticated');
+    }
+    const result = await this.timeTrackingService.getTaskSummary(
+      accountId,
+      parseInt(taskId),
+      date
+    );
     return this.utilityService.responseHandler(Promise.resolve(result), res);
   }
 }

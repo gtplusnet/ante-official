@@ -1,11 +1,11 @@
-import { IsInt, IsNotEmpty, IsOptional, IsNumber, IsString, IsBoolean } from 'class-validator';
+import { IsInt, IsOptional, IsNumber, IsString, IsBoolean, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class StartTimerDto {
-  @IsNotEmpty()
+  @ValidateIf((o) => o.taskId !== undefined && o.taskId !== null && o.taskId !== '')
   @IsInt()
   @Type(() => Number)
-  taskId: number;
+  taskId?: number;
 
   // TIME-IN GEOLOCATION FIELDS
   @IsOptional()

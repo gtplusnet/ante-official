@@ -36,34 +36,38 @@ export class DiscussionEventListener {
       // We need to modify the service to accept companyId as a parameter
       // For now, we'll set it on the utility service if available
       if (event.companyId && this.discussionService['utilityService']) {
-        // Temporarily set companyId on utility service for this operation
-        const originalCompanyId = this.discussionService['utilityService'].companyId;
-        this.discussionService['utilityService'].setCompanyId(event.companyId);
-
         try {
-          // Create discussion with initial message
-          await this.discussionService.createDiscussionMessage(
-            {
-              discussionId,
-              module: event.module,
-              targetId: event.targetId,
-              title: event.title,
-              content: '<em>Discussion created</em>',
-              activity: 'created the discussion',
-            },
-            event.actorId,
-          );
+          // Temporarily set companyId on utility service for this operation
+          // Don't try to get originalCompanyId as we're in a background job (no CLS context)
+          this.discussionService['utilityService'].setCompanyId(event.companyId);
 
-          // Sync initial watchers if provided (while companyId is still set)
-          if (event.initialWatchers?.length > 0) {
-            await this.discussionService.syncDiscussionWatchers(
-              discussionId,
-              event.initialWatchers,
+          try {
+            // Create discussion with initial message
+            await this.discussionService.createDiscussionMessage(
+              {
+                discussionId,
+                module: event.module,
+                targetId: event.targetId,
+                title: event.title,
+                content: '<em>Discussion created</em>',
+                activity: 'created the discussion',
+              },
+              event.actorId,
             );
+
+            // Sync initial watchers if provided (while companyId is still set)
+            if (event.initialWatchers?.length > 0) {
+              await this.discussionService.syncDiscussionWatchers(
+                discussionId,
+                event.initialWatchers,
+              );
+            }
+          } finally {
+            // Clear companyId after operation (don't try to restore - we're in a background job)
+            this.discussionService['utilityService'].setCompanyId(null);
           }
-        } finally {
-          // Restore original companyId
-          this.discussionService['utilityService'].setCompanyId(originalCompanyId);
+        } catch (error) {
+          console.error('[DiscussionEventListener] Error setting companyId or creating discussion:', error);
         }
       } else if (event.initialWatchers?.length > 0) {
         // If we couldn't set companyId but have watchers, log a warning

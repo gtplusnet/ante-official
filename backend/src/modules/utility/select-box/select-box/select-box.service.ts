@@ -166,6 +166,7 @@ export class SelectBoxService {
     search?: string;
     role?: string;
     department?: string;
+    excludeAccountIds?: string;
   }) {
     const where: any = {
       isDeleted: false,
@@ -197,6 +198,20 @@ export class SelectBoxService {
           name: filters.department,
         },
       };
+    }
+
+    // Add exclude account IDs filter
+    if (filters?.excludeAccountIds) {
+      const excludedIds = filters.excludeAccountIds
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+
+      if (excludedIds.length > 0) {
+        where.id = {
+          notIn: excludedIds,
+        };
+      }
     }
 
     const list = await this.prisma.account.findMany({
@@ -507,7 +522,7 @@ export class SelectBoxService {
 
     return list.map((location) => {
       return {
-        key: location.id,
+        value: location.id,
         label: `${location.name} (${location.region.name}, ${location.province.name})`,
       };
     });
@@ -694,6 +709,82 @@ export class SelectBoxService {
     ];
   }
 
+  async getCategoryTreeList() {
+    // Fetch all categories in a single query
+    const allCategories = await this.prisma.itemCategory.findMany({
+      where: {
+        companyId: this.utilityService.companyId,
+        isActive: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    // Build a map for quick parent-child lookups
+    const categoryMap = new Map();
+    const childrenMap = new Map();
+
+    // Initialize maps
+    allCategories.forEach((category) => {
+      categoryMap.set(category.id, category);
+      childrenMap.set(category.id, []);
+    });
+
+    // Build parent-child relationships
+    allCategories.forEach((category) => {
+      if (category.parentId && childrenMap.has(category.parentId)) {
+        childrenMap.get(category.parentId).push(category);
+      }
+    });
+
+    // Function to count all descendants recursively
+    const countAllDescendants = (categoryId: number): number => {
+      const directChildren = childrenMap.get(categoryId) || [];
+      let count = directChildren.length;
+
+      directChildren.forEach((child) => {
+        count += countAllDescendants(child.id);
+      });
+
+      return count;
+    };
+
+    // Build flat list with tree information
+    const flattenCategories = (categories: any[], depth = 0): any[] => {
+      const result: any[] = [];
+      for (const category of categories) {
+        const children = childrenMap.get(category.id) || [];
+        const totalDescendants = countAllDescendants(category.id);
+
+        result.push({
+          key: category.id,
+          label: category.name,
+          depth,
+          hasChildren: children.length > 0,
+          childCount: totalDescendants, // Total count of all descendants
+          parentId: category.parentId,
+        });
+
+        if (children.length > 0) {
+          // Sort children by name before flattening
+          const sortedChildren = children.sort((a, b) =>
+            a.name.localeCompare(b.name),
+          );
+          result.push(...flattenCategories(sortedChildren, depth + 1));
+        }
+      }
+      return result;
+    };
+
+    // Filter to only root categories (no parent) and sort them
+    const rootCategories = allCategories
+      .filter((c) => !c.parentId)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    const treeList = flattenCategories(rootCategories);
+
+    return treeList;
+  }
+
   async getRoleListSimple() {
     const roles = await this.prisma.role.findMany({
       where: {
@@ -836,6 +927,7 @@ export class SelectBoxService {
     const dealTypes = await this.prisma.dealType.findMany({
       where: {
         isActive: true,
+        companyId: this.utilityService.companyId, // Filter by user's company
       },
       orderBy: { typeName: 'asc' },
     });
@@ -854,16 +946,20 @@ export class SelectBoxService {
   }
 
   async getCompanyList() {
-    const companies = await this.prisma.company.findMany({
+    const companies = await this.prisma.leadCompany.findMany({
+      where: {
+        isActive: true,
+        companyId: this.utilityService.companyId, // Filter by user's company
+      },
       select: {
         id: true,
-        companyName: true,
+        name: true,
       },
-      orderBy: { companyName: 'asc' },
+      orderBy: { name: 'asc' },
     });
 
     return companies.map((company) => ({
-      label: company.companyName,
+      label: company.name,
       value: company.id,
     }));
   }
@@ -874,6 +970,9 @@ export class SelectBoxService {
   }) {
     const where: any = {
       isActive: true,
+      company: {
+        companyId: this.utilityService.companyId, // Filter by user's company
+      },
     };
 
     if (params?.search) {
@@ -1031,6 +1130,7 @@ export class SelectBoxService {
     const list = await this.prisma.leadRelationshipOwner.findMany({
       where: {
         isActive: true,
+        companyId: this.utilityService.companyId, // Filter by user's company
       },
       include: {
         account: {
@@ -1053,7 +1153,7 @@ export class SelectBoxService {
 
     return list.map((owner) => {
       return {
-        key: owner.account.id,
+        value: owner.account.id,
         label: `${owner.account.firstName} ${owner.account.lastName}`,
         firstName: owner.account.firstName,
         lastName: owner.account.lastName,
@@ -1077,7 +1177,7 @@ export class SelectBoxService {
 
     return list.map((source) => {
       return {
-        key: source.id,
+        value: source.id,
         label: source.sourceName,
         sourceName: source.sourceName,
       };

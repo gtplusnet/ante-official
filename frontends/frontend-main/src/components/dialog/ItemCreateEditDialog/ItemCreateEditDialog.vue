@@ -1,70 +1,85 @@
 <template>
   <q-dialog v-model="dialogVisible" @before-show="initialize" ref="dialog">
-    <div class="q-pa-md q-gutter-sm" style="width: 700px; max-width: 80vw">
-      <div class="q-gutter-y-md" style="max-width: 600px">
-        <q-card>
+    <TemplateDialog maxWidth="700px" :icon="'inventory'" :iconColor="'primary'">
+      <!-- Dialog Title -->
+      <template #DialogTitle>
+        {{ itemInformation ? 'Edit Item' : 'Create Item' }}
+      </template>
+
+      <!-- Dialog Content -->
+      <template #DialogContent>
+        <div>
+          <!-- Tabs for Simple/Variation Item (only for new items) -->
           <q-tabs v-if="!itemInformation" v-model="tab" dense class="text-grey" active-color="primary"
             indicator-color="primary" align="justify" narrow-indicator>
-            <q-tab name="simple" label="Simple Item"/>
-            <q-tab name="variation" label="Variation Item" />
+            <q-tab name="simple" label="Simple Item" no-caps/>
+            <q-tab name="variation" label="Variation Item" no-caps />
           </q-tabs>
-          <div v-else>
-            <div class="bg-primary text-white" style="border-radius:  8px 8px 0px 0px;">
-              <div class="text-title-medium q-pa-sm">Item Information</div>
-            </div>
-          </div>
 
-          <q-separator />
-          <q-card-section>
-            <q-tab-panels v-model="tab" animated>
-              <q-tab-panel name="simple">
-                <simple-item 
-                  :key="componentKey"
-                  :v-model="isSimpleItemOnDisplay" 
-                  :itemInformation="itemInformation"
-                  @onFormUpdate="onSimpleItemUpdate" />
-              </q-tab-panel>
-              <q-tab-panel name="variation">
-                <variation-item 
-                  :key="componentKey"
-                  :v-model="isVariationItemOnDisplay" 
-                  :itemInformation="itemInformation"
-                  @onFormUpdate="onVariationItemUpdate" />
-              </q-tab-panel>
-            </q-tab-panels>
-          </q-card-section>
-          <q-card-actions align="right">
-            <q-btn flat label="Cancel" color="primary" v-close-popup class="text-label-large" />
-            <q-btn :label="itemInformation ? 'Update Item' : 'Save Item'" color="primary"
-              @click="onSaveButtonClicked" class="text-label-large" />
-            <q-dialog v-model="confirm" persistent>
-              <q-card>
-                <q-card-section class="row items-center">
-                  <span class="q-ml-sm text-body-medium">Are you sure you want to add this new item?</span>
-                </q-card-section>
-                <q-card-actions align="right">
-                  <q-btn flat label="Cancel" color="primary" v-close-popup class="text-label-large"/>
-                  <q-btn flat :label="itemInformation ? 'Update Item' : 'Save Item'" color="primary" class="text-label-large" v-close-popup
-                    @click="addItem" />
-                </q-card-actions>
-              </q-card>
-            </q-dialog>
-          </q-card-actions>
-        </q-card>
-      </div>
-    </div>
+          <q-separator v-if="!itemInformation" />
+
+          <!-- Tab Panels -->
+          <q-tab-panels v-model="tab" animated>
+            <q-tab-panel name="simple">
+              <simple-item :key="componentKey" :v-model="isSimpleItemOnDisplay" :itemInformation="itemInformation"
+                :forceItemGroup="forceItemGroup" @onFormUpdate="onSimpleItemUpdate" />
+            </q-tab-panel>
+            <q-tab-panel name="variation">
+              <variation-item :key="componentKey" :v-model="isVariationItemOnDisplay" :itemInformation="itemInformation"
+                :fullItemData="fullItemData" @onFormUpdate="onVariationItemUpdate" />
+            </q-tab-panel>
+          </q-tab-panels>
+        </div>
+      </template>
+
+      <!-- Dialog Actions -->
+      <template #DialogSubmitActions>
+        <GButton label="Cancel" variant="text" color="primary" v-close-popup />
+        <GButton :label="itemInformation ? 'Update Item' : 'Save Item'" variant="filled" color="primary"
+          @click="onSaveButtonClicked" />
+      </template>
+    </TemplateDialog>
+
+    <!-- Confirmation Dialog -->
+    <q-dialog v-model="confirm" persistent>
+      <TemplateDialog size="xs" :scrollable="false" :icon="'help_outline'" :iconColor="'warning'">
+        <template #DialogTitle>
+          Confirm {{ itemInformation ? 'Update' : 'Save' }}
+        </template>
+
+        <template #DialogContent>
+          <div class="text-body-medium q-pa-md">
+            {{ itemInformation
+              ? 'Are you sure you want to update this item?'
+              : 'Are you sure you want to add this new item?'
+            }}
+          </div>
+        </template>
+
+        <template #DialogSubmitActions>
+          <GButton label="Cancel" variant="text" color="primary" v-close-popup />
+          <GButton :label="itemInformation ? 'Update Item' : 'Save Item'" variant="filled" color="primary" v-close-popup
+            @click="addItem" />
+        </template>
+      </TemplateDialog>
+    </q-dialog>
   </q-dialog>
 </template>
+
 <script>
 import { ref } from 'vue';
 import SimpleItem from './SimpleItem/SimpleItem.vue';
 import VariationItem from './VariationItem/VariationItem.vue';
+import TemplateDialog from '../TemplateDialog.vue';
+import GButton from '../../shared/buttons/GButton.vue';
 import { api } from 'src/boot/axios';
 
 export default {
   components: {
     SimpleItem,
     VariationItem,
+    TemplateDialog,
+    GButton,
   },
   data: () => ({
     tab: ref('simple'),
@@ -73,6 +88,7 @@ export default {
     confirm: false,
     data: null,
     componentKey: 0,
+    fullItemData: null, // Store full parent + children data
   }),
   props: {
     itemInformation: {
@@ -80,6 +96,10 @@ export default {
       default: null,
     },
     modelValue: {
+      type: Boolean,
+      default: false,
+    },
+    forceItemGroup: {
       type: Boolean,
       default: false,
     },
@@ -114,17 +134,20 @@ export default {
     }
   },
   methods: {
-    initialize() {
+    async initialize() {
       // Force child components to re-mount and reload data
       this.componentKey++;
-      
+
       // Reset data
       this.data = null;
       this.confirm = false;
-      
+      this.fullItemData = null;
+
       // Set appropriate tab based on item type
       if (this.itemInformation) {
+        // Fetch full item data with children for variation items
         if (this.itemInformation.variationCount > 0) {
+          await this.fetchFullItemData();
           this.tab = ref('variation');
           this.isVariationItemOnDisplay = true;
           this.isSimpleItemOnDisplay = false;
@@ -138,6 +161,15 @@ export default {
         this.tab = ref('simple');
         this.isSimpleItemOnDisplay = true;
         this.isVariationItemOnDisplay = false;
+      }
+    },
+    async fetchFullItemData() {
+      try {
+        const { data } = await api.get(`/items/${this.itemInformation.id}/parent`);
+        this.fullItemData = data;
+      } catch (error) {
+        console.error('Error fetching full item data:', error);
+        this.handleAxiosError(error);
       }
     },
     closeDialog() {
@@ -163,7 +195,6 @@ export default {
       this.$q.loading.show();
       try {
         const params = this.formatApiParams();
-
         let apiUrl =
           this.data.type === 'simple' ? '/items' : '/items/withVariants';
 
@@ -178,12 +209,6 @@ export default {
         const { data } = await api.post(apiUrl, params);
         this.$bus.emit('item-updated', data.data);
 
-        this.$q.notify({
-          color: 'positive',
-          message: data.message,
-          position: 'top',
-        });
-
       } catch (error) {
         this.handleAxiosError(error);
       } finally {
@@ -195,7 +220,7 @@ export default {
       const { data, type } = this.data;
 
       if (type === 'simple') {
-        const { itemName: name, sku, description, estimatedBuyingPrice, size, tags, isDraft, uom, tiers, sellingPrice, minimumStockLevel, maximumStockLevel } = data;
+        const { itemName: name, sku, description, estimatedBuyingPrice, size, tags, isDraft, uom, tiers, sellingPrice, minimumStockLevel, maximumStockLevel, categoryId, brandId, branchId, keywords, enabledInPOS, itemType, groupItems } = data;
 
         return {
           name,
@@ -210,9 +235,21 @@ export default {
           sellingPrice: Number(sellingPrice),
           minimumStockLevel: Number(minimumStockLevel),
           maximumStockLevel: Number(maximumStockLevel),
+          categoryId: categoryId ? Number(categoryId) : null,
+          brandId: brandId ? Number(brandId) : null,
+          branchId: branchId ? Number(branchId) : null,
+          keywords: keywords || [],
+          enabledInPOS: Boolean(enabledInPOS),
+          itemType: itemType || 'INDIVIDUAL_PRODUCT',
+          groupItems: itemType === 'ITEM_GROUP'
+            ? (groupItems || []).map(item => ({
+              itemId: item.id,
+              quantity: item.quantity || 1
+            }))
+            : undefined,
         };
       } else if (type === 'variation') {
-        const { itemName, description, tags, tiers, variations, isDraft, uom, sellingPrice, minimumStockLevel, maximumStockLevel } =
+        const { itemName, description, tags, tiers, variations, isDraft, uom, sellingPrice, minimumStockLevel, maximumStockLevel, categoryId, brandId, branchId, keywords, enabledInPOS } =
           data;
         return {
           name: itemName,
@@ -225,7 +262,13 @@ export default {
           sellingPrice: Number(sellingPrice),
           minimumStockLevel: Number(minimumStockLevel),
           maximumStockLevel: Number(maximumStockLevel),
+          categoryId: categoryId ? Number(categoryId) : null,
+          brandId: brandId ? Number(brandId) : null,
+          branchId: branchId ? Number(branchId) : null,
+          keywords: keywords || [],
+          enabledInPOS: Boolean(enabledInPOS),
           variants: variations.map((variation) => ({
+            ...(variation.id && { id: variation.id }), // Include id if exists (for updates)
             name: variation.itemName,
             sku: variation.sku,
             description: `${itemName} - ${variation.itemName}`,
@@ -244,3 +287,9 @@ export default {
   },
 };
 </script>
+
+<style scoped lang="scss">
+:deep(.q-tab-panel) {
+  padding: 0 !important;
+}
+</style>

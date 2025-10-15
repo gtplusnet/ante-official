@@ -13,13 +13,30 @@ export interface Student {
   studentNumber: string;
   firstName: string;
   lastName: string;
-  middleName?: string;
-  email: string;
-  gender: string;
+  middleName?: string | null;
+  email?: string;
+  dateOfBirth?: string | null;
+  gender?: string | null;
+  lrn?: string | null;
   isActive: boolean;
   isDeleted: boolean;
+  section?: {
+    id: string;
+    name: string;
+    gradeLevelId: number;
+    gradeLevel: {
+      id: number;
+      code: string;
+      name: string;
+      educationLevel: string;
+    } | null;
+    adviserName?: string | null;
+    schoolYear?: string | null;
+    capacity?: number | null;
+  } | null;
   createdAt: string;
   updatedAt: string;
+  syncedAt?: string;
   profilePhotoUrl?: string | null;
 }
 
@@ -34,6 +51,7 @@ export interface Guardian {
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
+  syncedAt?: string;
   profilePhotoUrl?: string | null;
 }
 
@@ -74,38 +92,43 @@ export class StorageManager {
     await dbManager.put('metadata', { key: 'syncMetadata', value: updated });
   }
 
-  async syncFromSupabase(): Promise<{ studentsSync: number; guardiansSync: number }> {
-    console.log('StorageManager: Starting sync from Supabase...');
-    
+  async syncFromAPI(): Promise<{ studentsSync: number; guardiansSync: number }> {
+    console.log('StorageManager: Starting sync from API...');
+
     try {
       // Import the sync service (dynamic import to avoid circular dependencies)
-      const { getSyncSupabaseService } = await import('../services/sync-supabase.service');
-      const syncService = getSyncSupabaseService();
+      const { getSyncAPIService } = await import('../services/sync-api.service');
+      const syncService = getSyncAPIService();
       await syncService.init();
-      
-      // Fetch data from Supabase with QR codes generated
+
+      // Fetch data from API with QR codes generated
       const { students, guardians } = await syncService.syncAll();
-      console.log(`StorageManager: Got ${students.length} students and ${guardians.length} guardians from Supabase`);
-      
+      console.log(`StorageManager: Got ${students.length} students and ${guardians.length} guardians from API`);
+
       // Map StudentData to Student interface with default values
-      const mappedStudents: Student[] = students.map(s => ({
+      const syncTime = new Date().toISOString();
+      const mappedStudents: Student[] = students.map((s: any) => ({
         id: s.id,
         qrCode: s.qrCode,
         studentNumber: s.studentNumber,
         firstName: s.firstName,
         lastName: s.lastName,
-        middleName: s.middleName || undefined,
+        middleName: s.middleName || null,
         email: '', // Default empty as it's not in StudentData
-        gender: '', // Default empty as it's not in StudentData
+        dateOfBirth: s.dateOfBirth ? (s.dateOfBirth instanceof Date ? s.dateOfBirth.toISOString() : s.dateOfBirth) : null,
+        gender: s.gender || null,
+        lrn: s.lrn || null,
         isActive: s.isActive,
         isDeleted: false, // Default to false
-        createdAt: new Date().toISOString(), // Default to now
-        updatedAt: new Date().toISOString(), // Default to now
-        profilePhotoUrl: s.profilePhotoId ? `/api/photos/${s.profilePhotoId}` : null
+        section: s.section || null,
+        createdAt: s.createdAt ? (s.createdAt instanceof Date ? s.createdAt.toISOString() : s.createdAt) : new Date().toISOString(),
+        updatedAt: s.updatedAt ? (s.updatedAt instanceof Date ? s.updatedAt.toISOString() : s.updatedAt) : new Date().toISOString(),
+        syncedAt: syncTime, // Track when this record was synced
+        profilePhotoUrl: s.profilePhotoUrl || null
       }));
-      
+
       // Map GuardianData to Guardian interface
-      const mappedGuardians: Guardian[] = guardians.map(g => ({
+      const mappedGuardians: Guardian[] = guardians.map((g: any) => ({
         id: g.id,
         qrCode: g.qrCode,
         firstName: g.firstName,
@@ -116,13 +139,14 @@ export class StorageManager {
         isDeleted: false, // Default to false
         createdAt: new Date().toISOString(), // Default to now
         updatedAt: new Date().toISOString(), // Default to now
+        syncedAt: syncTime, // Track when this record was synced
         profilePhotoUrl: null // Default to null
       }));
-      
+
       // Save to IndexedDB
       await this.saveStudents(mappedStudents);
       await this.saveGuardians(mappedGuardians);
-      
+
       // Update sync metadata
       const now = new Date().toISOString();
       await this.updateSyncMetadata({
@@ -133,19 +157,19 @@ export class StorageManager {
         lastSyncStatus: 'success',
         lastSyncTime: now
       });
-      
+
       console.log('StorageManager: Sync completed successfully');
       return { studentsSync: students.length, guardiansSync: guardians.length };
-      
+
     } catch (error) {
       console.error('StorageManager: Sync failed:', error);
-      
+
       await this.updateSyncMetadata({
         lastSyncStatus: 'failed',
         lastSyncError: error instanceof Error ? error.message : 'Unknown error',
         lastSyncTime: new Date().toISOString()
       });
-      
+
       throw error;
     }
   }
@@ -233,12 +257,28 @@ export class StorageManager {
   private async findStudent(qrCode: string): Promise<Student | null> {
     console.log('Looking up student with QR code:', qrCode);
     try {
-      const students = await dbManager.getAllByIndex<Student>('students', 'qrCode', qrCode, 1);
-      console.log('Students found:', students.length);
+      // First try exact QR code match (e.g., "student:103952140095")
+      let students = await dbManager.getAllByIndex<Student>('students', 'qrCode', qrCode, 1);
+      console.log('Students found by QR code index:', students.length);
+
       if (students.length > 0) {
         console.log('First student:', students[0]);
+        return students[0];
       }
-      return students[0] || null;
+
+      // If not found, try looking up by UUID (fallback for old QR codes like "student:uuid")
+      const [type, id] = qrCode.split(':');
+      if (type === 'student' && id) {
+        console.log('Trying UUID lookup with ID:', id);
+        const studentById = await dbManager.get<Student>('students', id);
+        if (studentById) {
+          console.log('Student found by UUID:', studentById);
+          return studentById;
+        }
+      }
+
+      console.log('Student not found');
+      return null;
     } catch (error) {
       console.error('Error looking up student:', error);
       return null;
@@ -248,12 +288,28 @@ export class StorageManager {
   private async findGuardian(qrCode: string): Promise<Guardian | null> {
     console.log('Looking up guardian with QR code:', qrCode);
     try {
-      const guardians = await dbManager.getAllByIndex<Guardian>('guardians', 'qrCode', qrCode, 1);
-      console.log('Guardians found:', guardians.length);
+      // First try exact QR code match
+      let guardians = await dbManager.getAllByIndex<Guardian>('guardians', 'qrCode', qrCode, 1);
+      console.log('Guardians found by QR code index:', guardians.length);
+
       if (guardians.length > 0) {
         console.log('First guardian:', guardians[0]);
+        return guardians[0];
       }
-      return guardians[0] || null;
+
+      // If not found, try looking up by UUID (fallback for old QR codes)
+      const [type, id] = qrCode.split(':');
+      if (type === 'guardian' && id) {
+        console.log('Trying UUID lookup with ID:', id);
+        const guardianById = await dbManager.get<Guardian>('guardians', id);
+        if (guardianById) {
+          console.log('Guardian found by UUID:', guardianById);
+          return guardianById;
+        }
+      }
+
+      console.log('Guardian not found');
+      return null;
     } catch (error) {
       console.error('Error looking up guardian:', error);
       return null;
@@ -261,11 +317,10 @@ export class StorageManager {
   }
 
   async clearAllData(): Promise<void> {
+    // Note: attendance and syncQueue stores were removed in DB v6
     await Promise.all([
       dbManager.clear('students'),
       dbManager.clear('guardians'),
-      dbManager.clear('attendance'),
-      dbManager.clear('syncQueue'),
       dbManager.clear('metadata')
     ]);
   }

@@ -70,7 +70,7 @@ export class LeadService {
       dealTypeId: params.leadType ? parseInt(params.leadType) : null,
       approvedBudgetContract: params.abc || params.budget || 0,
       monthlyRecurringRevenue: params.mmr || 0,
-      implementationFee: 0,
+      implementationFee: params.implementationFee || 0,
       totalContract: params.initialCosting || 0,
       closeDate: closeDate,
       winProbability: params.winProbability || 50, // Direct number, default 50%
@@ -94,7 +94,11 @@ export class LeadService {
         dealSource: true,
         location: true,
         relationshipOwner: true,
-        pointOfContact: true,
+        pointOfContact: {
+          include: {
+            company: true,
+          },
+        },
         company: true,
       },
     });
@@ -146,15 +150,15 @@ export class LeadService {
     return statusNameMap[status] || status;
   }
 
-  async leadBoard() {
-    return this.getLeadBoard();
+  async leadBoard(filters?: any) {
+    return this.getLeadBoard(filters);
   }
 
-  private async getLeadBoard() {
-    return this.getBoardData();
+  private async getLeadBoard(filters?: any) {
+    return this.getBoardData(filters);
   }
 
-  private async getBoardData() {
+  private async getBoardData(filters?: any) {
     // Define lead board stages based on LeadDealStatus
     const leadBoards = [
       {
@@ -210,18 +214,40 @@ export class LeadService {
 
     return Promise.all(
       leadBoards.map(async (board) => {
+        // Build base where clause
+        const where: any = {
+          status: board.status,
+          companyId: this.utilityService.companyId,
+          isDeleted: false, // Don't show archived leads on board
+        };
+
+        // Apply filters if provided
+        if (filters) {
+          // Filter by relationship owner (relationshipOwnerId is a UUID string, not an integer)
+          if (filters.relationshipOwnerId && filters.relationshipOwnerId !== 'all') {
+            where.relationshipOwnerId = filters.relationshipOwnerId;
+          }
+
+          // Filter by deal type
+          if (filters.dealTypeId && filters.dealTypeId !== 'all') {
+            where.dealTypeId = parseInt(filters.dealTypeId, 10);
+          }
+
+          // Note: Stage filter is not needed here since each board column is already a specific stage
+        }
+
         const leads = await this.prisma.leadDeal.findMany({
-          where: {
-            status: board.status,
-            companyId: this.utilityService.companyId,
-            isDeleted: false, // Don't show archived leads on board
-          },
+          where,
           include: {
             dealType: true,
             dealSource: true,
             location: true,
             relationshipOwner: true,
-            pointOfContact: true,
+            pointOfContact: {
+              include: {
+                company: true,
+              },
+            },
             company: true,
           },
         });
@@ -252,10 +278,29 @@ export class LeadService {
       this.utilityService.accountInformation;
 
     // Build where clause for LeadDeal filtering
-    const where = {
+    const where: any = {
       companyId: loggedInAccount.company.id,
       isDeleted: false, // Only show non-archived leads
     };
+
+    // Cast body to any to access custom properties
+    const filters = body as any;
+
+    // Add filter by relationship owner if provided (relationshipOwnerId is a UUID string, not an integer)
+    if (filters.relationshipOwnerId && filters.relationshipOwnerId !== 'all') {
+      where['relationshipOwnerId'] = filters.relationshipOwnerId;
+    }
+
+    // Add filter by deal type if provided
+    if (filters.dealTypeId && filters.dealTypeId !== 'all') {
+      where['dealTypeId'] = parseInt(filters.dealTypeId, 10);
+    }
+
+    // Add filter by lead board stage if provided
+    if (filters.leadBoardStage && filters.leadBoardStage !== 'all') {
+      // Map board stage to LeadDealStatus
+      where['status'] = this.mapBoardStageToLeadDealStatus(filters.leadBoardStage);
+    }
 
     // Add search functionality if needed
     if (body.searchBy) {
@@ -274,6 +319,30 @@ export class LeadService {
             },
           },
         },
+        {
+          relationshipOwner: {
+            firstName: {
+              contains: body.searchBy,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          relationshipOwner: {
+            lastName: {
+              contains: body.searchBy,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          relationshipOwner: {
+            username: {
+              contains: body.searchBy,
+              mode: 'insensitive',
+            },
+          },
+        },
       ];
     }
 
@@ -285,7 +354,11 @@ export class LeadService {
           dealSource: true,
           location: true,
           relationshipOwner: true,
-          pointOfContact: true,
+          pointOfContact: {
+            include: {
+              company: true,
+            },
+          },
           company: true,
         },
         skip: (query.page - 1) * query.perPage,
@@ -333,7 +406,11 @@ export class LeadService {
         dealSource: true,
         location: true,
         relationshipOwner: true,
-        pointOfContact: true,
+        pointOfContact: {
+          include: {
+            company: true,
+          },
+        },
         company: true,
       },
     });
@@ -370,6 +447,8 @@ export class LeadService {
       updateData.approvedBudgetContract = params.budget;
     if (params.mmr !== undefined)
       updateData.monthlyRecurringRevenue = params.mmr;
+    if (params.implementationFee !== undefined)
+      updateData.implementationFee = params.implementationFee;
     if (params.initialCosting !== undefined)
       updateData.totalContract = params.initialCosting;
     // Handle date updates
@@ -384,6 +463,12 @@ export class LeadService {
       updateData.relationshipOwnerId = params.relationshipOwnerId;
     if (params.personInChargeId)
       updateData.relationshipOwnerId = params.personInChargeId;
+    if (params.clientId)
+      updateData.pointOfContactId = params.clientId;
+    if (params.pointOfContactId)
+      updateData.pointOfContactId = params.pointOfContactId;
+    if (params.locationId)
+      updateData.locationId = params.locationId;
 
     const updatedLead = await this.prisma.leadDeal.update({
       where: { id: leadId },
@@ -393,7 +478,11 @@ export class LeadService {
         dealSource: true,
         location: true,
         relationshipOwner: true,
-        pointOfContact: true,
+        pointOfContact: {
+          include: {
+            company: true,
+          },
+        },
         company: true,
       },
     });
@@ -433,7 +522,11 @@ export class LeadService {
         dealSource: true,
         location: true,
         relationshipOwner: true,
-        pointOfContact: true,
+        pointOfContact: {
+          include: {
+            company: true,
+          },
+        },
         company: true,
       },
     });
@@ -508,7 +601,11 @@ export class LeadService {
         dealSource: true,
         location: true,
         relationshipOwner: true,
-        pointOfContact: true,
+        pointOfContact: {
+          include: {
+            company: true,
+          },
+        },
         company: true,
       },
     });
@@ -519,6 +616,52 @@ export class LeadService {
       entityId: updatedLead.id,
       entityName: updatedLead.dealName,
       description: `Changed stage from "${this.getStatusDisplayName(oldStatus)}" to "${this.getStatusDisplayName(newStatus)}" for lead "${updatedLead.dealName}"`,
+      performedById: this.utilityService.accountInformation.id,
+    });
+
+    return this.formatLeadDealAsProject(updatedLead);
+  }
+
+  async updateProposalStatus(params: { projectId: string; proposalStatus: string }) {
+    const leadId = parseInt(params.projectId, 10);
+    const lead = await this.prisma.leadDeal.findFirst({
+      where: {
+        id: leadId,
+        companyId: this.utilityService.companyId,
+      },
+    });
+
+    if (!lead) {
+      throw new NotFoundException('Lead not found');
+    }
+
+    // Update proposal status
+    const updatedLead = await this.prisma.leadDeal.update({
+      where: { id: leadId },
+      data: {
+        proposalStatus: params.proposalStatus as any, // ProposalStatus enum
+        updatedAt: new Date(),
+      },
+      include: {
+        dealType: true,
+        dealSource: true,
+        location: true,
+        relationshipOwner: true,
+        pointOfContact: {
+          include: {
+            company: true,
+          },
+        },
+        company: true,
+      },
+    });
+
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.UPDATE,
+      entityType: CRMEntityType.LEAD_DEAL,
+      entityId: updatedLead.id,
+      entityName: updatedLead.dealName,
+      description: `Updated proposal status to "${params.proposalStatus}" for lead "${updatedLead.dealName}"`,
       performedById: this.utilityService.accountInformation.id,
     });
 
@@ -536,13 +679,25 @@ export class LeadService {
         dealSource: true,
         location: true,
         relationshipOwner: true,
-        pointOfContact: true,
+        pointOfContact: {
+          include: {
+            company: true,
+          },
+        },
         company: true,
       },
     });
 
     if (!leadDeal) {
       throw new NotFoundException('Lead not found');
+    }
+
+    // Check if lead status is WIN before allowing conversion
+    if (leadDeal.status !== LeadDealStatus.WIN) {
+      const currentStage = this.getStatusDisplayName(leadDeal.status);
+      throw new BadRequestException(
+        `Lead must be in "Won" stage to convert to project. Current stage: ${currentStage}`,
+      );
     }
 
     // Create a new Project based on the LeadDeal data
@@ -583,7 +738,7 @@ export class LeadService {
       },
     });
 
-    // Mark the original lead as converted/won
+    // Mark the original lead as converted (already in WIN status, but update timestamp)
     await this.prisma.leadDeal.update({
       where: { id: leadId },
       data: {
@@ -591,6 +746,20 @@ export class LeadService {
         updatedAt: new Date(),
       },
     });
+
+    // Log the conversion activity
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.STAGE_CHANGE,
+      entityType: CRMEntityType.LEAD_DEAL,
+      entityId: leadId,
+      entityName: leadDeal.dealName,
+      description: `Lead "${leadDeal.dealName}" converted to Project #${convertedProject.id}`,
+      performedById: this.utilityService.accountInformation.id,
+    });
+
+    this.utilityService.log(
+      `Lead "${leadDeal.dealName}" has been converted to Project #${convertedProject.id} by ${this.utilityService.accountInformation.username}.`,
+    );
 
     return this.formatResponse(convertedProject);
   }
@@ -919,12 +1088,23 @@ export class LeadService {
     leadDeal: any,
   ): Promise<LeadDataResponse> {
     // Map LeadDeal to LeadDataResponse structure
-    const clientData = leadDeal.pointOfContact
-      ? ({
+    const clientData: any = leadDeal.pointOfContact
+      ? {
           id: leadDeal.pointOfContact.id,
           name: leadDeal.pointOfContact.fullName,
           email: leadDeal.pointOfContact.email,
-        } as ClientDataResponse)
+          contactNumber: leadDeal.pointOfContact.phone || '',
+          totalCollection: this.utilityService.formatCurrency(0),
+          totalCollectionBalance: this.utilityService.formatCurrency(0),
+          totalCollected: this.utilityService.formatCurrency(0),
+          isDeleted: false,
+          createdAt: this.utilityService.formatDate(leadDeal.pointOfContact.createdAt),
+          updatedAt: this.utilityService.formatDate(leadDeal.pointOfContact.updatedAt),
+          company: leadDeal.pointOfContact.company ? {
+            id: leadDeal.pointOfContact.company.id,
+            name: leadDeal.pointOfContact.company.name,
+          } : null,
+        }
       : null;
 
     const relationshipOwnerData = leadDeal.relationshipOwner
@@ -949,6 +1129,14 @@ export class LeadService {
       ? {
           key: leadDeal.dealType.id.toString(),
           label: leadDeal.dealType.typeName,
+        }
+      : undefined;
+
+    // Format deal source with label
+    const dealSourceData = leadDeal.dealSource
+      ? {
+          key: leadDeal.dealSource.id.toString(),
+          label: leadDeal.dealSource.sourceName,
         }
       : undefined;
 
@@ -987,14 +1175,19 @@ export class LeadService {
       mmr: this.utilityService.formatCurrency(
         leadDeal.monthlyRecurringRevenue || 0,
       ),
+      implementationFee: this.utilityService.formatCurrency(
+        leadDeal.implementationFee || 0,
+      ),
       initialCosting: this.utilityService.formatCurrency(
         leadDeal.totalContract || 0,
       ),
       contactDetails: '', // Not available in LeadDeal, keeping empty for compatibility
       relationshipOwnerId: leadDeal.relationshipOwnerId || '',
-      leadSource: leadDeal.dealSourceId?.toString() || '',
+      dealSource: dealSourceData,
+      leadSource: leadDeal.dealSourceId?.toString() || '', // Keep for backwards compatibility
       leadType: leadTypeData,
       clientEmailAddress: leadDeal.pointOfContact?.email || '',
+      proposalStatus: leadDeal.proposalStatus || undefined,
 
       // Default values for compatibility
       totalCollection: this.utilityService.formatCurrency(0),

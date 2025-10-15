@@ -38,9 +38,15 @@ export default {
       }
       this.$emit('onTagUpdate', this.tags);
     },
+    initialValue: {
+      handler(newVal) {
+        this.tags = newVal || [];
+      },
+      immediate: true,
+    },
   },
   mounted() {
-    this.tags = this.initialValue;
+    // Tags are initialized by initialValue watcher
   },
   computed: {},
   methods: {

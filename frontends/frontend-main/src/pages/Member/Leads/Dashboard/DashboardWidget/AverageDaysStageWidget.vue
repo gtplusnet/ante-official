@@ -10,7 +10,7 @@
         <div v-if="loading" class="chart-skeleton">
           <q-skeleton type="rect" height="300px" />
         </div>
-        <div v-else-if="averageDaysData.length > 0 && chartReady">
+        <div v-else-if="hasData && chartReady">
           <ApexChart
             :key="chartKey"
             type="bar"
@@ -28,7 +28,7 @@
         </div>
         <div v-else class="q-pa-lg text-center text-grey-6">
           <q-icon name="bar_chart" size="48px" class="q-mb-md" />
-          <div class="text-body-medium">No data available</div>
+          <div class="text-body-medium">No average days data available</div>
         </div>
       </div>
     </template>
@@ -64,6 +64,11 @@ export default {
 
     // Average days data - will be populated from API
     const averageDaysData = ref<AverageDaysData[]>([]);
+
+    // Check if there's any meaningful data (days > 0)
+    const hasData = computed(() => {
+      return averageDaysData.value.some(d => d.days > 0);
+    });
 
     // Chart configuration
     const chartOptions = computed(() => {
@@ -241,6 +246,7 @@ export default {
       chartReady,
       chartKey,
       averageDaysData,
+      hasData,
       refreshData,
     };
   },
@@ -250,6 +256,7 @@ export default {
 <style scoped lang="scss">
 .chart-container {
   margin-bottom: 15px;
+  position: relative;
 }
 
 .chart-title {

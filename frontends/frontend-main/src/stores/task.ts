@@ -2,8 +2,45 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { api } from 'src/boot/axios';
 import { Notify } from 'quasar';
-import type { TaskData } from 'src/composables/supabase/useTaskTable';
-import { useTask, type QuickTaskData } from 'src/composables/supabase/useTask';
+import { useAuthStore } from 'src/stores/auth';
+
+// Task data interface (migrated from Supabase composables)
+export interface TaskData {
+  id: number;
+  title: string;
+  description?: string | null;
+  statusId?: number;
+  status?: string;
+  priorityLevel?: number;
+  priority?: string;
+  dueDate?: string | null;
+  assignedToId?: string | null;
+  assignee?: string | null;
+  projectId?: number | null;
+  projectName?: string | null;
+  tags?: string[];
+  boardLane?: any;
+  boardLaneId?: number;
+  order?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Keep QuickTaskData interface for compatibility
+export interface QuickTaskData {
+  name: string;
+  description?: string;
+  projectId: number;
+  taskPhaseId?: number;
+  companyId: number;
+  assignedTo?: string;
+  priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
+  status?: 'TODO' | 'IN_PROGRESS' | 'DONE' | 'ARCHIVED';
+  dueDate?: string;
+  boardLaneId?: number;
+  order?: number;
+  goalId?: number;  // For goal inheritance in inline task creation
+}
 
 export type TaskCustomSection = 'do_today' | 'do_later' | 'do_next_week' | null;
 
@@ -125,15 +162,58 @@ export const useTaskStore = defineStore('task', () => {
     }
   };
 
-  // Quick task creation using direct Supabase insertion
+  // Quick task creation using backend API (replaced Supabase direct insertion)
   const createQuickTask = async (taskData: QuickTaskData) => {
     try {
       loading.value = true;
       error.value = null;
 
-      // Use the useTask composable for direct Supabase insertion
-      const taskComposable = useTask();
-      const createdTask = await taskComposable.createQuickTask(taskData);
+      // Get current user for assign mode calculation
+      const authStore = useAuthStore();
+      const currentUserId = authStore.accountInformation?.id;
+
+      // Map priority to difficulty level (required by backend)
+      const priorityToNumber = (priority?: string): number => {
+        if (!priority) return 2; // Default NORMAL
+        switch (priority.toUpperCase()) {
+          case 'VERYLOW': return 0;
+          case 'LOW': return 1;
+          case 'NORMAL': return 2;
+          case 'MEDIUM': return 2;  // Medium = Normal difficulty level
+          case 'HIGH': return 3;
+          case 'URGENT': return 4;
+          default: return 2;
+        }
+      };
+
+      // Determine assign mode (required by backend)
+      const determineAssignMode = (assignedTo?: string): 'SELF' | 'OTHER' | 'ROLE_GROUP' => {
+        if (assignedTo === currentUserId) return 'SELF';
+        return 'OTHER';
+      };
+
+      // Prepare backend API payload
+      const createPayload = {
+        title: taskData.name,
+        description: taskData.description || '',
+        companyId: taskData.companyId, // CRITICAL: Required for multi-tenant filtering
+        projectId: taskData.projectId || undefined,
+        difficulty: priorityToNumber(taskData.priority),
+        assignedToId: taskData.assignedTo || undefined,
+        assignedMode: determineAssignMode(taskData.assignedTo),
+        dueDate: taskData.dueDate || undefined,
+        boardLaneId: taskData.boardLaneId || undefined,
+        order: taskData.order || undefined,
+        goalId: taskData.goalId || undefined  // For goal inheritance in inline task creation
+      };
+
+      console.log('[TaskStore] Creating task via backend API:', createPayload);
+
+      // Call backend API (same as TaskCreateDialog)
+      const response = await api.post('/task/create', createPayload);
+      const createdTask = response.data;
+
+      console.log('[TaskStore] Task created successfully:', createdTask);
 
       if (createdTask) {
         // Add to local store for immediate UI update
@@ -151,7 +231,7 @@ export const useTaskStore = defineStore('task', () => {
       }
     } catch (err) {
       error.value = err as Error;
-      console.error('Failed to create quick task:', err);
+      console.error('[TaskStore] Failed to create quick task:', err);
 
       Notify.create({
         type: 'negative',

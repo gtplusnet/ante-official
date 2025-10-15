@@ -55,6 +55,10 @@ export class TaskCreateDto {
   @IsOptional()
   @IsDateString()
   readonly dueDate?: string;
+
+  @IsOptional()
+  @IsNumber()
+  readonly goalId?: number;
 }
 export class TaskUpdateDto {
   @IsOptional()
@@ -92,6 +96,10 @@ export class TaskUpdateDto {
   @IsOptional()
   @IsNumber()
   readonly boardLaneId?: number;
+
+  @IsOptional()
+  @IsNumber()
+  readonly goalId?: number;
 }
 export class TaskDeleteDto {
   @IsNotEmpty()
@@ -172,4 +180,13 @@ export class TaskFilterDto {
 
   @IsOptional()
   descending?: boolean;
+}
+export class TaskDashboardQueryDto {
+  @IsNotEmpty()
+  @IsEnum(['active', 'assigned', 'approvals'])
+  readonly tab: 'active' | 'assigned' | 'approvals';
+
+  @IsOptional()
+  @IsString()
+  readonly search?: string;
 }

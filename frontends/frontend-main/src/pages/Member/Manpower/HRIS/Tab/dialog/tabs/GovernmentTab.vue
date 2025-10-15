@@ -152,8 +152,12 @@ export default {
     },
     
     updateGovernmentDetails() {
+      console.log('[DEBUG] GovernmentTab: updateGovernmentDetails method called');
+      console.log('[DEBUG] GovernmentTab: Employee data:', this.employeeData);
+      console.log('[DEBUG] GovernmentTab: Government details:', this.governmentDetails);
+
       this.$q.loading.show();
-      
+
       const params = {
         accountId: this.employeeData.data.accountDetails.id,
         governmentDetails: {
@@ -164,9 +168,12 @@ export default {
         },
       };
 
+      console.log('[DEBUG] GovernmentTab: Sending params:', params);
+
       api
         .patch('/hris/employee/update-government-details', params)
         .then(() => {
+          console.log('[DEBUG] GovernmentTab: API call successful, emitting update event');
           this.$emit('update');
           this.$q.notify({
             type: 'positive',
@@ -174,13 +181,14 @@ export default {
           });
         })
         .catch((error) => {
-          console.error('Error updating government details:', error);
+          console.error('[DEBUG] GovernmentTab: API call failed:', error);
           this.$q.notify({
             type: 'negative',
             message: 'Failed to update government details',
           });
         })
         .finally(() => {
+          console.log('[DEBUG] GovernmentTab: Finally block, hiding loading');
           this.$q.loading.hide();
         });
     },

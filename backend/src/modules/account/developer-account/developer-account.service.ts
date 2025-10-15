@@ -13,7 +13,6 @@ import { EncryptionService } from '@common/encryption.service';
 import { AccountDataResponse } from '../../../shared/response/account.response';
 import { RoleService } from '@modules/role/role/role.service';
 import { CompanyService } from '@modules/company/company/company.service';
-import { SupabaseAuthService } from '../../auth/supabase-auth/supabase-auth.service';
 
 @Injectable()
 export class DeveloperAccountService {
@@ -23,7 +22,6 @@ export class DeveloperAccountService {
   @Inject() public encryption: EncryptionService;
   @Inject() public roleService: RoleService;
   @Inject() public companyService: CompanyService;
-  @Inject() public supabaseAuthService: SupabaseAuthService;
 
   async getDeveloperAccount({ id }): Promise<AccountDataResponse> {
     const account = await this.prisma.account.findFirst({
@@ -213,7 +211,7 @@ export class DeveloperAccountService {
     return this.formatAccountData(updatedAccount);
   }
 
-  async deleteDeveloperAccount({ id }) {
+  async deleteDeveloperAccount({ id, deletedBy = null, reason = null }) {
     const account = await this.prisma.account.findFirst({
       where: { id, isDeleted: false },
     });
@@ -221,6 +219,35 @@ export class DeveloperAccountService {
     if (!account) {
       throw new NotFoundException('Developer account not found');
     }
+
+    // Get deletedBy account details if provided
+    let deletedByUsername = null;
+    if (deletedBy) {
+      const deletedByAccount = await this.prisma.account.findUnique({
+        where: { id: deletedBy },
+        select: { username: true },
+      });
+      deletedByUsername = deletedByAccount?.username;
+    }
+
+    // Create audit log before deletion
+    await this.prisma.accountDeletionLog.create({
+      data: {
+        deletedAccountId: account.id,
+        deletedUsername: account.username,
+        deletedEmail: account.email,
+        deletedByAccountId: deletedBy,
+        deletedByUsername: deletedByUsername,
+        reason: reason,
+        deletionType: 'soft',
+        metadata: {
+          accountType: account.accountType,
+          roleId: account.roleId,
+          companyId: account.companyId,
+          isDeveloper: account.isDeveloper,
+        },
+      },
+    });
 
     // Soft delete
     await this.prisma.account.update({
@@ -372,30 +399,6 @@ export class DeveloperAccountService {
       throw new NotFoundException('Target user not found');
     }
 
-    // Generate Supabase tokens for the target user
-    let supabaseTokens: {
-      supabaseToken?: string;
-      supabaseRefreshToken?: string;
-    } = {};
-
-    try {
-      // Ensure Supabase user exists and get tokens
-      const supabaseResult = await this.supabaseAuthService.ensureSupabaseUser(
-        targetAccount,
-        // Password is not needed for existing users
-      );
-
-      if (supabaseResult && supabaseResult.accessToken) {
-        supabaseTokens = {
-          supabaseToken: supabaseResult.accessToken,
-          supabaseRefreshToken: supabaseResult.refreshToken,
-        };
-      }
-    } catch (error) {
-      console.error('Failed to generate Supabase tokens for login-as:', error);
-      // Continue without Supabase tokens (backward compatibility)
-    }
-
     // Generate a token for the target user
     const token = this.utility.randomString();
     const insertToken: Prisma.AccountTokenCreateInput = {
@@ -406,11 +409,6 @@ export class DeveloperAccountService {
       token: token,
       status: 'active' as const,
       updatedAt: new Date(),
-      // Store Supabase tokens if available
-      ...(supabaseTokens.supabaseToken && {
-        supabaseAccessToken: supabaseTokens.supabaseToken,
-        supabaseRefreshToken: supabaseTokens.supabaseRefreshToken,
-      }),
     };
 
     await this.prisma.accountToken.create({ data: insertToken });
@@ -421,7 +419,37 @@ export class DeveloperAccountService {
     return {
       token,
       accountInformation,
-      ...supabaseTokens, // Include Supabase tokens in response
     };
+  }
+
+  async getDeletionLogsTable(query: TableQueryDTO, body: TableBodyDTO) {
+    this.tableHandler.initialize(query, body, 'accountDeletionLog');
+    const tableQuery = this.tableHandler.constructTableQuery();
+
+    // Format dates and sort by most recent first
+    tableQuery['orderBy'] = { deletedAt: 'desc' };
+
+    const { list, currentPage, pagination } =
+      await this.tableHandler.getTableData(
+        this.prisma.accountDeletionLog,
+        query,
+        tableQuery,
+      );
+
+    // Format the data for display
+    const formattedList = list.map((log: any) => ({
+      id: log.id,
+      deletedAccountId: log.deletedAccountId,
+      deletedUsername: log.deletedUsername,
+      deletedEmail: log.deletedEmail,
+      deletedByAccountId: log.deletedByAccountId,
+      deletedByUsername: log.deletedByUsername || 'System',
+      reason: log.reason || 'No reason provided',
+      deletionType: log.deletionType,
+      deletedAt: this.utility.formatDate(log.deletedAt),
+      metadata: log.metadata,
+    }));
+
+    return { list: formattedList, pagination, currentPage };
   }
 }

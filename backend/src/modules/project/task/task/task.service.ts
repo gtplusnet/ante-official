@@ -96,6 +96,167 @@ export class TaskService {
     };
   }
 
+  /**
+   * Get dashboard tasks for TaskWidget
+   * Supports three tabs: active, assigned, approvals
+   * Includes counts for all tabs (for badges)
+   */
+  async getDashboardTasks(tab: 'active' | 'assigned' | 'approvals', search?: string) {
+    const userId = this.utilityService.accountInformation.id;
+    const companyId = this.utilityService.accountInformation.company?.id;
+
+    // Base where conditions
+    const baseWhere: Prisma.TaskWhereInput = {
+      isDeleted: false,
+      ...(companyId && { companyId }),
+    };
+
+    // Tab-specific filters
+    let tabWhere: Prisma.TaskWhereInput = {};
+
+    switch (tab) {
+      case 'active':
+        tabWhere = {
+          assignedToId: userId,
+          taskType: 'NORMAL',
+          boardLane: { key: { not: BoardLaneKeys.DONE } },
+        };
+        break;
+
+      case 'assigned':
+        tabWhere = {
+          createdById: userId,
+          isSelfAssigned: false,
+          isOpen: true,
+          taskType: 'NORMAL',
+        };
+        break;
+
+      case 'approvals':
+        tabWhere = {
+          assignedToId: userId,
+          taskType: 'APPROVAL',
+          boardLane: { key: { not: BoardLaneKeys.DONE } },
+        };
+        break;
+    }
+
+    // Search filter
+    const searchWhere: Prisma.TaskWhereInput = search
+      ? {
+          OR: [
+            { title: { contains: search, mode: 'insensitive' } },
+            { description: { contains: search, mode: 'insensitive' } },
+          ],
+        }
+      : {};
+
+    // Combine all filters
+    const where: Prisma.TaskWhereInput = {
+      ...baseWhere,
+      ...tabWhere,
+      ...searchWhere,
+    };
+
+    // Fetch tasks with all relations
+    const tasks = await this.prisma.task.findMany({
+      where,
+      include: {
+        assignedTo: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            username: true,
+            image: true,
+          },
+        },
+        createdBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            username: true,
+          },
+        },
+        updatedBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            username: true,
+          },
+        },
+        project: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
+        company: {
+          select: {
+            id: true,
+            companyName: true,
+          },
+        },
+        boardLane: {
+          select: {
+            id: true,
+            name: true,
+            key: true,
+            order: true,
+          },
+        },
+        ApprovalMetadata: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    // Get counts for all tabs (for badges) - run in parallel
+    const [activeCount, assignedCount, approvalsCount] = await Promise.all([
+      this.prisma.task.count({
+        where: {
+          ...baseWhere,
+          assignedToId: userId,
+          taskType: 'NORMAL',
+          boardLane: { key: { not: BoardLaneKeys.DONE } },
+        },
+      }),
+      this.prisma.task.count({
+        where: {
+          ...baseWhere,
+          createdById: userId,
+          isSelfAssigned: false,
+          isOpen: true,
+          taskType: 'NORMAL',
+        },
+      }),
+      this.prisma.task.count({
+        where: {
+          ...baseWhere,
+          assignedToId: userId,
+          taskType: 'APPROVAL',
+          boardLane: { key: { not: BoardLaneKeys.DONE } },
+        },
+      }),
+    ]);
+
+    // Format tasks
+    const formattedTasks = tasks.map((task) => this.formatTaskResponse(task));
+
+    return {
+      tasks: formattedTasks,
+      counts: {
+        active: activeCount,
+        assigned: assignedCount,
+        approvals: approvalsCount,
+      },
+    };
+  }
+
   async removeWatcher(params: AddWatcherDTO) {
     const taskInformation = await this.#getTaskInformation(params.taskId);
     const accountInformation = await this.prisma.account.findUnique({
@@ -179,22 +340,32 @@ export class TaskService {
   async getTaskUsers() {
     let list;
 
+    // Get companyId for filtering (multi-tenant isolation)
+    const companyId = this.utilityService.accountInformation.company?.id;
+
     if (this.utilityService.accountInformation.role.level === 0) {
+      // Admin users - fetch all accounts filtered by company
       list = await this.prisma.account.findMany({
-        where: { isDeleted: false },
+        where: {
+          isDeleted: false,
+          ...(companyId && { companyId })  // Filter by company if available
+        },
       });
     } else {
+      // Non-admin users - fetch child accounts from org hierarchy
       list = await this.userOrgService.getListOfChildAccount(
         this.utilityService.accountInformation.id,
         [],
         new Set(),
       );
+
+      // Additional safety: filter child accounts by company
+      if (companyId) {
+        list = list.filter(account => account.companyId === companyId);
+      }
     }
 
     const response = list.map((account) => this.formatAccountResponse(account));
-
-    // get task and total difficulty per user
-    const companyId = this.utilityService.accountInformation.company?.id;
 
     await Promise.all(
       response.map(async (user) => {
@@ -414,6 +585,7 @@ export class TaskService {
             }
           : null,
         workflowInstanceId: taskInformation.WorkflowTask?.instanceId || null,
+        goalId: taskInformation.goalId,
       };
     } catch (error) {
       if (
@@ -873,6 +1045,7 @@ export class TaskService {
       updatedBy: { connect: { id: this.utilityService.accountInformation.id } },
       order: createTaskDto.order ?? await this.getNextTaskOrder(createTaskDto.boardLaneId),
       assignedByDifficultySet: createTaskDto.difficulty,
+      priorityLevel: createTaskDto.difficulty,  // Set priority level from difficulty
       boardLane: { connect: { id: createTaskDto.boardLaneId } },
       assignMode: createTaskDto.assignedMode,
     };
@@ -884,6 +1057,11 @@ export class TaskService {
 
     if (createTaskDto.projectId) {
       newTaskData.project = { connect: { id: createTaskDto.projectId } };
+    }
+
+    // Add goal if provided (for goal inheritance in inline task creation)
+    if (createTaskDto.goalId) {
+      newTaskData.goal = { connect: { id: createTaskDto.goalId } };
     }
 
     // assign task to user if assignee is provided
@@ -1172,6 +1350,26 @@ export class TaskService {
       }
     }
 
+    // Track goal change
+    if (taskUpdateDto.goalId !== undefined && taskUpdateDto.goalId !== taskInformation.goalId) {
+      // Validate goal exists if not null
+      if (taskUpdateDto.goalId !== null) {
+        const goal = await this.prisma.goal.findUnique({
+          where: { id: taskUpdateDto.goalId },
+        });
+        if (!goal) {
+          throw new NotFoundException('Goal not found');
+        }
+      }
+      updateParams.goalId = taskUpdateDto.goalId;
+      changes.push({
+        field: 'goalId',
+        oldValue: taskInformation.goalId,
+        newValue: taskUpdateDto.goalId,
+        displayName: 'goal',
+      });
+    }
+
     const result = await this.prisma.task.update({
       where: { id: taskId },
       data: updateParams,
@@ -1255,18 +1453,20 @@ export class TaskService {
   }
 
   async addToTaskWatcher(taskWatcherDto: TaskWatcherDto): Promise<void> {
-    // check if task and account id already exist then remove if already exist
-    await this.prisma.taskWatcher.deleteMany({
-      where: {
-        taskId: taskWatcherDto.taskId,
-        accountId: { in: taskWatcherDto.accountIds },
-      },
-    });
-
+    // Use atomic upsert to prevent race condition duplicates (TASK-BACKEND-API-MIGRATION)
     await Promise.all(
       taskWatcherDto.accountIds.map(async (accountId) => {
-        await this.prisma.taskWatcher.create({
-          data: {
+        await this.prisma.taskWatcher.upsert({
+          where: {
+            taskId_accountId: {
+              taskId: taskWatcherDto.taskId,
+              accountId: accountId,
+            },
+          },
+          update: {
+            watcherType: taskWatcherDto.watcherType,
+          },
+          create: {
             taskId: taskWatcherDto.taskId,
             accountId: accountId,
             watcherType: taskWatcherDto.watcherType,
@@ -1849,6 +2049,11 @@ export class TaskService {
           }
         : null,
       workflowInstanceId: task.WorkflowTask?.instanceId || null,
+      goalId: task.goalId,
+      goal: task.goal ? {
+        id: task.goal.id,
+        name: task.goal.name
+      } : null,
     };
   }
 
@@ -2159,54 +2364,151 @@ export class TaskService {
       },
     });
 
-    // If we have custom ordering, use it
-    if (orderContexts.length > 0) {
-      const taskIds = orderContexts.map(ctx => ctx.taskId);
-      const orderMap = new Map(orderContexts.map(ctx => [ctx.taskId, ctx.orderIndex]));
+    // Build enhanced filter with new filter parameters
+    const enhancedFilter: any = { ...filter };
 
-      // Fetch tasks with the custom order
-      const tasks = await this.prisma.task.findMany({
-        where: {
-          ...filter,
-          id: { in: taskIds },
-          ...(companyId && { companyId }),
-        },
-        include: {
-          assignedTo: true,
-          createdBy: true,
-          boardLane: true,
-          project: true,
-          // Add other includes as needed
-        },
-      });
-
-      // Sort tasks according to the order context
-      tasks.sort((a, b) => {
-        const orderA = orderMap.get(a.id) || 999999;
-        const orderB = orderMap.get(b.id) || 999999;
-        return orderA - orderB;
-      });
-
-      return tasks;
+    // Handle boardLaneId filter (support both single value and array for "Ongoing Task")
+    if (filter.boardLaneId !== undefined) {
+      if (Array.isArray(filter.boardLaneId)) {
+        // Array of board lane IDs (e.g., [1, 2] for "Ongoing Task")
+        enhancedFilter.boardLaneId = { in: filter.boardLaneId.map((id: any) => Number(id)) };
+      } else {
+        // Single board lane ID
+        enhancedFilter.boardLaneId = Number(filter.boardLaneId);
+      }
     }
 
-    // Fall back to default ordering by the Task table's order field
-    return await this.prisma.task.findMany({
+    // Apply priority level filter
+    if (filter.priorityLevel !== undefined) {
+      enhancedFilter.priorityLevel = Number(filter.priorityLevel);
+    }
+
+    // Apply goal filter
+    if (filter.goalId !== undefined) {
+      enhancedFilter.goalId = filter.goalId === null ? null : Number(filter.goalId);
+    }
+
+    // Apply specific assignee filter (different from assignedToId for 'my' view)
+    if (filter.specificAssignee) {
+      if (filter.specificAssignee === 'unassigned') {
+        enhancedFilter.assignedToId = null;
+      } else {
+        enhancedFilter.assignedToId = filter.specificAssignee;
+      }
+    }
+
+    // Apply specific project filter
+    if (filter.specificProject !== undefined) {
+      enhancedFilter.projectId = filter.specificProject === null ? null : Number(filter.specificProject);
+    }
+
+    // Apply due date range filter
+    if (filter.dueDateRange) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      switch (filter.dueDateRange) {
+        case 'no_date':
+          enhancedFilter.dueDate = null;
+          break;
+        case 'overdue':
+          enhancedFilter.dueDate = { lt: today };
+          break;
+        case 'today':
+          const tomorrow = new Date(today);
+          tomorrow.setDate(today.getDate() + 1);
+          enhancedFilter.dueDate = { gte: today, lt: tomorrow };
+          break;
+        case 'tomorrow':
+          const dayAfterTomorrow = new Date(today);
+          dayAfterTomorrow.setDate(today.getDate() + 2);
+          const tomorrowStart = new Date(today);
+          tomorrowStart.setDate(today.getDate() + 1);
+          enhancedFilter.dueDate = { gte: tomorrowStart, lt: dayAfterTomorrow };
+          break;
+        case 'this_week':
+          const endOfWeek = new Date(today);
+          endOfWeek.setDate(today.getDate() + (7 - today.getDay()));
+          enhancedFilter.dueDate = { gte: today, lte: endOfWeek };
+          break;
+        case 'next_week':
+          const startOfNextWeek = new Date(today);
+          startOfNextWeek.setDate(today.getDate() + (7 - today.getDay()) + 1);
+          const endOfNextWeek = new Date(startOfNextWeek);
+          endOfNextWeek.setDate(startOfNextWeek.getDate() + 6);
+          enhancedFilter.dueDate = { gte: startOfNextWeek, lte: endOfNextWeek };
+          break;
+        case 'later':
+          const twoWeeksFromNow = new Date(today);
+          twoWeeksFromNow.setDate(today.getDate() + 14);
+          enhancedFilter.dueDate = { gt: twoWeeksFromNow };
+          break;
+      }
+    }
+
+    // Remove the temporary filter properties that were used for building the where clause
+    delete enhancedFilter.specificAssignee;
+    delete enhancedFilter.specificProject;
+    delete enhancedFilter.dueDateRange;
+
+    // Fetch ALL tasks matching the filter (including new tasks not in orderContext)
+    const tasks = await this.prisma.task.findMany({
       where: {
-        ...filter,
+        ...enhancedFilter,
         ...(companyId && { companyId }),
-      },
-      orderBy: {
-        order: 'asc',
       },
       include: {
         assignedTo: true,
         createdBy: true,
         boardLane: true,
         project: true,
+        goal: true,
         // Add other includes as needed
       },
     });
+
+    // If we have custom ordering, apply it
+    if (orderContexts.length > 0) {
+      const orderMap = new Map(orderContexts.map(ctx => [ctx.taskId, ctx.orderIndex]));
+
+      // Sort tasks: ordered tasks first (by orderIndex), then unordered tasks (by createdAt DESC)
+      tasks.sort((a, b) => {
+        const orderA = orderMap.get(a.id);
+        const orderB = orderMap.get(b.id);
+
+        // Both tasks have custom order - compare order indices
+        if (orderA !== undefined && orderB !== undefined) {
+          return orderA - orderB;
+        }
+
+        // Only task A has custom order - it comes after unordered tasks
+        if (orderA !== undefined && orderB === undefined) {
+          return 1;
+        }
+
+        // Only task B has custom order - it comes after unordered tasks
+        if (orderA === undefined && orderB !== undefined) {
+          return -1;
+        }
+
+        // Neither task has custom order - sort by createdAt DESC (newest first)
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+
+      return tasks;
+    }
+
+    // Fall back to default ordering by the Task table's order field, then createdAt DESC
+    tasks.sort((a, b) => {
+      // First sort by order field (if defined)
+      if (a.order !== b.order) {
+        return (a.order || 0) - (b.order || 0);
+      }
+      // Then by createdAt DESC (newest first)
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    return tasks;
   }
 
   /**

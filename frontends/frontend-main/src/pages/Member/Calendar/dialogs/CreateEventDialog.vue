@@ -125,6 +125,14 @@
               <template v-slot:prepend>
                 <q-icon name="label" size="20px" />
               </template>
+              <template v-slot:append>
+                <div
+                  v-if="form.categoryId"
+                  class="event-color-preview"
+                  :style="{ backgroundColor: form.colorCode }"
+                  title="Event color (auto-assigned from category)"
+                ></div>
+              </template>
               <template v-slot:option="scope">
                 <q-item v-bind="scope.itemProps">
                   <q-item-section avatar>
@@ -139,28 +147,6 @@
                 </q-item>
               </template>
             </q-select>
-          </div>
-
-          <!-- Color -->
-          <div class="form-field">
-            <div class="color-picker-label">Event Color</div>
-            <div class="color-picker-grid">
-              <div
-                v-for="color in predefinedColors"
-                :key="color"
-                class="color-option"
-                :class="{ 'selected': form.colorCode === color }"
-                :style="{ backgroundColor: color }"
-                @click="form.colorCode = color"
-              >
-                <q-icon
-                  v-if="form.colorCode === color"
-                  name="check"
-                  color="white"
-                  size="16px"
-                />
-              </div>
-            </div>
           </div>
 
           <!-- Description -->
@@ -356,13 +342,6 @@ const showDialog = ref(props.modelValue);
 const loading = ref(false);
 const recurrenceEndType = ref<'never' | 'until' | 'count'>('never');
 
-// Predefined colors
-const predefinedColors = [
-  '#2196F3', '#4CAF50', '#FF9800', '#E91E63', '#9C27B0',
-  '#00BCD4', '#FFC107', '#795548', '#607D8B', '#F44336',
-  '#8BC34A', '#03A9F4', '#FF5722', '#673AB7', '#009688'
-];
-
 // Week days
 const weekDays = [
   { value: 'SU', short: 'S', full: 'Sunday' },
@@ -556,6 +535,19 @@ watch(showDialog, (val) => {
   emit('update:modelValue', val);
 });
 
+// Auto-assign color when category changes
+watch(() => form.value.categoryId, (newCategoryId) => {
+  if (newCategoryId) {
+    const selectedCategory = categories.value.find(c => c.id === newCategoryId);
+    if (selectedCategory) {
+      form.value.colorCode = selectedCategory.colorCode;
+    }
+  } else {
+    // Default color when no category selected
+    form.value.colorCode = '#2196F3';
+  }
+});
+
 // Lifecycle
 onMounted(async () => {
   await fetchCategories();
@@ -621,42 +613,17 @@ onMounted(async () => {
         }
       }
 
-      .color-picker-label {
-        font-size: 0.875rem;
-        color: rgba(0, 0, 0, 0.6);
-        margin-bottom: 8px;
-      }
-
-      .color-picker-grid {
-        display: grid;
-        grid-template-columns: repeat(10, 1fr);
-        gap: 8px;
-
-        .color-option {
-          aspect-ratio: 1;
-          border-radius: 50%;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: transform 0.2s;
-          border: 2px solid transparent;
-
-          &:hover {
-            transform: scale(1.1);
-          }
-
-          &.selected {
-            border-color: rgba(0, 0, 0, 0.2);
-            transform: scale(1.15);
-          }
-        }
-      }
-
       .category-color-indicator {
         width: 16px;
         height: 16px;
         border-radius: 2px;
+      }
+
+      .event-color-preview {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid rgba(0, 0, 0, 0.1);
       }
 
       .recurrence-section {
@@ -720,10 +687,6 @@ onMounted(async () => {
 // Mobile responsiveness
 @media (max-width: 768px) {
   .event-dialog {
-    .color-picker-grid {
-      grid-template-columns: repeat(5, 1fr);
-    }
-
     .date-time-row {
       flex-direction: column;
 

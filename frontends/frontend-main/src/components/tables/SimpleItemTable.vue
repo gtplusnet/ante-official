@@ -1,6 +1,6 @@
 <template>
   <g-table :isRowActionEnabled="true" tableKey="item" apiUrl="/items/simpleView"
-    :apiFilters="[{ deleted: this.tab === 'deleted' }]" ref="table">
+    :apiFilters="apiFilters" ref="table">
     <!-- slot actions -->
     <template v-slot:row-actions="props">
       <q-btn rounded class="q-mr-sm text-label-medium" @click="editItem(props.data)" no-caps color="primary" unelevated>
@@ -12,8 +12,11 @@
         <q-icon class="q-mr-sm" size="20px" name="check"></q-icon> Select
       </q-btn>
 
-      <q-btn v-if="this.tab == 'simple'" rounded class="text-label-medium" @click="deleteItem(props.data)" no-caps color="red" outline>
+      <q-btn v-if="this.tab == 'simple'" rounded class="text-label-medium" @click="deleteItem(props.data)" no-caps color="red" outline :disable="props.data.isPartOfGroup">
         <q-icon class="q-mr-sm" size="20px" name="delete"></q-icon> Delete
+        <q-tooltip v-if="props.data.isPartOfGroup">
+          Cannot delete - Part of: {{ getGroupNames(props.data) }}
+        </q-tooltip>
       </q-btn>
 
       <q-btn v-if="this.tab == 'deleted'" rounded class="text-label-medium" @click="restoreItem(props.data)" no-caps color="red" outline>
@@ -82,8 +85,24 @@ export default {
       type: String,
       default: '',
     },
+    hideItemGroups: {
+      type: Boolean,
+      default: false,
+    },
   },
-  computed: {},
+  computed: {
+    apiFilters() {
+      const filters = [{ deleted: this.tab === 'deleted' }];
+
+      // Add isItemGroup filter when hideItemGroups is true
+      // When hiding group items, show only individual products
+      if (this.hideItemGroups) {
+        filters.push({ isItemGroup: true });
+      }
+
+      return filters;
+    },
+  },
   data: () => ({
     isItemCreateEditDialogOpen: false,
     isItemInformationDialogOpen: false,
@@ -170,6 +189,12 @@ export default {
     },
     refetch() {
       this.$refs.table.refetch();
+    },
+    getGroupNames(data) {
+      if (!data.belongsToGroups || data.belongsToGroups.length === 0) {
+        return '';
+      }
+      return data.belongsToGroups.map(bg => bg.group.name).join(', ');
     },
   },
 };

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-import { SyncService } from '@/lib/services/sync.service'
+import { getAuthHelperService } from '@/lib/services/auth-helper.service'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -19,101 +19,37 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      // First, try to validate with backend if available
-      const syncService = new SyncService()
-      let validationResult = null
-      
-      try {
-        validationResult = await syncService.validateLicense(licenseKey)
-      } catch (backendError) {
-        console.log('[Login] Backend not available, will use direct Supabase auth')
+      console.log('[Login] Validating license key with backend...')
+
+      const authService = getAuthHelperService()
+      const licenseInfo = await authService.validateLicense(licenseKey)
+
+      if (!licenseInfo) {
+        setError('Invalid license key. Please check and try again.')
+        setIsLoading(false)
+        return
       }
-      
-      if (validationResult && validationResult.valid) {
-        // Backend validation successful
-        localStorage.setItem('licenseKey', licenseKey)
-        localStorage.setItem('companyId', validationResult.companyId?.toString() || '')
-        localStorage.setItem('companyName', validationResult.companyName || '')
-        localStorage.setItem('licenseType', validationResult.licenseType || '')
-        localStorage.setItem('gateName', validationResult.gateName || '')
-        
-        // Initialize Supabase session if tokens are provided
-        if (validationResult.supabaseToken && validationResult.supabaseRefreshToken) {
-          const { getSupabaseService } = await import('@/lib/services/supabase.service')
-          const supabaseService = getSupabaseService()
-          
-          await supabaseService.setSession(
-            validationResult.supabaseToken,
-            validationResult.supabaseRefreshToken
-          )
-          
-          console.log('Supabase session initialized from backend tokens')
-        } else {
-          // Backend didn't provide tokens, authenticate using service account
-          console.log('[Login] Backend did not provide tokens, using service account authentication')
-          const { getAuthHelperService } = await import('@/lib/services/auth-helper.service')
-          const authHelper = getAuthHelperService()
-          
-          const tokens = await authHelper.authenticateGateApp(validationResult.companyId || 16)
-          
-          if (tokens) {
-            const { getSupabaseService } = await import('@/lib/services/supabase.service')
-            const supabaseService = getSupabaseService()
-            
-            await supabaseService.setSession(
-              tokens.supabaseToken,
-              tokens.supabaseRefreshToken
-            )
-            
-            console.log('Supabase session initialized using service account')
-          } else {
-            console.error('Failed to get Supabase tokens from service account')
-            setError('Authentication failed. Please contact support.')
-            return
-          }
-        }
-        
-        // Also set as cookie for middleware
-        document.cookie = `licenseKey=${licenseKey}; path=/; max-age=${60 * 60 * 24 * 30}` // 30 days
-        
-        console.log('Gate App authenticated successfully')
-        router.push('/dashboard')
-      } else {
-        // Backend validation failed or unavailable, try direct Supabase auth
-        console.log('[Login] Attempting direct Supabase authentication...')
-        
-        // For demo/testing: Accept specific license keys without backend
-        const validLicenses = ['GATE-2025-DEMO', 'GATE-TEST-001', 'gate-license-001']
-        
-        if (validLicenses.includes(licenseKey)) {
-          // Store basic info
-          localStorage.setItem('licenseKey', licenseKey)
-          localStorage.setItem('companyId', '16') // Default company ID
-          localStorage.setItem('companyName', 'Demo Company')
-          localStorage.setItem('licenseType', 'gate')
-          localStorage.setItem('gateName', 'Main Gate')
-          
-          // Authenticate directly with Supabase
-          const { getAuthSupabaseService } = await import('@/lib/services/auth-supabase.service')
-          const authService = getAuthSupabaseService()
-          
-          const authResult = await authService.authenticateGateApp(licenseKey, 16)
-          
-          if (authResult.success) {
-            // Set cookie for middleware
-            document.cookie = `licenseKey=${licenseKey}; path=/; max-age=${60 * 60 * 24 * 30}`
-            
-            console.log('Gate App authenticated with Supabase directly')
-            router.push('/dashboard')
-          } else {
-            setError('Failed to authenticate. Please try again.')
-          }
-        } else {
-          setError('Invalid or inactive license key. Backend is not available.')
-        }
-      }
+
+      // License validation successful - save to localStorage
+      console.log('[Login] License validation successful:', licenseInfo)
+
+      localStorage.setItem('licenseKey', licenseKey)
+      localStorage.setItem('companyId', licenseInfo.companyId?.toString() || '')
+      localStorage.setItem('gateName', licenseInfo.gateName || '')
+      localStorage.setItem('licenseType', 'Gate License')
+
+      // Set cookie for middleware
+      document.cookie = `licenseKey=${licenseKey}; path=/; max-age=${60 * 60 * 24 * 30}` // 30 days
+
+      console.log('[Login] Gate App authenticated successfully')
+      console.log('[Login] Company ID:', licenseInfo.companyId)
+      console.log('[Login] Gate Name:', licenseInfo.gateName)
+
+      // Redirect to scan page
+      router.push('/scan')
+
     } catch (err: any) {
-      console.error('License validation error:', err)
+      console.error('[Login] License validation error:', err)
       setError('An unexpected error occurred. Please try again.')
     } finally {
       setIsLoading(false)
@@ -122,7 +58,7 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-md">
-      <Card>
+      <Card className={`transition-opacity duration-200 ${isLoading ? 'opacity-75' : 'opacity-100'}`}>
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center">School Gatekeep</CardTitle>
           <CardDescription className="text-center">
@@ -130,7 +66,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-6 pb-6">
             <div className="space-y-2">
               <label htmlFor="license" className="text-sm font-medium text-gray-700">
                 License Key
@@ -153,9 +89,10 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || !licenseKey}
+              isLoading={isLoading}
+              disabled={!licenseKey}
             >
-              {isLoading ? 'Validating...' : 'Activate'}
+              {isLoading ? 'Validating license...' : 'Activate'}
             </Button>
           </CardFooter>
         </form>

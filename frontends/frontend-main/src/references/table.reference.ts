@@ -1,6 +1,7 @@
 // Import all individual table reference files
 import accomplishment from './table/accomplishment.table.reference';
 import account from './table/account.table.reference';
+import accountDeletionLog from './table/accountDeletionLog.table.reference';
 import accountInvite from './table/accountInvite.table.reference';
 import allowanceTable from './table/allowanceTable.table.reference';
 import attendanceConflicts from './table/attendanceConflicts.table.reference';
@@ -30,6 +31,7 @@ import inventoryHistory from './table/inventoryHistory.table.reference';
 import inventoryPerWarehouse from './table/inventoryPerWarehouse.table.reference';
 import item from './table/item.table.reference';
 import itemAdvance from './table/itemAdvance.table.reference';
+import itemCategoryManagement from './table/itemCategoryManagement.table.reference';
 import itemReceipt from './table/itemReceipt.table.reference';
 import itemReceiptPurchaseOrder from './table/itemReceiptPurchaseOrder.table.reference';
 import itemReceiptPurchaseOrderTreasury from './table/itemReceiptPurchaseOrderTreasury.table.reference';
@@ -78,6 +80,7 @@ import sectionTable from './table/sectionTable.table.reference';
 export default {
   accomplishment,
   account,
+  accountDeletionLog,
   accountInvite,
   allowanceTable,
   attendanceConflicts,
@@ -107,6 +110,7 @@ export default {
   inventoryPerWarehouse,
   item,
   itemAdvance,
+  itemCategoryManagement,
   itemReceipt,
   itemReceiptPurchaseOrder,
   itemReceiptPurchaseOrderTreasury,

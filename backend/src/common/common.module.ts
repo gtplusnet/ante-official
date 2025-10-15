@@ -22,8 +22,6 @@ import { CompanyService } from '@modules/company/company/company.service';
 import { TelegramService } from '@modules/communication/telegram/telegram/telegram.service';
 import { ExcelExportService } from '@common/services/excel-export.service';
 import { ExcelModule } from '@common/services/excel/excel.module';
-import { SupabaseTokenManagerService } from '@modules/auth/supabase-auth/supabase-token-manager.service';
-import { SupabaseService } from '@infrastructure/supabase/supabase.service';
 import { BenchmarkService } from './benchmark.service';
 import { RedisModule } from '@infrastructure/redis/redis.module';
 @Module({
@@ -45,8 +43,6 @@ import { RedisModule } from '@infrastructure/redis/redis.module';
     CompanyService,
     TelegramService,
     ExcelExportService, // Keep for backward compatibility
-    SupabaseService,
-    SupabaseTokenManagerService,
     BenchmarkService,
   ],
   exports: [
@@ -66,8 +62,6 @@ import { RedisModule } from '@infrastructure/redis/redis.module';
     TelegramService,
     ExcelExportService, // Keep for backward compatibility
     ExcelModule,
-    SupabaseService,
-    SupabaseTokenManagerService,
     BenchmarkService,
   ],
 })
@@ -104,6 +98,8 @@ export class CommonModule implements NestModule {
         { path: 'api/guardian/(.*)', method: RequestMethod.ALL },
         { path: 'api/notifications/(.*)', method: RequestMethod.ALL },
         { path: 'api/notifications', method: RequestMethod.ALL },
+        // Add root path as public (redirects to API docs)
+        { path: '', method: RequestMethod.GET },
         // Add health endpoints as public
         { path: 'health', method: RequestMethod.GET },
         { path: 'health/version', method: RequestMethod.GET },

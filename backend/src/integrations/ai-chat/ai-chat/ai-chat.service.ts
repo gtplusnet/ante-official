@@ -118,6 +118,7 @@ export class AiChatService {
     accountId: string,
     provider = 'gemini',
     model?: string,
+    accountInfo?: any, // Optional account info to avoid CLS dependency
   ) {
     const conversation = await this.getOrCreateConversation(accountId);
 
@@ -154,8 +155,9 @@ export class AiChatService {
     }));
 
     // 6. Get user's available services for context
-    const userScopes =
-      this.utilityService.accountInformation?.role?.scopeList || [];
+    // Use provided accountInfo or fall back to CLS (for HTTP requests)
+    const accountData = accountInfo || this.utilityService.accountInformation;
+    const userScopes = accountData?.role?.scopeList || [];
     const serviceContext =
       this.aiServiceResolver.generateServiceContext(userScopes);
 
@@ -175,7 +177,7 @@ export class AiChatService {
       // 8. Call the AI provider
       const aiResponse = await aiProvider.chat(
         aiMessages,
-        this.utilityService.accountInformation,
+        accountData,
         model,
       );
 

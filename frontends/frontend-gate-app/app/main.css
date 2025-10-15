@@ -52,3 +52,19 @@
   padding: 0.5rem 1rem !important;
   border-radius: 0.5rem !important;
 }
+
+/* Mirror front camera */
+.qr-scanner-container.front-camera video {
+  transform: scaleX(-1) !important;
+  -webkit-transform: scaleX(-1) !important;
+}
+
+.qr-scanner-container.front-camera #qr-reader video {
+  transform: scaleX(-1) !important;
+  -webkit-transform: scaleX(-1) !important;
+}
+
+.qr-scanner-container.front-camera #qr-reader__scan_region video {
+  transform: scaleX(-1) !important;
+  -webkit-transform: scaleX(-1) !important;
+}

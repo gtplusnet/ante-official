@@ -14,6 +14,7 @@ import {
   BadRequestException,
   UnauthorizedException,
   NotFoundException,
+  ConflictException,
   Render,
   ValidationPipe,
 } from '@nestjs/common';
@@ -31,6 +32,7 @@ import { GuardianPublicAuthGuard } from './guards/guardian-public-auth.guard';
 import { Public } from '@common/decorators/public.decorator';
 import {
   GuardianLoginDto,
+  GuardianRegisterDto,
   GuardianLogoutDto,
   AddStudentDto,
   UpdateProfileDto,
@@ -111,6 +113,35 @@ export class SchoolGuardianPublicController {
         throw error;
       }
       throw new BadRequestException('Login failed');
+    }
+  }
+
+  /**
+   * Guardian registration
+   * POST /api/public/school-guardian/auth/register
+   */
+  @Post('auth/register')
+  @Public()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Guardian registration' })
+  @ApiResponse({ status: 201, description: 'Registration successful' })
+  @ApiResponse({ status: 409, description: 'Email already exists' })
+  @ApiResponse({ status: 400, description: 'Invalid data or age requirement not met' })
+  @ApiBody({ type: GuardianRegisterDto })
+  async register(@Body(ValidationPipe) dto: GuardianRegisterDto) {
+    try {
+      const result = await this.guardianService.register(dto);
+      return {
+        success: true,
+        data: result,
+        message: 'Registration successful',
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      if (error instanceof ConflictException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Registration failed');
     }
   }
 

@@ -1,10 +1,12 @@
 <template>
   <div>
-    <!-- Use Supabase-enabled table for direct database access -->
-    <supabase-g-table 
-    :isRowActionEnabled="true" 
-    tableKey="notYetSetTabHRIS" 
-    supabaseTab="not_yet"
+    <!-- TODO: Backend needs to add support for listing accounts without employee data (not_yet tab) -->
+    <!-- For now using empty filters - needs backend endpoint for accounts_without_employee_data view -->
+    <g-table
+    :isRowActionEnabled="true"
+    tableKey="notYetSetTabHRIS"
+    apiUrl="/hris/employee/table-lite"
+    :apiFilters="[]"
     ref="table">
     <template v-slot:fullName="props">
       <div
@@ -62,7 +64,7 @@
       </g-button>
     </template>
     <!------------------------------------------->
-    </supabase-g-table>
+    </g-table>
 
     <!-- Activation Dialog (Create Employee) -->
   <ManpowerAddEditHRISEmployeeDialog
@@ -90,7 +92,7 @@
 
 <script>
 import { defineAsyncComponent } from 'vue';
-import SupabaseGTable from "../../../../../components/shared/display/SupabaseGTable.vue";
+import GTable from "../../../../../components/shared/display/GTable.vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
 import EditCreateEmployee from './dialog/EditCreateEmployee.vue';
 import ViewCreateEmployee from './dialog/ViewCreateEmployee.vue';
@@ -103,7 +105,7 @@ const ManpowerAddEditHRISEmployeeDialog = defineAsyncComponent(() =>
 export default {
   name: 'HRISNotYetSetTabPage',
   components: {
-    SupabaseGTable,
+    GTable,
     GButton,
     EditCreateEmployee,
     ViewCreateEmployee,

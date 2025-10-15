@@ -524,7 +524,7 @@ export class AccountService {
 
     return formattedResponse;
   }
-  async deleteUser({ id }) {
+  async deleteUser({ id, deletedBy = null, reason = null }) {
     const accountInformation = await this.prisma.account.findFirst({
       where: { id },
       include: { role: true },
@@ -560,6 +560,36 @@ export class AccountService {
         `There are accounts that are reporting to this user. Please reassign them first.`,
       );
     }
+
+    // Get deletedBy account details if provided
+    let deletedByUsername = null;
+    if (deletedBy) {
+      const deletedByAccount = await this.prisma.account.findUnique({
+        where: { id: deletedBy },
+        select: { username: true },
+      });
+      deletedByUsername = deletedByAccount?.username;
+    }
+
+    // Create audit log before deletion
+    await this.prisma.accountDeletionLog.create({
+      data: {
+        deletedAccountId: accountInformation.id,
+        deletedUsername: accountInformation.username,
+        deletedEmail: accountInformation.email,
+        deletedByAccountId: deletedBy,
+        deletedByUsername: deletedByUsername,
+        reason: reason,
+        deletionType: 'soft',
+        metadata: {
+          accountType: accountInformation.accountType,
+          roleId: accountInformation.roleId,
+          companyId: accountInformation.companyId,
+          roleLevel: accountInformation.role.level,
+          isDeveloper: accountInformation.isDeveloper,
+        },
+      },
+    });
 
     const updateResponse = await this.prisma.account.update({
       where: { id },

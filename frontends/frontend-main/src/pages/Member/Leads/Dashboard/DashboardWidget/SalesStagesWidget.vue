@@ -10,7 +10,7 @@
         <div v-if="loading" class="chart-skeleton">
           <q-skeleton type="rect" height="300px" />
         </div>
-        <div v-else-if="salesStages.length > 0 && chartReady">
+        <div v-else-if="hasData && chartReady">
           <ApexChart
             :key="chartKey"
             type="bar"
@@ -27,7 +27,7 @@
         </div>
         <div v-else class="q-pa-lg text-center text-grey-6">
           <q-icon name="bar_chart" size="48px" class="q-mb-md" />
-          <div class="text-body-medium">No sales data available</div>
+          <div class="text-body-medium">No sales stages data available</div>
         </div>
       </div>
     </template>
@@ -69,6 +69,11 @@ export default {
 
     // Sales stages data - will be populated from board data
     const salesStages = ref<SalesStage[]>([]);
+
+    // Check if there's any meaningful data (count > 0)
+    const hasData = computed(() => {
+      return salesStages.value.some(s => s.count > 0);
+    });
 
     // Chart configuration
     const chartOptions = computed(() => {
@@ -251,6 +256,7 @@ export default {
       chartReady,
       chartKey,
       salesStages,
+      hasData,
       refreshData,
     };
   },

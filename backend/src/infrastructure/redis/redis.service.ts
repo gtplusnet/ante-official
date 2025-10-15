@@ -15,13 +15,6 @@ export interface CachedTokenData {
   ipAddress?: string;
 }
 
-export interface CachedSupabaseToken {
-  token: string;
-  expiresAt: number;
-  userId: string;
-  accountId: string;
-}
-
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RedisService.name);
@@ -33,10 +26,16 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     const socketConfig: any = {
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT) || 6379,
-      connectTimeout: 5000, // 5 second connection timeout
+      connectTimeout: 10000, // 10 second connection timeout (TLS handshake needs more time)
+      keepAlive: 30000, // Send keep-alive packets every 30 seconds
+      noDelay: true, // Disable Nagle's algorithm for low latency
       reconnectStrategy: (retries) => {
-        // Exponential backoff with max 3 second delay
-        const delay = Math.min(retries * 100, 3000);
+        if (retries > 10) {
+          this.logger.error(`Redis reconnect failed after ${retries} attempts, giving up`);
+          return false; // Stop reconnecting after 10 attempts
+        }
+        // Exponential backoff with max 5 second delay
+        const delay = Math.min(retries * 500, 5000);
         this.logger.warn(`Main Redis reconnecting (attempt ${retries}) in ${delay}ms`);
         return delay;
       },
@@ -45,6 +44,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     // Add TLS if enabled (must be true, not boolean)
     if (process.env.REDIS_TLS === 'true') {
       socketConfig.tls = true;
+      socketConfig.servername = process.env.REDIS_HOST; // SNI for TLS
     }
 
     // Configuration for both clients
@@ -318,168 +318,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         connected: false,
         error: error.message,
       };
-    }
-  }
-
-  // Supabase Token Cache Methods
-  private getSupabaseAccessTokenKey(accountId: string): string {
-    return `supabase:access:${accountId}`;
-  }
-
-  private getSupabaseRefreshTokenKey(accountId: string): string {
-    return `supabase:refresh:${accountId}`;
-  }
-
-  async cacheSupabaseTokens(
-    accountId: string,
-    accessToken: string,
-    refreshToken: string,
-    userId: string,
-    accessTokenTTL = 3600, // 1 hour default
-    refreshTokenTTL = 2592000, // 30 days default
-  ): Promise<void> {
-    try {
-      const accessTokenData: CachedSupabaseToken = {
-        token: accessToken,
-        expiresAt: Date.now() + accessTokenTTL * 1000,
-        userId,
-        accountId,
-      };
-
-      const refreshTokenData: CachedSupabaseToken = {
-        token: refreshToken,
-        expiresAt: Date.now() + refreshTokenTTL * 1000,
-        userId,
-        accountId,
-      };
-
-      // Cache access token
-      const accessKey = this.getSupabaseAccessTokenKey(accountId);
-      await this.client.setEx(
-        accessKey,
-        accessTokenTTL,
-        JSON.stringify(accessTokenData),
-      );
-
-      // Cache refresh token
-      const refreshKey = this.getSupabaseRefreshTokenKey(accountId);
-      await this.client.setEx(
-        refreshKey,
-        refreshTokenTTL,
-        JSON.stringify(refreshTokenData),
-      );
-
-      this.logger.debug(`Supabase tokens cached for account: ${accountId}`);
-    } catch (error: any) {
-      this.logger.error(
-        `Error caching Supabase tokens: ${error?.message || String(error)}`,
-      );
-    }
-  }
-
-  async getCachedSupabaseAccessToken(
-    accountId: string,
-  ): Promise<CachedSupabaseToken | null> {
-    try {
-      const key = this.getSupabaseAccessTokenKey(accountId);
-      const data = await this.client.get(key);
-
-      if (!data) {
-        return null;
-      }
-
-      const tokenData = JSON.parse(data as string) as CachedSupabaseToken;
-
-      // Check if token is expired
-      if (tokenData.expiresAt <= Date.now()) {
-        this.logger.debug(
-          `Supabase access token expired for account: ${accountId}`,
-        );
-        await this.client.del(key);
-        return null;
-      }
-
-      return tokenData;
-    } catch (error: any) {
-      this.logger.error(
-        `Error retrieving cached Supabase access token: ${error?.message || String(error)}`,
-      );
-      return null;
-    }
-  }
-
-  async getCachedSupabaseRefreshToken(
-    accountId: string,
-  ): Promise<CachedSupabaseToken | null> {
-    try {
-      const key = this.getSupabaseRefreshTokenKey(accountId);
-      const data = await this.client.get(key);
-
-      if (!data) {
-        return null;
-      }
-
-      const tokenData = JSON.parse(data as string) as CachedSupabaseToken;
-
-      // Check if token is expired
-      if (tokenData.expiresAt <= Date.now()) {
-        this.logger.debug(
-          `Supabase refresh token expired for account: ${accountId}`,
-        );
-        await this.client.del(key);
-        return null;
-      }
-
-      return tokenData;
-    } catch (error: any) {
-      this.logger.error(
-        `Error retrieving cached Supabase refresh token: ${error?.message || String(error)}`,
-      );
-      return null;
-    }
-  }
-
-  async invalidateSupabaseTokens(accountId: string): Promise<void> {
-    try {
-      const accessKey = this.getSupabaseAccessTokenKey(accountId);
-      const refreshKey = this.getSupabaseRefreshTokenKey(accountId);
-
-      await this.client.del([accessKey, refreshKey]);
-
-      this.logger.debug(
-        `Supabase tokens invalidated for account: ${accountId}`,
-      );
-    } catch (error: any) {
-      this.logger.error(
-        `Error invalidating Supabase tokens: ${error?.message || String(error)}`,
-      );
-    }
-  }
-
-  async updateSupabaseAccessToken(
-    accountId: string,
-    newAccessToken: string,
-    userId: string,
-    ttl = 3600,
-  ): Promise<void> {
-    try {
-      const tokenData: CachedSupabaseToken = {
-        token: newAccessToken,
-        expiresAt: Date.now() + ttl * 1000,
-        userId,
-        accountId,
-      };
-
-      const key = this.getSupabaseAccessTokenKey(accountId);
-      await this.client.setEx(key, ttl, JSON.stringify(tokenData));
-
-      this.logger.debug(
-        `Supabase access token updated for account: ${accountId}`,
-      );
-    } catch (error: any) {
-      this.logger.error(
-        `Error updating Supabase access token: ${error?.message || String(error)}`,
-      );
     }
   }
 

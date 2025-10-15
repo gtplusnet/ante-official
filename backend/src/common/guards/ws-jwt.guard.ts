@@ -22,21 +22,40 @@ export class WsAdminGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const client = context.switchToWs().getClient();
+    const eventName = context.switchToWs().getPattern();
+
+    this.logger.log(`[WS GUARD] Checking auth for event: ${eventName} from client: ${client.id}`);
+
     const { token } = client.handshake.auth?.token
       ? client.handshake.auth
       : client.handshake.headers;
 
+    this.logger.log(`[WS GUARD] Token found: ${token ? 'YES' : 'NO'}`);
+
     const checkToken = await this.authenticateClient(token);
-    if (!checkToken) return false;
+    if (!checkToken) {
+      this.logger.error(`[WS GUARD] Token authentication failed for client: ${client.id}`);
+      return false;
+    }
+
+    this.logger.log(`[WS GUARD] Token authenticated for account: ${checkToken.accountId}`);
 
     const accountInformation: AccountSocketDataInterface =
       await this.accountService.getAccountInformation({
         id: checkToken.accountId,
       });
 
-    if (!accountInformation) return false;
+    if (!accountInformation) {
+      this.logger.error(`[WS GUARD] Account information not found for: ${checkToken.accountId}`);
+      return false;
+    }
 
-    this.utilityService.setAccountInformation(accountInformation);
+    this.logger.log(`[WS GUARD] Account information loaded, auth successful`);
+
+    // Store account information in the socket client data instead of CLS
+    // CLS (Continuation Local Storage) doesn't work with WebSocket connections
+    client.data = client.data || {};
+    client.data.account = accountInformation;
 
     return true;
   }

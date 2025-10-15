@@ -25,13 +25,15 @@ import { RedisService } from '@infrastructure/redis/redis.service';
 
 @Injectable()
 export class CompanyService {
-  @Inject() private prisma: PrismaService;
-  @Inject() private utility: UtilityService;
-  @Inject() private tableHandler: TableHandlerService;
-  @Inject() private uploadPhotoService: UploadPhotoService;
-  @Inject() private eventEmitter: EventEmitter2;
-  @Inject() private encryptionService: EncryptionService;
-  @Inject() private redisService: RedisService;
+  constructor(
+    private prisma: PrismaService,
+    private utility: UtilityService,
+    private tableHandler: TableHandlerService,
+    private uploadPhotoService: UploadPhotoService,
+    private eventEmitter: EventEmitter2,
+    private encryptionService: EncryptionService,
+    private redisService: RedisService,
+  ) {}
 
   async getInformation(id: number): Promise<CompanyDataResponse | null> {
     if (!id) return null;
@@ -283,17 +285,23 @@ export class CompanyService {
         data: companyCreateInput,
       });
 
-      // Step 2: Create a minimal level 0 role directly
-      const level0Role = await tx.role.create({
-        data: {
+      // Step 2: Seed all default roles and user levels
+      await this.seedRolesAndUserLevels(tx, company.id);
+
+      // Step 3: Find the Level 0 role from seeded roles
+      const level0Role = await tx.role.findFirst({
+        where: {
           companyId: company.id,
-          name: 'Admin',
           level: 0,
-          description: 'Administrator role',
-          isDeveloper: true,
           isDeleted: false,
         },
       });
+
+      if (!level0Role) {
+        throw new BadRequestException(
+          'Failed to create Level 0 role for company. Please contact support.',
+        );
+      }
 
       // Step 4: Create the user in the same transaction
       // Encrypt the password
@@ -468,5 +476,96 @@ export class CompanyService {
     this.utility.log(`Company cache invalidated for ID: ${id} (status update to ${isActive})`);
 
     return this.formatResponse(updatedCompany);
+  }
+
+  /**
+   * Seeds default roles and user levels for a new company
+   * This is a simplified version that copies from default (companyId: null) templates
+   */
+  private async seedRolesAndUserLevels(tx: any, companyId: number): Promise<void> {
+    // 1. Copy all default user levels (companyId: null) to the company
+    const defaultUserLevels = await tx.userLevel.findMany({
+      where: { companyId: null },
+    });
+
+    const userLevelIdMap: Record<number, number> = {};
+
+    for (const defaultUserLevel of defaultUserLevels) {
+      const { id: _id, ...userLevelData } = defaultUserLevel;
+      const created = await tx.userLevel.create({
+        data: {
+          ...userLevelData,
+          companyId,
+        },
+      });
+      userLevelIdMap[defaultUserLevel.id] = created.id;
+    }
+
+    // 2. Copy all default roles (companyId: null) to the company
+    const defaultRoleList = await tx.role.findMany({
+      where: { companyId: null },
+    });
+
+    // First pass: create all roles with parentRoleId null
+    const defaultIdToCompanyId: Record<string, string> = {};
+    const roleUserLevelsMap: Record<string, number[]> = {};
+
+    for (const defaultRole of defaultRoleList) {
+      const {
+        id: defaultRoleId,
+        companyId: _,
+        parentRoleId: _parentRoleId,
+        ...roleData
+      } = defaultRole;
+
+      // Get userLevelIds for this role
+      const roleUserLevels = await tx.roleUserLevel.findMany({
+        where: { roleId: defaultRoleId },
+      });
+      roleUserLevelsMap[defaultRoleId] = roleUserLevels.map(
+        (rul: any) => rul.userLevelId,
+      );
+
+      // Create role for company with parentRoleId null
+      const created = await tx.role.create({
+        data: {
+          ...roleData,
+          companyId,
+          parentRoleId: null,
+        },
+      });
+      defaultIdToCompanyId[defaultRoleId] = created.id;
+    }
+
+    // Second pass: update parentRoleId for all company roles
+    for (const defaultRole of defaultRoleList) {
+      const { id: defaultRoleId, parentRoleId } = defaultRole;
+      if (parentRoleId) {
+        const companyRoleId = defaultIdToCompanyId[defaultRoleId];
+        const newParentId = defaultIdToCompanyId[parentRoleId];
+        if (companyRoleId && newParentId) {
+          await tx.role.update({
+            where: { id: companyRoleId },
+            data: { parentRoleId: newParentId },
+          });
+        }
+      }
+    }
+
+    // Third pass: create RoleUserLevel associations
+    for (const defaultRole of defaultRoleList) {
+      const { id: defaultRoleId } = defaultRole;
+      const companyRoleId = defaultIdToCompanyId[defaultRoleId];
+      const defaultUserLevelIds = roleUserLevelsMap[defaultRoleId] || [];
+
+      if (companyRoleId && defaultUserLevelIds.length > 0) {
+        await tx.roleUserLevel.createMany({
+          data: defaultUserLevelIds.map((defaultUserLevelId) => ({
+            roleId: companyRoleId,
+            userLevelId: userLevelIdMap[defaultUserLevelId],
+          })),
+        });
+      }
+    }
   }
 }

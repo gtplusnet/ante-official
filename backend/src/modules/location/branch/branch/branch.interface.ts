@@ -25,4 +25,9 @@ export class BranchCreateDTO implements BranchCreateRequest {
   @IsNumber()
   @Exists('project', 'id', { message: 'Parent branch does not exist.' })
   parentId?: number;
+
+  @IsOptional()
+  @IsString()
+  @Exists('warehouse', 'id', { message: 'Warehouse ID does not exist.' })
+  mainWarehouseId?: string;
 }

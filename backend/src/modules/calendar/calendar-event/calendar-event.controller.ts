@@ -13,6 +13,7 @@ import {
 import { Response } from 'express';
 import { UtilityService } from '@common/utility.service';
 import { CalendarEventService } from './calendar-event.service';
+import { CalendarIntegrationService } from './calendar-integration.service';
 import {
   CreateEventDto,
   UpdateEventDto,
@@ -24,6 +25,7 @@ import {
 export class CalendarEventController {
   @Inject() private readonly utilityService: UtilityService;
   @Inject() private readonly calendarEventService: CalendarEventService;
+  @Inject() private readonly calendarIntegrationService: CalendarIntegrationService;
 
   @Get()
   async getEvents(
@@ -89,6 +91,31 @@ export class CalendarEventController {
   ) {
     return this.utilityService.responseHandler(
       this.calendarEventService.deleteEvent(id),
+      response,
+    );
+  }
+
+  // Integration endpoints
+  @Get('integration/personal')
+  async getPersonalCalendarEvents(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @NestResponse() response: Response,
+  ) {
+    return this.utilityService.responseHandler(
+      this.calendarIntegrationService.getPersonalCalendarEvents(startDate, endDate),
+      response,
+    );
+  }
+
+  @Get('integration/company')
+  async getCompanyCalendarEvents(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @NestResponse() response: Response,
+  ) {
+    return this.utilityService.responseHandler(
+      this.calendarIntegrationService.getCompanyCalendarEvents(startDate, endDate),
       response,
     );
   }

@@ -1,10 +1,11 @@
 <template>
   <div>
-    <!-- Use Supabase-enabled table for direct database access -->
-    <supabase-g-table 
-    :isRowActionEnabled="true" 
-    tableKey="employeeListTable" 
-    supabaseTab="inactive"
+    <!-- Use API-based table -->
+    <g-table
+    :isRowActionEnabled="true"
+    tableKey="employeeListTable"
+    apiUrl="/hris/employee/table-lite"
+    :apiFilters="[{ isActive: false }]"
     ref="table">
     <template v-slot:accountDetails="props">
       <div class="clickable-code text-body-small" style="display: flex; gap: 2px" @click="viewHRISInfo(props)">
@@ -32,7 +33,7 @@
       </g-button>
     </template>
     <!------------------------------------------->
-    </supabase-g-table>
+    </g-table>
 
     <EditCreateEmployee @saveDone="handleSaveDone" @close="openEditEmployeeGroupDialog = false" :employeeId="selectedEmployeeId" v-model="openEditEmployeeGroupDialog" />
 
@@ -41,7 +42,7 @@
 </template>
 
 <script>
-import SupabaseGTable from "../../../../../components/shared/display/SupabaseGTable.vue";
+import GTable from "../../../../../components/shared/display/GTable.vue";
 import GButton from "src/components/shared/buttons/GButton.vue";
 import EditCreateEmployee from './dialog/EditCreateEmployee.vue';
 import ViewCreateEmployee from './dialog/ViewCreateEmployee.vue';
@@ -50,7 +51,7 @@ import { api } from 'src/boot/axios';
 export default {
   name: 'HRISInactiveTabPage',
   components: {
-    SupabaseGTable,
+    GTable,
     GButton,
     EditCreateEmployee,
     ViewCreateEmployee,

@@ -1,11 +1,14 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@common/prisma.service';
 import { UtilityService } from '@common/utility.service';
+import { CRMActivityService } from '../../crm-activity/crm-activity/crm-activity.service';
+import { CRMActivityType, CRMEntityType } from '@prisma/client';
 
 @Injectable()
 export class LeadRelationshipOwnerService {
   @Inject() private prisma: PrismaService;
   @Inject() private utilityService: UtilityService;
+  @Inject() private crmActivityService: CRMActivityService;
 
   // Upsert multiple owners - create or update (unarchive)
   async upsertMultiple(accountIds: string[]) {
@@ -13,6 +16,16 @@ export class LeadRelationshipOwnerService {
     const results = [];
 
     for (const accountId of accountIds) {
+      // Check if exists first
+      const existingOwner = await this.prisma.leadRelationshipOwner.findUnique({
+        where: { accountId },
+        include: {
+          account: true,
+        },
+      });
+
+      const isNew = !existingOwner;
+
       // Upsert: update if exists, create if not
       const owner = await this.prisma.leadRelationshipOwner.upsert({
         where: { accountId },
@@ -26,7 +39,24 @@ export class LeadRelationshipOwnerService {
           companyId: this.utilityService.companyId,
           isActive: true,
         },
+        include: {
+          account: true,
+        },
       });
+
+      // Log activity for new owners OR when re-activating archived owners
+      if (isNew || (existingOwner && !existingOwner.isActive)) {
+        const ownerName = `${owner.account.firstName} ${owner.account.lastName}`;
+        // TODO: Re-enable after Prisma client regeneration issue is resolved
+        // await this.crmActivityService.createActivity({
+        //   activityType: CRMActivityType.CREATE,
+        //   entityType: CRMEntityType.RELATIONSHIP_OWNER,
+        //   entityId: owner.id,
+        //   entityName: ownerName,
+        //   description: `Added new relationship owner "${ownerName}"`,
+        //   performedById: this.utilityService.accountInformation.id,
+        // });
+      }
 
       results.push(owner);
     }
@@ -94,6 +124,31 @@ export class LeadRelationshipOwnerService {
       delete where.isActive;
     }
 
+    // Handle sorting
+    let orderBy: any = { createdAt: 'desc' }; // Default sort
+
+    if (query?.sortBy) {
+      switch (query.sortBy) {
+        case 'Name (A-Z)':
+          orderBy = { account: { firstName: 'asc' } };
+          break;
+        case 'Name (Z-A)':
+          orderBy = { account: { firstName: 'desc' } };
+          break;
+        case 'Job Title':
+          orderBy = { account: { role: { name: 'asc' } } };
+          break;
+        case 'Branch':
+          orderBy = { account: { EmployeeData: { branch: { name: 'asc' } } } };
+          break;
+        case 'Recent Activity':
+          orderBy = { updatedAt: 'desc' };
+          break;
+        default:
+          orderBy = { createdAt: 'desc' };
+      }
+    }
+
     const owners = await this.prisma.leadRelationshipOwner.findMany({
       where,
       include: {
@@ -109,12 +164,13 @@ export class LeadRelationshipOwnerService {
         },
         createdBy: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy,
     });
 
     // Format for frontend table
     return owners.map((owner) => ({
       id: owner.id,
+      accountId: owner.accountId,  // Add accountId for filtering
       fullName: `${owner.account.firstName} ${owner.account.lastName}`,
       email: owner.account.email,
       branch: owner.account.EmployeeData?.branch?.name || 'N/A',
@@ -133,19 +189,36 @@ export class LeadRelationshipOwnerService {
         id,
         companyId: this.utilityService.companyId,
       },
+      include: {
+        account: true,
+      },
     });
 
     if (!owner) {
       throw new NotFoundException('Lead relationship owner not found');
     }
 
-    return await this.prisma.leadRelationshipOwner.update({
+    const archivedOwner = await this.prisma.leadRelationshipOwner.update({
       where: { id },
       data: {
         isActive: false,
         updatedAt: new Date(),
       },
     });
+
+    // Log activity
+    const ownerName = `${owner.account.firstName} ${owner.account.lastName}`;
+    // TODO: Re-enable after Prisma client regeneration issue is resolved
+    // await this.crmActivityService.createActivity({
+    //   activityType: CRMActivityType.DELETE,
+    //   entityType: CRMEntityType.RELATIONSHIP_OWNER,
+    //   entityId: owner.id,
+    //   entityName: ownerName,
+    //   description: `Deleted relationship owner "${ownerName}"`,
+    //   performedById: this.utilityService.accountInformation.id,
+    // });
+
+    return archivedOwner;
   }
 
   // Toggle archive status

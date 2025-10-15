@@ -73,11 +73,23 @@
             </q-item-section>
 
             <q-item-section side>
-              <q-badge 
-                v-if="task.priorityLevel"
-                :color="getPriorityColor(task.priorityLevel)"
-                :label="getPriorityLabel(task.priorityLevel)"
-              />
+              <div class="column items-end q-gutter-xs">
+                <!-- Time badge (if any time spent) -->
+                <q-badge
+                  v-if="task.timeSpentSeconds && task.timeSpentSeconds > 0"
+                  color="primary"
+                  :label="formatTimeSpent(task.timeSpentSeconds)"
+                >
+                  <q-tooltip>Total time spent</q-tooltip>
+                </q-badge>
+
+                <!-- Priority badge -->
+                <q-badge
+                  v-if="task.priorityLevel"
+                  :color="getPriorityColor(task.priorityLevel)"
+                  :label="getPriorityLabel(task.priorityLevel)"
+                />
+              </div>
             </q-item-section>
           </q-item>
         </q-list>
@@ -133,6 +145,8 @@ interface Task {
   id: number;
   title: string;
   priorityLevel: number;
+  timeSpentMinutes?: number;
+  timeSpentSeconds?: number;
   project?: {
     id: number;
     name: string;
@@ -233,7 +247,17 @@ export default defineComponent({
       if (level >= 2) return 'Medium';
       return 'Low';
     };
-    
+
+    const formatTimeSpent = (seconds: number) => {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+
+      if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+      }
+      return `${minutes}m`;
+    };
+
     // Watch for dialog open
     watch(() => props.modelValue, (newVal) => {
       if (newVal) {
@@ -252,7 +276,8 @@ export default defineComponent({
       getTaskIcon,
       getTaskColor,
       getPriorityColor,
-      getPriorityLabel
+      getPriorityLabel,
+      formatTimeSpent
     };
   }
 });

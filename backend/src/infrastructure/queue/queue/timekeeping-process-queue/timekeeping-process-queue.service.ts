@@ -83,6 +83,7 @@ export class TimekeepingProcessQueueService extends QueueAbstract {
           params: {
             employeeAccountId: employee.accountId,
             cutoffDateRangeId: cutoffDataRange.id,
+            companyId: accountInformation.company?.id || null, // Store companyId for background processing
             processOnlyUncomputed,
             processFromDate,
             processUpToDate,

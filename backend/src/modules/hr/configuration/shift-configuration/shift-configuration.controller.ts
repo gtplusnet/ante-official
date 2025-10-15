@@ -25,6 +25,14 @@ export class ShiftConfigurationController {
     private readonly utilityService: UtilityService,
   ) {}
 
+  @Get('list')
+  async getShiftList(@Res() response: Response) {
+    return this.utilityService.responseHandler(
+      this.shiftConfigurationService.getShiftList(),
+      response,
+    );
+  }
+
   @Get('info')
   async getShiftInfo(@Query('id') id: number, @Res() response: Response) {
     return this.utilityService.responseHandler(

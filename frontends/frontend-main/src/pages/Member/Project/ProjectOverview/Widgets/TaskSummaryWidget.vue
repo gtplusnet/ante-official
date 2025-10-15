@@ -147,7 +147,8 @@
 import { defineComponent, ref, computed, onMounted, PropType } from 'vue';
 import { useRouter } from 'vue-router';
 import { ProjectDataResponse } from '@shared/response';
-import supabaseService from '../../../../../services/supabase';
+// TODO: Migrate to backend API
+// import supabaseService from '../../../../../services/supabase';
 
 interface Task {
   id: number;
@@ -200,43 +201,46 @@ export default defineComponent({
       if (!props.projectData?.id) return;
 
       loading.value = true;
-      try {
-        const { data, error } = await supabaseService.getClient()
-          .from('Task')
-          .select(`
-            id,
-            title,
-            priorityLevel,
-            assignedToId,
-            boardLane:boardLaneId (
-              id,
-              key,
-              name
-            ),
-            Account:assignedToId (
-              firstName,
-              lastName
-            )
-          `)
-          .eq('projectId', props.projectData.id)
-          .eq('isDeleted', false)
-          .order('createdAt', { ascending: false })
-          .limit(10);
+      // TODO: Migrate to backend API
+      console.warn('fetchTasks not implemented - needs backend API');
+      loading.value = false;
+      // try {
+      //   const { data, error } = await supabaseService.getClient()
+      //     .from('Task')
+      //     .select(`
+      //       id,
+      //       title,
+      //       priorityLevel,
+      //       assignedToId,
+      //       boardLane:boardLaneId (
+      //         id,
+      //         key,
+      //         name
+      //       ),
+      //       Account:assignedToId (
+      //         firstName,
+      //         lastName
+      //       )
+      //     `)
+      //     .eq('projectId', props.projectData.id)
+      //     .eq('isDeleted', false)
+      //     .order('createdAt', { ascending: false })
+      //     .limit(10);
 
-        if (!error && data) {
-          // Map data to include isDone, isInProgress, and priority for compatibility
-          tasks.value = data.map(task => ({
-            ...task,
-            isDone: task.boardLane?.key === 'DONE',
-            isInProgress: task.boardLane?.key === 'IN_PROGRESS',
-            priority: task.priorityLevel === 3 ? 'high' : task.priorityLevel === 2 ? 'medium' : 'low'
-          })) as Task[];
-        }
-      } catch (err) {
-        console.error('Error fetching tasks:', err);
-      } finally {
-        loading.value = false;
-      }
+      //   if (!error && data) {
+      //     // Map data to include isDone, isInProgress, and priority for compatibility
+      //     tasks.value = data.map(task => ({
+      //       ...task,
+      //       isDone: task.boardLane?.key === 'DONE',
+      //       isInProgress: task.boardLane?.key === 'IN_PROGRESS',
+      //       priority: task.priorityLevel === 3 ? 'high' : task.priorityLevel === 2 ? 'medium' : 'low'
+      //     })) as Task[];
+      //   }
+      // } catch (err) {
+      //   console.error('Error fetching tasks:', err);
+      // } finally {
+      //   loading.value = false;
+      // }
     };
 
     const getTaskIcon = (task: Task) => {

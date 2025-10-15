@@ -115,6 +115,12 @@ const routesConfig: RouteRecordRaw[] = [
         redirect: { name: 'member_task_my_task' },
         children: [
           {
+            path: 'goals',
+            name: 'member_task_goals',
+            component: () => import('pages/Member/Task/GoalList.vue'),
+            meta: { title: 'Goals' }
+          },
+          {
             path: 'my-task',
             name: 'member_task_my_task',
             component: TaskList,
@@ -189,6 +195,12 @@ const routesConfig: RouteRecordRaw[] = [
         meta: { title: 'Project Dashboard' }
       },
       {
+        name: 'member_project_board',
+        path: 'project/board',
+        component: () => import('pages/Member/Project/ProjectBoardView.vue'),
+        meta: { title: 'Project Board' }
+      },
+      {
         name: 'member_project',
         path: 'project',
         component: () => import('pages/Member/Project/Project.vue'),
@@ -247,6 +259,11 @@ const routesConfig: RouteRecordRaw[] = [
         component: () => import('pages/Member/Asset/Item/AssetItemAdvance.vue'),
       },
       {
+        name: 'member_asset_item_group',
+        path: 'asset/item/group',
+        component: () => import('pages/Member/Asset/Item/AssetItemGroup.vue'),
+      },
+      {
         name: 'member_asset_item_deleted',
         path: 'asset/item/deleted',
         component: () => import('pages/Member/Asset/Item/AssetItemDeleted.vue'),
@@ -287,6 +304,12 @@ const routesConfig: RouteRecordRaw[] = [
         name: 'member_asset_deliveries_canceled',
         path: 'asset/deliveries/canceled',
         component: () => import('pages/Member/Asset/Deliveries/AssetDeliveriesCanceled.vue'),
+      },
+      // Item Categories
+      {
+        name: 'member_asset_item_categories',
+        path: 'asset/item-categories',
+        component: () => import('pages/Member/Asset/AssetItemCategories.vue'),
       },
       // Equipment
       {
@@ -625,6 +648,26 @@ const routesConfig: RouteRecordRaw[] = [
         path: 'manpower/reports/tax',
         component: () => import('pages/Member/Manpower/Reports/TaxWithholdingReport.vue'),
       },
+      {
+        name: 'member_manpower_reports_13th_month',
+        path: 'manpower/reports/13th-month-pay',
+        component: () => import('pages/Member/Manpower/Reports/ThirteenthMonthPayReport.vue'),
+      },
+      {
+        name: 'member_manpower_reports_annualization',
+        path: 'manpower/reports/annualization',
+        component: () => import('pages/Member/Manpower/Reports/AnnualizationReport.vue'),
+      },
+      {
+        name: 'member_manpower_reports_leave',
+        path: 'manpower/reports/leave',
+        component: () => import('pages/Member/Manpower/Reports/LeaveReport.vue'),
+      },
+      {
+        name: 'member_manpower_reports_payroll_cost',
+        path: 'manpower/reports/payroll-cost',
+        component: () => import('pages/Member/Manpower/Reports/PayrollCostAllocation.vue'),
+      },
 
       // Manpower API
       {
@@ -914,6 +957,11 @@ const routesConfig: RouteRecordRaw[] = [
             component: () => import('pages/Member/Developer/DeveloperUserManagement.vue'),
           },
           {
+            path: 'deletion-logs',
+            name: 'member_developer_deletion_logs',
+            component: () => import('pages/Member/Developer/DeletionLogs.vue'),
+          },
+          {
             path: 'default-roles',
             name: 'member_developer_default_roles',
             component: () => import('pages/Member/Developer/DeveloperRoles.vue'),
@@ -962,6 +1010,11 @@ const routesConfig: RouteRecordRaw[] = [
             path: 'companies',
             name: 'member_leads_companies',
             component: () => import('pages/Member/Leads/Companies/LeadCompanies.vue'),
+          },
+          {
+            path: 'deal-type',
+            name: 'member_leads_deal_type',
+            component: () => import('pages/Member/Leads/DealType/DealType.vue'),
           },
           {
             path: 'people',

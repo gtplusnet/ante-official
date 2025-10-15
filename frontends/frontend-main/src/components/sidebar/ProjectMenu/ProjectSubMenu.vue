@@ -158,7 +158,7 @@
 import { ref, watch, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
-import supabaseService from '../../../services/supabase';
+import { api } from '../../../boot/axios';
 import { useCache } from '../../../composables/useCache';
 import { projectCache, CacheTTL } from '../../../utils/cache/implementations';
 import { useAuthStore } from '../../../stores/auth';
@@ -263,30 +263,28 @@ export default {
       projectCache,
       async () => {
         try {
-          // Build query with filters - matching ProjectGridView filters
-          let query = supabaseService.getClient()
-            .from('Project')
-            .select('id, name, status')
-            .eq('isDeleted', false)
-            .eq('isLead', false)
-            .eq('status', 'PROJECT')
-            .order('name', { ascending: true })
-            .limit(20);
+          // Use backend API with table endpoint (PUT /project)
+          const response = await api.put('/project', {
+            // TableBodyDTO
+            filters: [
+              { field: 'isDeleted', operator: '=', value: false },
+              { field: 'isLead', operator: '=', value: false },
+              { field: 'status', operator: '=', value: 'PROJECT' }
+            ],
+            sorts: [{ field: 'name', order: 'asc' }]
+          }, {
+            params: {
+              // TableQueryDTO
+              page: 1,
+              perPage: 20
+            }
+          });
 
-          // Add company filter if user has a company
-          if (userCompanyId) {
-            query = query.eq('companyId', userCompanyId);
-          }
-
-          const { data, error } = await query;
-
-          if (error) {
-            console.error('Error fetching projects:', error);
-            return { projects: [] };
-          }
+          // Backend returns data directly with list property
+          const projects = response.data?.list || [];
 
           return {
-            projects: (data || []).map((project: any) => ({
+            projects: projects.map((project: any) => ({
               id: project.id,
               name: project.name
             }))

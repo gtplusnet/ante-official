@@ -294,7 +294,8 @@
 
 <script>
 import { api } from "src/boot/axios";
-import { useSupabaseSchedules } from "src/composables/supabase/useSupabaseSchedules";
+// TODO: Migrate to backend API
+// import { useSupabaseSchedules } from "src/composables/supabase/useSupabaseSchedules";
 import { useAuthStore } from "src/stores/auth";
 import { useGlobalMethods } from "src/composables/useGlobalMethods";
 import { useQuasar } from "quasar";
@@ -305,8 +306,15 @@ export default {
     // Initialize Quasar
     const quasar = useQuasar();
 
-    // Initialize Supabase composables
-    const schedulesComposable = useSupabaseSchedules();
+    // TODO: Migrate to backend API - schedules composable deleted
+    // const schedulesComposable = useSupabaseSchedules();
+    const schedulesComposable = {
+      scheduleOptions: { value: [] },
+      fetchSchedulesByCompany: async () => {},
+      fetchSchedules: async () => {},
+      loading: false,
+      error: null
+    };
     const authStore = useAuthStore();
     const { handleAxiosError } = useGlobalMethods();
 

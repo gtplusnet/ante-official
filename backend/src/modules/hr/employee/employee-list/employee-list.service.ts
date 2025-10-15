@@ -65,6 +65,44 @@ export class EmployeeListService {
     return formattedResponse;
   }
 
+  async infoLite(accountId: string): Promise<EmployeeDataResponse> {
+    const response = await this.prisma.employeeData.findUnique({
+      where: { accountId },
+      relationLoadStrategy: 'join',
+      include: {
+        account: {
+          include: {
+            role: {
+              include: {
+                roleGroup: true,
+              },
+            },
+            parent: true,
+          },
+        },
+        payrollGroup: {
+          include: {
+            cutoff: true,
+          },
+        },
+        schedule: true,
+        branch: true,
+        activeContract: {
+          include: {
+            contractFile: true,
+          },
+        },
+      },
+    });
+
+    if (!response) {
+      throw new BadRequestException('Employee data not found.');
+    }
+
+    const formattedResponse = await this.formatResponseLite(response as any);
+    return formattedResponse;
+  }
+
   async getEmployeeListByPayrollByCutoff(
     cutoffId: number,
   ): Promise<EmployeeData[]> {
@@ -138,6 +176,255 @@ export class EmployeeListService {
     );
 
     return { list: formattedList, pagination, currentPage };
+  }
+
+  async employeeTableLite(query: TableQueryDTO, body: TableBodyDTO) {
+    this.tableHandlerService.initialize(query, body, 'employeeData');
+    const tableQuery = this.tableHandlerService.constructTableQuery();
+
+    // Configure eager loading with JOIN strategy to prevent N+1 queries
+    tableQuery['relationLoadStrategy'] = 'join';
+    tableQuery['include'] = {
+      account: {
+        include: {
+          role: {
+            include: {
+              roleGroup: true, // Include roleGroup for department display
+            },
+          },
+          parent: true,
+        },
+      },
+      payrollGroup: {
+        include: {
+          cutoff: true,
+        },
+      },
+      schedule: true,
+      branch: true,
+      activeContract: {
+        include: {
+          contractFile: true,
+        },
+      },
+    };
+
+    tableQuery['where'] = {
+      ...tableQuery['where'],
+      account: {
+        ...((tableQuery['where'] as any)?.account || {}),
+        companyId: this.utilityService.companyId,
+      },
+    };
+
+    const {
+      list: baseList,
+      currentPage,
+      pagination,
+    } = await this.tableHandlerService.getTableData(
+      this.prisma.employeeData,
+      query,
+      tableQuery,
+    );
+
+    // Format with already-loaded data (no additional queries)
+    const formattedList = await Promise.all(
+      baseList.map(async (employeeData: any) => {
+        return await this.formatResponseLite(employeeData);
+      }),
+    );
+
+    return { list: formattedList, pagination, currentPage };
+  }
+
+  private async formatResponseLite(employeeData: any): Promise<EmployeeDataResponse> {
+    // CRITICAL PERFORMANCE OPTIMIZATION: Use ONLY the eager-loaded data
+    // DO NOT make additional database queries - this eliminates the N+1 problem
+
+    // Format account (use eager-loaded account data with role already included)
+    const account = employeeData.account;
+    const accountInformation: AccountDataResponse = {
+      id: account.id,
+      email: account.email,
+      firstName: account.firstName,
+      middleName: account.middleName || '',
+      lastName: account.lastName,
+      fullName: `${account.lastName.charAt(0).toUpperCase() + account.lastName.slice(1)}, ${account.firstName.charAt(0).toUpperCase() + account.firstName.slice(1)} ${account.middleName ? account.middleName.charAt(0).toUpperCase() + account.middleName.slice(1) : ''}`,
+      contactNumber: account.contactNumber,
+      username: account.username,
+      roleID: account.roleId,
+      // Simplified role formatting - use eager-loaded data only
+      role: account.role ? {
+        id: account.role.id,
+        name: account.role.name,
+        employeeCount: 0, // Not needed for table
+        description: account.role.description,
+        isDeveloper: account.role.isDeveloper,
+        isDeleted: account.role.isDeleted,
+        level: account.role.level,
+        roleGroupId: account.role.roleGroupId,
+        roleGroup: account.role.roleGroup ? {
+          id: account.role.roleGroup.id,
+          name: account.role.roleGroup.name,
+          description: account.role.roleGroup.description,
+        } : null,
+        parentRole: null, // Not needed for table
+        userLevels: [],
+        isFullAccess: account.role.isFullAccess,
+        updatedAt: this.utilityService.formatDate(account.role.updatedAt),
+        createdAt: this.utilityService.formatDate(account.role.createdAt),
+        scopeList: [],
+        department: account.role.department || null, // Add department field
+      } : null,
+      company: null, // Not needed for employee list
+      parentAccountId: account.parentAccountId,
+      status: account.status,
+      image: account.image,
+      createdAt: this.utilityService.formatDate(account.createdAt),
+      updatedAt: this.utilityService.formatDate(account.updatedAt),
+      isDeveloper: account.isDeveloper,
+      isDeleted: account.isDeleted,
+      isEmailVerified: account.isEmailVerified,
+      dateOfBirth: account.dateOfBirth,
+      gender: account.gender,
+      civilStatus: account.civilStatus,
+      street: account.street,
+      city: account.city,
+      stateProvince: account.stateProvince,
+      postalCode: account.postalCode,
+      zipCode: account.zipCode,
+      country: account.country,
+    };
+
+    // Format contract (use eager-loaded data)
+    let contractDetails: ContractDataResponse = null;
+    if (employeeData.activeContract) {
+      // Inline contract formatting using eager-loaded data
+      const contract = employeeData.activeContract;
+      contractDetails = {
+        id: contract.id,
+        accountId: contract.accountId,
+        startDate: this.utilityService.formatDate(contract.startDate),
+        endDate: this.utilityService.formatDate(contract.endDate),
+        employmentStatus: employmentStatusReference.find(
+          (status) => status.key === contract.employmentStatus,
+        ),
+        monthlyRate: this.utilityService.formatCurrency(contract.monthlyRate),
+        contractFileId: contract.contractFileId,
+        contractFile: contract.contractFile ? {
+          id: contract.contractFile.id,
+          name: contract.contractFile.fileName,
+          type: contract.contractFile.fileType,
+          url: contract.contractFile.filePath,
+          size: contract.contractFile.fileSize,
+          uploadedBy: null, // Not needed for table
+          fieldName: '',
+          originalName: contract.contractFile.fileName,
+          encoding: null,
+          mimetype: '',
+        } : null,
+        isActive: contract.isActive,
+        isEmployeeActiveContract: employeeData.activeContractId === contract.id,
+        createdAt: this.utilityService.formatDate(contract.createdAt),
+        updatedAt: this.utilityService.formatDate(contract.updatedAt),
+      };
+    }
+
+    // Format payroll group (use eager-loaded data only - simplified for table)
+    let payrollGroup: PayrollGroupDataResponse = null;
+    if (employeeData.payrollGroup) {
+      const pg = employeeData.payrollGroup;
+      payrollGroup = {
+        id: pg.id,
+        payrollGroupCode: pg.payrollGroupCode,
+        cutoff: pg.cutoff ? {
+          id: pg.cutoff.id,
+          cutoffCode: pg.cutoff.cutoffCode,
+          cutoffType: pg.cutoff.type,
+          cutoffConfig: null, // Not needed for table
+          releaseProcessingDays: pg.cutoff.releaseProcessingDays || 0,
+        } : null,
+        salaryRateType: null, // Not needed for table display
+        deductionPeriodWitholdingTax: null,
+        deductionPeriodSSS: null,
+        deductionPeriodPhilhealth: null,
+        deductionPeriodPagibig: null,
+        deductionBasisPhilhealth: null,
+        deductionBasisSSS: null,
+        lateDeductionType: null,
+        lateDeductionCustom: null,
+        undertimeDeductionType: null,
+        undertimeDeductionCustom: null,
+        absentDeductionHours: pg.absentDeductionHours,
+        shiftingWorkingDaysPerWeek: pg.shiftingWorkingDaysPerWeek,
+        lateGraceTimeMinutes: pg.lateGraceTimeMinutes,
+        undertimeGraceTimeMinutes: pg.undertimeGraceTimeMinutes,
+        overtimeGraceTimeMinutes: pg.overtimeGraceTimeMinutes,
+        overtimeRateFactors: null,
+      };
+    }
+
+    // Format schedule (use eager-loaded data only - simplified for table)
+    let schedule: ScheduleDataResponse = null;
+    if (employeeData.schedule) {
+      const sched = employeeData.schedule;
+      schedule = {
+        id: sched.id,
+        scheduleCode: sched.scheduleCode,
+        totalWorkingHours: { raw: 0, formatted: '0h 0m', hours: 0, minutes: 0, totalMinutes: 0 }, // Not needed for table
+        daySchedule: {
+          mondayShiftId: sched.mondayShiftId,
+          tuesdayShiftId: sched.tuesdayShiftId,
+          wednesdayShiftId: sched.wednesdayShiftId,
+          thursdayShiftId: sched.thursdayShiftId,
+          fridayShiftId: sched.fridayShiftId,
+          saturdayShiftId: sched.saturdayShiftId,
+          sundayShiftId: sched.sundayShiftId,
+        },
+        dayScheduleDetails: null, // Not needed for table
+      };
+    }
+
+    // Format branch (use eager-loaded data only - simplified for table)
+    let branch: BranchDataResponse = null;
+    if (employeeData.branch) {
+      const br = employeeData.branch;
+      branch = {
+        id: br.id,
+        name: br.name,
+        code: br.code,
+        status: br.status,
+        location: null, // Not needed for table
+        parentId: br.parentId,
+        parent: undefined,
+        children: undefined,
+        childrenCount: 0,
+        createdAt: this.utilityService.formatDate(br.createdAt),
+        updatedAt: this.utilityService.formatDate(br.updatedAt),
+      };
+    }
+
+    const formattedResponse: EmployeeDataResponse = {
+      employeeCode: employeeData.employeeCode,
+      accountDetails: accountInformation,
+      contractDetails: contractDetails,
+      payrollGroup: payrollGroup,
+      schedule: schedule,
+      branch: branch,
+      jobDetails: {
+        bankName: employeeData.bankName,
+        bankAccountNumber: employeeData.bankAccountNumber,
+        biometricsNumber: employeeData.biometricsNumber,
+      },
+      governmentDetails: {
+        tinNumber: employeeData.tinNumber,
+        sssNumber: employeeData.sssNumber,
+        hdmfNumber: employeeData.hdmfNumber,
+        phicNumber: employeeData.phicNumber,
+      },
+    };
+
+    return formattedResponse;
   }
 
   async add(params: EmployeeCreateDTO) {

@@ -12,7 +12,7 @@
 
     <!-- Variations -->
     <div v-if="form.itemName && form.tiers && form.tiers.length > 0" class="column justify-start">
-      <variations-partial :itemInformation="itemInformation" ref="tags" :tiers="form.tiers" :itemName="form.itemName"
+      <variations-partial :itemInformation="itemInformation" :fullItemData="fullItemData" ref="tags" :tiers="form.tiers" :itemName="form.itemName"
         @onVariationUpdate="onVariationUpdate" />
     </div>
   </div>
@@ -34,6 +34,10 @@ export default {
       type: Object || null,
       default: null,
     },
+    fullItemData: {
+      type: Object || null,
+      default: null,
+    },
   },
   data: () => ({
     form: {
@@ -45,7 +49,12 @@ export default {
       uom: null,
       sellingPrice: '',
       minimumStockLevel: 0,
-      maximumStockLevel: 0
+      maximumStockLevel: 0,
+      categoryId: null,
+      keywords: [],
+      enabledInPOS: false,
+      branchId: null,
+      brandId: null,
     },
   }),
   watch: {
@@ -64,21 +73,34 @@ export default {
   },
   computed: {},
   methods: {
-    initialize() {
+    async initialize() {
       if (this.itemInformation) {
         this.$refs.basicDetails.form.itemName = this.itemInformation.name;
         this.$refs.basicDetails.form.description = this.itemInformation.description;
         this.$refs.basicDetails.form.tags = this.itemInformation.tags;
         this.$refs.basicDetails.setTags(this.itemInformation.tags);
-        
+
         // Initialize price fields with proper value handling
         this.$refs.basicDetails.form.sellingPrice = this.itemInformation.sellingPrice || '';
         this.$refs.basicDetails.form.minimumStockLevel = this.itemInformation.minimumStockLevel || 0;
         this.$refs.basicDetails.form.maximumStockLevel = this.itemInformation.maximumStockLevel || 0;
-        
+
         // Set UOM if available
         if (this.itemInformation.uom) {
           this.$refs.basicDetails.form.uom = this.itemInformation.uom;
+        }
+
+        // Handle new fields
+        this.$refs.basicDetails.form.categoryId = this.itemInformation.categoryId || null;
+        this.$refs.basicDetails.form.brandId = this.itemInformation.brandId || null;
+        this.$refs.basicDetails.form.enabledInPOS = this.itemInformation.enabledInPOS || false;
+        this.$refs.basicDetails.form.branchId = this.itemInformation.branchId || null;
+        this.$refs.basicDetails.setKeywords(this.itemInformation.keywords || []);
+
+        // Set brand after refs are ready
+        await this.$nextTick();
+        if (this.$refs.basicDetails.form.brandId && this.$refs.basicDetails.$refs.brandSelect) {
+          await this.$refs.basicDetails.$refs.brandSelect.setAutoSelect(this.$refs.basicDetails.form.brandId);
         }
 
         if (!this.itemInformation.hasOwnProperty('parent') && this.itemInformation.parent) {
@@ -101,6 +123,11 @@ export default {
       this.form.sellingPrice = newUpdate.sellingPrice;
       this.form.minimumStockLevel = newUpdate.minimumStockLevel;
       this.form.maximumStockLevel = newUpdate.maximumStockLevel;
+      this.form.categoryId = newUpdate.categoryId;
+      this.form.brandId = newUpdate.brandId;
+      this.form.keywords = newUpdate.keywords;
+      this.form.enabledInPOS = newUpdate.enabledInPOS;
+      this.form.branchId = newUpdate.branchId;
     },
 
     onVariationUpdate(newUpdate) {
@@ -109,3 +136,12 @@ export default {
   },
 };
 </script>
+
+<style scoped lang="scss">
+.example-column-vertical-alignment {
+  max-height: 75vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--q-scroll-background-track) var(--q-scroll-background);
+}
+</style>

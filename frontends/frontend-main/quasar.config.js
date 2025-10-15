@@ -27,7 +27,7 @@ module.exports = configure(function (/* ctx */) {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
-    boot: ['sentry', 'axios', 'supabase', 'auth', 'multi-account', 'mixins', 'bus', 'lazy-components', 'theme', 'route-loading', 'google-auth'],
+    boot: ['sentry', 'axios', 'auth', 'global-stores', 'location-tracker', 'multi-account', 'mixins', 'bus', 'lazy-components', 'theme', 'google-auth'],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#css
     css: ['app.scss'],
@@ -64,7 +64,7 @@ module.exports = configure(function (/* ctx */) {
             // Only include variables that are relevant to the frontend
             if (key.startsWith('VITE_') || key.startsWith('API_') ||
                 key === 'ENVIRONMENT' || key === 'WHITELABEL' ||
-                key === 'SOCKET_URL' || key.includes('SUPABASE')) {
+                key === 'SOCKET_URL') {
               acc[key] = process.env[key];
             }
             return acc;
@@ -90,7 +90,7 @@ module.exports = configure(function (/* ctx */) {
         '__API_URL': JSON.stringify(process.env.API_URL || 'http://localhost:3000'),
         '__ENVIRONMENT': JSON.stringify(process.env.ENVIRONMENT || 'development'),
         '__WHITELABEL': JSON.stringify(process.env.WHITELABEL || 'ante'),
-        '__SOCKET_URL': JSON.stringify(process.env.VITE_SOCKET_URL || 'ws://localhost:4000'),
+        '__SOCKET_URL': JSON.stringify(process.env.VITE_SOCKET_URL || 'http://localhost:3000'),
       },
       // ignorePublicFolder: true,
       // minify: false,
@@ -247,13 +247,7 @@ module.exports = configure(function (/* ctx */) {
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#framework
     framework: {
-      config: {
-        loadingBar: {
-          color: 'primary',
-          size: '3px',
-          position: 'top'
-        }
-      },
+      config: {},
 
       // iconSet: 'material-icons', // Quasar icon set
       // lang: 'en-US', // Quasar language pack
@@ -266,7 +260,7 @@ module.exports = configure(function (/* ctx */) {
       // directives: [],
 
       // Quasar plugins
-      plugins: ['Dialog', 'Notify', 'LocalStorage', 'SessionStorage', 'Loading', 'LoadingBar'],
+      plugins: ['Dialog', 'Notify', 'LocalStorage', 'SessionStorage', 'Loading'],
     },
 
     // animations: 'all', // --- includes all animations

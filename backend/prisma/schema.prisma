@@ -101,10 +101,8 @@ model Account {
   facebookEmail                          String?                            @db.VarChar(255)
   googleEmail                            String?                            @db.VarChar(255)
   passwordHash                           String?                            @db.VarChar(255)
-  supabaseUserId                         String?                            @unique @db.VarChar(255)
-  supabaseEmail                          String?                            @db.VarChar(255)
   company                                Company?                           @relation(fields: [companyId], references: [id])
-  parent                                 Account?                           @relation("AccountHierarchy", fields: [parentAccountId], references: [id], onDelete: Cascade)
+  parent                                 Account?                           @relation("AccountHierarchy", fields: [parentAccountId], references: [id], onDelete: SetNull)
   children                               Account[]                          @relation("AccountHierarchy")
   role                                   Role                               @relation(fields: [roleId], references: [id], onDelete: Cascade)
   invite                                 AccountInvite?                     @relation("AccountInvite")
@@ -171,6 +169,7 @@ model Account {
   assignedTask                           Task[]                             @relation("AssignedTo")
   tasks                                  Task[]                             @relation("CreatedBy")
   updatedTasks                           Task[]                             @relation("UpdatedBy")
+  goals                                  Goal[]                             @relation("GoalCreatedBy")
   TaskWatcher                            TaskWatcher[]
   TaskOrderContext                       TaskOrderContext[]
   teamMembership                         TeamMember?
@@ -184,6 +183,7 @@ model Account {
   createdCalendarEvents                  CalendarEvent[]                    @relation("EventCreator")
   calendarEventAttendee                  CalendarEventAttendee[]            @relation("EventAttendee")
   createdCalendarCategories              CalendarCategory[]                 @relation("CategoryCreator")
+  ownedCalendarCategories                CalendarCategory[]                 @relation("AccountCategories")
   uploadedEventAttachments               CalendarEventAttachment[]          @relation("EventAttachmentUploader")
 
   @@index([firstName])
@@ -192,22 +192,35 @@ model Account {
   @@index([firstName, lastName])
   @@index([googleId])
   @@index([companyId], map: "idx_account_company")
-  @@index([supabaseUserId], map: "idx_account_supabase_user")
+}
+
+model AccountDeletionLog {
+  id                 String   @id @default(uuid())
+  deletedAccountId   String
+  deletedUsername    String
+  deletedEmail       String
+  deletedByAccountId String?
+  deletedByUsername  String?
+  reason             String?
+  deletionType       String // "soft" or "hard"
+  deletedAt          DateTime @default(now())
+  metadata           Json?
+
+  @@index([deletedAccountId])
+  @@index([deletedAt])
 }
 
 model AccountToken {
-  sessionId            String   @id @unique @default(uuid())
-  accountId            String
-  payload              String
-  userAgent            String
-  token                String   @db.VarChar(100)
-  ipAddress            String   @db.VarChar(200)
-  status               String   @db.VarChar(50)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  supabaseAccessToken  String?
-  supabaseRefreshToken String?
-  account              Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  sessionId String   @id @unique @default(uuid())
+  accountId String
+  payload   String
+  userAgent String
+  token     String   @db.VarChar(100)
+  ipAddress String   @db.VarChar(200)
+  status    String   @db.VarChar(50)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
 
 model EmailConfiguration {
@@ -394,6 +407,7 @@ model Project {
   mmr                           Float?
   relationshipOwnerId           String?
   parentId                      Int?
+  mainWarehouseId               String?
   TaskProjectNotifications      AccountNotifications[]
   boqs                          BillOfQuantity[]
   BranchTimekeepingStatus       BranchTimekeepingStatus[]
@@ -407,6 +421,7 @@ model Project {
   location                      Location                       @relation(fields: [locationId], references: [id], onDelete: Cascade)
   parent                        Project?                       @relation("BranchHierarchy", fields: [parentId], references: [id])
   children                      Project[]                      @relation("BranchHierarchy")
+  mainWarehouse                 Warehouse?                     @relation("BranchMainWarehouse", fields: [mainWarehouseId], references: [id])
   personInCharge                Account?                       @relation("ProjectPersonInCharge", fields: [personInChargeId], references: [id])
   relationshipOwner             Account?                       @relation("ProjectRelationshipOwner", fields: [relationshipOwnerId], references: [id])
   projectAccomplishment         ProjectAccomplishment[]
@@ -417,6 +432,7 @@ model Project {
   warehouse                     Warehouse[]
   EmployeeTimekeepingRaw        EmployeeTimekeepingRaw[]
   ManpowerDevice                ManpowerDevice[]
+  items                         Item[]                         @relation("ItemBranch")
 }
 
 model BoardLane {
@@ -433,12 +449,12 @@ model BoardLane {
 }
 
 model Task {
-  id                      Int                  @id @default(autoincrement())
+  id                      Int                      @id @default(autoincrement())
   order                   Int
   description             String
-  createdAt               DateTime             @default(now())
-  updatedAt               DateTime             @updatedAt
-  isDeleted               Boolean              @default(false)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  isDeleted               Boolean                  @default(false)
   boardLaneId             Int
   createdById             String
   projectId               Int?
@@ -446,29 +462,31 @@ model Task {
   updatedById             String
   assignedToId            String?
   dueDate                 DateTime?
-  isRead                  Boolean              @default(false)
-  assignedByDifficultySet Int                  @default(0)
-  assignedToDifficultySet Int                  @default(0)
+  isRead                  Boolean                  @default(false)
+  assignedByDifficultySet Int                      @default(0)
+  assignedToDifficultySet Int                      @default(0)
   roleGroupdId            String?
-  isSelfAssigned          Boolean              @default(false)
-  assignMode              TaskAssignMode       @default(SELF)
-  priorityLevel           Int                  @default(0)
-  isOpen                  Boolean              @default(true)
-  taskType                TaskType             @default(NORMAL)
+  isSelfAssigned          Boolean                  @default(false)
+  assignMode              TaskAssignMode           @default(SELF)
+  priorityLevel           Int                      @default(0)
+  isOpen                  Boolean                  @default(true)
+  taskType                TaskType                 @default(NORMAL)
   companyId               Int?
   taskPhaseId             Int?
-  isDraft                 Boolean              @default(false)
+  isDraft                 Boolean                  @default(false)
+  goalId                  Int?
   ApprovalMetadata        ApprovalMetadata?
   EmailApprovalToken      EmailApprovalToken[]
   Files                   Files[]
-  assignedTo              Account?             @relation("AssignedTo", fields: [assignedToId], references: [id], onDelete: Cascade)
-  boardLane               BoardLane            @relation(fields: [boardLaneId], references: [id], onDelete: Cascade)
-  createdBy               Account              @relation("CreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
-  project                 Project?             @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  roleGroup               RoleGroup?           @relation("RoleGroup", fields: [roleGroupdId], references: [id], onDelete: Cascade)
-  updatedBy               Account              @relation("UpdatedBy", fields: [updatedById], references: [id], onDelete: Cascade)
-  company                 Company?             @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  taskPhase               TaskPhase?           @relation(fields: [taskPhaseId], references: [id], onDelete: SetNull)
+  assignedTo              Account?                 @relation("AssignedTo", fields: [assignedToId], references: [id], onDelete: Cascade)
+  boardLane               BoardLane                @relation(fields: [boardLaneId], references: [id], onDelete: Cascade)
+  createdBy               Account                  @relation("CreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  project                 Project?                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  roleGroup               RoleGroup?               @relation("RoleGroup", fields: [roleGroupdId], references: [id], onDelete: Cascade)
+  updatedBy               Account                  @relation("UpdatedBy", fields: [updatedById], references: [id], onDelete: Cascade)
+  company                 Company?                 @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  taskPhase               TaskPhase?               @relation(fields: [taskPhaseId], references: [id], onDelete: SetNull)
+  goal                    Goal?                    @relation(fields: [goalId], references: [id], onDelete: SetNull)
   TaskWatcher             TaskWatcher[]
   TaskOrderContext        TaskOrderContext[]
   WorkflowTask            WorkflowTask?
@@ -488,47 +506,68 @@ model TaskWatcher {
 
 model TaskOrderContext {
   id            Int      @id @default(autoincrement())
-  userId        String?  // NULL for global orderings, populated for personal "My Tasks"
+  userId        String? // NULL for global orderings, populated for personal "My Tasks"
   taskId        Int
   orderIndex    Int
-  viewType      String   // 'my', 'all', 'assigned', 'complete', etc.
-  groupingMode  String   // 'none', 'priority', 'assignee', 'project', 'custom'
-  groupingValue String?  // 'high', 'project-123', 'john-doe', 'today', null
+  viewType      String // 'my', 'all', 'assigned', 'complete', etc.
+  groupingMode  String // 'none', 'priority', 'assignee', 'project', 'custom'
+  groupingValue String? // 'high', 'project-123', 'john-doe', 'today', null
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  user          Account? @relation(fields: [userId], references: [id], onDelete: Cascade)
-  task          Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user Account? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   // Unique constraints for both personal and global ordering
   @@unique([userId, taskId, viewType, groupingMode, groupingValue])
   @@unique([taskId, viewType, groupingMode, groupingValue])
-
   // Indexes for performance
   @@index([userId, viewType, groupingMode, groupingValue, orderIndex])
   @@index([viewType, groupingMode, groupingValue, orderIndex])
 }
 
 model TaskPhase {
-  id          Int              @id @default(autoincrement())
+  id          Int             @id @default(autoincrement())
   name        String
   description String?
   projectId   Int
-  status      TaskPhaseStatus  @default(DRAFT)
-  order       Int              @default(0)
+  status      TaskPhaseStatus @default(DRAFT)
+  order       Int             @default(0)
   startDate   DateTime?
   endDate     DateTime?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  isDeleted   Boolean          @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  isDeleted   Boolean         @default(false)
   companyId   Int
 
-  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  company     Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  tasks       Task[]
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  tasks   Task[]
 
   @@index([projectId, isDeleted, order])
   @@index([companyId])
+}
+
+model Goal {
+  id          Int        @id @default(autoincrement())
+  name        String     @db.VarChar(255)
+  description String?    @db.Text
+  deadline    DateTime?
+  status      GoalStatus @default(PENDING)
+  progress    Float      @default(0)
+  createdById String
+  companyId   Int?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  isDeleted   Boolean    @default(false)
+
+  createdBy Account  @relation("GoalCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  tasks     Task[]
+
+  @@index([createdById])
+  @@index([companyId])
+  @@index([status, isDeleted])
 }
 
 model ApprovalMetadata {
@@ -595,6 +634,7 @@ model Warehouse {
   Equipment          Equipment[]
   inventories        InventoryItem[]
   itemReceipt        ItemReceipt[]
+  branchesAsMain     Project[]       @relation("BranchMainWarehouse")
   company            Company?        @relation(fields: [companyId], references: [id])
   location           Location?       @relation(fields: [locationId], references: [id], onDelete: Cascade)
   project            Project?        @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -617,6 +657,26 @@ model Brand {
   @@unique([companyId, code])
 }
 
+model ItemCategory {
+  id          Int            @id @default(autoincrement())
+  name        String
+  code        String
+  description String?
+  isActive    Boolean        @default(true)
+  parentId    Int?
+  companyId   Int
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  company     Company        @relation(fields: [companyId], references: [id])
+  parent      ItemCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    ItemCategory[] @relation("CategoryHierarchy")
+  items       Item[]
+
+  @@unique([companyId, code])
+  @@index([parentId])
+  @@index([companyId])
+}
+
 model Item {
   id                       String                     @id @default(uuid())
   name                     String
@@ -637,17 +697,26 @@ model Item {
   maximumStockLevelPrice   Int                        @default(0)
   minimumStockLevelPrice   Int                        @default(0)
   brandId                  Int?
+  categoryId               Int?
+  branchId                 Int?
+  enabledInPOS             Boolean                    @default(false)
+  itemType                 ItemType                   @default(INDIVIDUAL_PRODUCT)
   boqTable                 BillOfQuantityTable[]
   BillOfQuantityTableItems BillOfQuantityTableItems[]
   EquipmentPartsItem       EquipmentPartsItem[]
   inventories              InventoryItem[]
   brand                    Brand?                     @relation(fields: [brandId], references: [id])
+  branch                   Project?                   @relation("ItemBranch", fields: [branchId], references: [id])
+  category                 ItemCategory?              @relation(fields: [categoryId], references: [id])
   company                  Company?                   @relation(fields: [companyId], references: [id])
   itemReceiptItems         ItemReceiptItems[]
   tags                     ItemTag[]
+  keywords                 ItemKeyword[]
   ItemTier                 ItemTier[]
   SupplierItems            SupplierItems[]
   SupplierPriceUpdate      SupplierPriceUpdate[]
+  groupItems               ItemGroupItem[]            @relation("GroupParent")
+  belongsToGroups          ItemGroupItem[]            @relation("GroupChild")
 
   @@unique([companyId, sku])
 }
@@ -683,6 +752,36 @@ model Tag {
   id     String    @id @default(uuid())
   tagKey String
   items  ItemTag[]
+}
+
+model ItemKeyword {
+  itemId    String
+  keywordId String
+  item      Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  keyword   Keyword @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, keywordId])
+}
+
+model Keyword {
+  id           String        @id @default(uuid())
+  keywordValue String
+  items        ItemKeyword[]
+}
+
+model ItemGroupItem {
+  id        String   @id @default(uuid())
+  groupId   String
+  itemId    String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  group     Item     @relation("GroupParent", fields: [groupId], references: [id], onDelete: Cascade)
+  item      Item     @relation("GroupChild", fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, itemId])
+  @@index([groupId])
+  @@index([itemId])
 }
 
 model InventoryItem {
@@ -1913,38 +2012,38 @@ model EmployeeTimekeepingLogs {
 }
 
 model EmployeeTimekeepingRaw {
-  id                      Int                       @id @default(autoincrement())
-  accountId               String
-  timeIn                  DateTime
-  timeOut                 DateTime?
-  timeSpan                Float                     @default(0)
-  createdAt               DateTime                  @default(now())
-  updatedAt               DateTime                  @updatedAt
-  source                  TimekeepingSource         @default(MANUAL)
-  remarks                 String?
-  importBatchId           String?
-  taskId                  Int?
-  taskTitle               String?
-  projectId               Int?
-  deviceId                String?                   // Device that recorded this entry
+  id                        Int                       @id @default(autoincrement())
+  accountId                 String
+  timeIn                    DateTime
+  timeOut                   DateTime?
+  timeSpan                  Float                     @default(0)
+  createdAt                 DateTime                  @default(now())
+  updatedAt                 DateTime                  @updatedAt
+  source                    TimekeepingSource         @default(MANUAL)
+  remarks                   String?
+  importBatchId             String?
+  taskId                    Int?
+  taskTitle                 String?
+  projectId                 Int?
+  deviceId                  String? // Device that recorded this entry
   // TIME-IN GEOLOCATION FIELDS
-  timeInLatitude          Float?                    // Latitude when timer started
-  timeInLongitude         Float?                    // Longitude when timer started
-  timeInLocation          String?                   // Location name (e.g., "Manila, Philippines")
-  timeInIpAddress         String?                   // IP address when timer started
-  timeInGeolocationEnabled Boolean?                 // Whether geolocation was enabled
+  timeInLatitude            Float? // Latitude when timer started
+  timeInLongitude           Float? // Longitude when timer started
+  timeInLocation            String? // Location name (e.g., "Manila, Philippines")
+  timeInIpAddress           String? // IP address when timer started
+  timeInGeolocationEnabled  Boolean? // Whether geolocation was enabled
   // TIME-OUT GEOLOCATION FIELDS
-  timeOutLatitude         Float?                    // Latitude when timer stopped
-  timeOutLongitude        Float?                    // Longitude when timer stopped
-  timeOutLocation         String?                   // Location name (e.g., "Quezon City, Philippines")
-  timeOutIpAddress        String?                   // IP address when timer stopped
-  timeOutGeolocationEnabled Boolean?                // Whether geolocation was enabled
-  EmployeeTimekeepingLogs EmployeeTimekeepingLogs[]
-  account                 Account                   @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  importBatch             TimekeepingImportBatch?   @relation(fields: [importBatchId], references: [id])
-  task                    Task?                     @relation(fields: [taskId], references: [id])
-  project                 Project?                  @relation(fields: [projectId], references: [id])
-  device                  ManpowerDevice?           @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  timeOutLatitude           Float? // Latitude when timer stopped
+  timeOutLongitude          Float? // Longitude when timer stopped
+  timeOutLocation           String? // Location name (e.g., "Quezon City, Philippines")
+  timeOutIpAddress          String? // IP address when timer stopped
+  timeOutGeolocationEnabled Boolean? // Whether geolocation was enabled
+  EmployeeTimekeepingLogs   EmployeeTimekeepingLogs[]
+  account                   Account                   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  importBatch               TimekeepingImportBatch?   @relation(fields: [importBatchId], references: [id])
+  task                      Task?                     @relation(fields: [taskId], references: [id])
+  project                   Project?                  @relation(fields: [projectId], references: [id])
+  device                    ManpowerDevice?           @relation(fields: [deviceId], references: [id], onDelete: SetNull)
 
   @@index([importBatchId])
   @@index([accountId, taskId])
@@ -2068,6 +2167,7 @@ model Company {
   Guardian                      Guardian[]
   individualScheduleAssignments IndividualScheduleAssignment[]
   Item                          Item[]
+  ItemCategory                  ItemCategory[]
   ItemReceipt                   ItemReceipt[]
   leadCompanies                 LeadCompany[]                  @relation("LeadCompanies")
   leadDeals                     LeadDeal[]
@@ -2083,6 +2183,7 @@ model Company {
   RequestForPayment             RequestForPayment[]
   Task                          Task[]
   TaskPhase                     TaskPhase[]
+  Goal                          Goal[]
   Role                          Role[]
   Schedule                      Schedule[]
   SchoolAttendance              SchoolAttendance[]
@@ -2639,31 +2740,31 @@ model SchoolSection {
 }
 
 model Student {
-  id                           String               @id @default(uuid())
-  studentNumber                String
-  lrn                          String?
-  sectionId                    String?
-  profilePhotoId               Int?
-  dateRegistered               DateTime             @default(now())
-  searchKeyword                String?
-  isActive                     Boolean              @default(true)
-  isDeleted                    Boolean              @default(false)
-  createdAt                    DateTime             @default(now())
-  updatedAt                    DateTime             @updatedAt
-  companyId                    Int
-  dateOfBirth                  DateTime
-  firstName                    String
-  gender                       String
-  lastName                     String
-  middleName                   String?
-  temporaryGuardianName        String?
-  temporaryGuardianAddress     String?
+  id                             String               @id @default(uuid())
+  studentNumber                  String
+  lrn                            String?
+  sectionId                      String?
+  profilePhotoId                 Int?
+  dateRegistered                 DateTime             @default(now())
+  searchKeyword                  String?
+  isActive                       Boolean              @default(true)
+  isDeleted                      Boolean              @default(false)
+  createdAt                      DateTime             @default(now())
+  updatedAt                      DateTime             @updatedAt
+  companyId                      Int
+  dateOfBirth                    DateTime
+  firstName                      String
+  gender                         String
+  lastName                       String
+  middleName                     String?
+  temporaryGuardianName          String?
+  temporaryGuardianAddress       String?
   temporaryGuardianContactNumber String?
-  schoolNotifications          SchoolNotification[]
-  company                      Company              @relation(fields: [companyId], references: [id])
-  section                      SchoolSection?       @relation(fields: [sectionId], references: [id])
-  profilePhoto                 Files?               @relation(fields: [profilePhotoId], references: [id])
-  guardians                    StudentGuardian[]
+  schoolNotifications            SchoolNotification[]
+  company                        Company              @relation(fields: [companyId], references: [id])
+  section                        SchoolSection?       @relation(fields: [sectionId], references: [id])
+  profilePhoto                   Files?               @relation(fields: [profilePhotoId], references: [id])
+  guardians                      StudentGuardian[]
 
   @@unique([studentNumber, companyId])
   @@unique([lrn, companyId])
@@ -3213,32 +3314,35 @@ model PointOfContact {
   company     LeadCompany @relation(fields: [companyId], references: [id])
   createdBy   Account     @relation("PointOfContactCreatedBy", fields: [createdById], references: [id])
 
-  @@unique([email, companyId])
+  // Note: Unique constraint handled by partial index in migration (20251009175200)
+  // Only active contacts (isActive = true) must have unique email+companyId
+  // Allows reusing emails for archived/deleted contacts
   @@index([fullName])
   @@index([email])
   @@index([companyId])
 }
 
 model LeadDeal {
-  id                      Int             @id @default(autoincrement())
-  dealName                String          @db.VarChar(255)
+  id                      Int              @id @default(autoincrement())
+  dealName                String           @db.VarChar(255)
   dealTypeId              Int?
-  approvedBudgetContract  Float           @default(0)
-  monthlyRecurringRevenue Float           @default(0)
-  implementationFee       Float           @default(0)
-  totalContract           Float           @default(0)
+  approvedBudgetContract  Float            @default(0)
+  monthlyRecurringRevenue Float            @default(0)
+  implementationFee       Float            @default(0)
+  totalContract           Float            @default(0)
   closeDate               DateTime
-  winProbability          Int             @default(50)
+  winProbability          Int              @default(50)
   locationId              String?
   dealSourceId            Int?
   relationshipOwnerId     String?
   pointOfContactId        Int?
-  status                  LeadDealStatus  @default(OPPORTUNITY)
+  status                  LeadDealStatus   @default(OPPORTUNITY)
+  proposalStatus          ProposalStatus?
   companyId               Int?
   createdById             String
-  createdAt               DateTime        @default(now())
-  updatedAt               DateTime        @updatedAt
-  isDeleted               Boolean         @default(false)
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+  isDeleted               Boolean          @default(false)
   company                 Company?        @relation(fields: [companyId], references: [id])
   createdBy               Account         @relation("LeadDealCreatedBy", fields: [createdById], references: [id])
   dealSource              DealSource?     @relation(fields: [dealSourceId], references: [id])
@@ -3254,18 +3358,18 @@ model LeadDeal {
 }
 
 model CRMActivity {
-  id            Int                @id @default(autoincrement())
+  id            Int             @id @default(autoincrement())
   activityType  CRMActivityType
   entityType    CRMEntityType
   entityId      Int
-  entityName    String             @db.VarChar(255)
+  entityName    String          @db.VarChar(255)
   description   String
   performedById String
-  isRead        Boolean            @default(false)
-  createdAt     DateTime           @default(now())
+  isRead        Boolean         @default(false)
+  createdAt     DateTime        @default(now())
   companyId     Int?
-  company       Company?           @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  performedBy   Account            @relation("CRMActivityPerformedBy", fields: [performedById], references: [id], onDelete: Cascade)
+  company       Company?        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  performedBy   Account         @relation("CRMActivityPerformedBy", fields: [performedById], references: [id], onDelete: Cascade)
 
   @@index([companyId, createdAt])
   @@index([performedById])
@@ -3595,20 +3699,20 @@ model MediaFolder {
 }
 
 model ManpowerDevice {
-  id                      String                    @id @default(uuid())
-  deviceId                String                    @unique
-  name                    String
-  location                String                    @default("")
-  companyId               Int
-  projectId               Int?                      // Optional branch/project ID
-  apiKey                  String                    @unique
-  isActive                Boolean                   @default(true)
-  lastActivityAt          DateTime?
-  createdAt               DateTime                  @default(now())
-  updatedAt               DateTime                  @updatedAt
-  company                 Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  project                 Project?                  @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  EmployeeTimekeepingRaw  EmployeeTimekeepingRaw[]
+  id                     String                   @id @default(uuid())
+  deviceId               String                   @unique
+  name                   String
+  location               String                   @default("")
+  companyId              Int
+  projectId              Int? // Optional branch/project ID
+  apiKey                 String                   @unique
+  isActive               Boolean                  @default(true)
+  lastActivityAt         DateTime?
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  company                Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  project                Project?                 @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  EmployeeTimekeepingRaw EmployeeTimekeepingRaw[]
 }
 
 enum AssigneeType {
@@ -3710,6 +3814,11 @@ enum TaskType {
 enum TaskPhaseStatus {
   DRAFT
   ACTIVE
+  COMPLETED
+}
+
+enum GoalStatus {
+  PENDING
   COMPLETED
 }
 
@@ -4309,6 +4418,14 @@ enum LeadDealStatus {
   LOST
 }
 
+enum ProposalStatus {
+  PREPARING
+  READY
+  SENT
+  FOR_REVISION
+  FINALIZED
+}
+
 enum CRMActivityType {
   CREATE
   UPDATE
@@ -4322,8 +4439,14 @@ enum CRMEntityType {
   CLIENT
   LEAD_COMPANY
   POINT_OF_CONTACT
+  RELATIONSHIP_OWNER
   DEAL_TYPE
   DEAL_SOURCE
+}
+
+enum ItemType {
+  INDIVIDUAL_PRODUCT
+  ITEM_GROUP
 }
 
 // OAuth 2.0 Models
@@ -4370,31 +4493,31 @@ model OAuthToken {
 
 // Main Calendar Events Table
 model CalendarEvent {
-  id               String                    @id @default(uuid())
-  title            String
-  description      String?
-  location         String?
-  startDateTime    DateTime
-  endDateTime      DateTime
-  allDay           Boolean                   @default(false)
-  colorCode        String                    @default("#2196F3")
-  categoryId       Int?
-  creatorId        String
-  isActive         Boolean                   @default(true)
-  visibility       String                    @default("private") // private, public, team
-  companyId        Int
-  createdAt        DateTime                  @default(now())
-  updatedAt        DateTime                  @updatedAt
+  id            String   @id @default(uuid())
+  title         String
+  description   String?
+  location      String?
+  startDateTime DateTime
+  endDateTime   DateTime
+  allDay        Boolean  @default(false)
+  colorCode     String   @default("#2196F3")
+  categoryId    Int?
+  creatorId     String
+  isActive      Boolean  @default(true)
+  visibility    String   @default("private") // private, public, team
+  companyId     Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // Relations
-  creator          Account                   @relation("EventCreator", fields: [creatorId], references: [id])
-  category         CalendarCategory?         @relation(fields: [categoryId], references: [id])
-  company          Company                   @relation(fields: [companyId], references: [id])
-  attendees        CalendarEventAttendee[]
-  attachments      CalendarEventAttachment[]
-  recurrence       CalendarEventRecurrence?
-  instances        CalendarEventInstance[]
-  reminders        CalendarEventReminder[]
+  creator     Account                   @relation("EventCreator", fields: [creatorId], references: [id])
+  category    CalendarCategory?         @relation(fields: [categoryId], references: [id])
+  company     Company                   @relation(fields: [companyId], references: [id])
+  attendees   CalendarEventAttendee[]
+  attachments CalendarEventAttachment[]
+  recurrence  CalendarEventRecurrence?
+  instances   CalendarEventInstance[]
+  reminders   CalendarEventReminder[]
 
   @@index([creatorId, startDateTime])
   @@index([categoryId])
@@ -4403,45 +4526,45 @@ model CalendarEvent {
 
 // Recurrence Rules Table (Google Calendar style)
 model CalendarEventRecurrence {
-  id               String            @id @default(uuid())
-  eventId          String            @unique
-  recurrenceType   String            // daily, weekly, monthly, yearly, custom
-  frequency        Int               @default(1) // every X days/weeks/months
-  interval         String?           // MO,TU,WE,TH,FR,SA,SU
-  byDay            String[]          // ["MO", "WE", "FR"]
-  byMonthDay       Int[]             // [1, 15] for 1st and 15th
-  byMonth          Int[]             // [1, 6, 12] for Jan, Jun, Dec
-  count            Int?              // number of occurrences
-  until            DateTime?         // end date
-  exceptions       String[]          // dates to skip (ISO format)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  id             String    @id @default(uuid())
+  eventId        String    @unique
+  recurrenceType String // daily, weekly, monthly, yearly, custom
+  frequency      Int       @default(1) // every X days/weeks/months
+  interval       String? // MO,TU,WE,TH,FR,SA,SU
+  byDay          String[] // ["MO", "WE", "FR"]
+  byMonthDay     Int[] // [1, 15] for 1st and 15th
+  byMonth        Int[] // [1, 6, 12] for Jan, Jun, Dec
+  count          Int? // number of occurrences
+  until          DateTime? // end date
+  exceptions     String[] // dates to skip (ISO format)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  event            CalendarEvent     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@index([eventId])
 }
 
 // Event Instances (for recurring events)
 model CalendarEventInstance {
-  id               String            @id @default(uuid())
-  parentEventId    String
-  instanceDate     DateTime
-  originalStart    DateTime
-  originalEnd      DateTime
+  id            String   @id @default(uuid())
+  parentEventId String
+  instanceDate  DateTime
+  originalStart DateTime
+  originalEnd   DateTime
 
   // Override fields (if this instance is modified)
-  title            String?
-  description      String?
-  location         String?
-  startDateTime    DateTime?
-  endDateTime      DateTime?
-  colorCode        String?
-  isCancelled      Boolean           @default(false)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  title         String?
+  description   String?
+  location      String?
+  startDateTime DateTime?
+  endDateTime   DateTime?
+  colorCode     String?
+  isCancelled   Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  parentEvent      CalendarEvent     @relation(fields: [parentEventId], references: [id], onDelete: Cascade)
+  parentEvent CalendarEvent @relation(fields: [parentEventId], references: [id], onDelete: Cascade)
 
   @@unique([parentEventId, instanceDate])
   @@index([parentEventId, instanceDate])
@@ -4449,18 +4572,18 @@ model CalendarEventInstance {
 
 // Event Attendees
 model CalendarEventAttendee {
-  id               String            @id @default(uuid())
-  eventId          String
-  accountId        String
-  email            String?
-  responseStatus   String            @default("pending") // pending, accepted, declined, tentative
-  isOrganizer      Boolean           @default(false)
-  isOptional       Boolean           @default(false)
-  addedAt          DateTime          @default(now())
-  respondedAt      DateTime?
+  id             String    @id @default(uuid())
+  eventId        String
+  accountId      String
+  email          String?
+  responseStatus String    @default("pending") // pending, accepted, declined, tentative
+  isOrganizer    Boolean   @default(false)
+  isOptional     Boolean   @default(false)
+  addedAt        DateTime  @default(now())
+  respondedAt    DateTime?
 
-  event            CalendarEvent     @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  account          Account           @relation("EventAttendee", fields: [accountId], references: [id])
+  event   CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  account Account       @relation("EventAttendee", fields: [accountId], references: [id])
 
   @@unique([eventId, accountId])
   @@index([eventId])
@@ -4469,55 +4592,58 @@ model CalendarEventAttendee {
 
 // Calendar Categories
 model CalendarCategory {
-  id               Int               @id @default(autoincrement())
-  name             String
-  colorCode        String
-  icon             String?
-  description      String?
-  isSystem         Boolean           @default(false)
-  creatorId        String?
-  companyId        Int
-  isActive         Boolean           @default(true)
-  sortOrder        Int               @default(0)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  id          Int      @id @default(autoincrement())
+  name        String
+  colorCode   String
+  icon        String?
+  description String?
+  isSystem    Boolean  @default(false)
+  creatorId   String?
+  accountId   String? // Owner of this category (user-specific categories)
+  companyId   Int
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  events           CalendarEvent[]
-  creator          Account?          @relation("CategoryCreator", fields: [creatorId], references: [id])
-  company          Company           @relation(fields: [companyId], references: [id])
+  events  CalendarEvent[]
+  creator Account?        @relation("CategoryCreator", fields: [creatorId], references: [id])
+  account Account?        @relation("AccountCategories", fields: [accountId], references: [id])
+  company Company         @relation(fields: [companyId], references: [id])
 
-  @@unique([name, companyId])
+  @@unique([name, accountId, companyId])
   @@index([creatorId])
+  @@index([accountId])
   @@index([companyId])
 }
 
 // Event Attachments
 model CalendarEventAttachment {
-  id               String            @id @default(uuid())
-  eventId          String
-  fileName         String
-  fileUrl          String
-  fileSize         Int
-  mimeType         String
-  uploadedBy       String
-  uploadedAt       DateTime          @default(now())
+  id         String   @id @default(uuid())
+  eventId    String
+  fileName   String
+  fileUrl    String
+  fileSize   Int
+  mimeType   String
+  uploadedBy String
+  uploadedAt DateTime @default(now())
 
-  event            CalendarEvent     @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  uploader         Account           @relation("EventAttachmentUploader", fields: [uploadedBy], references: [id])
+  event    CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  uploader Account       @relation("EventAttachmentUploader", fields: [uploadedBy], references: [id])
 
   @@index([eventId])
 }
 
 // Event Reminders
 model CalendarEventReminder {
-  id               String            @id @default(uuid())
-  eventId          String
-  method           String            @default("popup") // popup, email, notification
-  minutes          Int               @default(15) // minutes before event
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  id        String   @id @default(uuid())
+  eventId   String
+  method    String   @default("popup") // popup, email, notification
+  minutes   Int      @default(15) // minutes before event
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  event            CalendarEvent     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@index([eventId])
 }

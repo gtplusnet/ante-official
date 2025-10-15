@@ -90,6 +90,19 @@ export const formatName = (name: string | undefined) => {
     .join(' ');
 };
 
+/**
+ * Formats lead board stage keys like 'technical_meeting' to 'Technical Meeting'
+ * Replaces underscores with spaces and capitalizes each word
+ */
+export const formatLeadStage = (stage: string | undefined): string => {
+  if (!stage) return '';
+
+  return stage
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
 export const TEXT_TRUNCATION = {
   NOTIFICATION_CONTENT: 60,
   REJECTION_REASON: 65,
@@ -120,7 +133,7 @@ export const formatDate = (dateInput: string | { raw: Date }): string => {
 
 export const formatTime = (dateInput: string | Date | { raw: Date }): string => {
   let date: Date;
-  
+
   if (typeof dateInput === 'string') {
     date = new Date(dateInput);
   } else if (dateInput && typeof dateInput === 'object' && 'raw' in dateInput) {
@@ -128,13 +141,34 @@ export const formatTime = (dateInput: string | Date | { raw: Date }): string => 
   } else {
     date = dateInput as Date;
   }
-  
+
   if (isNaN(date.getTime())) {
     throw new Error('Invalid date input for time formatting');
   }
-  
+
   // Use UTC methods to extract time without timezone conversion
   const hours = String(date.getUTCHours()).padStart(2, '0');
   const minutes = String(date.getUTCMinutes()).padStart(2, '0');
   return `${hours}:${minutes}`;
+};
+
+/**
+ * Formats date to long format: "October 8, 2025"
+ * @param dateInput ISO date string or Date object
+ * @returns Formatted date string in "Month Day, Year" format
+ */
+export const formatLongDate = (dateInput: string | Date | null | undefined): string => {
+  if (!dateInput) return '';
+
+  const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+
+  if (isNaN(date.getTime())) {
+    return '';
+  }
+
+  return date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
 };

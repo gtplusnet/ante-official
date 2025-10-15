@@ -114,16 +114,18 @@
 <script>
 import GInput from "../../../../../../components/shared/form/GInput.vue";
 import GButton from 'src/components/shared/buttons/GButton.vue';
-import { useSupabaseEmployees } from 'src/composables/supabase/useSupabaseEmployees';
+// TODO: Migrate to backend API
+//  import { useSupabaseEmployees } from 'src/composables/supabase/useSupabaseEmployees';
 import { useAuthStore } from 'src/stores/auth';
 
 export default {
   name: 'ViewCreateEmployee',
   setup() {
-    // Initialize Supabase composables
-    const employeesComposable = useSupabaseEmployees();
+    // TODO: Migrate to backend API - employees composable deleted
+    // const employeesComposable = useSupabaseEmployees();
+    const employeesComposable = { employees: { value: [] }, fetchEmployeesByCompany: async () => {}, fetchEmployeesMinimal: async () => {} };
     const authStore = useAuthStore();
-    
+
     return {
       employeesComposable,
       authStore

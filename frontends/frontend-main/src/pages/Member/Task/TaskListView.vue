@@ -23,6 +23,7 @@
       </button>
     </div>
 
+
     <!-- Column Headers -->
     <div class="list-header" :class="{
       'hide-assignee': filter === 'my',
@@ -33,6 +34,7 @@
       <div class="header-due-date">Due date</div>
       <div class="header-priority">Priority</div>
       <div v-if="!projectId && !hideProjectGrouping" class="header-project">Project</div>
+      <div class="header-goal">Goal</div>
       <div class="header-tags">Tags</div>
       <div class="header-add"></div>
     </div>
@@ -101,7 +103,9 @@
               <input
                 v-model="newTaskTitle"
                 class="inline-task-input"
+                :class="{ 'is-creating': props.creatingTask }"
                 placeholder="Task name"
+                :disabled="props.creatingTask"
                 @keydown.enter="saveInlineTask(section)"
                 @keydown.escape="cancelInlineAdd"
                 @blur="cancelInlineAdd"
@@ -115,14 +119,17 @@
             <div class="task-due-date"></div>
             <div class="task-priority"></div>
             <div v-if="!projectId && !hideProjectGrouping" class="task-project"></div>
+            <div class="task-goal"></div>
             <div class="task-tags"></div>
             <div class="task-add-section">
-              <button class="save-btn" @mousedown.prevent @click="saveInlineTask(section)">
+              <button class="save-btn" :disabled="props.creatingTask" @mousedown.prevent @click="saveInlineTask(section)">
                 <span class="material-icons">check</span>
               </button>
-              <button class="cancel-btn" @mousedown.prevent @click="cancelInlineAdd">
+              <button class="cancel-btn" :disabled="props.creatingTask" @mousedown.prevent @click="cancelInlineAdd">
                 <span class="material-icons">close</span>
               </button>
+              <!-- Loading spinner -->
+              <q-spinner-dots v-if="props.creatingTask" color="primary" size="20px" class="inline-task-spinner" />
             </div>
           </div>
         </div>
@@ -287,6 +294,29 @@
             </div>
           </div>
 
+          <div class="task-goal editable">
+            <div class="goal-button" @click.stop="openGoalDropdown(task.id, $event)">
+              <span class="goal-indicator">🏆</span>
+              <span class="goal-name">{{ formatGoalName(task.goalId) }}</span>
+            </div>
+            <div v-if="activeDropdown === `goal-${task.id}`" class="custom-dropdown goal-dropdown" :class="getDropdownPositionClass(task.id, 'goal')">
+              <div
+                class="dropdown-item"
+                @click.stop="clearGoal(task); closeAllDropdowns()"
+              >
+                <span>No Goal</span>
+              </div>
+              <div
+                v-for="goal in availableGoals"
+                :key="goal.id"
+                class="dropdown-item"
+                @click.stop="updateTaskGoal(task, goal.id); closeAllDropdowns()"
+              >
+                <span>{{ goal.name }}</span>
+              </div>
+            </div>
+          </div>
+
           <div class="task-tags">
             <div class="tags-container">
               <span v-for="tag in task.tags" :key="tag" class="task-tag">
@@ -395,8 +425,9 @@ import { onMounted } from 'vue';
 import { Notify } from 'quasar';
 import { useTaskSearchStore, type TaskGroupingMode } from '../../../stores/taskSearch';
 import { useTaskPhaseStore } from '../../../stores/taskPhase';
-import { useAssigneeList } from 'src/composables/useAssigneeList';
-import { useProjectList } from 'src/composables/useProjectList';
+import { useAssigneeStore } from 'src/stores/assignee';
+import { useProjectStore } from 'src/stores/project';
+import { useGoalStore } from 'src/stores/goal';
 import draggable from 'vuedraggable';
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
@@ -411,6 +442,7 @@ interface Task {
   status: string;
   priority?: 'verylow' | 'low' | 'medium' | 'high' | 'urgent';
   assignee: string;
+  assignedToId?: string | null;
   creator: string;
   project?: string | number;
   projectId?: number;
@@ -423,11 +455,19 @@ interface Task {
   subtaskCount?: number;
   tags?: string[];
   order?: number;
+  goal?: {
+    id: number;
+    name: string;
+  };
+  goalId?: number;
+  boardLaneId?: number;
 }
 
 const props = defineProps<{
   tasks: Task[];
   filter: string;
+  loading?: boolean;
+  creatingTask?: boolean; // Loading state for inline task creation
   projectId?: number | string | null;
   hideProjectGrouping?: boolean;
   compactMode?: boolean;
@@ -438,6 +478,9 @@ const emit = defineEmits<{
   'toggle-status': [task: Task];
   'update-status': [task: Task, status: string];
   'update-task': [task: Task, field: string, value: any, extraData?: any];
+  'select-task': [task: Task];
+  'edit-task': [task: Task];
+  'open-menu': [task: Task, event: MouseEvent];
   'add-task': [section: string, title?: string, metadata?: any];
   'reorder-tasks': [data: { sectionKey: string; fromIndex: number; toIndex: number; task: Task }];
   'view-task': [task: Task];
@@ -462,6 +505,7 @@ const groupingTabs = computed(() => {
     { mode: 'assignee' as TaskGroupingMode, label: 'Assignee', icon: 'person' },
     { mode: 'project' as TaskGroupingMode, label: 'Project', icon: 'folder' },
     { mode: 'taskPhase' as TaskGroupingMode, label: 'Task Phases', icon: 'timeline' },
+    { mode: 'goals' as TaskGroupingMode, label: 'Goals', icon: 'emoji_events' },
   ];
 
   // Remove "Group by Assignee" tab when viewing "My Task" since all tasks are already assigned to the same person
@@ -495,7 +539,7 @@ const newTaskTitle = ref('');
 watch(() => props.filter, (newFilter) => {
   // If switching to "My Task" view and currently grouped by assignee, switch to default grouping
   if (newFilter === 'my' && currentGroupingMode.value === 'assignee') {
-    taskSearchStore.setGroupingMode('stages'); // Default to stages grouping
+    taskSearchStore.setGroupingMode('none'); // Default to no groups
   }
 });
 
@@ -536,6 +580,8 @@ watch(() => currentGroupingMode.value, async (newMode) => {
 // Load phases on component mount if needed
 onMounted(async () => {
   await loadPhases();
+  // Load pending goals for dropdown
+  await goalStore.fetchGoals({ status: 'PENDING' });
 });
 
 // Inline editing state
@@ -559,8 +605,16 @@ const draggedIndex = ref<number | null>(null);
 const draggedSection = ref<string | null>(null);
 
 
-// Get available users from centralized assignee list composable
-const { assignees: availableUsers, getInitials, getAvatarColor } = useAssigneeList();
+// Get stores
+const assigneeStore = useAssigneeStore();
+const projectStore = useProjectStore();
+const goalStore = useGoalStore();
+
+// Get available users from centralized assignee store
+const availableUsers = computed(() => assigneeStore.formattedAssignees);
+
+// Get available goals (pending goals only)
+const availableGoals = computed(() => goalStore.pendingGoals);
 
 // Filter users based on search query
 const filteredUsers = computed(() => {
@@ -574,21 +628,23 @@ const filteredUsers = computed(() => {
   });
 });
 
-// Get dynamic projects from Supabase
-const {
-  projectsWithNone: availableProjects
-} = useProjectList();
+// Get dynamic projects from centralized project store
+const availableProjects = computed(() => projectStore.projectsWithNone);
 
-// Filter tasks by search query
+// Filter tasks by search query only (server-side filtering now handles other filters)
 const filteredTasks = computed(() => {
-  if (!taskSearchStore.searchQuery) {
-    return props.tasks;
+  let tasks = props.tasks;
+
+  // Apply search query (client-side for real-time search)
+  if (taskSearchStore.searchQuery) {
+    const query = taskSearchStore.searchQuery.toLowerCase();
+    tasks = tasks.filter((task: Task) =>
+      task.title.toLowerCase().includes(query) ||
+      task.description.toLowerCase().includes(query)
+    );
   }
-  const query = taskSearchStore.searchQuery.toLowerCase();
-  return props.tasks.filter((task: Task) =>
-    task.title.toLowerCase().includes(query) ||
-    task.description.toLowerCase().includes(query)
-  );
+
+  return tasks;
 });
 
 // Define section interface for dynamic grouping
@@ -883,6 +939,47 @@ const taskSections = computed<TaskSection[]>(() => {
         }
       }));
 
+    case 'goals':
+      // Group by goals (exclude tasks without goals)
+      const goalGroups = new Map<number, Task[]>();
+
+      // Group tasks by goalId (skip tasks without goals)
+      allTasks.forEach(task => {
+        if (task.goalId && task.goal) {
+          if (!goalGroups.has(task.goalId)) {
+            goalGroups.set(task.goalId, []);
+          }
+          goalGroups.get(task.goalId)!.push(task);
+        }
+      });
+
+      // Convert to sections array (sorted by goal name)
+      const goalSections = [];
+      const goalKeys = Array.from(goalGroups.keys())
+        .sort((a, b) => {
+          const taskA = allTasks.find(t => t.goalId === a);
+          const taskB = allTasks.find(t => t.goalId === b);
+          const nameA = taskA?.goal?.name || '';
+          const nameB = taskB?.goal?.name || '';
+          return nameA.localeCompare(nameB);
+        });
+
+      goalKeys.forEach(goalKey => {
+        const task = allTasks.find(t => t.goalId === goalKey);
+        const goalName = task?.goal?.name || 'Unknown Goal';
+
+        goalSections.push({
+          key: `goal-${goalKey}`,
+          title: goalName,
+          tasks: goalGroups.get(goalKey)!,
+          icon: 'o_flag',
+          color: '#008CE3',
+          metadata: { goalId: goalKey }
+        });
+      });
+
+      return goalSections;
+
     case 'stages':
     default:
       // Group by status/stages (default behavior)
@@ -1112,19 +1209,31 @@ const updateProject = (task: Task, projectId: string | number) => {
 };
 
 const getProjectById = (projectId?: string | number) => {
-  if (!projectId) return null;
-  const id = typeof projectId === 'string' ? (projectId === 'none' ? 'none' : Number(projectId)) : projectId;
-  return availableProjects.value.find(p => p.id === id || p.id === String(id));
+  return projectStore.getProjectById(projectId);
 };
 
 const formatProjectName = (projectId?: string | number) => {
-  const project = getProjectById(projectId);
-  return project ? project.name : 'No project';
+  return projectStore.getProjectName(projectId);
 };
 
 const getProjectColor = (projectId?: string | number) => {
-  const project = getProjectById(projectId);
+  const project = projectStore.getProjectById(projectId);
   return project ? project.color : '#6d6e78';
+};
+
+const updateTaskGoal = (task: Task, goalId: number) => {
+  emit('update-task', task, 'goalId', goalId);
+};
+
+const clearGoal = (task: Task) => {
+  emit('update-task', task, 'goalId', null);
+  closeAllDropdowns();
+};
+
+const formatGoalName = (goalId?: number) => {
+  if (!goalId) return '-';
+  const goal = availableGoals.value.find(g => g.id === goalId);
+  return goal ? goal.name : '-';
 };
 
 const addTag = (task: Task, tag: string) => {
@@ -1152,22 +1261,40 @@ const startInlineAdd = (sectionKey: string) => {
 };
 
 const saveInlineTask = (section: any) => {
+  // Don't allow submission if already creating
+  if (props.creatingTask) {
+    return;
+  }
+
   if (!newTaskTitle.value.trim()) {
     cancelInlineAdd();
     return;
   }
 
   // Emit the add-task event with the title and section metadata
+  // Don't call cancelInlineAdd() here - let the parent manage state via creatingTask prop
+  // Input will auto-hide when creatingTask becomes false after successful creation
   emit('add-task', section.key, newTaskTitle.value.trim(), section.metadata);
-
-  // Reset state
-  cancelInlineAdd();
 };
 
 const cancelInlineAdd = () => {
+  // Don't allow canceling while task is being created
+  if (props.creatingTask) {
+    return;
+  }
+
   addingTaskInSection.value = null;
   newTaskTitle.value = '';
 };
+
+// Auto-hide inline input when task creation completes successfully
+// When creatingTask changes from true to false, the task was successfully created
+watch(() => props.creatingTask, (newValue, oldValue) => {
+  // When creation completes (true -> false), auto-hide the input
+  if (oldValue === true && newValue === false && addingTaskInSection.value) {
+    cancelInlineAdd();
+  }
+});
 
 
 // Helper functions for assignee display
@@ -1184,9 +1311,9 @@ const getInitialsFromName = (name: string | null | undefined) => {
   // Fallback to parsing the name
   const parts = name.split(' ').filter(part => part.length > 0);
   if (parts.length >= 2) {
-    return getInitials(parts[0], parts[1]);
+    return assigneeStore.getInitials(parts[0], parts[1]);
   }
-  return getInitials(parts[0], '');
+  return assigneeStore.getInitials(parts[0], '');
 };
 
 const getAvatarColorFromName = (name: string | null | undefined) => {
@@ -1201,9 +1328,9 @@ const getAvatarColorFromName = (name: string | null | undefined) => {
   // Fallback to generating color from name parts
   const parts = name.split(' ').filter(part => part.length > 0);
   if (parts.length >= 2) {
-    return getAvatarColor(parts[0], parts[1]);
+    return assigneeStore.getAvatarColor(parts[0], parts[1]);
   }
-  return getAvatarColor(parts[0], '');
+  return assigneeStore.getAvatarColor(parts[0], '');
 };
 
 const isDatePastDue = (dateString: string) => {
@@ -1355,6 +1482,19 @@ const openProjectDropdown = (taskId: string, event: MouseEvent) => {
   } else {
     const element = event.currentTarget as HTMLElement;
     calculateDropdownPosition(element, 'project', taskId);
+    activeDropdown.value = dropdownKey;
+  }
+};
+
+const openGoalDropdown = (taskId: string, event: MouseEvent) => {
+  event.stopPropagation();
+  const dropdownKey = `goal-${taskId}`;
+
+  if (activeDropdown.value === dropdownKey) {
+    activeDropdown.value = null;
+  } else {
+    const element = event.currentTarget as HTMLElement;
+    calculateDropdownPosition(element, 'goal', taskId);
     activeDropdown.value = dropdownKey;
   }
 };

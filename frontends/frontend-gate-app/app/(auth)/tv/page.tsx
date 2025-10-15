@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { format } from 'date-fns'
-import { getAttendanceSupabaseService, AttendanceRecord } from '@/lib/services/attendance-supabase.service'
+import { getAttendanceAPIService, AttendanceRecord } from '@/lib/services/attendance-api.service'
+import { websocketService } from '@/lib/services/websocket.service'
 import { CheckCircle2, LogOut, Clock, Users, UserCheck, GraduationCap, User, Camera } from 'lucide-react'
 import { playBeep } from '@/lib/utils/sound'
 import styles from './tv.module.css'
@@ -34,7 +35,8 @@ export default function TVPage() {
     checkOuts: 0
   })
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
-  const attendanceService = useRef(getAttendanceSupabaseService())
+  const attendanceService = useRef(getAttendanceAPIService())
+  const wsUnsubscribeRef = useRef<(() => void) | null>(null)
 
   // Update time every second
   useEffect(() => {
@@ -45,93 +47,97 @@ export default function TVPage() {
     return () => clearInterval(timer)
   }, [])
 
-  // Supabase real-time subscription
+  // WebSocket real-time subscription
   useEffect(() => {
-    let subscription: any = null;
-
     const setupRealtimeSubscription = async () => {
       try {
-        console.log('🔌 [TVPage] Setting up Supabase realtime subscription...')
-        
+        console.log('🔌 [TVPage] Setting up WebSocket realtime subscription...')
+
+        // Get companyId from localStorage
+        const companyIdStr = localStorage.getItem('companyId')
+        if (!companyIdStr) {
+          console.error('❌ [TVPage] No companyId found in localStorage')
+          return
+        }
+
+        const companyId = parseInt(companyIdStr)
+
         // Initialize service
         await attendanceService.current.init()
-        
+
+        // Connect to WebSocket
+        await websocketService.connect(companyId)
+
         // Subscribe to real-time attendance updates
-        subscription = attendanceService.current.subscribeToAttendance((payload: any) => {
-          console.log('📺 [TVPage] Received realtime attendance update:', payload)
-          
-          if (payload.eventType === 'INSERT' && payload.new) {
-            const data = payload.new
-            
-            // Convert Supabase data to DisplayRecord format
-            const newRecord: DisplayRecord = {
-              id: data.id,
-              qrCode: data.qrCode,
-              personId: data.personId,
-              personType: data.personType,
-              personName: data.personName || 'Unknown',
-              firstName: data.firstName,
-              lastName: data.lastName,
-              profilePhotoUrl: data.profilePhotoUrl,
-              action: data.action,
-              timestamp: new Date(data.timestamp),
-              deviceId: data.deviceId,
-              location: data.location,
-              companyId: data.companyId,
-              personDetails: data.firstName && data.lastName ? {
-                firstName: data.firstName,
-                lastName: data.lastName,
-                studentNumber: data.personType === 'student' ? data.personId : undefined,
-              } : undefined
-            }
+        const unsubscribe = websocketService.subscribeToAttendance((data: any) => {
+          console.log('📺 [TVPage] Received WebSocket attendance update:', data)
 
-            // Update latest scan with animation
-            setLatestScan(prev => {
-              // Only update if this is a newer scan
-              if (!prev || new Date(data.timestamp) > new Date(prev.timestamp)) {
-                setShowAnimation(true)
-                setTimeout(() => setShowAnimation(false), 3000)
-                
-                // Play sound for new scan
-                try {
-                  playBeep()
-                } catch (e) {
-                  console.error('Could not play sound:', e)
-                }
-                
-                return newRecord
-              }
-              return prev
-            })
-
-            // Update recent scans list
-            setRecentScans(prev => {
-              const filtered = prev.filter(scan => scan.id !== data.id)
-              return [newRecord, ...filtered].slice(0, 6)
-            })
-
-            // Refresh data to update stats
-            loadAttendanceData()
+          // Convert WebSocket data to DisplayRecord format
+          const newRecord: DisplayRecord = {
+            id: data.id,
+            qrCode: data.qrCode,
+            personId: data.personId,
+            personType: data.personType,
+            personName: data.personName || 'Unknown',
+            firstName: undefined,
+            lastName: undefined,
+            profilePhotoUrl: data.profilePhoto || undefined,
+            action: data.action,
+            timestamp: new Date(data.timestamp),
+            deviceId: data.deviceId || undefined,
+            location: undefined,
+            companyId: data.companyId
           }
+
+          // Update latest scan with animation
+          setLatestScan(prev => {
+            // Only update if this is a newer scan
+            if (!prev || new Date(data.timestamp) > new Date(prev.timestamp)) {
+              setShowAnimation(true)
+              setTimeout(() => setShowAnimation(false), 3000)
+
+              // Play sound for new scan
+              try {
+                playBeep()
+              } catch (e) {
+                console.error('Could not play sound:', e)
+              }
+
+              return newRecord
+            }
+            return prev
+          })
+
+          // Update recent scans list
+          setRecentScans(prev => {
+            const filtered = prev.filter(scan => scan.id !== data.id)
+            return [newRecord, ...filtered].slice(0, 6)
+          })
+
+          // Refresh data to update stats
+          loadAttendanceData()
         })
-        
-        console.log('✅ [TVPage] Supabase subscription setup successfully')
+
+        wsUnsubscribeRef.current = unsubscribe
+        console.log('✅ [TVPage] WebSocket subscription setup successfully')
 
       } catch (error) {
-        console.error('❌ [TVPage] Failed to setup Supabase subscription:', error)
+        console.error('❌ [TVPage] Failed to setup WebSocket subscription:', error)
       }
     }
 
     setupRealtimeSubscription()
 
     return () => {
-      if (subscription) {
-        subscription.unsubscribe()
+      if (wsUnsubscribeRef.current) {
+        wsUnsubscribeRef.current()
+        wsUnsubscribeRef.current = null
       }
+      websocketService.disconnect()
     }
   }, [])
 
-  // Load attendance data from Supabase
+  // Load attendance data from API
   const loadAttendanceData = async () => {
     try {
       // Get today's attendance records

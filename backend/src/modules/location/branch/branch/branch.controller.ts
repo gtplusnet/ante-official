@@ -32,6 +32,14 @@ export class BranchController {
     );
   }
 
+  @Get('select-box')
+  async getSelectBox(@NestResponse() response: Response) {
+    this.utilityService.responseHandler(
+      this.branchService.getSelectBox(),
+      response,
+    );
+  }
+
   @Get('parent-options')
   async getParentBranchOptions(
     @Query('excludeId') excludeId: string,

@@ -13,7 +13,7 @@ import { PrismaService } from '@common/prisma.service';
 import { TableBodyDTO, TableQueryDTO } from '@common/table.dto/table.dto';
 import { TableHandlerService } from '@common/table.handler/table.handler.service';
 import { UtilityService } from '@common/utility.service';
-import { Prisma, Item } from '@prisma/client';
+import { Prisma, Item, ItemType } from '@prisma/client';
 import UnitOfMeasurementReference from '../../../../reference/uom-list.reference';
 
 export class ItemService {
@@ -54,6 +54,7 @@ export class ItemService {
     itemDto.sku = itemDto.sku.toUpperCase();
     await this.ensureUniqueSKU(itemDto.sku);
     const tagIds = await this.createTags(itemDto.tags);
+    const keywordIds = await this.createKeywords(itemDto.keywords);
 
     const item = await this.prisma.item.create({
       data: {
@@ -67,12 +68,23 @@ export class ItemService {
         sellingPrice: itemDto.sellingPrice,
         minimumStockLevelPrice: itemDto.minimumStockLevel,
         maximumStockLevelPrice: itemDto.maximumStockLevel,
+        enabledInPOS: itemDto.enabledInPOS || false,
+        itemType: (itemDto.itemType as ItemType) || ItemType.INDIVIDUAL_PRODUCT,
         company: { connect: { id: this.utility.companyId } },
         ...(itemDto.brandId && { brand: { connect: { id: itemDto.brandId } } }),
+        ...(itemDto.categoryId && { category: { connect: { id: itemDto.categoryId } } }),
+        ...(itemDto.branchId && { branch: { connect: { id: itemDto.branchId } } }),
       },
     });
 
     await this.createItemTags(item.id, tagIds);
+    await this.createItemKeywords(item.id, keywordIds);
+
+    // Save group items if itemType is ITEM_GROUP
+    if (itemDto.itemType === 'ITEM_GROUP' && itemDto.groupItems?.length > 0) {
+      await this.validateGroupItems(itemDto.groupItems);
+      await this.saveGroupItems(item.id, itemDto.groupItems);
+    }
 
     return this.formatResponse(item);
   }
@@ -81,8 +93,10 @@ export class ItemService {
     itemDto.sku = itemDto.sku.toUpperCase();
     await this.ensureUniqueSKU(itemDto.sku);
     const tagIds = await this.createTags(itemDto.tags);
+    const keywordIds = await this.createKeywords(itemDto.keywords);
     const parentItem = await this.createParentItem(itemDto);
     await this.createItemTags(parentItem.id, tagIds);
+    await this.createItemKeywords(parentItem.id, keywordIds);
     await this.saveTiers(parentItem.id, itemDto.tiers);
 
     const variantItems = await this.createVariantItems(
@@ -105,22 +119,45 @@ export class ItemService {
         });
       }
 
-      for (const attribute of tier.attributes) {
-        const checkAttribute = await this.prisma.itemTierAttribute.findFirst({
-          where: {
+      // Fetch existing attributes for this tier
+      const existingAttributes = await this.prisma.itemTierAttribute.findMany({
+        where: { itemTierId: tierInformation.id },
+        select: { id: true, attributeKey: true },
+      });
+
+      // Build maps for comparison
+      const existingMap = new Map(
+        existingAttributes.map(attr => [attr.attributeKey, attr]),
+      );
+      const incomingKeys = new Set(
+        tier.attributes.map((attr: string) => attr.toLowerCase()),
+      );
+
+      // Determine attributes to delete (exist in DB but not in incoming)
+      const attributesToDelete = existingAttributes
+        .filter(existing => !incomingKeys.has(existing.attributeKey))
+        .map(attr => attr.id);
+
+      // Determine attributes to create (exist in incoming but not in DB)
+      const attributesToCreate = tier.attributes.filter(
+        (attr: string) => !existingMap.has(attr.toLowerCase()),
+      );
+
+      // Execute deletions
+      if (attributesToDelete.length > 0) {
+        await this.prisma.itemTierAttribute.deleteMany({
+          where: { id: { in: attributesToDelete } },
+        });
+      }
+
+      // Execute creations
+      for (const attribute of attributesToCreate) {
+        await this.prisma.itemTierAttribute.create({
+          data: {
             itemTierId: tierInformation.id,
             attributeKey: attribute.toLowerCase(),
           },
         });
-
-        if (!checkAttribute) {
-          await this.prisma.itemTierAttribute.create({
-            data: {
-              itemTierId: tierInformation.id,
-              attributeKey: attribute.toLowerCase(),
-            },
-          });
-        }
       }
     }
   }
@@ -134,13 +171,31 @@ export class ItemService {
     const tableQuery = this.tableHandler.constructTableQuery();
 
     tableQuery.where['isDraft'] = false;
+    tableQuery.where['isDeleted'] = false;
     tableQuery.where['NOT'] = [{ estimatedBuyingPrice: null }, { size: null }];
     tableQuery.where['companyId'] = this.utility.companyId;
 
-    // Get items with brand data
+    // Check for Item Group filtering
+    const isItemGroupFilter = body.filters?.find(f => f.hasOwnProperty('isItemGroup'));
+    if (isItemGroupFilter) {
+      if (isItemGroupFilter.isItemGroup === true) {
+        // Hide Item Groups (show only Individual Products)
+        tableQuery.where['itemType'] = { not: 'ITEM_GROUP' };
+      } else if (isItemGroupFilter.isItemGroup === false) {
+        // Show ONLY Item Groups
+        tableQuery.where['itemType'] = 'ITEM_GROUP';
+      }
+    }
+
+    // Get items with brand, category, branch, and keywords data
     const itemsWithBrands = await this.prisma.item.findMany({
       ...tableQuery,
-      include: { brand: true },
+      include: {
+        brand: true,
+        category: true,
+        branch: true,
+        keywords: { include: { keyword: true } },
+      },
     });
 
     // Count for pagination
@@ -197,14 +252,57 @@ export class ItemService {
     tableQuery.where['isDraft'] = false;
     tableQuery.where['companyId'] = this.utility.companyId;
 
+    // Check for Item Group filtering
+    const isItemGroupFilter = body.filters?.find(f => f.hasOwnProperty('isItemGroup'));
+    if (isItemGroupFilter) {
+      if (isItemGroupFilter.isItemGroup === true) {
+        // Hide Item Groups (show only Individual Products)
+        tableQuery.where['itemType'] = { not: 'ITEM_GROUP' };
+      } else if (isItemGroupFilter.isItemGroup === false) {
+        // Show ONLY Item Groups
+        tableQuery.where['itemType'] = 'ITEM_GROUP';
+      }
+    }
+
     const totalCount = await this.prisma.item.count({
       where: tableQuery.where,
     });
 
-    // Get items with brand data
+    // Get items with brand, category, branch data and keywords
     const baseList = await this.prisma.item.findMany({
       ...tableQuery,
-      include: { brand: true },
+      include: {
+        brand: true,
+        category: true,
+        branch: true,
+        keywords: {
+          include: {
+            keyword: true,
+          },
+        },
+        groupItems: {
+          include: {
+            item: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+              },
+            },
+          },
+        },
+        belongsToGroups: {
+          include: {
+            group: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     const currentPage = Number(query.page);
@@ -331,7 +429,7 @@ export class ItemService {
 
   private async getVariations(itemId: string): Promise<string> {
     const tiers = await this.prisma.item.findMany({
-      where: { parent: itemId },
+      where: { parent: itemId, isDeleted: false },
       select: { id: true },
     });
 
@@ -345,7 +443,7 @@ export class ItemService {
 
   private async getVariationCount(itemId: string): Promise<number> {
     const count = await this.prisma.item.count({
-      where: { parent: itemId },
+      where: { parent: itemId, isDeleted: false },
     });
     return count;
   }
@@ -353,7 +451,26 @@ export class ItemService {
   async getItemInfoById(id: string) {
     const itemInformation = await this.prisma.item.findUnique({
       where: { id },
-      include: { brand: true },
+      include: {
+        brand: true,
+        category: true,
+        keywords: {
+          include: {
+            keyword: true,
+          },
+        },
+        groupItems: {
+          include: {
+            item: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     const formattedItemInformation = this.formatResponse(itemInformation);
@@ -375,6 +492,12 @@ export class ItemService {
         description: true,
         estimatedBuyingPrice: true,
         size: true,
+        sellingPrice: true,
+        minimumStockLevelPrice: true,
+        maximumStockLevelPrice: true,
+        categoryId: true,
+        branchId: true,
+        enabledInPOS: true,
       },
     });
 
@@ -392,6 +515,10 @@ export class ItemService {
         estimatedBuyingPrice: true,
         size: true,
         parent: true,
+        variantCombination: true,
+        sellingPrice: true,
+        minimumStockLevelPrice: true,
+        maximumStockLevelPrice: true,
       },
     });
 
@@ -411,12 +538,30 @@ export class ItemService {
       }
     }
 
+    // Fetch keywords
+    const keywords = await this.prisma.itemKeyword.findMany({
+      where: { itemId: id },
+      select: { keywordId: true },
+    });
+
+    const keywordValues: string[] = [];
+    for (const kw of keywords) {
+      const keywordRecord = await this.prisma.keyword.findUnique({
+        where: { id: kw.keywordId },
+        select: { keywordValue: true },
+      });
+      if (keywordRecord) {
+        keywordValues.push(keywordRecord.keywordValue);
+      }
+    }
+
     const parentTags = await this.getParentItemTags(id);
 
     return {
       parent: {
         ...parentItem,
         tags: parentTags.join(', '),
+        keywords: keywordValues,
       },
       children: childItems.length > 0 ? childItems : ['No children item'],
     };
@@ -473,7 +618,12 @@ export class ItemService {
         sellingPrice: itemDto.sellingPrice,
         minimumStockLevelPrice: itemDto.minimumStockLevel,
         maximumStockLevelPrice: itemDto.maximumStockLevel,
+        enabledInPOS: itemDto.enabledInPOS || false,
+        itemType: (itemDto.itemType as ItemType) || ItemType.INDIVIDUAL_PRODUCT,
         company: { connect: { id: this.utility.companyId } },
+        ...(itemDto.categoryId && { category: { connect: { id: itemDto.categoryId } } }),
+        ...(itemDto.branchId && { branch: { connect: { id: itemDto.branchId } } }),
+        ...(itemDto.brandId && { brand: { connect: { id: itemDto.brandId } } }),
       },
     });
   }
@@ -481,6 +631,33 @@ export class ItemService {
   private async createItemTags(itemId: string, tagIds: string[]) {
     const itemTags = tagIds.map((tagId) => ({ itemId, tagId }));
     await this.prisma.itemTag.createMany({ data: itemTags });
+  }
+
+  private async createKeywords(keywordValues: string[]): Promise<string[]> {
+    const createdKeywordIds: string[] = [];
+
+    if (keywordValues && keywordValues.length > 0) {
+      for (const keywordValue of keywordValues) {
+        let keyword = await this.prisma.keyword.findFirst({
+          where: { keywordValue: keywordValue.toUpperCase() },
+        });
+
+        if (!keyword) {
+          keyword = await this.prisma.keyword.create({
+            data: { keywordValue: keywordValue.toUpperCase() },
+          });
+        }
+
+        createdKeywordIds.push(keyword.id);
+      }
+    }
+
+    return createdKeywordIds;
+  }
+
+  private async createItemKeywords(itemId: string, keywordIds: string[]) {
+    const itemKeywords = keywordIds.map((keywordId) => ({ itemId, keywordId }));
+    await this.prisma.itemKeyword.createMany({ data: itemKeywords });
   }
 
   private async createVariantItems(
@@ -643,6 +820,18 @@ export class ItemService {
     formattedItem.size = this.formatSize(item.size);
     formattedItem.tags = await this.getTagsPerItem(item.id);
 
+    // Add keywords
+    formattedItem.keywords = item.keywords
+      ? item.keywords.map((kw) => kw.keyword.keywordValue)
+      : [];
+
+    // Add display formatting for brand, category, and branch
+    formattedItem.brandDisplay = item.brand ? item.brand.name : 'No Brand';
+    formattedItem.categoryDisplay = item.category
+      ? item.category.name
+      : 'No Category';
+    formattedItem.branchDisplay = item.branch ? item.branch.name : 'No Branch';
+
     // Get stock information from main warehouse
     const mainWarehouseId = await this.ensureMainWarehouse(item.companyId);
     const stock = await this.getItemStock(item.id, mainWarehouseId);
@@ -701,6 +890,11 @@ export class ItemService {
     formattedItem.variationCount = variationCount;
     formattedItem.tags = await this.getTagsPerItem(item.id);
 
+    // Format brand, category, and branch display with fallbacks
+    formattedItem.brandDisplay = item.brand ? item.brand.name : 'No Brand';
+    formattedItem.categoryDisplay = item.category ? item.category.name : 'No Category';
+    formattedItem.branchDisplay = item.branch ? item.branch.name : 'No Branch';
+
     // Get stock information from main warehouse
     const mainWarehouseId = await this.ensureMainWarehouse(item.companyId);
     let stock = 0;
@@ -731,6 +925,40 @@ export class ItemService {
       formattedItem.variations = await this.getVariants(formattedItem.id);
     }
 
+    // Check if parent is in a group
+    const parentInGroup = (item.belongsToGroups?.length || 0) > 0;
+
+    // Check if any variation is in a group
+    let variationInGroup = false;
+    if (variationCount > 0) {
+      const variations = await this.prisma.item.findMany({
+        where: { parent: item.id, isDeleted: false },
+        include: {
+          belongsToGroups: {
+            include: {
+              group: { select: { name: true, sku: true } }
+            }
+          }
+        }
+      });
+
+      variationInGroup = variations.some(v => v.belongsToGroups.length > 0);
+
+      // Combine all groups from parent and variations
+      const allGroups = [...(item.belongsToGroups || [])];
+      variations.forEach(v => {
+        if (v.belongsToGroups.length > 0) {
+          allGroups.push(...v.belongsToGroups);
+        }
+      });
+      formattedItem.belongsToGroups = allGroups;
+    } else {
+      formattedItem.belongsToGroups = item.belongsToGroups || [];
+    }
+
+    // Item is part of group if parent OR any variation is in a group
+    formattedItem.isPartOfGroup = parentInGroup || variationInGroup;
+
     return formattedItem;
   }
 
@@ -744,7 +972,7 @@ export class ItemService {
 
   private async getChildPrices(parentId: string): Promise<number[]> {
     const childItems = await this.prisma.item.findMany({
-      where: { parent: parentId },
+      where: { parent: parentId, isDeleted: false },
       select: { estimatedBuyingPrice: true },
     });
     return childItems
@@ -767,7 +995,7 @@ export class ItemService {
 
   private async getChildSizes(parentId: string): Promise<number[]> {
     const childItems = await this.prisma.item.findMany({
-      where: { parent: parentId },
+      where: { parent: parentId, isDeleted: false },
       select: { size: true },
     });
     return childItems
@@ -795,8 +1023,8 @@ export class ItemService {
     itemDto: UpdateItemWithVariantsDto,
   ) {
     await this.ensureUniqueSKU(itemDto.sku, itemId);
-
     const tagIds = itemDto.tags ? await this.createTags(itemDto.tags) : [];
+    const keywordIds = itemDto.keywords ? await this.createKeywords(itemDto.keywords) : [];
 
     const parentItemUpdate: any = {
       name: itemDto.name,
@@ -814,6 +1042,18 @@ export class ItemService {
     if (itemDto.maximumStockLevel !== undefined) {
       parentItemUpdate.maximumStockLevelPrice = itemDto.maximumStockLevel;
     }
+    if (itemDto.enabledInPOS !== undefined) {
+      parentItemUpdate.enabledInPOS = itemDto.enabledInPOS;
+    }
+    if (itemDto.categoryId !== undefined) {
+      parentItemUpdate.categoryId = itemDto.categoryId;
+    }
+    if (itemDto.branchId !== undefined) {
+      parentItemUpdate.branchId = itemDto.branchId;
+    }
+    if (itemDto.itemType !== undefined) {
+      parentItemUpdate.itemType = itemDto.itemType;
+    }
 
     const updatedParentItem = await this.prisma.item.update({
       where: { id: itemId },
@@ -825,9 +1065,64 @@ export class ItemService {
       await this.createItemTags(itemId, tagIds);
     }
 
-    const variantItems = await Promise.all(
-      itemDto.variants.map(async (variant) => {
-        await this.ensureUniqueSKU(variant.sku, variant.id);
+    if (itemDto.keywords) {
+      await this.prisma.itemKeyword.deleteMany({ where: { itemId } });
+      await this.createItemKeywords(itemId, keywordIds);
+    }
+
+    // Update tiers if provided - this will sync tier attributes
+    if (itemDto.tiers) {
+      await this.saveTiers(itemId, itemDto.tiers);
+    }
+
+    // Fetch existing variant items
+    const existingVariants = await this.prisma.item.findMany({
+      where: { parent: itemId, isDeleted: false },
+      select: { id: true, variantCombination: true },
+    });
+
+    // Build maps for efficient lookup
+    const existingMap = new Map(existingVariants.map(v => [v.variantCombination, v]));
+    const incomingMap = new Map((itemDto.variants || []).map(v => {
+      // Calculate variantCombination for incoming variant
+      const variantCombination = this.getVariationCombination(v.variation || {});
+      return [variantCombination, v];
+    }));
+
+    // Determine variants to delete (exist in DB but not in incoming array)
+    const variantsToDelete = existingVariants
+      .filter(existing => !incomingMap.has(existing.variantCombination))
+      .map(v => v.id);
+
+    // Determine variants to create (exist in incoming array but not in DB)
+    const variantsToCreate = (itemDto.variants || [])
+      .filter(incoming => {
+        const variantCombination = this.getVariationCombination(incoming.variation || {});
+        return !existingMap.has(variantCombination);
+      });
+
+    // Determine variants to update (exist in both)
+    const variantsToUpdate = (itemDto.variants || [])
+      .filter(incoming => {
+        const variantCombination = this.getVariationCombination(incoming.variation || {});
+        return existingMap.has(variantCombination);
+      });
+
+    // Execute deletions
+    if (variantsToDelete.length > 0) {
+      await this.prisma.item.updateMany({
+        where: { id: { in: variantsToDelete } },
+        data: { isDeleted: true },
+      });
+    }
+
+    // Execute updates
+    const updatedVariants = await Promise.all(
+      variantsToUpdate.map(async (variant) => {
+        const variantCombination = this.getVariationCombination(variant.variation || {});
+        const existingVariant = existingMap.get(variantCombination);
+
+        await this.ensureUniqueSKU(variant.sku, existingVariant.id);
 
         const variantItemUpdate = {
           name: variant.name,
@@ -839,19 +1134,30 @@ export class ItemService {
           maximumStockLevelPrice: variant.maximumStockLevel,
         };
 
-        const updatedVariantItem = await this.prisma.item.update({
-          where: { id: variant.id },
+        return await this.prisma.item.update({
+          where: { id: existingVariant.id },
           data: variantItemUpdate,
         });
-
-        return updatedVariantItem;
       }),
     );
+
+    // Execute creations
+    const createdVariants = await Promise.all(
+      variantsToCreate.map(async (variant) => {
+        return await this.createVariantItem(
+          itemId,
+          variant as CreateVariantDto,
+          itemDto.description,
+        );
+      }),
+    );
+
+    const allVariants = [...updatedVariants, ...createdVariants];
 
     return this.formatUpdateItemResponse(
       updatedParentItem,
       tagIds,
-      variantItems,
+      allVariants,
     );
   }
 
@@ -883,6 +1189,7 @@ export class ItemService {
 
     await this.ensureUniqueSKU(itemDto.sku, itemDto.id);
     const tagIds = await this.createTags(itemDto.tags);
+    const keywordIds = await this.createKeywords(itemDto.keywords);
 
     const updateData = {
       name: itemDto.name,
@@ -902,6 +1209,10 @@ export class ItemService {
         maximumStockLevelPrice: itemDto.maximumStockLevel,
       }),
       ...(itemDto.brandId !== undefined && { brandId: itemDto.brandId }),
+      ...(itemDto.enabledInPOS !== undefined && { enabledInPOS: itemDto.enabledInPOS }),
+      ...(itemDto.categoryId !== undefined && { categoryId: itemDto.categoryId }),
+      ...(itemDto.branchId !== undefined && { branchId: itemDto.branchId }),
+      ...(itemDto.itemType !== undefined && { itemType: itemDto.itemType as ItemType }),
     };
 
     if (uomInformation) {
@@ -937,6 +1248,13 @@ export class ItemService {
     }
 
     await this.updateItemTags(item.id, tagIds);
+    await this.updateItemKeywords(item.id, keywordIds);
+
+    // Update group items if itemType is ITEM_GROUP
+    if (itemDto.itemType === 'ITEM_GROUP' && itemDto.groupItems !== undefined) {
+      await this.validateGroupItems(itemDto.groupItems);
+      await this.updateGroupItems(itemDto.id, itemDto.groupItems);
+    }
 
     return this.formatResponse(item);
   }
@@ -954,6 +1272,23 @@ export class ItemService {
 
       await this.prisma.itemTag.createMany({
         data: itemTags,
+      });
+    }
+  }
+
+  private async updateItemKeywords(itemId: string, keywordIds: string[]) {
+    await this.prisma.itemKeyword.deleteMany({
+      where: { itemId },
+    });
+
+    if (keywordIds && keywordIds.length > 0) {
+      const itemKeywords = keywordIds.map((keywordId) => ({
+        itemId,
+        keywordId,
+      }));
+
+      await this.prisma.itemKeyword.createMany({
+        data: itemKeywords,
       });
     }
   }
@@ -1180,8 +1515,135 @@ export class ItemService {
     return totalStock;
   }
 
+  private async checkItemGroupReferences(itemId: string) {
+    // Check if this item is referenced in any Item Group
+    const groupReferences = await this.prisma.itemGroupItem.findMany({
+      where: { itemId },
+      include: {
+        group: {
+          select: { name: true, sku: true }
+        }
+      }
+    });
+
+    if (groupReferences.length > 0) {
+      const groupNames = groupReferences.map(ref => ref.group.name).join(', ');
+      throw new ConflictException(
+        `Cannot delete this item because it is part of the following Item Group(s): ${groupNames}. ` +
+        `Please remove this item from the group(s) before deleting.`
+      );
+    }
+  }
+
+  private async validateGroupItems(groupItems: any[]) {
+    if (!groupItems || groupItems.length === 0) return;
+
+    // Get all items to check their types
+    const itemIds = groupItems.map(gi => gi.itemId);
+    const items = await this.prisma.item.findMany({
+      where: { id: { in: itemIds } },
+      select: { id: true, itemType: true, name: true }
+    });
+
+    // Check if any item is ITEM_GROUP
+    const invalidItems = items.filter(item => item.itemType === 'ITEM_GROUP');
+
+    if (invalidItems.length > 0) {
+      const names = invalidItems.map(i => i.name).join(', ');
+      throw new ConflictException(
+        `Cannot add Item Groups to another Item Group. Invalid items: ${names}`
+      );
+    }
+  }
+
+  private async saveGroupItems(groupId: string, groupItems: any[]) {
+    if (!groupItems || groupItems.length === 0) return;
+
+    const data = groupItems.map(gi => ({
+      groupId,
+      itemId: gi.itemId,
+      quantity: gi.quantity || 1,
+    }));
+
+    await this.prisma.itemGroupItem.createMany({ data });
+  }
+
+  private async updateGroupItems(groupId: string, groupItems: any[]) {
+    // Fetch existing group items
+    const existingItems = await this.prisma.itemGroupItem.findMany({
+      where: { groupId },
+      select: { id: true, itemId: true, quantity: true }
+    });
+
+    // Build maps for efficient lookup
+    const existingMap = new Map(existingItems.map(item => [item.itemId, item]));
+    const newMap = new Map((groupItems || []).map(item => [item.itemId, item]));
+
+    // Determine items to delete (exist in DB but not in new array)
+    const itemsToDelete = existingItems
+      .filter(existing => !newMap.has(existing.itemId))
+      .map(item => item.id);
+
+    // Determine items to create (exist in new array but not in DB)
+    const itemsToCreate = (groupItems || [])
+      .filter(newItem => !existingMap.has(newItem.itemId))
+      .map(newItem => ({
+        groupId,
+        itemId: newItem.itemId,
+        quantity: newItem.quantity || 1
+      }));
+
+    // Determine items to update (exist in both but quantity changed)
+    const itemsToUpdate = (groupItems || [])
+      .filter(newItem => {
+        const existing = existingMap.get(newItem.itemId);
+        return existing && existing.quantity !== (newItem.quantity || 1);
+      })
+      .map(newItem => ({
+        id: existingMap.get(newItem.itemId).id,
+        quantity: newItem.quantity || 1
+      }));
+
+    // Execute operations
+    if (itemsToDelete.length > 0) {
+      await this.prisma.itemGroupItem.deleteMany({
+        where: { id: { in: itemsToDelete } }
+      });
+    }
+
+    if (itemsToCreate.length > 0) {
+      await this.prisma.itemGroupItem.createMany({ data: itemsToCreate });
+    }
+
+    for (const item of itemsToUpdate) {
+      await this.prisma.itemGroupItem.update({
+        where: { id: item.id },
+        data: { quantity: item.quantity }
+      });
+    }
+  }
+
   private formatResponse(item: any): any {
     const uomInfo = UnitOfMeasurementReference.find((u) => u.key === item.uom);
+
+    // Extract keywords if available
+    const keywords = item.keywords
+      ? item.keywords.map((kw) => kw.keyword.keywordValue)
+      : [];
+
+    // Extract group items if available
+    const groupItems = item.groupItems
+      ? item.groupItems.map((gi) => ({
+          id: gi.id,
+          itemId: gi.itemId,
+          quantity: gi.quantity,
+          item: gi.item ? {
+            id: gi.item.id,
+            name: gi.item.name,
+            sku: gi.item.sku,
+          } : null
+        }))
+      : [];
 
     return {
       id: item.id,
@@ -1208,6 +1670,12 @@ export class ItemService {
       uom: uomInfo || null,
       brandId: item.brandId || null,
       brand: item.brand || null,
+      categoryId: item.categoryId || null,
+      branchId: item.branchId || null,
+      keywords: keywords,
+      enabledInPOS: item.enabledInPOS || false,
+      itemType: item.itemType || 'INDIVIDUAL_PRODUCT',
+      groupItems: groupItems,
     };
   }
 

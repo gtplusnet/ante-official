@@ -34,7 +34,7 @@
             <job-details-tab ref="jobDetailsTab" v-show="activeTab === 'job_Details'" :employee-data="localEmployeeData" @cancel="hideDialog" @update="onUpdate" @update-complete="isUpdating = false" />
 
             <!-- Government Tab -->
-            <government-tab v-show="activeTab === 'goverment'" :employee-data="localEmployeeData" @cancel="hideDialog" @update="onUpdate" />
+            <government-tab ref="governmentTab" v-show="activeTab === 'goverment'" :employee-data="localEmployeeData" @cancel="hideDialog" @update="onUpdate" />
 
             <!-- Shift Tab -->
             <shift-tab v-show="activeTab === 'shift'" :employee-data="localEmployeeData" @cancel="hideDialog" @update="onUpdate" />
@@ -97,12 +97,8 @@ import DeductionTab from './tabs/DeductionTab.vue';
 import NewContract from './NewContract.vue';
 import EditContract from './EditContract.vue';
 import GButton from 'src/components/shared/buttons/GButton.vue';
-import { useSupabaseSchedules } from 'src/composables/supabase/useSupabaseSchedules';
-import { useSupabasePayrollGroups } from 'src/composables/supabase/useSupabasePayrollGroups';
-import { useSupabaseBranches } from 'src/composables/supabase/useSupabaseBranches';
-import { useSupabaseEmployees } from 'src/composables/supabase/useSupabaseEmployees';
 import { useAuthStore } from 'src/stores/auth';
-import supabaseService from 'src/services/supabase';
+import { api } from 'src/boot/axios';
 
 // Lazy-loaded dialogs (ALL dialogs must be lazy loaded - CLAUDE.md)
 const AddEditPayrollGroupDialog = defineAsyncComponent(() =>
@@ -118,18 +114,9 @@ const TemplateDialog = defineAsyncComponent(() =>
 export default {
   name: 'AddEditHRISEmployeeDialog',
   setup() {
-    // Initialize Supabase composables
-    const schedulesComposable = useSupabaseSchedules();
-    const payrollGroupsComposable = useSupabasePayrollGroups();
-    const branchesComposable = useSupabaseBranches();
-    const employeesComposable = useSupabaseEmployees();
     const authStore = useAuthStore();
-    
+
     return {
-      schedulesComposable,
-      payrollGroupsComposable,
-      branchesComposable,
-      employeesComposable,
       authStore
     };
   },
@@ -311,22 +298,35 @@ export default {
     },
 
     updateJobDetails() {
+      console.log('[DEBUG] Parent: updateJobDetails called');
+      console.log('[DEBUG] Parent: $refs.jobDetailsTab:', this.$refs.jobDetailsTab);
+      console.log('[DEBUG] Parent: Has updateJobDetails method?', this.$refs.jobDetailsTab?.updateJobDetails);
+
       // Call the job details tab's update method
       if (this.$refs.jobDetailsTab && this.$refs.jobDetailsTab.updateJobDetails) {
+        console.log('[DEBUG] Parent: Calling child updateJobDetails method');
         this.$refs.jobDetailsTab.updateJobDetails();
       } else {
-        console.error('Job details tab ref not found or updateJobDetails method not available');
+        console.error('[DEBUG] Parent: Job details tab ref not found or updateJobDetails method not available');
+        console.error('[DEBUG] Parent: Available refs:', Object.keys(this.$refs));
         this.isUpdating = false;
       }
     },
 
     updateGovernmentDetails() {
-      // Placeholder - implement when government details update is needed
-      this.isUpdating = false;
-      this.$q.notify({
-        type: 'positive',
-        message: 'Government details updated successfully',
-      });
+      console.log('[DEBUG] Parent: updateGovernmentDetails called');
+      console.log('[DEBUG] Parent: $refs.governmentTab:', this.$refs.governmentTab);
+      console.log('[DEBUG] Parent: Has updateGovernmentDetails method?', this.$refs.governmentTab?.updateGovernmentDetails);
+
+      // Call the government tab's update method
+      if (this.$refs.governmentTab && this.$refs.governmentTab.updateGovernmentDetails) {
+        console.log('[DEBUG] Parent: Calling child updateGovernmentDetails method');
+        this.$refs.governmentTab.updateGovernmentDetails();
+      } else {
+        console.error('[DEBUG] Parent: Government tab ref not found or updateGovernmentDetails method not available');
+        console.error('[DEBUG] Parent: Available refs:', Object.keys(this.$refs));
+        this.isUpdating = false;
+      }
     },
 
     updateShiftDetails() {
@@ -593,136 +593,64 @@ export default {
     },
     async fetchEmployeeData() {
       if (!this.employeeId) return;
-      
+
       this.isLoadingEmployee = true;
       try {
-        // Fetch complete employee data using Supabase
-        const supabase = supabaseService.getClient();
-        const { data, error } = await supabase
-          .from('EmployeeData')
-          .select(`
-            *,
-            account:Account!inner(
-              id,
-              firstName,
-              lastName,
-              middleName,
-              email,
-              contactNumber,
-              username,
-              roleId,
-              companyId,
-              status,
-              dateOfBirth,
-              gender,
-              civilStatus,
-              street,
-              city,
-              stateProvince,
-              postalCode,
-              zipCode,
-              country,
-              role:Role(
-                id,
-                name,
-                level,
-                roleGroupId
-              )
-            ),
-            activeContract:EmployeeContract!inner(
-              id,
-              startDate,
-              endDate,
-              employmentStatus,
-              monthlyRate,
-              isActive
-            ),
-            branch:Project(
-              id,
-              name
-            ),
-            payrollGroup:PayrollGroup(
-              id,
-              payrollGroupCode
-            ),
-            schedule:Schedule(
-              id,
-              scheduleCode
-            )
-          `)
-          .eq('accountId', this.employeeId)
-          .single();
-        
-        if (error) {
-          console.error('Error fetching employee data:', error);
-          this.$q.notify({
-            type: 'negative',
-            message: 'Failed to load employee data'
-          });
-          return;
-        }
-        
+        // Fetch complete employee data using optimized API (N+1 query fix)
+        const response = await api.get(`/hris/employee/info-lite?accountId=${this.employeeId}`);
+        const data = response.data;
+
         // Transform the data to match expected format
         this.localEmployeeData = {
           key: 1,
           data: {
             accountDetails: {
-              ...(data.account || {}),
-              fullName: data.account ? `${data.account.lastName}, ${data.account.firstName} ${data.account.middleName || ''}` : '',
-              roleId: data.account?.roleId || null
+              ...data.accountDetails,
+              roleId: data.accountDetails?.roleID || data.accountDetails?.roleId || null
             },
             employeeCode: data.employeeCode,
-            contractDetails: data.activeContract ? {
-              ...(data.activeContract || {}),
-              employmentStatus: data.activeContract?.employmentStatus || '',
-              startDate: data.activeContract?.startDate ? {
-                date: new Date(data.activeContract.startDate).toLocaleDateString()
-              } : null,
-              endDate: data.activeContract.endDate ? {
-                date: new Date(data.activeContract.endDate).toLocaleDateString()
-              } : null
-            } : null,
-            jobDetails: {
-              bankName: data.bankName || '',
-              bankAccountNumber: data.bankAccountNumber || '',
-              biometricsNumber: data.biometricsNumber || '',
-              branchId: data.branchId || null
+            contractDetails: data.contractDetails,
+            jobDetails: data.jobDetails || {
+              bankName: '',
+              bankAccountNumber: '',
+              biometricsNumber: '',
+              branchId: null
             },
-            governmentDetails: {
-              sssNumber: data.sssNumber || '',
-              tinNumber: data.tinNumber || '',
-              phicNumber: data.phicNumber || '',
-              hdmfNumber: data.hdmfNumber || ''
+            governmentDetails: data.governmentDetails || {
+              sssNumber: '',
+              tinNumber: '',
+              phicNumber: '',
+              hdmfNumber: ''
             },
             payrollGroup: data.payrollGroup || {},
             schedule: data.schedule || {},
             branch: data.branch || {}
           }
         };
-        
-        this.employeeID = data.accountId;
+
+        this.employeeID = data.accountDetails?.id;
         this.employeeCodes = data.employeeCode;
-        
+
         // Populate contract data if exists
-        if (data.activeContract) {
+        if (data.contractDetails) {
           const usersSeeing = this.findContract.find((pro) => pro.employeeCode === this.employeeCodes);
           if (usersSeeing) {
             this.tableContract.push({
               employeeCode: data.employeeCode,
-              employementStatus: data.activeContract.employmentStatus,
-              startDate: data.activeContract.startDate ? new Date(data.activeContract.startDate).toLocaleDateString() : 'N/A',
-              endDate: data.activeContract.endDate ? new Date(data.activeContract.endDate).toLocaleDateString() : 'N/A',
+              employementStatus: data.contractDetails.employmentStatus?.key || data.contractDetails.employmentStatus,
+              startDate: data.contractDetails.startDate?.date || data.contractDetails.startDate?.dateFull || 'N/A',
+              endDate: data.contractDetails.endDate?.date || data.contractDetails.endDate?.dateFull || 'N/A',
             });
           }
         }
-        
+
         this.populateFormData();
-        
+
       } catch (error) {
         console.error('Error fetching employee data:', error);
         this.$q.notify({
           type: 'negative',
-          message: 'Failed to load employee data'
+          message: error.response?.data?.message || 'Failed to load employee data'
         });
       } finally {
         this.isLoadingEmployee = false;
@@ -731,60 +659,43 @@ export default {
     
     async fetchScheduleCodeAsync() {
       try {
-        const companyId = this.authStore.getAccountInformation?.companyId || this.authStore.getAccountInformation?.company?.id;
-        if (companyId) {
-          await this.schedulesComposable.fetchSchedulesByCompany(companyId);
-        } else {
-          await this.schedulesComposable.fetchSchedules();
-        }
-        this.scheduleOption = this.schedulesComposable.scheduleOptions.value;
+        const response = await api.get('/hr-configuration/schedule/list');
+        this.scheduleOption = response.data || [];
       } catch (error) {
         console.error('Error fetching schedule codes:', error);
         // Don't block dialog from opening if this fails
       }
     },
-    
+
     async fetchPayrolGroupCodeAsync() {
       try {
-        const companyId = this.authStore.getAccountInformation?.companyId || this.authStore.getAccountInformation?.company?.id;
-        if (companyId) {
-          await this.payrollGroupsComposable.fetchPayrollGroupsByCompany(companyId);
-        } else {
-          await this.payrollGroupsComposable.fetchPayrollGroups();
-        }
-        this.payrolGroupCode = this.payrollGroupsComposable.payrollGroupOptions.value;
+        const response = await api.get('/hr-configuration/payroll-group/list');
+        this.payrolGroupCode = response.data || [];
       } catch (error) {
         console.error('Error fetching payroll groups:', error);
       }
     },
-    
+
     async fetchBranchIdAsync() {
       try {
-        const companyId = this.authStore.getAccountInformation?.companyId || this.authStore.getAccountInformation?.company?.id;
-        if (companyId) {
-          await this.branchesComposable.fetchBranchesByCompany(companyId);
-        } else {
-          await this.branchesComposable.fetchBranches();
-        }
-        this.branchIds = this.branchesComposable.branchOptions.value;
+        const response = await api.get('/project/list');
+        this.branchIds = response.data || [];
       } catch (error) {
         console.error('Error fetching branches:', error);
       }
     },
-    
+
     async fetchContractAsync() {
       try {
-        // Fetch employees using Supabase composable
-        const companyId = this.authStore.getAccountInformation?.companyId || this.authStore.getAccountInformation?.company?.id;
-        if (companyId) {
-          await this.employeesComposable.fetchEmployeesByCompany(companyId);
-        } else {
-          await this.employeesComposable.fetchEmployeesMinimal();
-        }
+        // Fetch employee table data with minimal fields
+        const response = await api.put('/hris/employee/table?page=1&perPage=1000', {
+          filters: [{ isActive: true }]
+        });
+
         // Map the employees to match the expected format
-        this.findContract = this.employeesComposable.employees.value.map(emp => ({
+        this.findContract = response.data.list.map(emp => ({
           employeeCode: emp.employeeCode,
-          accountId: emp.accountId,
+          accountId: emp.accountDetails?.id,
           ...emp
         }));
       } catch (error) {
@@ -795,45 +706,32 @@ export default {
     async fetchScheduleCode() {
       this.isLoading = true;
       try {
-        const companyId = this.authStore.getAccountInformation?.companyId || this.authStore.getAccountInformation?.company?.id;
-        if (companyId) {
-          await this.schedulesComposable.fetchSchedulesByCompany(companyId);
-        } else {
-          await this.schedulesComposable.fetchSchedules();
-        }
-        this.scheduleOption = this.schedulesComposable.scheduleOptions.value;
+        const response = await api.get('/hr-configuration/schedule/list');
+        this.scheduleOption = response.data || [];
       } catch (error) {
         console.error('Error fetching schedule codes:', error);
       } finally {
         this.isLoading = false;
       }
     },
+
     async fetchPayrolGroupCode() {
       this.isLoading = true;
       try {
-        const companyId = this.authStore.getAccountInformation?.companyId || this.authStore.getAccountInformation?.company?.id;
-        if (companyId) {
-          await this.payrollGroupsComposable.fetchPayrollGroupsByCompany(companyId);
-        } else {
-          await this.payrollGroupsComposable.fetchPayrollGroups();
-        }
-        this.payrolGroupCode = this.payrollGroupsComposable.payrollGroupOptions.value;
+        const response = await api.get('/hr-configuration/payroll-group/list');
+        this.payrolGroupCode = response.data || [];
       } catch (error) {
         console.error('Error fetching payroll groups:', error);
       } finally {
         this.isLoading = false;
       }
     },
+
     async fetchBranchId() {
       this.isLoading = true;
       try {
-        const companyId = this.authStore.getAccountInformation?.companyId || this.authStore.getAccountInformation?.company?.id;
-        if (companyId) {
-          await this.branchesComposable.fetchBranchesByCompany(companyId);
-        } else {
-          await this.branchesComposable.fetchBranches();
-        }
-        this.branchIds = this.branchesComposable.branchOptions.value;
+        const response = await api.get('/project/list');
+        this.branchIds = response.data || [];
       } catch (error) {
         console.error('Error fetching branches:', error);
       } finally {
@@ -844,44 +742,38 @@ export default {
     async fetchContract() {
       this.isLoading = true;
       try {
-        // Fetch employees using Supabase composable
-        const companyId = this.authStore.getAccountInformation?.companyId || this.authStore.getAccountInformation?.company?.id;
-        if (companyId) {
-          await this.employeesComposable.fetchEmployeesByCompany(companyId);
-        } else {
-          await this.employeesComposable.fetchEmployeesMinimal();
-        }
+        // Fetch employee table data with minimal fields using API
+        const response = await api.put('/hris/employee/table?page=1&perPage=1000', {
+          filters: [{ isActive: true }]
+        });
+
         // Map the employees to match the expected format
-        this.findContract = this.employeesComposable.employees.value.map(emp => ({
+        this.findContract = response.data.list.map(emp => ({
           employeeCode: emp.employeeCode,
-          accountId: emp.accountId,
+          accountId: emp.accountDetails?.id,
           ...emp
         }));
       } catch (error) {
-        console.error('Error fetching employees:', error);
+        console.error('Error fetching contracts:', error);
       } finally {
         this.isLoading = false;
       }
     },
     async onUpdate() {
       console.log('[DEBUG] EditCreateEmployee: onUpdate method called');
-      
-      // Show success notification
-      this.$q.notify({
-        type: 'positive',
-        message: 'Employee details updated successfully',
-        position: 'top'
-      });
-      
+
+      // Note: Child tabs already show their own success notifications
+      // No need to show duplicate notification here
+
       // Reset the updating state
       this.isUpdating = false;
-      
-      // Optional: Refresh data from Supabase if needed
-      // await this.fetchEmployeeData();
-      
+
       // Emit saveDone to trigger parent table refresh
       console.log('[DEBUG] EditCreateEmployee: Emitting saveDone event after successful update');
       this.$emit('saveDone');
+
+      // Close the dialog after successful update
+      this.hideDialog();
     },
   },
 };

@@ -1,55 +1,49 @@
 <template>
   <q-dialog ref="dialog" @before-show="fetchData">
-    <q-card class="full-width dialog-card">
-      <q-bar class="bg-primary text-white cursor-default" dark>
-        <q-icon name="o_inventory" />
-        <div class="text-title-medium">Choose Item</div>
+    <TemplateDialog
+      size="lg"
+      :scrollable="true"
+      :icon="'o_inventory'"
+      :iconColor="'primary'"
+    >
+      <!-- Dialog Title -->
+      <template #DialogTitle> Choose Item </template>
 
-        <q-space />
+      <!-- Dialog Content -->
+      <template #DialogContent>
+        <section class="q-pa-md">
+          <div class="text-right q-mb-sm">
+            <GButton
+              label="Add Item"
+              icon="add"
+              variant="filled"
+              color="primary"
+              @click="this.$refs.itemTable.addItem()"
+            />
+          </div>
+          <SimpleItemTable
+            ref="itemTable"
+            :emitKey="emitKey"
+            :hideItemGroups="true"
+            @select="selectItem"
+            tab="select"
+          />
+        </section>
+      </template>
+    </TemplateDialog>
 
-        <q-btn dense flat icon="close" v-close-popup>
-          <q-tooltip class="text-label-small" >Close</q-tooltip>
-        </q-btn>
-      </q-bar>
+    <!-- Choose Variation Dialog -->
+    <q-dialog v-model="isChooseVariantDialog">
+      <TemplateDialog
+        size="sm"
+        :scrollable="true"
+        :icon="'o_check'"
+        :iconColor="'primary'"
+      >
+        <template #DialogTitle> Choose Variation </template>
 
-      <q-card-section>
-        <div class="text-right q-mb-sm">
-          <q-btn
-            @click="this.$refs.itemTable.addItem()"
-            color="primary"
-            unelevated
-            ><q-icon name="add" size="16px" class="q-mr-xs text-body-medium"></q-icon> Add
-            Item</q-btn
-          >
-        </div>
-        <SimpleItemTable
-          ref="itemTable"
-          :emitKey="emitKey"
-          @select="selectItem"
-          tab="select"
-        />
-      </q-card-section>
-
-      <!-- select variation dialog -->
-      <q-dialog v-model="isChooseVariantDialog">
-        <q-card class="full-width dialog-card-variant">
-          <q-bar class="bg-primary text-white cursor-default" dark>
-            <q-icon name="o_check" />
-            <div class="text-title-medium">Choose Variation</div>
-
-            <q-space />
-
-            <q-btn
-              dense
-              flat
-              icon="close"
-              @click="isChooseVariantDialog = false"
-            >
-              <q-tooltip class="text-label-small">Close</q-tooltip>
-            </q-btn>
-          </q-bar>
-
-          <q-card-section>
+        <template #DialogContent>
+          <div class="q-pa-md">
             <div v-for="item in variations" :key="item">
               <div class="q-mb-xs">
                 {{ this.capitalizeFirstLetter(item.name) }}
@@ -66,61 +60,110 @@
                 ></q-select>
               </div>
             </div>
-            <div class="column justify-end q-mt-md">
-              <div v-if="variationItemInformation" class="text-center q-pa-md text-body-medium">
-                {{ variationItemInformation.name }} ({{
-                  variationItemInformation.sku
-                }})
-              </div>
-              <q-btn
-                @click="submitVariationItem"
-                :disabled="!variationItemInformation"
-                unelevated
-                color="primary"
-                class="text-body-medium"
-                label="Submit"
-              />
+            <div
+              v-if="variationItemInformation"
+              class="text-center q-pa-md text-body-medium"
+            >
+              {{ variationItemInformation.name }} ({{
+                variationItemInformation.sku
+              }})
             </div>
-          </q-card-section>
-        </q-card>
-      </q-dialog>
-    </q-card>
+          </div>
+        </template>
+
+        <template #DialogSubmitActions>
+          <GButton
+            label="Submit"
+            variant="filled"
+            color="primary"
+            :disable="!variationItemInformation"
+            @click="submitVariationItem"
+          />
+        </template>
+      </TemplateDialog>
+    </q-dialog>
+
+    <!-- Quantity Dialog -->
+    <q-dialog v-model="isQuantityDialog">
+      <TemplateDialog
+        size="sm"
+        :scrollable="false"
+        :icon="'o_inventory'"
+        :iconColor="'primary'"
+      >
+        <template #DialogTitle> Set Quantity </template>
+
+        <template #DialogContent>
+          <div class="q-pa-md">
+            <div v-if="selectedItemForQuantity" class="q-mb-md">
+              <div class="text-body-medium">
+                {{ selectedItemForQuantity.name }}
+              </div>
+              <div class="text-caption text-grey">
+                {{ selectedItemForQuantity.sku }}
+              </div>
+            </div>
+
+            <q-input
+              v-model.number="itemQuantity"
+              type="number"
+              label="Quantity"
+              outlined
+              dense
+              :min="1"
+              class="text-body-medium"
+            />
+          </div>
+        </template>
+
+        <template #DialogSubmitActions>
+          <GButton
+            label="Add Item"
+            variant="filled"
+            color="primary"
+            @click="submitItemWithQuantity"
+            block
+          />
+        </template>
+      </TemplateDialog>
+    </q-dialog>
   </q-dialog>
 </template>
 
-<style scoped lang="scss">
-.dialog-card {
-  max-width: 1000px;
-  min-height: 600px;
-}
-
-.dialog-card-variant {
-  max-width: 600px;
-  min-height: 300px;
-}
-</style>
+<style scoped lang="scss"></style>
 
 <script>
 import SimpleItemTable from "../../components/tables/SimpleItemTable.vue";
-import { api } from 'src/boot/axios';
+import TemplateDialog from "./TemplateDialog.vue";
+import GButton from "../shared/buttons/GButton.vue";
+import { api } from "src/boot/axios";
 
 export default {
-  name: 'ChooseItemDialog',
+  name: "ChooseItemDialog",
   props: {
     emitKey: {
       type: String,
-      default: '',
+      default: "",
+    },
+    isItemGroup: {
+      type: Boolean,
+      default: false,
     },
   },
   components: {
     SimpleItemTable,
+    TemplateDialog,
+    GButton,
   },
   data: () => ({
     isChooseVariantDialog: false,
+    isQuantityDialog: false,
     variationItemInformation: null,
     itemData: null,
     optionValue: [],
     variations: [],
+    selectedItemForQuantity: null,
+    itemQuantity: 1,
   }),
   watch: {
     variations: {
@@ -132,12 +175,21 @@ export default {
   },
   methods: {
     submitVariationItem() {
-      this.variationItemInformation.emitKey = this.emitKey;
       this.isChooseVariantDialog = false;
-      this.$bus.emit('chooseItem', this.variationItemInformation);
-      this.$emit('chooseItem', this.variationItemInformation);
 
-      this.$refs.dialog.hide();
+      if (this.isItemGroup) {
+        // Show quantity dialog for variation item
+        this.variationItemInformation.emitKey = this.emitKey;
+        this.selectedItemForQuantity = this.variationItemInformation;
+        this.itemQuantity = 1;
+        this.isQuantityDialog = true;
+      } else {
+        // Original behavior - direct emit
+        this.variationItemInformation.emitKey = this.emitKey;
+        this.$bus.emit("chooseItem", this.variationItemInformation);
+        this.$emit("chooseItem", this.variationItemInformation);
+        this.$refs.dialog.hide();
+      }
     },
     selectItem(itemData) {
       if (itemData.variationCount > 0) {
@@ -145,15 +197,23 @@ export default {
         this.variations = this.formatVariations(itemData.variations);
         this.isChooseVariantDialog = true;
       } else {
-        this.$bus.emit('chooseItem', itemData);
-        this.$emit('chooseItem', itemData);
-        this.$refs.dialog.hide();
+        // Show quantity dialog if in item group mode
+        if (this.isItemGroup) {
+          this.selectedItemForQuantity = itemData;
+          this.itemQuantity = 1;
+          this.isQuantityDialog = true;
+        } else {
+          // Default behavior - direct emit
+          this.$bus.emit("chooseItem", itemData);
+          this.$emit("chooseItem", itemData);
+          this.$refs.dialog.hide();
+        }
       }
     },
     loadVariant() {
       this.$q.loading.show();
       api
-        .post('/items/get-variation-item', {
+        .post("/items/get-variation-item", {
           itemId: this.itemData.id,
           variations: this.variations,
         })
@@ -183,6 +243,18 @@ export default {
       return variations;
     },
     fetchData() {},
+    submitItemWithQuantity() {
+      const itemWithQuantity = {
+        ...this.selectedItemForQuantity,
+        quantity: this.itemQuantity,
+      };
+      console.log(itemWithQuantity);
+      this.$bus.emit("chooseItem", itemWithQuantity);
+      this.$emit("chooseItem", itemWithQuantity);
+
+      this.isQuantityDialog = false;
+      this.$refs.dialog.hide();
+    },
   },
 };
 </script>

@@ -398,4 +398,196 @@ export class SchoolGatePublicController {
       throw new BadRequestException('Failed to process heartbeat');
     }
   }
+
+  /**
+   * Smart QR code scan - Auto determines check-in or check-out
+   * POST /api/public/school-gate/scan
+   */
+  @Post('scan')
+  @HttpCode(HttpStatus.OK)
+  async scanQRCode(
+    @Headers('x-license-key') licenseKey: string,
+    @Body() body: {
+      qrCode: string;
+      timestamp?: string;
+      photo?: string;
+      temperature?: number;
+    },
+  ) {
+    if (!licenseKey) {
+      throw new BadRequestException('License key is required');
+    }
+
+    const license = await this.deviceLicenseService.validateLicense(licenseKey);
+    if (!license) {
+      throw new UnauthorizedException('Invalid license key');
+    }
+
+    if (!body.qrCode) {
+      throw new BadRequestException('QR code is required');
+    }
+
+    try {
+      const result = await this.gateService.processScan({
+        qrCode: body.qrCode,
+        gateId: license.gateId,
+        timestamp: body.timestamp || new Date().toISOString(),
+        photo: body.photo,
+        temperature: body.temperature,
+        companyId: license.companyId,
+      });
+
+      return {
+        success: true,
+        data: result,
+        message: `${result.action === 'check_in' ? 'Check-in' : 'Check-out'} recorded successfully`,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message || 'Failed to process scan');
+    }
+  }
+
+  /**
+   * Get today's attendance records
+   * GET /api/public/school-gate/attendance/today
+   */
+  @Get('attendance/today')
+  @HttpCode(HttpStatus.OK)
+  async getTodayAttendance(
+    @Headers('x-license-key') licenseKey: string,
+  ) {
+    if (!licenseKey) {
+      throw new BadRequestException('License key is required');
+    }
+
+    const license = await this.deviceLicenseService.validateLicense(licenseKey);
+    if (!license) {
+      throw new UnauthorizedException('Invalid license key');
+    }
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const attendance = await this.gateService.getAttendanceByDate({
+        companyId: license.companyId,
+        date: today,
+        limit: 100,
+      });
+
+      return {
+        success: true,
+        data: attendance,
+        message: 'Today\'s attendance retrieved successfully',
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      throw new BadRequestException('Failed to get attendance');
+    }
+  }
+
+  /**
+   * Get currently checked-in people
+   * GET /api/public/school-gate/attendance/checked-in
+   */
+  @Get('attendance/checked-in')
+  @HttpCode(HttpStatus.OK)
+  async getCurrentlyCheckedIn(
+    @Headers('x-license-key') licenseKey: string,
+  ) {
+    if (!licenseKey) {
+      throw new BadRequestException('License key is required');
+    }
+
+    const license = await this.deviceLicenseService.validateLicense(licenseKey);
+    if (!license) {
+      throw new UnauthorizedException('Invalid license key');
+    }
+
+    try {
+      const checkedIn = await this.attendanceService.getPeopleWithoutCheckout();
+
+      return {
+        success: true,
+        data: checkedIn,
+        message: 'Currently checked-in people retrieved successfully',
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      throw new BadRequestException('Failed to get checked-in people');
+    }
+  }
+
+  /**
+   * Get attendance statistics for today
+   * GET /api/public/school-gate/attendance/stats
+   */
+  @Get('attendance/stats')
+  @HttpCode(HttpStatus.OK)
+  async getAttendanceStats(
+    @Headers('x-license-key') licenseKey: string,
+  ) {
+    if (!licenseKey) {
+      throw new BadRequestException('License key is required');
+    }
+
+    const license = await this.deviceLicenseService.validateLicense(licenseKey);
+    if (!license) {
+      throw new UnauthorizedException('Invalid license key');
+    }
+
+    try {
+      const stats = await this.attendanceService.getAttendanceSummary();
+
+      return {
+        success: true,
+        data: stats,
+        message: 'Attendance statistics retrieved successfully',
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      throw new BadRequestException('Failed to get attendance statistics');
+    }
+  }
+
+  /**
+   * Get guardian list for the gate
+   * POST /api/public/school-gate/guardians
+   */
+  @Post('guardians')
+  @HttpCode(HttpStatus.OK)
+  async getGuardians(
+    @Headers('x-license-key') licenseKey: string,
+    @Body() body: {
+      search?: string;
+      limit?: number;
+      offset?: number;
+    },
+  ) {
+    if (!licenseKey) {
+      throw new BadRequestException('License key is required');
+    }
+
+    const license = await this.deviceLicenseService.validateLicense(licenseKey);
+    if (!license) {
+      throw new UnauthorizedException('Invalid license key');
+    }
+
+    try {
+      const guardians = await this.gateService.getGuardiansForGate({
+        companyId: license.companyId,
+        search: body.search,
+        limit: body.limit || 100,
+        offset: body.offset || 0,
+      });
+
+      return {
+        success: true,
+        data: guardians,
+        message: 'Guardians retrieved successfully',
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      throw new BadRequestException('Failed to get guardians');
+    }
+  }
 }

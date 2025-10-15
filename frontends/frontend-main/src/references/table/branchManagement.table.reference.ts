@@ -33,6 +33,12 @@ export default {
       class: 'text-center',
       sortable: true,
     },
+    {
+      key: 'mainWarehouse.name',
+      label: 'Main Warehouse',
+      class: 'text-center',
+      sortable: false,
+    },
   ],
   search: [
     {
@@ -42,5 +48,10 @@ export default {
     },
   ],
   perPage: 7,
-  sort: [],
+  sort: [
+    {
+      column: 'createdAt',
+      type: 'desc',
+    },
+  ],
 };

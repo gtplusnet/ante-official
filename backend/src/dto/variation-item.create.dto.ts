@@ -66,11 +66,38 @@ export class CreateItemWithVariantsDto {
 
   @IsNumber()
   maximumStockLevel: number;
+
+  @IsOptional()
+  @IsNumber()
+  categoryId?: number;
+
+  @IsOptional()
+  @IsArray()
+  keywords?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  enabledInPOS?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  branchId?: number;
+
+  @IsOptional()
+  @IsNumber()
+  brandId?: number;
+
+  @IsOptional()
+  @IsString()
+  itemType?: string;
 }
 export class UpdateVariantDto {
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  id: string;
+  id?: string;
+
+  @IsOptional()
+  variation?: any;
 
   @IsOptional()
   @IsString()
@@ -128,6 +155,10 @@ export class UpdateItemWithVariantsDto {
   variants?: UpdateVariantDto[];
 
   @IsOptional()
+  @IsArray()
+  tiers?: any[];
+
+  @IsOptional()
   @IsNumber()
   sellingPrice?: number;
 
@@ -138,6 +169,30 @@ export class UpdateItemWithVariantsDto {
   @IsOptional()
   @IsNumber()
   maximumStockLevel?: number;
+
+  @IsOptional()
+  @IsNumber()
+  categoryId?: number;
+
+  @IsOptional()
+  @IsArray()
+  keywords?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  enabledInPOS?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  branchId?: number;
+
+  @IsOptional()
+  @IsNumber()
+  brandId?: number;
+
+  @IsOptional()
+  @IsString()
+  itemType?: string;
 }
 export class CreateVariantDto {
   @IsOptional()

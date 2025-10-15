@@ -5,14 +5,15 @@ Full-stack ERP monorepo: NestJS backend + Vue.js frontends + Flutter mobile app
 - **Backend**: NestJS API with PostgreSQL (Supabase)
 - **Frontend Main**: Vue 3 + Quasar (PM2)
 - **Mobile Apps**: Flutter (facial recognition, gate, guardian)
-- **Infrastructure**: PM2 for apps, Docker for databases
+- **Infrastructure**: PM2 for local dev, DigitalOcean + Vercel for deployments
 
 ## 📦 Tech Stack
 - **Backend**: NestJS 10, TypeScript 5, Prisma ORM
 - **Frontend**: Vue 3, Quasar Framework, Pinia, TypeScript
-- **Database**: PostgreSQL (Supabase), MongoDB, Redis
+- **Database**: PostgreSQL (Supabase), MongoDB (local/Atlas), Valkey/Redis (DigitalOcean managed)
 - **Mobile**: Flutter, BLoC pattern
-- **Process**: PM2 (apps) + Docker (databases)
+- **Process**: PM2 (local apps), Docker (local databases), DigitalOcean App Platform (staging/production)
+- **CI/CD**: GitHub Actions with self-hosted runners (3 concurrent)
 
 ## 🚀 Essential Commands
 
@@ -238,16 +239,48 @@ const { data, load, refresh } = useCache(
 onMounted(() => load());  // Use load() for initial, refresh() for manual
 ```
 
-### Supabase Integration
+### Supabase Usage Policy (CRITICAL)
+**⚠️ IMPORTANT**: Supabase direct access is LIMITED. Most operations MUST use backend API.
+
+**❌ NEVER Use Supabase Direct For**:
+- Task operations (SELECT, INSERT, UPDATE, DELETE)
+- Any write operations requiring business logic
+- Operations needing watchers, notifications, or webhooks
+- Operations requiring audit trails
+
+**✅ Use Backend API Instead**:
+```typescript
+// Task operations - ALWAYS use backend API
+api.get('/task/ordered')           // List tasks
+api.post('/task/create', data)     // Create task
+api.put('/task/update', data)      // Update task
+api.put('/task/update-order', data)// Reorder tasks
+api.delete(`/task/${id}`)          // Delete task
+```
+
+**✅ Supabase Allowed For (Limited Use Cases)**:
 ```typescript
 import { useSupabaseTable } from 'src/composables/supabase/useSupabaseTable';
 
+// ONLY for read-only views with proper RLS policies
 const { data, loading } = useSupabaseTable({
-  table: 'EmployeeData',
+  table: 'EmployeeData',  // ✅ OK: Read-only view
   select: '*, account:Account!inner(firstName, lastName)',
   filters: [{ column: 'isActive', operator: 'eq', value: true }]
 });
+
+// ❌ WRONG: Task table
+useSupabaseTable({ table: 'Task' })  // Use backend API instead!
 ```
+
+**Why Backend API is Required**:
+- ✅ Business logic validation
+- ✅ Audit trail creation
+- ✅ Notification triggers
+- ✅ Task watcher management
+- ✅ Discussion thread creation
+- ✅ WebSocket events
+- ✅ No RLS policy issues
 
 ## 🎨 Material Design 3 Standards
 - **MANDATORY**: Flat design only
@@ -391,22 +424,21 @@ Dashboard, HRIS, Projects, Tasks, Treasury, Assets, CRM, Communication, Settings
 **Infrastructure Overview:**
 - **Backend**: DigitalOcean App Platform (Docker containers from GHCR)
 - **Frontends**: Vercel (3 apps: Main, Gate, Guardian)
-- **CI/CD**: GitHub Actions workflows (self-hosted runner on utility server)
-- **Utility Server**: 157.230.246.107 (GitHub Runner, Redis, MongoDB)
+- **CI/CD**: GitHub Actions with self-hosted runners (3 concurrent on local PC)
+- **Cache/Queue**: DigitalOcean Managed Valkey (shared, database isolation)
 - **Branches**: `main` (staging), `production` (production)
 
-**Utility Server (157.230.246.107):**
-- **Purpose**: Shared infrastructure services
-- **Services**:
-  - GitHub Actions Self-Hosted Runner (staging workflows)
-  - Redis (port 16379, DB 1 for staging)
-  - MongoDB (port 27017, staging database)
-- **Access**: `ssh jdev@157.230.246.107`
+**GitHub Actions Runners:**
+- **Location**: Local development PC (jhay-B450M-DS3H-V2)
+- **Runners**: 3 concurrent (local-staging-runner, local-staging-runner-2, local-staging-runner-3)
+- **Health Monitoring**: Automated checks every 5 minutes with Telegram alerts
+- **Status Dashboard**: `~/projects/ante-official/scripts/check-runner-status.sh`
+- **Auto-Recovery**: Failed runners restart automatically
 
 **Staging Environment:**
 - Workflow: `.github/workflows/deploy.yml`
 - Trigger: Push to `main` branch
-- Runner: Self-hosted on 157.230.246.107
+- Runner: Self-hosted on local PC (3 concurrent)
 - Backend: https://ante-backend-staging-q6udd.ondigitalocean.app
 - Frontends:
   - Main: https://ante-main-staging.vercel.app (alias: https://ante.geertest.com)
@@ -414,12 +446,13 @@ Dashboard, HRIS, Projects, Tasks, Treasury, Assets, CRM, Communication, Settings
   - Guardian: https://ante-guardian-staging.vercel.app
 - Database:
   - PostgreSQL: Supabase (ofnmfmwywkhosrmycltb)
-  - MongoDB: 157.230.246.107:27017 (ante-staging)
-  - Redis: 157.230.246.107:16379 (DB 1)
+  - MongoDB: Local/Atlas
+  - Valkey: DigitalOcean Managed (DB 1, shared with production)
 
 **Production Environment:**
 - Workflow: `.github/workflows/deploy-production.yml`
 - Trigger: Push to `production` branch
+- Runner: Self-hosted on local PC (3 concurrent)
 - Backend: https://ante-backend-production-gael2.ondigitalocean.app
 - Frontends:
   - Main: https://ante-main-production.vercel.app (alias: https://ante.ph)
@@ -428,7 +461,7 @@ Dashboard, HRIS, Projects, Tasks, Treasury, Assets, CRM, Communication, Settings
 - Database:
   - PostgreSQL: Supabase (ccdlrujemqfwclogysjv)
   - MongoDB: MongoDB Atlas (ante-production)
-  - Redis: Redis Cloud (DB 0)
+  - Valkey: DigitalOcean Managed (DB 0, shared with staging)
 
 **Deployment Process:**
 1. Push to `main` (staging) or `production` branch
@@ -456,6 +489,7 @@ gh workflow run deploy-production.yml --ref production
 - **Coverage**: 80% minimum for new/modified code
 - **E2E Location**: Must be in `/playwright-testing/` folder
 - **PM2 Logs**: `pm2 logs ante-backend --lines 20 --nostream`
+- **Hash Routing**: Frontend uses hash routing - URLs must include `/#/` (e.g., `http://localhost:9000/#/member/manpower/hris`)
 
 ## 🔐 Security Notes
 - Test credentials in CLAUDE.local.md (not version controlled)
@@ -474,4 +508,25 @@ gh workflow run deploy-production.yml --ref production
 
 **Purpose**: This file provides critical context for Claude AI to work effectively on this project. Keep it concise. Move detailed documentation to `/documentation/` folder and reference it here.
 
-**Last Updated**: 2025-10-06
+**Last Updated**: 2025-10-08
+
+---
+
+## 🔄 Recent Infrastructure Changes (2025-10-08)
+
+**Valkey Migration:**
+- ✅ Migrated from self-hosted Redis to DigitalOcean Managed Valkey
+- Database isolation: DB 0 (production), DB 1 (staging)
+- TLS encryption enabled (rediss:// protocol)
+- Cost: $15/month (shared between environments)
+
+**GitHub Runners Migration:**
+- ✅ Migrated from utility server to local development PC
+- 3 concurrent runners with automated health monitoring
+- Health checks every 5 minutes via systemd timer
+- Auto-restart on failures with Telegram alerts
+- Cost savings: $24/month
+
+**Decommissioned:**
+- ❌ Utility Server (157.230.246.107) - deleted October 15, 2025
+- All services migrated to managed solutions or local PC

@@ -22,7 +22,7 @@
         </div>
       </div>
       <g-card class="q-pa-md q-mt-sm text-body-small">
-        <AdvanceItemTable ref="table"></AdvanceItemTable>
+        <AdvanceItemTable ref="table" :hideItemGroups="true"></AdvanceItemTable>
       </g-card>
 
       <!-- item information dialog -->
