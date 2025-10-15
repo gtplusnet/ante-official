@@ -11,26 +11,30 @@ export interface GoalAPIOptions {
   autoFetch?: boolean;
 }
 
+export interface DateFormat {
+  dateTime: string;
+  time: string;
+  time24: string;
+  date: string;
+  dateFull: string;
+  dateStandard: string;
+  raw: Date | null;
+  timeAgo: string;
+  day: string;
+  daySmall: string;
+}
+
 export interface Goal {
   id: number;
   name: string;
   description?: string;
-  deadline?: {
-    raw: string;
-    formatted: string;
-  } | null;
+  deadline?: DateFormat | null;
   status: 'PENDING' | 'COMPLETED';
   progress: number;
   totalTasks?: number;
   completedTasks?: number;
-  createdAt: {
-    raw: string;
-    formatted: string;
-  };
-  updatedAt: {
-    raw: string;
-    formatted: string;
-  };
+  createdAt: DateFormat;
+  updatedAt: DateFormat;
   createdBy: {
     id: string;
     firstName: string;

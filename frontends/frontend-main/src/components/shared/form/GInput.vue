@@ -231,12 +231,6 @@
         v-if="type == 'date'"
         outlined
         class="text-body-medium"
-        @update:modelValue="
-          (newValue) => {
-            $emit('update:modelValue', newValue);
-            date = newValue;
-          }
-        "
         mask="date"
         :rounded="rounded"
         hide-hint
@@ -246,7 +240,7 @@
         <template v-slot:append>
           <q-icon v-if="!isDisabled" name="event" class="cursor-pointer">
             <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-              <q-date color="accent" v-model="date"></q-date>
+              <q-date color="accent" v-model="date" mask="YYYY-MM-DD"></q-date>
             </q-popup-proxy>
           </q-icon>
         </template>
