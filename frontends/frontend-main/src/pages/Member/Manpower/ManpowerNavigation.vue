@@ -115,6 +115,12 @@ export default {
       {
         title: 'HRIS',
         key: 'member_manpower_hris',
+        requiredScope: ['MANPOWER_HRIS_ACCESS'],
+      },
+      {
+        title: 'Cashier Management',
+        key: 'member_manpower_cashier_management',
+        requiredScope: ['MANPOWER_CASHIER_MANAGEMENT_ACCESS'],
       },
       {
         title: 'Team',

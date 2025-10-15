@@ -482,6 +482,11 @@ const routesConfig: RouteRecordRaw[] = [
         component: () => import('pages/Member/Manpower/HRIS/HRISMenuPage.vue'),
       },
       {
+        name: 'member_manpower_cashier_management',
+        path: 'manpower/cashier-management',
+        component: () => import('pages/Member/Manpower/CashierManagementPage.vue'),
+      },
+      {
         name: 'member_manpower_time_keeping_device',
         path: 'manpower/time-keeping-device',
         component: () => import('pages/Member/Manpower/TimeKeepingDevice/TimeKeepingDeviceMenuPage.vue'),
@@ -648,6 +653,16 @@ const routesConfig: RouteRecordRaw[] = [
         name: 'member_manpower_api_documentation',
         path: 'manpower/api/documentation',
         component: () => import('pages/Member/Manpower/API/ManpowerAPIDocumentation.vue'),
+      },
+      {
+        name: 'member_manpower_pos_api_documentation',
+        path: 'manpower/api/pos-documentation',
+        component: () => import('pages/Member/Manpower/API/POSAPIDocumentation.vue'),
+      },
+      {
+        name: 'member_manpower_pos_device_management',
+        path: 'manpower/pos-device-management',
+        component: () => import('pages/Member/Settings/SettingsDeviceManagement.vue'),
       },
 
       // Test route

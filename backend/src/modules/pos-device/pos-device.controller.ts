@@ -144,4 +144,21 @@ export class POSDeviceController {
     );
     return this.utilityService.responseHandler(Promise.resolve(result), res);
   }
+
+  /**
+   * Unbind device - removes device fingerprint binding
+   */
+  @Post(':id/unbind')
+  async unbindDevice(
+    @Param('id') id: string,
+    @NestResponse() res: Response,
+  ) {
+    const companyId = this.utilityService.accountInformation?.company?.id;
+    if (!companyId) {
+      return res.status(403).json({ message: 'Company not found' });
+    }
+
+    const result = await this.posDeviceService.unbindDevice(id, companyId);
+    return this.utilityService.responseHandler(Promise.resolve(result), res);
+  }
 }

@@ -107,6 +107,8 @@ import { TimeTrackingModule } from '@modules/time-tracking/time-tracking.module'
 import { ManpowerDeviceModule } from '@modules/manpower-device/manpower-device.module';
 import { POSDeviceModule } from '@modules/pos-device/pos-device.module';
 import { CashierModule } from '@modules/cashier/cashier.module';
+import { CartModule } from '@modules/cart/cart.module';
+import { PosModule } from '@modules/pos/pos.module';
 
 // App controller
 import { AppController } from './app.controller';
@@ -306,6 +308,8 @@ const ENV = process.env.NODE_ENV;
     ManpowerDeviceModule,
     POSDeviceModule,
     CashierModule,
+    CartModule,
+    PosModule,
   ],
   controllers: [
     // Root app controller

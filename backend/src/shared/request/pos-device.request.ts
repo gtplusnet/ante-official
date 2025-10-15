@@ -23,3 +23,17 @@ export interface POSDeviceDeleteRequest {
 export interface POSDeviceListRequest {
   includeInactive?: boolean;
 }
+
+export interface POSDeviceInitializeRequest {
+  apiKey: string;
+  deviceId: string;
+}
+
+export interface POSDeviceUnbindRequest {
+  id: string;
+}
+
+export interface CashierLoginRequest {
+  username: string;
+  password: string;
+}

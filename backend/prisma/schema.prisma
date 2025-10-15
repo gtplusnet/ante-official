@@ -135,6 +135,11 @@ model Account {
   EmailConfiguration                     EmailConfiguration?
   EmployeeContract                       EmployeeContract[]
   EmployeeData                           EmployeeData?
+  CashierData                            CashierData?
+  LaborerData                            LaborerData?
+  salesAsCustomer                        Sale[]                             @relation("SaleCustomer")
+  salesVoided                            Sale[]                             @relation("SaleVoidedBy")
+  cartsAsCustomer                        Cart[]                             @relation("CartCustomer")
   EmployeeImportBatch                    EmployeeImportBatch[]
   EmployeeSalaryAdjustment               EmployeeSalaryAdjustment[]
   EmployeeTimekeepingCutoff              EmployeeTimekeepingCutoff[]
@@ -396,6 +401,8 @@ model Project {
   BranchTimekeepingStatus       BranchTimekeepingStatus[]
   Collection                    Collection[]
   EmployeeData                  EmployeeData[]
+  LaborerData                   LaborerData[]
+  Sales                         Sale[]
   Files                         Files[]
   individualScheduleAssignments IndividualScheduleAssignment[]
   ItemReceipt                   ItemReceipt[]
@@ -678,6 +685,8 @@ model Item {
   SupplierPriceUpdate      SupplierPriceUpdate[]
   groupItems               ItemGroupItem[]         @relation("GroupParent")
   belongsToGroups          ItemGroupItem[]         @relation("GroupChild")
+  saleItems                SaleItem[]
+  cartItems                CartItem[]
 
   @@unique([companyId, sku])
 }
@@ -1631,6 +1640,163 @@ model EmployeeData {
   @@index([employeeCode], map: "idx_employee_code")
   @@index([branchId, isActive], map: "idx_employee_company_active")
   @@index([createdAt(sort: Desc)], map: "idx_employee_created")
+}
+
+model CashierData {
+  accountId   String   @unique
+  cashierCode String   @default("")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  sales       Sale[]
+  carts       Cart[]
+
+  @@index([cashierCode])
+  @@index([createdAt(sort: Desc)], map: "idx_cashier_created")
+}
+
+model LaborerData {
+  accountId String   @unique
+  branchId  Int
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  branch    Project  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  sales     Sale[]
+
+  @@index([branchId])
+  @@index([branchId, isActive], map: "idx_laborer_branch_active")
+  @@index([createdAt(sort: Desc)], map: "idx_laborer_created")
+}
+
+model Sale {
+  id             String        @id @default(uuid())
+  saleNumber     String        @unique
+  subtotal       Float
+  discountAmount Float         @default(0)
+  total          Float
+  paymentAmount  Float
+  changeAmount   Float         @default(0)
+  cashierId      String
+  laborerId      String?
+  customerId     String?
+  branchId       Int
+  status         SaleStatus    @default(PENDING)
+  isClaimed      Boolean       @default(false)
+  isVoid         Boolean       @default(false)
+  voidReason     String?
+  voidById       String?
+  voidedAt       DateTime?
+  cashierName    String
+  laborerName    String?
+  customerName   String?
+  customerEmail  String?
+  branchName     String
+  remarks        String?
+  pointsEarned   Float         @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  cashier        CashierData   @relation(fields: [cashierId], references: [accountId], onDelete: Cascade)
+  laborer        LaborerData?  @relation(fields: [laborerId], references: [accountId], onDelete: SetNull)
+  customer       Account?      @relation("SaleCustomer", fields: [customerId], references: [id], onDelete: SetNull)
+  branch         Project       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  voidedBy       Account?      @relation("SaleVoidedBy", fields: [voidById], references: [id], onDelete: SetNull)
+  items          SaleItem[]
+  payments       SalePayment[]
+
+  @@index([saleNumber])
+  @@index([cashierId])
+  @@index([laborerId])
+  @@index([branchId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+}
+
+model SaleItem {
+  id                   String    @id @default(uuid())
+  saleId               String
+  itemId               String?
+  parentSaleItemId     String?
+  itemName             String
+  itemImage            String?
+  itemType             ItemType  @default(INDIVIDUAL_PRODUCT)
+  quantity             Int
+  unitPrice            Float
+  subtotal             Float
+  discountType         String?
+  discountPercentage   Float?
+  discountAmount       Float     @default(0)
+  totalAfterDiscount   Float
+  isIncluded           Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  sale                 Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  item                 Item?     @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  parentItem           SaleItem? @relation("ItemGroupChildren", fields: [parentSaleItemId], references: [id], onDelete: Cascade)
+  childItems           SaleItem[] @relation("ItemGroupChildren")
+
+  @@index([saleId])
+  @@index([itemId])
+  @@index([parentSaleItemId])
+}
+
+model SalePayment {
+  id              String        @id @default(uuid())
+  saleId          String
+  paymentMethod   PaymentMethod
+  amount          Float
+  referenceNumber String?
+  createdAt       DateTime      @default(now())
+  sale            Sale          @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@index([saleId])
+}
+
+model Cart {
+  id             String       @id @default(uuid())
+  cashierId      String       @unique
+  customerId     String?
+  subtotal       Float        @default(0)
+  discountAmount Float        @default(0)
+  total          Float        @default(0)
+  customerName   String?
+  customerEmail  String?
+  remarks        String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  cashier        CashierData  @relation(fields: [cashierId], references: [accountId], onDelete: Cascade)
+  customer       Account?     @relation("CartCustomer", fields: [customerId], references: [id], onDelete: SetNull)
+  items          CartItem[]
+
+  @@index([cashierId])
+}
+
+model CartItem {
+  id                 String    @id @default(uuid())
+  cartId             String
+  itemId             String?
+  parentCartItemId   String?
+  itemName           String
+  itemImage          String?
+  itemType           ItemType  @default(INDIVIDUAL_PRODUCT)
+  quantity           Int
+  unitPrice          Float
+  subtotal           Float
+  discountType       String?
+  discountPercentage Float?
+  discountAmount     Float     @default(0)
+  totalAfterDiscount Float
+  isIncluded         Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  cart               Cart      @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  item               Item?     @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  parentItem         CartItem? @relation("CartItemGroupChildren", fields: [parentCartItemId], references: [id], onDelete: Cascade)
+  childItems         CartItem[] @relation("CartItemGroupChildren")
+
+  @@index([cartId])
+  @@index([itemId])
+  @@index([parentCartItemId])
 }
 
 model EmployeeContract {
@@ -3676,24 +3842,27 @@ model ManpowerDevice {
 }
 
 model POSDevice {
-  id              String    @id @default(uuid())
-  deviceId        String    @unique
-  name            String
-  location        String    @default("")
-  companyId       Int
-  branchId        Int?      // Optional branch ID
-  apiKey          String    @unique
-  isActive        Boolean   @default(true)
-  lastActivityAt  DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                String    @id @default(uuid())
+  deviceId          String    @unique
+  name              String
+  location          String    @default("")
+  companyId         Int
+  branchId          Int?      // Optional branch ID
+  apiKey            String    @unique
+  isActive          Boolean   @default(true)
+  deviceFingerprint String?   // Unique device identifier for binding
+  boundAt           DateTime? // When device was first bound
+  lastActivityAt    DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  company         Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  branch          Project?  @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  company           Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branch            Project?  @relation(fields: [branchId], references: [id], onDelete: SetNull)
 
   @@index([companyId])
   @@index([branchId])
   @@index([deviceId])
+  @@index([deviceFingerprint])
 }
 
 enum AssigneeType {
@@ -4239,6 +4408,10 @@ enum ScopeList {
   MANPOWER_HRIS_CREATE
   MANPOWER_HRIS_UPDATE
   MANPOWER_HRIS_DELETE
+  MANPOWER_CASHIER_MANAGEMENT_ACCESS
+  MANPOWER_CASHIER_MANAGEMENT_CREATE
+  MANPOWER_CASHIER_MANAGEMENT_UPDATE
+  MANPOWER_CASHIER_MANAGEMENT_DELETE
   MANPOWER_PAYROLL_CENTER_ACCESS
   MANPOWER_TIME_IMPORTATION_ACCESS
   MANPOWER_PAYROLL_SUBMIT_FOR_REVIEW
@@ -4417,6 +4590,25 @@ enum CRMEntityType {
 enum ItemType {
   INDIVIDUAL_PRODUCT
   ITEM_GROUP
+}
+
+enum SaleStatus {
+  PENDING
+  PROCESSED
+  COMPLETED
+  VOID
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CREDIT_CARD
+  DEBIT_CARD
+  QR_CODE
+  GCASH
+  PAYMAYA
+  BANK_TRANSFER
+  CHECK
 }
 
 // OAuth 2.0 Models

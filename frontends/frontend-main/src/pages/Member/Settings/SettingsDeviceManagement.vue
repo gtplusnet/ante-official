@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <expanded-nav-page-container>
     <!-- Header Section -->
     <div class="page-head q-pb-md">
       <div class="row items-center justify-between full-width">
@@ -7,9 +7,9 @@
           <div class="title">POS Device Management</div>
           <div>
             <q-breadcrumbs>
-              <q-breadcrumbs-el label="Settings" />
-              <q-breadcrumbs-el label="System" />
-              <q-breadcrumbs-el label="Device Management" />
+              <q-breadcrumbs-el label="Manpower" />
+              <q-breadcrumbs-el label="API" />
+              <q-breadcrumbs-el label="POS Device Management" />
             </q-breadcrumbs>
           </div>
         </div>
@@ -148,13 +148,14 @@
       :device="selectedDevice"
       :new-api-key="newApiKey"
     />
-  </div>
+  </expanded-nav-page-container>
 </template>
 
 <script setup>
 import { ref, onMounted, getCurrentInstance, defineAsyncComponent } from 'vue';
 import { useQuasar } from 'quasar';
 import GCard from 'src/components/shared/display/GCard.vue';
+import ExpandedNavPageContainer from 'src/components/shared/ExpandedNavPageContainer.vue';
 
 // Lazy-loaded dialogs (MANDATORY - CLAUDE.md)
 const AddEditPOSDeviceDialog = defineAsyncComponent(() =>

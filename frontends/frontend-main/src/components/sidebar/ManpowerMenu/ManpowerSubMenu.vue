@@ -129,6 +129,12 @@ export default {
         icon: 'o_folder_open',
       },
       {
+        title: 'Cashier Management',
+        key: 'member_manpower_cashier_management',
+        icon: 'o_point_of_sale',
+        requiredScope: ['MANPOWER_CASHIER_MANAGEMENT_ACCESS'],
+      },
+      {
         title: 'Team Management',
         key: 'member_manpower_team_management',
         icon: 'o_groups',
@@ -221,6 +227,8 @@ export default {
         child: [
           { icon: 'o_devices', title: 'Device Management', key: 'member_manpower_api_devices', requiredScope: [] },
           { icon: 'o_description', title: 'API Documentation', key: 'member_manpower_api_documentation', requiredScope: [] },
+          { icon: 'o_receipt_long', title: 'POS API Documentation', key: 'member_manpower_pos_api_documentation', requiredScope: [] },
+          { icon: 'o_point_of_sale', title: 'POS Device Management', key: 'member_manpower_pos_device_management', requiredScope: ['SETTINGS_DEVICE_MANAGEMENT_ACCESS'] },
         ],
       },
     ]);

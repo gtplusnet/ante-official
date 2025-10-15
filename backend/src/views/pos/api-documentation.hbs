@@ -1,0 +1,837 @@
+<div class="container">
+    <section id="overview">
+        <h2>Overview</h2>
+        <p>
+            The POS API provides a comprehensive system for point-of-sale operations including item management,
+            shopping cart functionality, and sales transactions. It supports individual items, combo items (ITEM_GROUP),
+            discounts, customer management, and seamless conversion to sales transactions.
+        </p>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Key Features</h4>
+            <ul class="feature-list">
+                <li><strong>POS Items Management:</strong> Get all items enabled for POS operations</li>
+                <li><strong>One Cart Per Cashier:</strong> Each cashier has a single persistent cart</li>
+                <li><strong>Individual & Combo Items:</strong> Support for regular items and ITEM_GROUP bundles</li>
+                <li><strong>Flexible Discounts:</strong> Percentage, fixed, or promo discounts</li>
+                <li><strong>Customer Management:</strong> Link to registered customers or use walk-in details</li>
+                <li><strong>Split Payments:</strong> Multiple payment methods per transaction</li>
+                <li><strong>Cart-to-Sale Conversion:</strong> Automatic sale creation with cart clearing</li>
+                <li><strong>Auto Totals:</strong> Automatic calculation of subtotal, discounts, and totals</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="authentication">
+        <h2>Authentication</h2>
+        <p>
+            POS API uses a two-step authentication system for enhanced security:
+        </p>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Two-Step Authentication Flow</h4>
+            <ol>
+                <li><strong>Device Initialization:</strong> Bind API key to device fingerprint (one-time setup)</li>
+                <li><strong>Cashier Login:</strong> Authenticate cashier and get session token (daily login)</li>
+            </ol>
+        </div>
+
+        <div class="info-box warning">
+            <h4 class="info-box-title">Required Headers for All POS Requests</h4>
+            <pre><code>x-api-key: &lt;device-api-key&gt;
+x-device-id: &lt;device-fingerprint&gt;
+x-cashier-session: &lt;cashier-session-token&gt;</code></pre>
+        </div>
+
+        <h3>Step 1: Device Initialization</h3>
+        <p>First-time setup to bind the device to an API key. This creates a secure connection between the physical device and the POS system.</p>
+
+        <h4>Initialize Device Endpoint</h4>
+        <pre><code>POST /pos/device/initialize
+Content-Type: application/json
+
+{
+  "apiKey": "your-device-api-key",
+  "deviceId": "unique-device-fingerprint"
+}
+
+Response:
+{
+  "success": true,
+  "device": {
+    "id": "device-uuid",
+    "name": "Main Counter POS",
+    "location": "Ground Floor",
+    "isActive": true,
+    "isBound": true,
+    "boundAt": "2025-10-15T12:00:00Z"
+  },
+  "message": "Device initialized successfully"
+}</code></pre>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Device Initialization Details</h4>
+            <ul class="feature-list">
+                <li><code>apiKey</code>: Generated from POS Device Management (admin creates device)</li>
+                <li><code>deviceId</code>: Unique device fingerprint (hardware ID, MAC address, etc.)</li>
+                <li><strong>One-Time Binding:</strong> Once bound, API key only works with this device</li>
+                <li><strong>Security:</strong> Prevents API key sharing across multiple devices</li>
+            </ul>
+        </div>
+
+        <div class="info-box error">
+            <h4 class="info-box-title">Device Binding Errors</h4>
+            <ul class="feature-list">
+                <li><strong>400:</strong> "Device ID is required"</li>
+                <li><strong>401:</strong> "Invalid or inactive API key"</li>
+                <li><strong>403:</strong> "API key is already bound to a different device"</li>
+            </ul>
+        </div>
+
+        <h3>Step 2: Cashier Login</h3>
+        <p>Daily cashier authentication to get a session token. The device must be initialized before cashiers can log in.</p>
+
+        <h4>Cashier Login Endpoint</h4>
+        <pre><code>POST /pos/cashier/login
+Content-Type: application/json
+x-api-key: &lt;device-api-key&gt;
+x-device-id: &lt;device-fingerprint&gt;
+
+{
+  "username": "cashier01",
+  "password": "cashier-password"
+}
+
+Response:
+{
+  "success": true,
+  "sessionToken": "session-token-uuid",
+  "accountId": "account-uuid",
+  "cashierCode": "CSH001",
+  "fullName": "John Doe"
+}</code></pre>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Cashier Login Details</h4>
+            <ul class="feature-list">
+                <li><strong>Device Headers Required:</strong> Must include x-api-key and x-device-id</li>
+                <li><strong>Credentials:</strong> Cashier's username and password</li>
+                <li><strong>Session Token:</strong> Used for all subsequent POS requests</li>
+                <li><strong>Validation:</strong> Cashier must belong to the same company as the device</li>
+            </ul>
+        </div>
+
+        <div class="info-box error">
+            <h4 class="info-box-title">Cashier Login Errors</h4>
+            <ul class="feature-list">
+                <li><strong>400:</strong> "Device not initialized. Initialize device first"</li>
+                <li><strong>401:</strong> "Invalid credentials" or "Cashier account is inactive"</li>
+                <li><strong>403:</strong> "Cashier does not belong to the same company as the POS device"</li>
+            </ul>
+        </div>
+
+        <h3>Cashier Logout</h3>
+        <p>End cashier session and invalidate session token.</p>
+
+        <h4>Cashier Logout Endpoint</h4>
+        <pre><code>POST /pos/cashier/logout
+Content-Type: application/json
+x-api-key: &lt;device-api-key&gt;
+x-device-id: &lt;device-fingerprint&gt;
+x-cashier-session: &lt;session-token&gt;
+
+Response:
+{
+  "success": true,
+  "message": "Logged out successfully"
+}</code></pre>
+
+        <h3>Device Unbinding (Admin Only)</h3>
+        <p>Removes device fingerprint binding, allowing the API key to be used on a different device. This is typically done when replacing hardware.</p>
+
+        <h4>Unbind Device Endpoint</h4>
+        <pre><code>POST /pos-device/:id/unbind
+Authorization: Bearer &lt;admin-token&gt;
+
+Response:
+{
+  "success": true,
+  "message": "Device unbound successfully. API key can now be used on a different device."
+}</code></pre>
+
+        <div class="info-box warning">
+            <h4 class="info-box-title">Security Best Practices</h4>
+            <ul class="feature-list">
+                <li><strong>Store API Key Securely:</strong> Save in device's secure storage (keychain, encrypted prefs)</li>
+                <li><strong>Never Expose API Key:</strong> Don't log or display the full API key</li>
+                <li><strong>Session Management:</strong> Logout when cashier shift ends</li>
+                <li><strong>Device Fingerprint:</strong> Use hardware-specific identifier (cannot be easily copied)</li>
+                <li><strong>Network Security:</strong> Always use HTTPS in production</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Authentication Flow Summary</h4>
+            <ol>
+                <li><strong>First Time Setup:</strong>
+                    <ul>
+                        <li>Admin creates POS device in management portal (gets API key)</li>
+                        <li>Device operator enters API key on POS app</li>
+                        <li>App calls /pos/device/initialize with API key + device fingerprint</li>
+                        <li>Device is now bound and ready for cashier logins</li>
+                    </ul>
+                </li>
+                <li><strong>Daily Usage:</strong>
+                    <ul>
+                        <li>Cashier opens POS app (already has API key stored)</li>
+                        <li>Cashier logs in with username/password</li>
+                        <li>App receives session token</li>
+                        <li>All POS requests include: x-api-key, x-device-id, x-cashier-session</li>
+                        <li>Cashier logs out at end of shift</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+    <section id="endpoints">
+        <h2>POS API Endpoints</h2>
+
+        <h3>Get POS Items</h3>
+        {{> api-doc/endpoint-card
+            method="GET"
+            path="/get_items"
+            description="Retrieve all items enabled for POS for the device's company. Requires device authentication and active cashier session. Only returns items where enabledInPOS is true, excluding deleted and draft items."
+            responseExample='{"success":true,"data":{"items":[{"id":"item-uuid-123","name":"Coffee","sku":"COFFEE-001","description":"Premium coffee","sellingPrice":50,"itemType":"INDIVIDUAL_PRODUCT","categoryId":1,"categoryName":"Beverages","brandId":2,"brandName":"Premium","enabledInPOS":true,"uom":"pieces","companyId":1,"branchId":null}],"total":1}}'
+        }}
+
+        <div class="info-box">
+            <h4 class="info-box-title">Required Headers</h4>
+            <pre><code>x-api-key: &lt;device-api-key&gt;
+x-device-id: &lt;device-fingerprint&gt;
+x-cashier-session: &lt;session-token&gt;</code></pre>
+        </div>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Item List Features</h4>
+            <ul class="feature-list">
+                <li><strong>Company Filtered:</strong> Only shows items from the device's company</li>
+                <li><strong>POS Enabled Only:</strong> Only items with enabledInPOS = true</li>
+                <li><strong>Excludes Deleted/Draft:</strong> Clean list of active items only</li>
+                <li><strong>Includes Categories & Brands:</strong> Full item details with relations</li>
+                <li><strong>Sorted Alphabetically:</strong> Items sorted by name for easy browsing</li>
+            </ul>
+        </div>
+
+        <h2>Cart Management Endpoints</h2>
+
+        <h3>Get Current Cart</h3>
+        {{> api-doc/endpoint-card
+            method="GET"
+            path="/cart"
+            description="Retrieve the current cashier's active cart with all items. Returns empty cart if no items have been added."
+            responseExample='{"success":true,"data":{"id":"cart-uuid","cashierId":"cashier-id","customerId":null,"subtotal":150.00,"discountAmount":15.00,"total":135.00,"customerName":null,"customerEmail":null,"remarks":null,"createdAt":"2025-10-14T12:00:00Z","updatedAt":"2025-10-14T12:15:00Z","items":[{"id":"item-uuid","itemId":"product-uuid","itemName":"Coffee","itemImage":"/images/coffee.jpg","itemType":"INDIVIDUAL_PRODUCT","quantity":2,"unitPrice":50.00,"subtotal":100.00,"discountAmount":10.00,"totalAfterDiscount":90.00,"isIncluded":true}]}}'
+        }}
+
+        <div class="info-box">
+            <h4 class="info-box-title">Cart Scenarios</h4>
+            <ul class="feature-list">
+                <li><strong>First Access:</strong> Returns empty cart (automatically created on first item add)</li>
+                <li><strong>One Cart Per Cashier:</strong> Each cashier has exactly one persistent cart</li>
+                <li><strong>Auto Totals:</strong> Cart totals are automatically calculated and up-to-date</li>
+            </ul>
+        </div>
+
+        <h3>Add Item to Cart</h3>
+        {{> api-doc/endpoint-card
+            method="POST"
+            path="/cart/items"
+            description="Add a new item to cart or update quantity if item already exists. Supports discount configuration. NOT for ITEM_GROUP items - use /cart/items/group instead."
+            requestBody='{"itemId":"product-uuid","quantity":2,"discountType":"percentage","discountPercentage":10}'
+            responseExample='{"success":true,"data":{"cartItem":{"id":"cartitem-uuid","cartId":"cart-uuid","itemId":"product-uuid","itemName":"Coffee","itemImage":"/images/coffee.jpg","quantity":2,"unitPrice":50.00,"subtotal":100.00,"discountAmount":10.00,"totalAfterDiscount":90.00},"cart":{"subtotal":100.00,"discountAmount":10.00,"total":90.00}}}'
+        }}
+
+        <div class="info-box">
+            <h4 class="info-box-title">Request Parameters</h4>
+            <ul class="feature-list">
+                <li><code>itemId</code> (required): UUID of the item from Item table</li>
+                <li><code>quantity</code> (required): Number of items to add (minimum: 1)</li>
+                <li><code>discountType</code> (optional): "percentage", "fixed", or "promo"</li>
+                <li><code>discountPercentage</code> (optional): Percentage discount (0-100)</li>
+                <li><code>discountAmount</code> (optional): Fixed discount amount</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Behavior</h4>
+            <ul class="feature-list">
+                <li><strong>Update Existing:</strong> If item already in cart, quantity is updated</li>
+                <li><strong>Auto Calculation:</strong> Cart totals recalculated automatically</li>
+                <li><strong>Item Data:</strong> Name, price, and image fetched from Item table</li>
+                <li><strong>Validation:</strong> Returns 400 if ITEM_GROUP item (use /items/group instead)</li>
+            </ul>
+        </div>
+
+        <h3>Add Item Group (Combo) to Cart</h3>
+        {{> api-doc/endpoint-card
+            method="POST"
+            path="/cart/items/group"
+            description="Add a combo/bundle item (ITEM_GROUP) with its child items. Supports flexible child item inclusion."
+            requestBody='{"groupItemId":"breakfast-combo-uuid","quantity":1,"childItems":[{"itemId":"coffee-uuid","quantity":1,"isIncluded":true},{"itemId":"toast-uuid","quantity":2,"isIncluded":true},{"itemId":"eggs-uuid","quantity":1,"isIncluded":false}]}'
+            responseExample='{"success":true,"data":{"groupItem":{"id":"group-cartitem-uuid","itemName":"Breakfast Combo","quantity":1,"unitPrice":200.00,"subtotal":200.00,"childItems":[{"id":"child-uuid","itemName":"Coffee","quantity":1,"isIncluded":true},{"id":"child-uuid-2","itemName":"Toast","quantity":2,"isIncluded":true}]},"cart":{"subtotal":200.00,"total":200.00}}}'
+        }}
+
+        <div class="info-box">
+            <h4 class="info-box-title">Request Parameters</h4>
+            <ul class="feature-list">
+                <li><code>groupItemId</code> (required): UUID of the ITEM_GROUP from Item table</li>
+                <li><code>quantity</code> (required): Number of combos to add</li>
+                <li><code>childItems</code> (required): Array of child items
+                    <ul>
+                        <li><code>itemId</code>: Child item UUID</li>
+                        <li><code>quantity</code>: Quantity of this child item</li>
+                        <li><code>isIncluded</code>: Whether customer wants this item (allows exclusions)</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Child Items</h4>
+            <ul class="feature-list">
+                <li>The <code>isIncluded</code> flag allows customers to exclude specific items</li>
+                <li>Excluded items don't change the combo price</li>
+                <li>Example: "No eggs in my breakfast combo" - set eggs isIncluded:false</li>
+            </ul>
+        </div>
+
+        <h3>Update Cart Item</h3>
+        {{> api-doc/endpoint-card
+            method="PUT"
+            path="/cart/items/:itemId"
+            description="Update quantity, discount, or isIncluded flag for an existing cart item. All fields are optional."
+            requestBody='{"quantity":3,"discountPercentage":15,"isIncluded":true}'
+            responseExample='{"success":true,"data":{"cartItem":{"id":"cartitem-uuid","quantity":3,"discountPercentage":15,"subtotal":150.00,"discountAmount":22.50,"totalAfterDiscount":127.50},"cart":{"subtotal":150.00,"discountAmount":22.50,"total":127.50}}}'
+        }}
+
+        <div class="info-box">
+            <h4 class="info-box-title">URL Parameters</h4>
+            <ul class="feature-list">
+                <li><code>itemId</code>: UUID of the cart item (not the product item)</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Request Fields (all optional)</h4>
+            <ul class="feature-list">
+                <li><code>quantity</code>: New quantity</li>
+                <li><code>discountPercentage</code>: New discount percentage</li>
+                <li><code>discountAmount</code>: New fixed discount</li>
+                <li><code>isIncluded</code>: For ITEM_GROUP children - include/exclude item</li>
+            </ul>
+        </div>
+
+        <h3>Remove Item from Cart</h3>
+        {{> api-doc/endpoint-card
+            method="DELETE"
+            path="/cart/items/:itemId"
+            description="Remove a specific item from the cart. If removing ITEM_GROUP parent, all child items are also removed (CASCADE)."
+            responseExample='{"success":true,"data":{"itemsRemoved":1,"cart":{"subtotal":50.00,"total":50.00}}}'
+        }}
+
+        <div class="info-box">
+            <h4 class="info-box-title">Cascade Delete</h4>
+            <ul class="feature-list">
+                <li><strong>Individual Items:</strong> Only the specific item is removed</li>
+                <li><strong>ITEM_GROUP:</strong> Removing parent item also removes all children</li>
+                <li><strong>Auto Recalculation:</strong> Cart totals updated automatically</li>
+            </ul>
+        </div>
+
+        <h3>Clear Cart</h3>
+        {{> api-doc/endpoint-card
+            method="DELETE"
+            path="/cart"
+            description="Remove all items from the cart. Cart remains active but empty, ready for next customer."
+            responseExample='{"success":true,"data":{"itemsRemoved":5}}'
+        }}
+
+        <h3>Update Cart Customer</h3>
+        {{> api-doc/endpoint-card
+            method="PUT"
+            path="/cart"
+            description="Associate a customer with the cart or update cart details. All fields are optional."
+            requestBody='{"customerId":"customer-account-uuid","customerName":"Jane Doe","customerEmail":"jane@example.com","remarks":"Birthday celebration - add candles"}'
+            responseExample='{"success":true,"data":{"cart":{"id":"cart-uuid","customerId":"customer-uuid","customerName":"Jane Doe","customerEmail":"jane@example.com","remarks":"Birthday celebration"}}}'
+        }}
+
+        <div class="info-box">
+            <h4 class="info-box-title">Request Fields (all optional)</h4>
+            <ul class="feature-list">
+                <li><code>customerId</code>: Link to registered customer account</li>
+                <li><code>customerName</code>: Name for walk-in customers (used if no customerId)</li>
+                <li><code>customerEmail</code>: Email for receipt</li>
+                <li><code>remarks</code>: Special instructions or notes</li>
+            </ul>
+        </div>
+
+        <h2>Cart to Sale Conversion</h2>
+
+        <h3>Checkout - Convert Cart to Sale</h3>
+        {{> api-doc/endpoint-card
+            method="POST"
+            path="/cart/checkout"
+            description="Convert the current cart to a completed sale transaction and clear the cart. Supports split payments and automatic sale number generation."
+            requestBody='{"laborerId":"laborer-account-uuid","payments":[{"paymentMethod":"CASH","amount":100.00},{"paymentMethod":"GCASH","amount":50.00,"referenceNumber":"GC-TXN-123456"}],"paymentAmount":150.00,"changeAmount":15.00}'
+            responseExample='{"success":true,"data":{"sale":{"id":"sale-uuid","saleNumber":"00000053","total":135.00,"paymentAmount":150.00,"changeAmount":15.00,"status":"PROCESSED","items":[{"itemName":"Coffee","quantity":2,"unitPrice":50.00,"subtotal":100.00}],"payments":[{"paymentMethod":"CASH","amount":100.00},{"paymentMethod":"GCASH","amount":50.00,"referenceNumber":"GC-TXN-123456"}]},"cartCleared":true}}'
+        }}
+
+        <div class="info-box">
+            <h4 class="info-box-title">Request Fields</h4>
+            <ul class="feature-list">
+                <li><code>laborerId</code> (optional): Laborer who performed service</li>
+                <li><code>payments</code> (required): Array of payment objects
+                    <ul>
+                        <li><code>paymentMethod</code> (required): CASH, CREDIT_CARD, DEBIT_CARD, QR_CODE, GCASH, PAYMAYA, BANK_TRANSFER, CHECK</li>
+                        <li><code>amount</code> (required): Amount paid with this method</li>
+                        <li><code>referenceNumber</code> (optional): Transaction reference for digital payments</li>
+                    </ul>
+                </li>
+                <li><code>paymentAmount</code> (required): Total amount paid by customer</li>
+                <li><code>changeAmount</code> (optional): Change to return (calculated as paymentAmount - total)</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Process Flow</h4>
+            <ol>
+                <li>Validate cart has items</li>
+                <li>Validate payment amount >= cart total</li>
+                <li>Create Sale record with auto-generated saleNumber</li>
+                <li>Copy all CartItems to SaleItems</li>
+                <li>Create SalePayment records</li>
+                <li>Delete all CartItems (empty the cart)</li>
+                <li>Return sale details with receipt data</li>
+            </ol>
+        </div>
+
+        <div class="info-box">
+            <h4 class="info-box-title">Validation Rules</h4>
+            <ul class="feature-list">
+                <li>Cart must have at least one item</li>
+                <li>Sum of payment amounts must equal paymentAmount</li>
+                <li>paymentAmount must be >= cart total</li>
+                <li>If paymentAmount > total, changeAmount is required</li>
+            </ul>
+        </div>
+
+        <div class="info-box warning">
+            <h4 class="info-box-title">Important</h4>
+            <p><strong>Cart Clearing:</strong> Cart is automatically cleared after successful checkout. If checkout fails, cart remains intact and can be retried.</p>
+        </div>
+    </section>
+
+    <section id="schema">
+        <h2>Database Schema Overview</h2>
+        <p>
+            The POS Cart system consists of two main tables: <code>Cart</code> and <code>CartItem</code>.
+            Each cashier has one persistent cart, and items can be individual products or combos (ITEM_GROUP).
+        </p>
+
+        <h3>Cart Table</h3>
+        <pre><code>model Cart {
+  id             String       @id @default(uuid())
+  cashierId      String       @unique
+  customerId     String?
+  subtotal       Float        @default(0)
+  discountAmount Float        @default(0)
+  total          Float        @default(0)
+  customerName   String?
+  customerEmail  String?
+  remarks        String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  cashier        CashierData  @relation(fields: [cashierId])
+  customer       Account?     @relation(fields: [customerId])
+  items          CartItem[]
+}</code></pre>
+
+        <h4>Key Relationships</h4>
+        <ul>
+            <li><strong>Cart ↔ CashierData:</strong> One-to-one (one cart per cashier, enforced by unique constraint)</li>
+            <li><strong>Cart ↔ Account:</strong> Many-to-one (optional customer link)</li>
+            <li><strong>Cart ↔ CartItem:</strong> One-to-many (cart has many items)</li>
+        </ul>
+
+        <h3>CartItem Table</h3>
+        <pre><code>model CartItem {
+  id                 String    @id @default(uuid())
+  cartId             String
+  itemId             String?
+  parentCartItemId   String?
+  itemName           String
+  itemImage          String?
+  itemType           ItemType  @default(INDIVIDUAL_PRODUCT)
+  quantity           Int
+  unitPrice          Float
+  subtotal           Float
+  discountType       String?
+  discountPercentage Float?
+  discountAmount     Float     @default(0)
+  totalAfterDiscount Float
+  isIncluded         Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+
+  cart               Cart      @relation(fields: [cartId])
+  item               Item?     @relation(fields: [itemId])
+  parentItem         CartItem? @relation(fields: [parentCartItemId])
+  childItems         CartItem[]
+}</code></pre>
+
+        <h4>Key Relationships</h4>
+        <ul>
+            <li><strong>CartItem ↔ Item:</strong> Many-to-one (references product/service, SET NULL on delete)</li>
+            <li><strong>CartItem ↔ CartItem:</strong> Self-referencing (parent-child for ITEM_GROUP, CASCADE delete)</li>
+        </ul>
+
+        <h3>Key Behaviors</h3>
+        <div class="info-box">
+            <ul class="feature-list">
+                <li><strong>One Cart Per Cashier:</strong> Enforced by unique constraint on cashierId</li>
+                <li><strong>Auto-Created:</strong> Cart is created automatically when first item is added</li>
+                <li><strong>Cascade Delete:</strong> Deleting parent CartItem deletes all children</li>
+                <li><strong>Soft Item Reference:</strong> itemId can be null (SET NULL) if product deleted</li>
+                <li><strong>Auto Totals:</strong> Cart totals recalculated after each item operation</li>
+                <li><strong>Checkout Clears Cart:</strong> Successful checkout deletes all CartItems</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="quickstart">
+        <h2>Quick Start Guide</h2>
+
+        <div class="info-box success">
+            <h4>Step 1: Initialize Device (First Time Only)</h4>
+            <pre><code>POST /pos/device/initialize
+Content-Type: application/json
+
+{
+  "apiKey": "your-device-api-key",
+  "deviceId": "unique-device-fingerprint"
+}
+
+// Save deviceId for all future requests
+DEVICE_ID="unique-device-fingerprint"
+API_KEY="your-device-api-key"</code></pre>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 2: Cashier Login</h4>
+            <pre><code>POST /pos/cashier/login
+Content-Type: application/json
+x-api-key: $API_KEY
+x-device-id: $DEVICE_ID
+
+{
+  "username": "cashier01",
+  "password": "cashier-password"
+}
+
+// Save the session token from response
+SESSION_TOKEN="session-token-uuid"</code></pre>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 3: Get POS Items</h4>
+            <pre><code>GET {{baseUrl}}/get_items
+x-api-key: $API_KEY
+x-device-id: $DEVICE_ID
+x-cashier-session: $SESSION_TOKEN
+
+// Returns list of all POS-enabled items for this company</code></pre>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 4: Get or Create Cart</h4>
+            <pre><code>GET {{baseUrl}}/cart
+x-api-key: $API_KEY
+x-device-id: $DEVICE_ID
+x-cashier-session: $SESSION_TOKEN
+
+// Returns empty cart on first access</code></pre>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 5: Add Items to Cart</h4>
+            <pre><code>// Add individual item
+POST {{baseUrl}}/cart/items
+x-api-key: $API_KEY
+x-device-id: $DEVICE_ID
+x-cashier-session: $SESSION_TOKEN
+Content-Type: application/json
+
+{
+  "itemId": "coffee-uuid",
+  "quantity": 2,
+  "discountPercentage": 10
+}
+
+// Add combo item
+POST {{baseUrl}}/cart/items/group
+x-api-key: $API_KEY
+x-device-id: $DEVICE_ID
+x-cashier-session: $SESSION_TOKEN
+Content-Type: application/json
+
+{
+  "groupItemId": "breakfast-combo-uuid",
+  "quantity": 1,
+  "childItems": [
+    {"itemId": "coffee-uuid", "quantity": 1, "isIncluded": true},
+    {"itemId": "toast-uuid", "quantity": 2, "isIncluded": true}
+  ]
+}</code></pre>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 6: Update Customer Information (Optional)</h4>
+            <pre><code>PUT {{baseUrl}}/cart
+x-api-key: $API_KEY
+x-device-id: $DEVICE_ID
+x-cashier-session: $SESSION_TOKEN
+Content-Type: application/json
+
+{
+  "customerName": "John Doe",
+  "customerEmail": "john@example.com",
+  "remarks": "No onions"
+}</code></pre>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 7: Checkout</h4>
+            <pre><code>POST {{baseUrl}}/cart/checkout
+x-api-key: $API_KEY
+x-device-id: $DEVICE_ID
+x-cashier-session: $SESSION_TOKEN
+Content-Type: application/json
+
+{
+  "payments": [
+    {"paymentMethod": "CASH", "amount": 150.00}
+  ],
+  "paymentAmount": 150.00,
+  "changeAmount": 15.00
+}
+
+// Response includes sale details and cartCleared: true</code></pre>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 8: Cart is Now Empty</h4>
+            <pre><code>GET {{baseUrl}}/cart
+x-api-key: $API_KEY
+x-device-id: $DEVICE_ID
+x-cashier-session: $SESSION_TOKEN
+
+// Returns empty cart, ready for next customer</code></pre>
+        </div>
+
+        <div class="info-box success">
+            <h4>Step 9: Cashier Logout (End of Shift)</h4>
+            <pre><code>POST /pos/cashier/logout
+x-api-key: $API_KEY
+x-device-id: $DEVICE_ID
+x-cashier-session: $SESSION_TOKEN
+
+// Session token invalidated</code></pre>
+        </div>
+
+        <h3>Complete cURL Example</h3>
+        <pre><code>#!/bin/bash
+
+# Environment variables (configure once)
+API_KEY="your-device-api-key"
+DEVICE_ID="unique-device-fingerprint"
+BASE_URL="http://localhost:3000/pos"
+
+# 1. Initialize device (first time only)
+curl -X POST http://localhost:3000/pos/device/initialize \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"apiKey\": \"$API_KEY\",
+    \"deviceId\": \"$DEVICE_ID\"
+  }"
+
+# 2. Cashier login
+SESSION_TOKEN=$(curl -s -X POST http://localhost:3000/pos/cashier/login \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: $API_KEY" \
+  -H "x-device-id: $DEVICE_ID" \
+  -d '{"username":"cashier01","password":"cashier-password"}' \
+  | jq -r '.sessionToken')
+
+# 3. Get POS items
+curl -X GET $BASE_URL/get_items \
+  -H "x-api-key: $API_KEY" \
+  -H "x-device-id: $DEVICE_ID" \
+  -H "x-cashier-session: $SESSION_TOKEN"
+
+# 4. Add item to cart
+curl -X POST $BASE_URL/cart/items \
+  -H "x-api-key: $API_KEY" \
+  -H "x-device-id: $DEVICE_ID" \
+  -H "x-cashier-session: $SESSION_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "itemId": "coffee-uuid",
+    "quantity": 2,
+    "discountPercentage": 10
+  }'
+
+# 5. Checkout
+curl -X POST $BASE_URL/cart/checkout \
+  -H "x-api-key: $API_KEY" \
+  -H "x-device-id: $DEVICE_ID" \
+  -H "x-cashier-session: $SESSION_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "payments": [{"paymentMethod": "CASH", "amount": 100.00}],
+    "paymentAmount": 100.00,
+    "changeAmount": 10.00
+  }'
+
+# 6. Logout
+curl -X POST http://localhost:3000/pos/cashier/logout \
+  -H "x-api-key: $API_KEY" \
+  -H "x-device-id: $DEVICE_ID" \
+  -H "x-cashier-session: $SESSION_TOKEN"</code></pre>
+    </section>
+
+    <section id="errors">
+        <h2>Error Handling</h2>
+
+        <p>The API uses standard HTTP status codes to indicate success or failure:</p>
+
+        <div class="endpoint">
+            <h4>Common Status Codes</h4>
+            <div class="param">
+                <span class="param-name">200 OK</span>
+                <span class="param-description">Request successful</span>
+            </div>
+            <div class="param">
+                <span class="param-name">201 Created</span>
+                <span class="param-description">Resource created successfully</span>
+            </div>
+            <div class="param">
+                <span class="param-name">400 Bad Request</span>
+                <span class="param-description">Invalid request parameters or validation error</span>
+            </div>
+            <div class="param">
+                <span class="param-name">401 Unauthorized</span>
+                <span class="param-description">Invalid or missing auth token</span>
+            </div>
+            <div class="param">
+                <span class="param-name">404 Not Found</span>
+                <span class="param-description">Resource not found</span>
+            </div>
+            <div class="param">
+                <span class="param-name">500 Internal Server Error</span>
+                <span class="param-description">Server error, please try again</span>
+            </div>
+        </div>
+
+        <h4>Error Response Format</h4>
+        <pre><code>{
+  "success": false,
+  "error": "Error message description",
+  "details": {
+    "field": "validation error details",
+    "code": "ERROR_CODE"
+  }
+}</code></pre>
+
+        <h3>Common Error Scenarios</h3>
+
+        <div class="info-box error">
+            <h4>Empty Cart Checkout</h4>
+            <p><strong>Error:</strong> "Cart is empty" (400)</p>
+            <p><strong>Cause:</strong> Attempting checkout with no items</p>
+            <p><strong>Solution:</strong> Add items to cart before checkout</p>
+        </div>
+
+        <div class="info-box error">
+            <h4>Insufficient Payment</h4>
+            <p><strong>Error:</strong> "Payment amount is less than cart total" (400)</p>
+            <p><strong>Cause:</strong> Payment amount less than total</p>
+            <p><strong>Solution:</strong> Ensure paymentAmount >= cart total</p>
+        </div>
+
+        <div class="info-box error">
+            <h4>Invalid Discount</h4>
+            <p><strong>Error:</strong> "Discount percentage must be between 0 and 100" (400)</p>
+            <p><strong>Cause:</strong> Discount percentage > 100 or negative</p>
+            <p><strong>Solution:</strong> Use discount percentage between 0-100</p>
+        </div>
+
+        <div class="info-box error">
+            <h4>Payment Sum Mismatch</h4>
+            <p><strong>Error:</strong> "Sum of payment amounts must equal paymentAmount" (400)</p>
+            <p><strong>Cause:</strong> Payment array amounts don't match paymentAmount</p>
+            <p><strong>Solution:</strong> Ensure sum of payments[].amount equals paymentAmount</p>
+        </div>
+
+        <div class="info-box error">
+            <h4>Unauthorized Access</h4>
+            <p><strong>Error:</strong> "Invalid or expired session token" (401)</p>
+            <p><strong>Cause:</strong> Missing/invalid session token or cashier not active</p>
+            <p><strong>Solution:</strong> Login again to get a new session token</p>
+        </div>
+
+        <div class="info-box error">
+            <h4>Device Not Initialized</h4>
+            <p><strong>Error:</strong> "Device not initialized. Initialize device first" (400)</p>
+            <p><strong>Cause:</strong> Attempting cashier login before device initialization</p>
+            <p><strong>Solution:</strong> Call /pos/device/initialize first with API key and device ID</p>
+        </div>
+
+        <div class="info-box error">
+            <h4>Device Binding Conflict</h4>
+            <p><strong>Error:</strong> "API key is already bound to a different device" (403)</p>
+            <p><strong>Cause:</strong> API key already initialized with different device fingerprint</p>
+            <p><strong>Solution:</strong> Contact admin to unbind the device or use correct device ID</p>
+        </div>
+
+        <div class="info-box error">
+            <h4>Company Mismatch</h4>
+            <p><strong>Error:</strong> "Cashier does not belong to the same company as the POS device" (403)</p>
+            <p><strong>Cause:</strong> Cashier account is from different company than device</p>
+            <p><strong>Solution:</strong> Ensure cashier account and device are from same company</p>
+        </div>
+
+        <div class="info-box error">
+            <h4>Item Not Found</h4>
+            <p><strong>Error:</strong> "Item not found" or "Cart item not found" (404)</p>
+            <p><strong>Cause:</strong> ItemId or CartItemId doesn't exist</p>
+            <p><strong>Solution:</strong> Verify IDs are valid UUIDs from respective tables</p>
+        </div>
+
+        <h3>Best Practices for Error Handling</h3>
+        <div class="info-box">
+            <ul class="feature-list">
+                <li><strong>Always Check Response:</strong> Verify <code>success: true</code> before processing data</li>
+                <li><strong>Display User-Friendly Messages:</strong> Use <code>error</code> field for user display</li>
+                <li><strong>Log Details:</strong> Log <code>details</code> object for debugging</li>
+                <li><strong>Retry Logic:</strong> Implement retry for 500 errors, not 400/401/404</li>
+                <li><strong>Validate Before Submit:</strong> Client-side validation prevents most errors</li>
+                <li><strong>Handle Token Expiry:</strong> Redirect to login on 401 errors</li>
+            </ul>
+        </div>
+
+        <div class="info-box warning">
+            <h4 class="info-box-title">Cart Integrity</h4>
+            <p>If checkout fails, the cart remains intact with all items. Customers can retry checkout or modify the cart without losing data.</p>
+        </div>
+    </section>
+</div>

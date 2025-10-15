@@ -7,6 +7,7 @@ import attendanceConflicts from './table/attendanceConflicts.table.reference';
 import attendanceLogsTable from './table/attendanceLogsTable.table.reference';
 import boardLane from './table/boardLane.table.reference';
 import branchManagement from './table/branchManagement.table.reference';
+import cashierListTable from './table/cashierListTable.table.reference';
 import collectionByProject from './table/collectionByProject.table.reference';
 import collectionClient from './table/collectionClient.table.reference';
 import collectionLogsTable from './table/collectionLogsTable.table.reference';
@@ -85,6 +86,7 @@ export default {
   attendanceLogsTable,
   boardLane,
   branchManagement,
+  cashierListTable,
   collectionByProject,
   collectionClient,
   collectionLogsTable,

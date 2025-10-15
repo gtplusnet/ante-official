@@ -39,6 +39,7 @@ export const routeScopeMap: Record<string, string | string[]> = {
   // ========== MANPOWER MODULE ==========
   'member_manpower_dashboard': 'MANPOWER_ACCESS',
   'member_manpower_hris': 'MANPOWER_HRIS_ACCESS',
+  'member_manpower_cashier_management': 'MANPOWER_CASHIER_MANAGEMENT_ACCESS',
   'member_manpower_payroll_center': 'MANPOWER_PAYROLL_CENTER_ACCESS',
   'member_manpower_payslip_center': 'MANPOWER_PAYSLIP_CENTER_ACCESS',
   'member_manpower_payroll_time_keeping': ['MANPOWER_TIME_KEEPING_ACCESS_ALL', 'MANPOWER_TIME_KEEPING_ACCESS_BY_BRANCH'],
@@ -74,6 +75,9 @@ export const routeScopeMap: Record<string, string | string[]> = {
   'member_manpower_reports_philhealth': 'MANPOWER_REPORTS_PHILHEALTH_ACCESS',
   'member_manpower_reports_pagibig': 'MANPOWER_REPORTS_PAGIBIG_ACCESS',
   'member_manpower_reports_tax': 'MANPOWER_REPORTS_TAX_ACCESS',
+
+  // Manpower API
+  'member_manpower_pos_device_management': 'SETTINGS_DEVICE_MANAGEMENT_ACCESS',
 
   // ========== TREASURY MODULE ==========
   'member_treasury': 'TREASURY_FUND_ACCOUNT_ACCESS',

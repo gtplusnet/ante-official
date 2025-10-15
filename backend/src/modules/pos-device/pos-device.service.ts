@@ -13,6 +13,8 @@ import {
   POSDeviceRegenerateKeyRequest,
   POSDeviceDeleteRequest,
   POSDeviceListRequest,
+  POSDeviceInitializeRequest,
+  POSDeviceUnbindRequest,
 } from '@shared/request/pos-device.request';
 import {
   POSDeviceResponse,
@@ -309,5 +311,124 @@ export class POSDeviceService {
     });
 
     return device;
+  }
+
+  /**
+   * Initialize device - binds device fingerprint to API key
+   */
+  async initializeDevice(apiKey: string, deviceId: string): Promise<any> {
+    // Find device by API key
+    const device = await this.prismaService.pOSDevice.findUnique({
+      where: { apiKey },
+      include: {
+        company: true,
+        branch: true,
+      },
+    });
+
+    if (!device) {
+      throw new NotFoundException('Invalid API key');
+    }
+
+    if (!device.isActive) {
+      throw new BadRequestException('Device is inactive. Please contact administrator.');
+    }
+
+    // Check if device is already bound
+    if (device.deviceFingerprint) {
+      // Device is already bound
+      if (device.deviceFingerprint !== deviceId) {
+        throw new BadRequestException(
+          'API key is already bound to another device. Please unbind from admin panel first.',
+        );
+      }
+      // Same device - allow
+    } else {
+      // First time binding
+      await this.prismaService.pOSDevice.update({
+        where: { id: device.id },
+        data: {
+          deviceFingerprint: deviceId,
+          boundAt: new Date(),
+          lastActivityAt: new Date(),
+        },
+      });
+    }
+
+    return {
+      success: true,
+      deviceBound: true,
+      deviceName: device.name,
+      deviceId: device.deviceId,
+      branchId: device.branchId,
+      branchName: device.branch?.name,
+      companyId: device.companyId,
+      companyName: device.company?.companyName,
+    };
+  }
+
+  /**
+   * Validate device binding - checks if API key matches device fingerprint
+   */
+  async validateDeviceBinding(apiKey: string, deviceId: string): Promise<POSDevice> {
+    const device = await this.prismaService.pOSDevice.findUnique({
+      where: { apiKey },
+      include: {
+        company: true,
+        branch: true,
+      },
+    });
+
+    if (!device) {
+      throw new NotFoundException('Invalid API key');
+    }
+
+    if (!device.isActive) {
+      throw new BadRequestException('Device is inactive');
+    }
+
+    if (!device.deviceFingerprint) {
+      throw new BadRequestException('Device not initialized. Please initialize device first.');
+    }
+
+    if (device.deviceFingerprint !== deviceId) {
+      throw new BadRequestException('Device fingerprint mismatch. API key is bound to another device.');
+    }
+
+    // Update last activity
+    await this.prismaService.pOSDevice.update({
+      where: { id: device.id },
+      data: {
+        lastActivityAt: new Date(),
+      },
+    });
+
+    return device;
+  }
+
+  /**
+   * Unbind device - removes device fingerprint binding
+   */
+  async unbindDevice(id: string, companyId: number): Promise<POSDeviceResponse> {
+    // Verify device belongs to company
+    await this.getDeviceById(id, companyId);
+
+    const device = await this.prismaService.pOSDevice.update({
+      where: { id },
+      data: {
+        deviceFingerprint: null,
+        boundAt: null,
+      },
+      include: {
+        branch: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    return this.toResponse(device);
   }
 }
