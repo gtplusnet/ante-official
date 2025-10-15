@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcrypt';
 import {
   GuardianLoginDto,
+  GuardianRegisterDto,
   UpdateProfileDto,
   GetAttendanceLogsDto,
   GuardianLoginResponseDto,
@@ -119,6 +120,118 @@ export class SchoolGuardianPublicService {
         studentCode: gs.student.studentNumber,
       })),
       permissions: [], // Can be expanded based on requirements
+    };
+  }
+
+  /**
+   * Guardian registration
+   */
+  async register(dto: GuardianRegisterDto): Promise<GuardianLoginResponseDto> {
+    // Check if email already exists
+    const existingGuardian = await this.prisma.guardian.findFirst({
+      where: {
+        email: dto.email.toLowerCase(),
+      },
+    });
+
+    if (existingGuardian) {
+      throw new ConflictException('Email address is already registered');
+    }
+
+    // Get company ID from environment variable
+    const companyId = parseInt(process.env.NEXT_PUBLIC_COMPANY_ID || '1');
+
+    // Verify company exists
+    const company = await this.prisma.company.findUnique({
+      where: { id: companyId },
+    });
+
+    if (!company) {
+      throw new BadRequestException('Invalid company configuration');
+    }
+
+    // Validate age (must be 18+)
+    const birthDate = new Date(dto.dateOfBirth);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    const dayDiff = today.getDate() - birthDate.getDate();
+
+    // Adjust age if birthday hasn't occurred this year
+    const actualAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
+
+    if (actualAge < 18) {
+      throw new BadRequestException('You must be at least 18 years old to register');
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+    // Generate encryption key (required by schema, though we're using bcrypt)
+    // This maintains backward compatibility with the legacy encryption system
+    const key = Buffer.from(uuidv4().replace(/-/g, ''), 'hex');
+
+    // Create search keyword for easy searching
+    const searchKeyword = [
+      dto.firstName,
+      dto.lastName,
+      dto.middleName,
+      dto.email,
+      dto.contactNumber,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    // Create guardian
+    const guardian = await this.prisma.guardian.create({
+      data: {
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        middleName: dto.middleName || undefined,
+        dateOfBirth: new Date(dto.dateOfBirth),
+        email: dto.email.toLowerCase(),
+        password: hashedPassword,
+        key: key,
+        contactNumber: dto.contactNumber,
+        alternateNumber: dto.alternateNumber || undefined,
+        address: dto.address || undefined,
+        occupation: dto.occupation || undefined,
+        companyId,
+        searchKeyword,
+        isActive: true,
+        lastLogin: new Date(),
+      },
+    });
+
+    // Generate permanent token
+    const token = this.generateToken();
+    const refreshToken = this.generateToken();
+
+    // Store token in database
+    await this.prisma.guardianToken.create({
+      data: {
+        id: uuidv4(),
+        guardianId: guardian.id,
+        token,
+        refreshToken,
+        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
+        createdAt: new Date(),
+      },
+    });
+
+    // Format response (same as login)
+    return {
+      token,
+      guardian: {
+        id: guardian.id,
+        firstName: guardian.firstName,
+        lastName: guardian.lastName,
+        email: guardian.email,
+        phoneNumber: guardian.contactNumber,
+      },
+      students: [], // New registration has no students yet
+      permissions: [],
     };
   }
 
