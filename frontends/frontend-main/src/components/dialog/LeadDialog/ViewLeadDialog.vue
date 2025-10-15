@@ -39,8 +39,16 @@
             :style="{ backgroundColor: currentStageColor }"
           >
             {{ currentStageDisplay }}
-            <q-icon name="keyboard_arrow_down" class="q-ml-xs stage-arrow" :class="{ 'rotate-arrow': isStageMenuOpen }" />
-            <q-menu auto-close @before-show="isStageMenuOpen = true" @before-hide="isStageMenuOpen = false">
+            <q-icon
+              name="keyboard_arrow_down"
+              class="q-ml-xs stage-arrow"
+              :class="{ 'rotate-arrow': isStageMenuOpen }"
+            />
+            <q-menu
+              auto-close
+              @before-show="isStageMenuOpen = true"
+              @before-hide="isStageMenuOpen = false"
+            >
               <q-list style="min-width: 200px">
                 <q-item
                   v-for="stage in stageOptions"
@@ -62,38 +70,56 @@
             </q-menu>
           </q-badge>
 
-          <!-- Proposal Status Badge - Under Development -->
-          <q-badge class="ProposalBadge cursor-pointer" text-color="white">
-            Proposal Status <q-icon name="keyboard_arrow_down" />
-            <q-tooltip>Under Development</q-tooltip>
+          <!-- Proposal Status Badge - Dynamic -->
+          <q-badge
+            v-if="showProposalBadge"
+            class="ProposalBadge cursor-pointer"
+            text-color="white"
+            :style="{ backgroundColor: currentProposalColor }"
+          >
+            {{ currentProposalDisplay }}
+            <q-icon
+              name="keyboard_arrow_down"
+              class="q-ml-xs stage-arrow"
+              :class="{ 'rotate-arrow': isProposalMenuOpen }"
+            />
+            <q-menu
+              auto-close
+              @before-show="isProposalMenuOpen = true"
+              @before-hide="isProposalMenuOpen = false"
+            >
+              <q-list style="min-width: 200px">
+                <q-item
+                  v-for="status in proposalStatusOptions"
+                  :key="status.key"
+                  clickable
+                  @click="handleProposalStatusChange(status.key)"
+                  :active="leadInformation.proposalStatus === status.key"
+                >
+                  <q-item-section avatar>
+                    <q-icon
+                      name="fiber_manual_record"
+                      :style="{ color: status.color }"
+                      size="12px"
+                    />
+                  </q-item-section>
+                  <q-item-section>{{ status.label }}</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
           </q-badge>
 
           <!-- Bidding Status Badge - Under Development -->
-          <q-badge class="BiddingBadge cursor-pointer" text-color="white">
+          <!-- <q-badge class="BiddingBadge cursor-pointer" text-color="white">
             Bidding Status <q-icon name="keyboard_arrow_down" />
             <q-tooltip>Under Development</q-tooltip>
-          </q-badge>
+          </q-badge> -->
         </div>
-
         <div class="row items-start justify-start">
           <div class="col-8">
             <div class="details-container q-pr-sm">
               <div class="detail-three-card-container q-pb-lg">
-                <div
-                  class="detail-three-card column items-center justify-center"
-                >
-                  <div class="icon-div q-pa-sm">
-                    <q-icon
-                      name="o_beenhere"
-                      :style="{ color: 'var(--q-secondary)' }"
-                      size="18px"
-                    />
-                  </div>
-                  <span class="title">{{
-                    leadInformation.abc?.formatCurrency || "₱0.00"
-                  }}</span>
-                  <span class="subtitle">Approved Budget</span>
-                </div>
+                <!-- Total Contract -->
                 <div
                   class="detail-three-card column items-center justify-center"
                 >
@@ -107,8 +133,25 @@
                   <span class="title">{{
                     leadInformation.initialCosting?.formatCurrency || "₱0.00"
                   }}</span>
-                  <span class="subtitle">Initial Contract</span>
+                  <span class="subtitle">Total Contract</span>
                 </div>
+                <!-- Win Probability -->
+                <div
+                  class="detail-three-card column items-center justify-center"
+                >
+                  <div class="icon-div q-pa-sm">
+                    <q-icon
+                      name="o_beenhere"
+                      :style="{ color: 'var(--q-secondary)' }"
+                      size="18px"
+                    />
+                  </div>
+                  <span class="title">{{
+                    leadInformation.winProbability?.label || "0%"
+                  }}</span>
+                  <span class="subtitle">Win Probability</span>
+                </div>
+                <!-- Company -->
                 <div
                   class="detail-three-card column items-center justify-center"
                 >
@@ -124,12 +167,13 @@
                   }}</span>
                   <span class="subtitle">Company</span>
                 </div>
+                <!-- Relationship Owner -->
                 <div
                   class="detail-three-card column items-center justify-center"
                 >
                   <div class="icon-div q-pa-sm">
                     <q-icon
-                      name="pin_drop"
+                      name="o_account_circle"
                       :style="{ color: 'var(--q-secondary)' }"
                       size="18px"
                     />
@@ -165,6 +209,18 @@
                   </div>
                 </div>
 
+                <div v-if="leadInformation.abc?.raw !== 0" class="row">
+                  <q-icon
+                    name="my_location"
+                    size="16px"
+                    :style="{ color: 'var(--q-text-light-grey)' }"
+                  />
+                  <div class="column q-ml-sm">
+                    <span class="subtitle">Approved Budget Contract (ABC):</span>
+                    <span class="details-value">{{ leadInformation.abc?.formatCurrency || "₱0.00" }}</span>
+                  </div>
+                </div>
+
                 <div class="row">
                   <q-icon
                     name="today"
@@ -193,18 +249,6 @@
                       leadInformation.implementationFee?.formatCurrency ||
                       "₱0.00"
                     }}</span>
-                  </div>
-                </div>
-
-                <div class="row">
-                  <q-icon
-                    name="my_location"
-                    size="16px"
-                    :style="{ color: 'var(--q-text-light-grey)' }"
-                  />
-                  <div class="column q-ml-sm">
-                    <span class="subtitle">Probability:</span>
-                    <span class="details-value">{{ winProbabilityLabel }}</span>
                   </div>
                 </div>
 
@@ -249,7 +293,9 @@
                           size="18px"
                           :style="{ color: 'var(--q-text-light-grey)' }"
                         />
-                        <span class="details-value q-ml-xs">{{ closeDate }}</span>
+                        <span class="details-value q-ml-xs">{{
+                          closeDate
+                        }}</span>
                       </div>
                     </div>
                   </div>
@@ -806,7 +852,7 @@ export default {
       required: true,
     },
   },
-  emits: ["update:modelValue", "close", "stageChanged"],
+  emits: ["update:modelValue", "close", "stageChanged", "proposalStatusChanged"],
 
   setup(props, { emit }) {
     const $q = useQuasar();
@@ -820,6 +866,7 @@ export default {
     const editingNote = ref(null);
     const isLeadEditDialogOpen = ref(false);
     const isStageMenuOpen = ref(false);
+    const isProposalMenuOpen = ref(false);
 
     const winProbabilityLabel = computed(() => {
       const prob = leadInformation.value?.winProbability;
@@ -862,6 +909,42 @@ export default {
       { key: "won", label: "Won", color: "#4CAF50" },
       { key: "loss", label: "Lost", color: "#F44336" },
     ];
+
+    // Proposal status options with colors
+    const proposalStatusOptions = [
+      { key: "PREPARING", label: "Preparing", color: "#00ACC1" },
+      { key: "READY", label: "Ready", color: "#FB8C00" },
+      { key: "SENT", label: "Sent", color: "#673AB7" },
+      { key: "FOR_REVISION", label: "For Revision", color: "#F44336" },
+      { key: "FINALIZED", label: "Finalized", color: "#2196F3" },
+    ];
+
+    // Show proposal badge only when lead is in proposal stage
+    const showProposalBadge = computed(() => {
+      return leadInformation.value?.leadBoardStage === 'proposal';
+    });
+
+    // Computed property for current proposal status display
+    const currentProposalDisplay = computed(() => {
+      if (!leadInformation.value?.proposalStatus) {
+        return "Preparing"; // Default to Preparing if no status set
+      }
+      const status = proposalStatusOptions.find(
+        (s) => s.key === leadInformation.value.proposalStatus
+      );
+      return status ? status.label : "Preparing";
+    });
+
+    // Computed property for current proposal status color
+    const currentProposalColor = computed(() => {
+      if (!leadInformation.value?.proposalStatus) {
+        return "#00ACC1"; // Default to Preparing color
+      }
+      const status = proposalStatusOptions.find(
+        (s) => s.key === leadInformation.value.proposalStatus
+      );
+      return status ? status.color : "#00ACC1";
+    });
 
     // Computed property for close date - format as "Month YYYY"
     const closeDate = computed(() => {
@@ -1083,11 +1166,7 @@ export default {
         });
 
         // Call the API to move the lead
-        await APIRequests.moveLead(
-          $q,
-          props.leadViewId.toString(),
-          newStage
-        );
+        await APIRequests.moveLead($q, props.leadViewId.toString(), newStage);
 
         // Update local state immediately for smooth UX
         leadInformation.value.leadBoardStage = newStage;
@@ -1117,6 +1196,55 @@ export default {
       }
     };
 
+    const handleProposalStatusChange = async (newStatus: string) => {
+      // Don't allow changing if already the same status
+      if (leadInformation.value.proposalStatus === newStatus) {
+        return;
+      }
+
+      try {
+        $q.loading.show({
+          message: "Updating proposal status...",
+        });
+
+        // Call the API to update proposal status
+        await APIRequests.updateProposalStatus(
+          $q,
+          props.leadViewId.toString(),
+          newStatus
+        );
+
+        // Update local state immediately for smooth UX
+        leadInformation.value.proposalStatus = newStatus;
+
+        // Emit event to parent components to refresh board/grid/list
+        emit("proposalStatusChanged", {
+          leadId: props.leadViewId,
+          newProposalStatus: newStatus,
+        });
+
+        // Get the status label for notification
+        const statusLabel = proposalStatusOptions.find((s) => s.key === newStatus)?.label || newStatus;
+
+        $q.notify({
+          color: "positive",
+          message: `Proposal status updated to ${statusLabel}`,
+          icon: "check",
+          position: "top",
+        });
+      } catch (error: any) {
+        console.error("Failed to update proposal status:", error);
+        $q.notify({
+          color: "negative",
+          message: "Failed to update proposal status",
+          icon: "report_problem",
+          position: "top",
+        });
+      } finally {
+        $q.loading.hide();
+      }
+    };
+
     return {
       notesText,
       leadInformation,
@@ -1124,6 +1252,10 @@ export default {
       currentStageDisplay,
       currentStageColor,
       stageOptions,
+      proposalStatusOptions,
+      showProposalBadge,
+      currentProposalDisplay,
+      currentProposalColor,
       closeDate,
       daysInCurrentStage,
       isBillOfQuantityDialogOpen,
@@ -1133,6 +1265,7 @@ export default {
       editingNote,
       isLeadEditDialogOpen,
       isStageMenuOpen,
+      isProposalMenuOpen,
       formatWord,
       truncateFormat,
       fetchData,
@@ -1146,6 +1279,7 @@ export default {
       openEditDialog,
       handleLeadEdited,
       handleStageChange,
+      handleProposalStatusChange,
     };
   },
 };

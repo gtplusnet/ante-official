@@ -26,7 +26,7 @@
     "@capacitor/core": "^7.4.1",
     "@capacitor/push-notifications": "^7.0.1",
     "@types/node": "^24.0.12",
-    "@types/react": "^19.1.8",
+    "@types/react": "19.2.2",
     "@types/react-dom": "^19.1.6",
     "autoprefixer": "^10.4.21",
     "axios": "^1.10.0",
@@ -39,7 +39,7 @@
     "react-dom": "^19.1.0",
     "react-icons": "^5.5.0",
     "socket.io-client": "^4.8.1",
-    "typescript": "^5.8.3"
+    "typescript": "5.9.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.2",

@@ -71,16 +71,21 @@ export default function SettingsPage() {
     }
     
     // Load database counts
+    // Note: attendance store was removed in DB v6, only students/guardians remain
     Promise.all([
-      dbManager.count('attendance'),
       dbManager.count('students'),
       dbManager.count('guardians')
-    ]).then(([attendanceCount, studentCount, guardianCount]) => {
-      setAttendanceCount(attendanceCount)
+    ]).then(([studentCount, guardianCount]) => {
       setStudentCount(studentCount)
       setGuardianCount(guardianCount)
+      // Attendance count set to 0 as the store no longer exists
+      setAttendanceCount(0)
     }).catch(err => {
       console.error('Failed to get counts:', err)
+      // Set default values on error
+      setStudentCount(0)
+      setGuardianCount(0)
+      setAttendanceCount(0)
     })
   }, [])
 

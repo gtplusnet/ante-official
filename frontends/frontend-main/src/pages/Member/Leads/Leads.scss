@@ -284,6 +284,35 @@
         background-color: #9e9e9e; // Unknown/null (default gray)
       }
     }
+
+    .proposal-status {
+      font-weight: 500;
+      color: #fff;
+      border-radius: 50px;
+      padding: 5px 10px;
+      line-height: 1;
+
+      // Proposal Status color coding
+      &.proposal-status-preparing {
+        background-color: #00ACC1; // Preparing (Cyan)
+      }
+
+      &.proposal-status-ready {
+        background-color: #FB8C00; // Ready (Orange)
+      }
+
+      &.proposal-status-sent {
+        background-color: #673AB7; // Sent (Deep Purple)
+      }
+
+      &.proposal-status-for-revision {
+        background-color: #F44336; // For Revision (Red)
+      }
+
+      &.proposal-status-finalized {
+        background-color: #2196F3; // Finalized (Blue)
+      }
+    }
   }
 
   .avatar-container {
@@ -446,6 +475,35 @@
 
             &.probability-unknown {
               background-color: #9e9e9e; // Unknown/null (default gray)
+            }
+          }
+
+          .proposal-status {
+            font-weight: 500;
+            color: #fff;
+            border-radius: 50px;
+            padding: 5px 10px;
+            line-height: 1;
+
+            // Proposal Status color coding
+            &.proposal-status-preparing {
+              background-color: #00ACC1; // Preparing (Cyan)
+            }
+
+            &.proposal-status-ready {
+              background-color: #FB8C00; // Ready (Orange)
+            }
+
+            &.proposal-status-sent {
+              background-color: #673AB7; // Sent (Deep Purple)
+            }
+
+            &.proposal-status-for-revision {
+              background-color: #F44336; // For Revision (Red)
+            }
+
+            &.proposal-status-finalized {
+              background-color: #2196F3; // Finalized (Blue)
             }
           }
         }

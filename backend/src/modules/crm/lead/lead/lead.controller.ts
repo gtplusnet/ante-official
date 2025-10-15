@@ -17,6 +17,7 @@ import {
   LeadCreateDto,
   LeadUpdateDto,
   LeadMoveDto,
+  UpdateProposalStatusDto,
 } from './lead.validator.dto';
 import { LeadService } from './lead.service';
 import { ClientService } from '@modules/crm/client/client/client.service';
@@ -129,6 +130,17 @@ export class LeadController {
   async move(@NestResponse() response: Response, @Body() params: LeadMoveDto) {
     return this.utilityService.responseHandler(
       this.leadService.moveLead(params),
+      response,
+    );
+  }
+
+  @Patch('update-proposal-status')
+  async updateProposalStatus(
+    @NestResponse() response: Response,
+    @Body() params: UpdateProposalStatusDto,
+  ) {
+    return this.utilityService.responseHandler(
+      this.leadService.updateProposalStatus(params),
       response,
     );
   }

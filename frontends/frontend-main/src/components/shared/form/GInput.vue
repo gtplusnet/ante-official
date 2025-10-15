@@ -209,6 +209,21 @@
         :min="min"
       />
 
+      <!-- currency -->
+      <q-input
+        :readonly="isDisabled"
+        :required="required"
+        v-if="type == 'currency'"
+        outlined
+        class="q-mb-md text-body-medium"
+        @update:modelValue="handleCurrencyInput"
+        @blur="handleCurrencyBlur"
+        @focus="handleCurrencyFocus"
+        hide-bottom-space
+        v-model="displayValue"
+        dense
+      />
+
       <!-- date -->
       <q-input
         :readonly="isDisabled"
@@ -409,12 +424,21 @@ export default {
       type: Boolean,
       default: false,
     },
+    prefix: {
+      type: String,
+      default: '',
+    },
+    suffix: {
+      type: String,
+      default: '',
+    },
   },
   data() {
     return {
       date: null,
       fileInformation: '',
       textProp: this.modelValue,
+      displayValue: '',
       emitKey: null,
       isCheckboxTicked: this.enabledCheckbox,
       isPasswordVisible: false,
@@ -537,6 +561,70 @@ export default {
         }
       });
     },
+
+    // Currency formatting methods
+    formatCurrencyValue(value) {
+      if (value === null || value === undefined || value === '') {
+        return '';
+      }
+
+      // Convert to number
+      const numValue = typeof value === 'string' ? parseFloat(value) : value;
+
+      if (isNaN(numValue)) {
+        return '';
+      }
+
+      // Format with thousand separators, no forced decimals
+      return numValue.toLocaleString('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      });
+    },
+
+    parseCurrencyValue(value) {
+      if (!value) return 0;
+
+      // Remove all non-numeric characters except decimal point and minus sign
+      const cleaned = String(value).replace(/[^0-9.-]/g, '');
+      const parsed = parseFloat(cleaned);
+
+      return isNaN(parsed) ? 0 : parsed;
+    },
+
+    handleCurrencyInput(newValue) {
+      // Allow numbers and common symbols (users can type them but they won't be preserved)
+      // Filter out letters but allow numbers, commas, periods, and common currency symbols
+      const filtered = String(newValue).replace(/[a-zA-Z]/g, '');
+      this.displayValue = filtered;
+    },
+
+    handleCurrencyBlur() {
+      // Parse and format the value on blur
+      const numericValue = this.parseCurrencyValue(this.displayValue);
+
+      // Format the value (thousand separators only, no prefix/suffix)
+      this.displayValue = this.formatCurrencyValue(numericValue);
+
+      // Emit the numeric value
+      this.$emit('update:modelValue', numericValue);
+    },
+
+    handleCurrencyFocus() {
+      // When focused, show the raw numeric value for easier editing
+      if (this.displayValue) {
+        const numericValue = this.parseCurrencyValue(this.displayValue);
+        if (numericValue !== 0) {
+          this.displayValue = String(numericValue);
+        }
+      }
+    },
+
+    initializeCurrencyDisplay() {
+      if (this.type === 'currency' && this.modelValue !== null && this.modelValue !== undefined) {
+        this.displayValue = this.formatCurrencyValue(this.modelValue);
+      }
+    },
   },
   async mounted() {
     if (this.modelValue) {
@@ -557,6 +645,9 @@ export default {
       }
     }
 
+    // Initialize currency display
+    this.initializeCurrencyDisplay();
+
     this.watchChooseItem();
   },
   watch: {
@@ -570,6 +661,10 @@ export default {
       // Also update date property for date inputs
       if (this.type === 'date' && newValue) {
         this.date = newValue;
+      }
+      // Update display value for currency inputs
+      if (this.type === 'currency') {
+        this.displayValue = this.formatCurrencyValue(newValue);
       }
     },
     textProp(newValue) {

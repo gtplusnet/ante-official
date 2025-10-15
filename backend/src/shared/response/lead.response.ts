@@ -21,4 +21,5 @@ export interface LeadDataResponse extends ProjectDataResponse {
   leadSource?: string;
   leadType?: string | { key: string; label: string };
   clientEmailAddress?: string;
+  proposalStatus?: string;
 }

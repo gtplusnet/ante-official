@@ -622,6 +622,52 @@ export class LeadService {
     return this.formatLeadDealAsProject(updatedLead);
   }
 
+  async updateProposalStatus(params: { projectId: string; proposalStatus: string }) {
+    const leadId = parseInt(params.projectId, 10);
+    const lead = await this.prisma.leadDeal.findFirst({
+      where: {
+        id: leadId,
+        companyId: this.utilityService.companyId,
+      },
+    });
+
+    if (!lead) {
+      throw new NotFoundException('Lead not found');
+    }
+
+    // Update proposal status
+    const updatedLead = await this.prisma.leadDeal.update({
+      where: { id: leadId },
+      data: {
+        proposalStatus: params.proposalStatus as any, // ProposalStatus enum
+        updatedAt: new Date(),
+      },
+      include: {
+        dealType: true,
+        dealSource: true,
+        location: true,
+        relationshipOwner: true,
+        pointOfContact: {
+          include: {
+            company: true,
+          },
+        },
+        company: true,
+      },
+    });
+
+    await this.crmActivityService.createActivity({
+      activityType: CRMActivityType.UPDATE,
+      entityType: CRMEntityType.LEAD_DEAL,
+      entityId: updatedLead.id,
+      entityName: updatedLead.dealName,
+      description: `Updated proposal status to "${params.proposalStatus}" for lead "${updatedLead.dealName}"`,
+      performedById: this.utilityService.accountInformation.id,
+    });
+
+    return this.formatLeadDealAsProject(updatedLead);
+  }
+
   async convertLeadToProject(leadId: number) {
     const leadDeal = await this.prisma.leadDeal.findFirst({
       where: {
@@ -1141,6 +1187,7 @@ export class LeadService {
       leadSource: leadDeal.dealSourceId?.toString() || '', // Keep for backwards compatibility
       leadType: leadTypeData,
       clientEmailAddress: leadDeal.pointOfContact?.email || '',
+      proposalStatus: leadDeal.proposalStatus || undefined,
 
       // Default values for compatibility
       totalCollection: this.utilityService.formatCurrency(0),

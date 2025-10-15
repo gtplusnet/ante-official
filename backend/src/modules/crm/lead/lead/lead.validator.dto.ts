@@ -217,3 +217,13 @@ export class LeadMoveDto {
   @IsOptional()
   readonly boardKey: string;
 }
+
+export class UpdateProposalStatusDto {
+  @IsNotEmpty()
+  @IsString()
+  readonly projectId: string;
+
+  @IsNotEmpty()
+  @IsString()
+  readonly proposalStatus: string;
+}
