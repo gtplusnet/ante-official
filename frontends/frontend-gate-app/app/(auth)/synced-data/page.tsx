@@ -37,7 +37,7 @@ interface Guardian {
 }
 
 export default function SyncedDataPage() {
-  // Note: Using Supabase services for data access
+  // Note: Displays data synced from API and cached in IndexedDB
   const [activeTab, setActiveTab] = useState<'students' | 'guardians'>('students')
   const [searchTerm, setSearchTerm] = useState('')
   const [students, setStudents] = useState<Student[]>([])
@@ -51,7 +51,7 @@ export default function SyncedDataPage() {
       try {
         // Initialize DB first
         await db.init();
-        // Load data from Supabase
+        // Load data from IndexedDB (synced from API)
         await loadData();
       } catch (error) {
         console.error('Failed to initialize:', error);

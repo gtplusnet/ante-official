@@ -74,21 +74,21 @@ export class StorageManager {
     await dbManager.put('metadata', { key: 'syncMetadata', value: updated });
   }
 
-  async syncFromSupabase(): Promise<{ studentsSync: number; guardiansSync: number }> {
-    console.log('StorageManager: Starting sync from Supabase...');
-    
+  async syncFromAPI(): Promise<{ studentsSync: number; guardiansSync: number }> {
+    console.log('StorageManager: Starting sync from API...');
+
     try {
       // Import the sync service (dynamic import to avoid circular dependencies)
-      const { getSyncSupabaseService } = await import('../services/sync-supabase.service');
-      const syncService = getSyncSupabaseService();
+      const { getSyncAPIService } = await import('../services/sync-api.service');
+      const syncService = getSyncAPIService();
       await syncService.init();
-      
-      // Fetch data from Supabase with QR codes generated
+
+      // Fetch data from API with QR codes generated
       const { students, guardians } = await syncService.syncAll();
-      console.log(`StorageManager: Got ${students.length} students and ${guardians.length} guardians from Supabase`);
-      
+      console.log(`StorageManager: Got ${students.length} students and ${guardians.length} guardians from API`);
+
       // Map StudentData to Student interface with default values
-      const mappedStudents: Student[] = students.map(s => ({
+      const mappedStudents: Student[] = students.map((s: any) => ({
         id: s.id,
         qrCode: s.qrCode,
         studentNumber: s.studentNumber,
@@ -103,9 +103,9 @@ export class StorageManager {
         updatedAt: new Date().toISOString(), // Default to now
         profilePhotoUrl: s.profilePhotoId ? `/api/photos/${s.profilePhotoId}` : null
       }));
-      
+
       // Map GuardianData to Guardian interface
-      const mappedGuardians: Guardian[] = guardians.map(g => ({
+      const mappedGuardians: Guardian[] = guardians.map((g: any) => ({
         id: g.id,
         qrCode: g.qrCode,
         firstName: g.firstName,
@@ -118,11 +118,11 @@ export class StorageManager {
         updatedAt: new Date().toISOString(), // Default to now
         profilePhotoUrl: null // Default to null
       }));
-      
+
       // Save to IndexedDB
       await this.saveStudents(mappedStudents);
       await this.saveGuardians(mappedGuardians);
-      
+
       // Update sync metadata
       const now = new Date().toISOString();
       await this.updateSyncMetadata({
@@ -133,19 +133,19 @@ export class StorageManager {
         lastSyncStatus: 'success',
         lastSyncTime: now
       });
-      
+
       console.log('StorageManager: Sync completed successfully');
       return { studentsSync: students.length, guardiansSync: guardians.length };
-      
+
     } catch (error) {
       console.error('StorageManager: Sync failed:', error);
-      
+
       await this.updateSyncMetadata({
         lastSyncStatus: 'failed',
         lastSyncError: error instanceof Error ? error.message : 'Unknown error',
         lastSyncTime: new Date().toISOString()
       });
-      
+
       throw error;
     }
   }

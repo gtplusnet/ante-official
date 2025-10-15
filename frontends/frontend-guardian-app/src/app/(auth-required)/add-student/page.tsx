@@ -8,13 +8,10 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FiCamera, FiCheck, FiUserPlus, FiAlertCircle, FiLogOut } from 'react-icons/fi';
 import { useAuth } from '@/contexts/AuthContext';
-// studentsApi removed - using Supabase
-import { getStudentsSupabaseService } from '@/lib/services/students.service';
-import { getSupabaseService } from '@/lib/services/supabase.service';
+import { guardianPublicApi } from '@/lib/api/guardian-public-api';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import { QRScanner } from '@/components/ui/QRScanner';
 import { format } from 'date-fns';
-import { storeUserInfo, storeCompanyInfo } from '@/lib/utils/storage';
 
 // Relationship options - clear and simple from guardian's perspective
 const RELATIONSHIPS = [
@@ -55,38 +52,24 @@ export default function AddStudentPage() {
     try {
       setVerifyingStudent(true);
       setError('');
-      
+
       if (!user?.id) {
         setError('User not authenticated');
         return false;
       }
-      
-      const studentsService = getStudentsSupabaseService();
-      
-      // Get student profile
-      const student = await studentsService.getStudentProfile(studentId);
-      
-      if (!student) {
-        setError('Student not found or not active in your institution. Please check the QR code and try again.');
-        return false;
-      }
-      
-      // Check if student is already connected to this guardian
-      const existingStudents = await studentsService.getGuardianStudents(user.id);
-      const isAlreadyConnected = existingStudents.some(s => s.id === studentId);
-      
+
+      // Get current students to check if already connected
+      const students = await guardianPublicApi.getStudents();
+      const isAlreadyConnected = students.some(s => s.id === studentId);
+
       if (isAlreadyConnected) {
         setError('This student is already connected to your account.');
         return false;
       }
-      
-      // Check if student is active
-      if (!student.isActive) {
-        setError('This student account is inactive. Please contact your school administrator.');
-        return false;
-      }
-      
-      setStudentInfo(student);
+
+      // For now, assume student exists if we got this far
+      // The backend will validate when we try to add
+      setStudentInfo({ id: studentId });
       return true;
     } catch (error: any) {
       console.error('Student verification error:', error);
@@ -131,46 +114,25 @@ export default function AddStudentPage() {
     try {
       setIsConnecting(true);
       setError('');
-      
+
       if (!user?.id || !studentInfo?.id) {
         setError('Missing user or student information');
         return;
       }
-      
+
       console.log('Connecting student with relationship:', selectedRelationship);
-      
-      const supabaseService = getSupabaseService();
-      const client = await supabaseService.getClient();
-      
-      if (!client) {
-        setError('Database connection failed');
-        return;
-      }
-      
-      // Create StudentGuardian relationship record
-      const { error: insertError } = await (client as any)
-        .from('StudentGuardian')
-        .insert({
-          studentId: studentInfo.id,
-          guardianId: user.id,
-          relationship: selectedRelationship,
-          isPrimary: true, // First guardian connection is primary
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        });
-      
-      if (insertError) {
-        console.error('Failed to create guardian-student relationship:', insertError);
-        setError('Failed to connect student. Please try again.');
-        return;
-      }
-      
+
+      // Add student via Public API
+      await guardianPublicApi.addStudent({
+        studentId: studentInfo.id,
+        relationship: selectedRelationship,
+      });
+
       console.log('Student connected successfully!');
-      
+
       // Refresh auth context to update user's students list
       await refreshAuth();
-      
+
       // Small delay to ensure all state updates are complete
       setTimeout(() => {
         console.log('Navigating to dashboard...');
@@ -178,7 +140,7 @@ export default function AddStudentPage() {
       }, 100);
     } catch (error: any) {
       console.error('Connect student error:', error);
-      setError('Failed to connect student. Please try again.');
+      setError(error.message || 'Failed to connect student. Please try again.');
     } finally {
       setIsConnecting(false);
     }

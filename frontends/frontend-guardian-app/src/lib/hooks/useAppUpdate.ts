@@ -55,7 +55,8 @@ export function useAppUpdate() {
         }
       }
     } catch (error) {
-      console.error('Failed to check for updates:', error);
+      // Silently handle update check failures (network errors, API unavailable, etc.)
+      // This is expected in offline mode or when API is not available
       setState(prev => ({ ...prev, isChecking: false }));
     }
   }, []);

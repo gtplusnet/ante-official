@@ -60,6 +60,46 @@ module.exports = {
       error_file: './logs/website-multibook-error.log',
       out_file: './logs/website-multibook-out.log',
       time: true
+    },
+    {
+      name: 'ante-guardian-app',
+      cwd: './frontends/frontend-guardian-app',
+      script: 'npx',
+      args: 'next dev -p 9001',
+      env: {
+        PORT: 9001
+      },
+      watch: false, // Next.js dev handles its own file watching
+      ignore_watch: ['node_modules', '.next', 'out'],
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      max_restarts: 5,
+      restart_delay: 2000,
+      log_file: './logs/guardian-app.log',
+      error_file: './logs/guardian-app-error.log',
+      out_file: './logs/guardian-app-out.log',
+      time: true
+    },
+    {
+      name: 'ante-gate-app',
+      cwd: './frontends/frontend-gate-app',
+      script: 'npx',
+      args: 'next dev -p 9002',
+      env: {
+        PORT: 9002
+      },
+      watch: false, // Next.js dev handles its own file watching
+      ignore_watch: ['node_modules', '.next', 'out'],
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      max_restarts: 5,
+      restart_delay: 2000,
+      log_file: './logs/gate-app.log',
+      error_file: './logs/gate-app-error.log',
+      out_file: './logs/gate-app-out.log',
+      time: true
     }
   ]
 };

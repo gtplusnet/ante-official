@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '@common/prisma.service';
 import { UtilityService } from '@common/utility.service';
 import { TableHandlerService } from '@common/table.handler/table.handler.service';
@@ -8,12 +8,15 @@ import {
 } from './attendance.validator';
 import { IAttendanceTableRow } from './attendance.interface';
 import { format } from 'date-fns';
+import { SocketGateway } from '@modules/communication/socket/socket/socket.gateway';
 
 @Injectable()
 export class AttendanceService {
   @Inject() private prisma: PrismaService;
   @Inject() private utilityService: UtilityService;
   @Inject() private tableHandler: TableHandlerService;
+  @Inject(forwardRef(() => SocketGateway))
+  private socketGateway: SocketGateway;
 
   async getAttendanceTable(query: any, body: AttendanceTableDto) {
     this.tableHandler.initialize(query, body, 'attendance');
@@ -290,6 +293,26 @@ export class AttendanceService {
       },
     });
 
+    // Emit WebSocket event for real-time updates
+    if (this.socketGateway && this.socketGateway.server) {
+      this.socketGateway.emitAttendanceRecorded(data.companyId, {
+        id: attendance.id,
+        qrCode: attendance.qrCode,
+        personId: attendance.personId,
+        personName: attendance.personName,
+        personType: attendance.personType,
+        action: attendance.action,
+        timestamp: attendance.timestamp.toISOString(),
+        deviceId: attendance.deviceId,
+        profilePhoto: attendance.profilePhoto,
+        companyId: attendance.companyId,
+      });
+
+      // Also emit updated stats
+      const stats = await this.getAttendanceSummary();
+      this.socketGateway.emitStatsUpdate(data.companyId, stats);
+    }
+
     return {
       attendanceId: attendance.id,
       studentId: data.studentId,
@@ -356,6 +379,27 @@ export class AttendanceService {
         checkIn.timestamp,
         attendance.timestamp,
       );
+    }
+
+    // Emit WebSocket event for real-time updates
+    if (this.socketGateway && this.socketGateway.server) {
+      this.socketGateway.emitAttendanceRecorded(data.companyId, {
+        id: attendance.id,
+        qrCode: attendance.qrCode,
+        personId: attendance.personId,
+        personName: attendance.personName,
+        personType: attendance.personType,
+        action: attendance.action,
+        timestamp: attendance.timestamp.toISOString(),
+        deviceId: attendance.deviceId,
+        profilePhoto: attendance.profilePhoto,
+        companyId: attendance.companyId,
+        duration,
+      });
+
+      // Also emit updated stats
+      const stats = await this.getAttendanceSummary();
+      this.socketGateway.emitStatsUpdate(data.companyId, stats);
     }
 
     return {

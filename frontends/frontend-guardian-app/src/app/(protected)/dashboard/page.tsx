@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MobileLayout } from '@/components/layout/MobileLayout';
 import { Header } from '@/components/layout/Header';
 import { Navigation } from '@/components/layout/Navigation';
@@ -10,17 +10,30 @@ import { AttendanceLogDetailModal } from '@/components/features/AttendanceLogDet
 import { PushNotificationWidget } from '@/components/features/PushNotificationWidget';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { PullToRefresh } from '@/components/ui/PullToRefresh';
-import { StudentStatusDto, AttendanceLogDto } from '@/types/api.types';
 import { FiSun, FiAlertCircle } from 'react-icons/fi';
 import { useAuth } from '@/contexts/AuthContext';
-import { getStudentsSupabaseService, StudentAttendance } from '@/lib/services/students.service';
+import { guardianPublicApi, StudentAttendanceStatusDto, AttendanceLogDto } from '@/lib/api/guardian-public-api';
+import { usePolling } from '@/hooks/usePolling';
 import { format } from 'date-fns';
+
+// Transform API status to display format
+interface StudentStatus {
+  studentId: string;
+  studentName: string;
+  studentNumber: string;
+  currentStatus: 'in_school' | 'out_of_school' | 'no_attendance';
+  lastAction?: {
+    type: 'check-in' | 'check-out';
+    timestamp: string;
+    location?: string;
+  };
+}
 
 export default function DashboardPage() {
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
   const [showLogDetail, setShowLogDetail] = useState(false);
-  const [studentStatuses, setStudentStatuses] = useState<StudentStatusDto[]>([]);
+  const [studentStatuses, setStudentStatuses] = useState<StudentStatus[]>([]);
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceLogDto[]>([]);
   const [statusLoading, setStatusLoading] = useState(true);
   const [logsLoading, setLogsLoading] = useState(true);
@@ -28,9 +41,8 @@ export default function DashboardPage() {
   const [logsError, setLogsError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  
+
   const { user, loading: authLoading } = useAuth();
-  // Socket removed - using Supabase realtime
 
   // Convert user to Guardian format for Navigation
   const guardianForNav = user ? {
@@ -40,98 +52,89 @@ export default function DashboardPage() {
     photoUrl: undefined
   } : { id: '', name: '', email: '' };
 
-  // Fetch student statuses
-  const fetchStudentStatuses = async () => {
+  // Fetch student statuses from Public API
+  const fetchStudentStatuses = useCallback(async () => {
     try {
       setStatusError(null);
       if (!user?.id) return;
-      
-      const studentsService = getStudentsSupabaseService();
-      const students = await studentsService.getGuardianStudents(user.id);
-      
-      // Get current attendance status for each student
-      const statusPromises = students.map(async (student) => {
-        const todayAttendance = await studentsService.getStudentAttendanceToday(student.id);
-        
-        // Determine current status based on today's attendance
-        let currentStatus: StudentStatusDto['currentStatus'] = 'no_attendance';
-        let lastAction: StudentStatusDto['lastAction'] | undefined;
-        
-        if (todayAttendance.length > 0) {
-          // Get the most recent action today
-          const mostRecent = todayAttendance[0]; // Already sorted by timestamp desc
-          lastAction = {
-            type: mostRecent.action,
-            timestamp: mostRecent.timestamp,
-            location: mostRecent.location || undefined
-          };
-          
-          currentStatus = mostRecent.action === 'check_in' ? 'in_school' : 'out_of_school';
+
+      console.log('[Dashboard] Fetching attendance status from Public API');
+      const apiStatuses = await guardianPublicApi.getAttendanceStatus();
+
+      // Transform API response to internal format
+      const transformedStatuses: StudentStatus[] = apiStatuses.map((apiStatus) => {
+        let currentStatus: 'in_school' | 'out_of_school' | 'no_attendance' = 'no_attendance';
+        let lastAction: StudentStatus['lastAction'];
+
+        // Determine status based on last check-in/out
+        if (apiStatus.status === 'in-school') {
+          currentStatus = 'in_school';
+        } else if (apiStatus.status === 'out-of-school') {
+          currentStatus = 'out_of_school';
         }
-        
+
+        // Get last action from either lastCheckIn or lastCheckOut (whichever is more recent)
+        if (apiStatus.lastCheckIn || apiStatus.lastCheckOut) {
+          const lastCheckInTime = apiStatus.lastCheckIn ? new Date(apiStatus.lastCheckIn.timestamp).getTime() : 0;
+          const lastCheckOutTime = apiStatus.lastCheckOut ? new Date(apiStatus.lastCheckOut.timestamp).getTime() : 0;
+
+          if (lastCheckInTime > lastCheckOutTime && apiStatus.lastCheckIn) {
+            lastAction = {
+              type: 'check-in',
+              timestamp: apiStatus.lastCheckIn.timestamp,
+              location: apiStatus.lastCheckIn.gate,
+            };
+          } else if (apiStatus.lastCheckOut) {
+            lastAction = {
+              type: 'check-out',
+              timestamp: apiStatus.lastCheckOut.timestamp,
+              location: apiStatus.lastCheckOut.gate,
+            };
+          }
+        }
+
         return {
-          studentId: student.id,
-          studentName: `${student.firstName} ${student.lastName}`,
-          studentNumber: student.studentNumber,
+          studentId: apiStatus.studentId,
+          studentName: apiStatus.studentName,
+          studentNumber: apiStatus.studentCode,
           currentStatus,
-          lastAction
-        } as StudentStatusDto;
+          lastAction,
+        };
       });
-      
-      const statuses = await Promise.all(statusPromises);
-      setStudentStatuses(statuses);
+
+      setStudentStatuses(transformedStatuses);
       setLastUpdated(new Date());
+      console.log(`[Dashboard] Fetched ${transformedStatuses.length} student statuses`);
     } catch (error: any) {
-      console.error('Failed to fetch student statuses:', error);
+      console.error('[Dashboard] Failed to fetch student statuses:', error);
       setStatusError(error.message || 'Failed to load student status');
     } finally {
       setStatusLoading(false);
     }
-  };
+  }, [user?.id]);
 
-  // Fetch attendance logs
-  const fetchAttendanceLogs = async () => {
+  // Fetch attendance logs from Public API
+  const fetchAttendanceLogs = useCallback(async () => {
     try {
       setLogsError(null);
       if (!user?.id) return;
-      
-      const studentsService = getStudentsSupabaseService();
-      const students = await studentsService.getGuardianStudents(user.id);
-      
-      // Get attendance history for all students
-      const logsPromises = students.map(async (student) => {
-        const attendance = await studentsService.getStudentAttendanceHistory(student.id, 20);
-        
-        return attendance.map((record): AttendanceLogDto => ({
-          id: record.id,
-          studentId: record.studentId,
-          studentName: `${student.firstName} ${student.lastName}`,
-          action: record.action,
-          timestamp: record.timestamp,
-          formattedDate: format(new Date(record.timestamp), 'MMMM dd, yyyy'),
-          formattedTime: format(new Date(record.timestamp), 'h:mm a'),
-          location: record.location || undefined,
-          deviceId: record.deviceId || undefined
-        }));
+
+      console.log('[Dashboard] Fetching attendance logs from Public API');
+      const logs = await guardianPublicApi.getAttendanceLogs({
+        limit: 50,
+        days: 7,
       });
-      
-      const allLogs = (await Promise.all(logsPromises)).flat();
-      
-      // Sort by timestamp (newest first)
-      allLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      
-      // Limit to recent logs (last 50)
-      const recentLogs = allLogs.slice(0, 50);
-      
-      setAttendanceLogs(recentLogs);
+
+      setAttendanceLogs(logs);
       setLastUpdated(new Date());
+      console.log(`[Dashboard] Fetched ${logs.length} attendance logs`);
     } catch (error: any) {
-      console.error('Failed to fetch attendance logs:', error);
+      console.error('[Dashboard] Failed to fetch attendance logs:', error);
       setLogsError(error.message || 'Failed to load attendance logs');
     } finally {
       setLogsLoading(false);
     }
-  };
+  }, [user?.id]);
 
   // Refresh all data
   const refreshData = async () => {
@@ -146,46 +149,25 @@ export default function DashboardPage() {
       fetchStudentStatuses();
       fetchAttendanceLogs();
     }
-  }, [authLoading, user]);
+  }, [authLoading, user, fetchStudentStatuses, fetchAttendanceLogs]);
 
-  // Setup Supabase realtime subscriptions
-  useEffect(() => {
-    if (!authLoading && user) {
-      const studentsService = getStudentsSupabaseService();
-      const studentIds = user.students.map(s => s.id);
-      
-      if (studentIds.length === 0) return;
-      
-      // Subscribe to attendance updates for all user's students
-      let unsubscribe: (() => void) | undefined;
-      
-      const setupSubscription = async () => {
-        unsubscribe = await studentsService.subscribeToStudentAttendance(
-          studentIds,
-          (payload) => {
-            console.log('New attendance update:', payload);
-            // Refresh data when new attendance records are added
-            fetchStudentStatuses();
-            fetchAttendanceLogs();
-          }
-        );
-      };
-      
-      setupSubscription();
-      
-      return () => {
-        if (unsubscribe) {
-          unsubscribe();
-        }
-      };
+  // Setup polling for realtime updates (every 30 seconds)
+  usePolling(
+    async () => {
+      console.log('[Dashboard] Polling for updates...');
+      await Promise.all([fetchStudentStatuses(), fetchAttendanceLogs()]);
+    },
+    30000, // 30 seconds
+    {
+      enabled: !authLoading && !!user,
+      runOnMount: false, // Don't run on mount (already fetched above)
+      stopWhenHidden: true, // Stop polling when tab is hidden
     }
-  }, [authLoading, user]);
-
-  // Removed polling - using Supabase realtime subscriptions
+  );
 
   // Group logs by date
   const logsByDate = attendanceLogs.reduce((groups, log) => {
-    const date = log.formattedDate;
+    const date = format(new Date(log.timestamp), 'MMMM dd, yyyy');
     if (!groups[date]) {
       groups[date] = [];
     }
@@ -194,7 +176,7 @@ export default function DashboardPage() {
   }, {} as Record<string, AttendanceLogDto[]>);
 
   // Helper function to get status display
-  const getStatusDisplay = (status: StudentStatusDto['currentStatus']) => {
+  const getStatusDisplay = (status: StudentStatus['currentStatus']) => {
     switch (status) {
       case 'in_school':
         return 'In School';
@@ -213,13 +195,13 @@ export default function DashboardPage() {
 
   return (
     <MobileLayout className="bg-gray-50">
-      <Header 
-        title="Dashboard" 
+      <Header
+        title="Dashboard"
         onMenuClick={() => setIsNavOpen(true)}
       />
-      
-      <Navigation 
-        isOpen={isNavOpen} 
+
+      <Navigation
+        isOpen={isNavOpen}
         onClose={() => setIsNavOpen(false)}
         guardian={guardianForNav}
       />
@@ -234,11 +216,11 @@ export default function DashboardPage() {
                 <h2 className="text-2xl font-bold text-gray-900">
                   Good Day {user?.firstName || 'Guardian'}
                 </h2>
-                <p className="text-sm text-gray-500">{new Date().toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
+                <p className="text-sm text-gray-500">{new Date().toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
                 })}</p>
               </div>
             </div>
@@ -255,7 +237,7 @@ export default function DashboardPage() {
             </div>
             <h3 className="text-lg font-semibold">Attendance Tracker</h3>
           </div>
-          
+
           {statusLoading ? (
             <div className="space-y-3">
               {[1, 2].map((i) => (
@@ -286,8 +268,8 @@ export default function DashboardPage() {
           ) : (
             <div className="space-y-3">
               {studentStatuses.map((student) => (
-                <div 
-                  key={student.studentId} 
+                <div
+                  key={student.studentId}
                   className="flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
@@ -300,14 +282,14 @@ export default function DashboardPage() {
                       <p className="font-medium text-gray-900">{student.studentName}</p>
                       {student.lastAction && (
                         <p className="text-xs text-gray-500">
-                          Last {student.lastAction.type === 'check_in' ? 'in' : 'out'}: {format(new Date(student.lastAction.timestamp), 'h:mm a')}
+                          Last {student.lastAction.type === 'check-in' ? 'in' : 'out'}: {format(new Date(student.lastAction.timestamp), 'h:mm a')}
                         </p>
                       )}
                     </div>
                   </div>
                   <span className={`text-sm font-medium ${
-                    student.currentStatus === 'in_school' ? 'text-green-600' : 
-                    student.currentStatus === 'out_of_school' ? 'text-gray-500' : 
+                    student.currentStatus === 'in_school' ? 'text-green-600' :
+                    student.currentStatus === 'out_of_school' ? 'text-gray-500' :
                     'text-amber-600'
                   }`}>
                     {getStatusDisplay(student.currentStatus)}
@@ -326,7 +308,7 @@ export default function DashboardPage() {
               Updated: {format(lastUpdated, 'h:mm:ss a')}
             </p>
           </div>
-          
+
           {logsLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
@@ -363,7 +345,7 @@ export default function DashboardPage() {
                 <p className="text-sm text-gray-500 mb-3 text-center">{date}</p>
                 <div className="space-y-3">
                   {logs.map((log) => (
-                    <div 
+                    <div
                       key={log.id}
                       onClick={() => {
                         setSelectedLogId(log.id);
@@ -375,8 +357,8 @@ export default function DashboardPage() {
                         studentId: log.studentId,
                         studentName: log.studentName,
                         timestamp: new Date(log.timestamp),
-                        type: log.action === 'check_in' ? 'entry' : 'exit',
-                        date: log.formattedDate,
+                        type: log.type === 'check-in' ? 'entry' : 'exit',
+                        date: format(new Date(log.timestamp), 'MMMM dd, yyyy'),
                       }} />
                     </div>
                   ))}
