@@ -137,6 +137,74 @@ export class IcsExportService {
   }
 
   /**
+   * Export ALL calendar events (like Google Calendar export)
+   */
+  async exportAllEvents(categoryIds?: number[]): Promise<string> {
+    const companyId = this.utility.accountInformation.company?.id;
+
+    if (!companyId) {
+      throw new NotFoundException('Company not found');
+    }
+
+    // Fetch ALL active events for the company
+    const events = await this.prisma.calendarEvent.findMany({
+      where: {
+        companyId,
+        isActive: true,
+        ...(categoryIds && categoryIds.length > 0 && {
+          categoryId: { in: categoryIds },
+        }),
+      },
+      include: {
+        category: true,
+        creator: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        attendees: {
+          include: {
+            account: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
+          },
+        },
+        recurrence: true,
+        reminders: true,
+        attachments: true,
+      },
+      orderBy: { startDateTime: 'asc' },
+    });
+
+    if (events.length === 0) {
+      throw new NotFoundException('No events found in calendar');
+    }
+
+    // Create calendar
+    const calendar = ical({
+      name: 'ANTE ERP - Full Calendar Export',
+      prodId: '//ANTE ERP//Calendar Events//EN',
+      method: ICalCalendarMethod.PUBLISH,
+      timezone: 'Asia/Manila',
+    });
+
+    // Add all events to calendar
+    events.forEach(event => {
+      this.addEventToCalendar(calendar, event);
+    });
+
+    return calendar.toString();
+  }
+
+  /**
    * Export events within a date range
    */
   async exportDateRange(

@@ -270,7 +270,7 @@ const {
   loading: integratedLoading
 } = useCalendarIntegration();
 
-const { exportDateRange } = useCalendarExport();
+const { exportAllEvents } = useCalendarExport();
 
 // State
 const currentView = ref('dayGridMonth');
@@ -677,17 +677,15 @@ const openSettings = () => {
 
 const openExportDialog = async () => {
   try {
-    const startDate = getStartDateForView();
-    const endDate = getEndDateForView();
-
-    // Get selected category IDs
+    // Get selected category IDs (like Google Calendar, export ALL events or filtered by category)
     const categoryIds = selectedCategories.value.length > 0
       ? selectedCategories.value
       : undefined;
 
-    await exportDateRange(
-      { startDate, endDate, categoryIds },
-      `calendar-${date.formatDate(new Date(), 'YYYY-MM-DD')}.ics`
+    // Export ALL calendar events (Google Calendar style)
+    await exportAllEvents(
+      categoryIds,
+      `ante-calendar-${date.formatDate(new Date(), 'YYYY-MM-DD')}.ics`
     );
   } catch (error) {
     console.error('Error exporting calendar:', error);
