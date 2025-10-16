@@ -23,6 +23,8 @@ interface StudentStatus {
   studentNumber: string;
   currentStatus: "in_school" | "out_of_school" | "no_attendance";
   photoUrl?: string;
+  grade?: string;
+  section?: string;
   lastAction?: {
     type: "check-in" | "check-out";
     timestamp: string;
@@ -96,12 +98,17 @@ export default function DashboardPage() {
           }
         }
 
+        // Merge grade and section from user.students data
+        const studentInfo = user?.students?.find((s) => s.id === apiStatus.studentId);
+
         return {
           studentId: apiStatus.studentId,
           studentName: apiStatus.studentName,
           studentNumber: apiStatus.studentCode,
           currentStatus,
           photoUrl: apiStatus.photoUrl,
+          grade: studentInfo?.grade,
+          section: studentInfo?.section,
           lastAction,
         };
       });
@@ -263,11 +270,7 @@ export default function DashboardPage() {
                   <div key={student.studentId} className="flex flex-col items-start justify-start">
                     <div className="flex items-center gap-3">
                       {student.photoUrl ? (
-                        <img
-                          src={student.photoUrl}
-                          alt={student.studentName}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
+                        <img src={student.photoUrl} alt={student.studentName} className="w-10 h-10 rounded-full object-cover" />
                       ) : (
                         <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
                           <span className="text-gray-600 text-sm font-medium">
@@ -281,6 +284,12 @@ export default function DashboardPage() {
                       )}
                       <div>
                         <p className="font-medium text-gray-900">{student.studentName}</p>
+                        {student.grade && (
+                          <p className="text-xs text-gray-500">
+                            {student.grade}
+                            {student.section ? ` - ${student.section}` : ""}
+                          </p>
+                        )}
                         {student.lastAction && (
                           <p className="text-xs text-gray-500">
                             Last {student.lastAction.type === "check-in" ? "in" : "out"}: {format(new Date(student.lastAction.timestamp), "h:mm a")}

@@ -128,16 +128,47 @@ export interface NotificationDto {
   iconType?: string;
 }
 
+export interface GradeLevelInfoDto {
+  id: number;
+  code: string;
+  name: string;
+  educationLevel: string;
+}
+
+export interface SectionInfoDto {
+  id: string;
+  name: string;
+  gradeLevelId: number;
+  gradeLevel: GradeLevelInfoDto | null;
+  adviserName: string;
+  schoolYear: string;
+  capacity?: number;
+}
+
+export interface FileInfoDto {
+  id: string;
+  url: string;
+  name: string;
+  size?: number;
+  type?: string;
+}
+
 export interface StudentInfoDto {
   id: string;
+  studentNumber: string;
   firstName: string;
   lastName: string;
   middleName?: string;
-  studentCode: string;
-  section?: string;
-  gradeLevel?: string;
+  dateOfBirth: string;
+  gender: string;
+  section?: SectionInfoDto;
+  lrn?: string;
+  profilePhoto?: FileInfoDto;
+  dateRegistered: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
   relationship?: string;
-  photoUrl?: string;
   isPrimary?: boolean;
 }
 

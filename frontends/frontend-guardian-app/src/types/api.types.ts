@@ -23,7 +23,7 @@ export interface GuardianAuthInfo {
   address?: string;
   occupation?: string;
   lastLogin?: Date;
-  students: StudentBasicInfo[];
+  students: StudentFullInfo[];
 }
 
 export interface StudentBasicInfo {
@@ -36,6 +36,64 @@ export interface StudentBasicInfo {
   section?: string;
   relationship: string;
   isPrimary: boolean;
+  photoUrl?: string;
+}
+
+// Full student information matching backend StudentFullInfoDto
+export interface GradeLevelInfo {
+  id: number;
+  code: string;
+  name: string;
+  educationLevel: string;
+}
+
+export interface SectionInfo {
+  id: string;
+  name: string;
+  gradeLevelId: number;
+  gradeLevel: GradeLevelInfo | null;
+  adviserName: string;
+  schoolYear: string;
+  capacity?: number;
+}
+
+export interface FileInfo {
+  id: string;
+  url: string;
+  name: string;
+  size?: number;
+  type?: string;
+}
+
+export interface GuardianInfo {
+  id: string;
+  name: string;
+  email: string;
+  contactNumber: string;
+  relationship: string;
+}
+
+export interface StudentFullInfo {
+  id: string;
+  studentNumber: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  dateOfBirth: string;
+  gender: string;
+  section?: SectionInfo;
+  lrn?: string;
+  profilePhoto?: FileInfo;
+  dateRegistered: string;
+  isActive: boolean;
+  guardian?: GuardianInfo;
+  temporaryGuardianName?: string;
+  temporaryGuardianAddress?: string;
+  temporaryGuardianContactNumber?: string;
+  createdAt: string;
+  updatedAt: string;
+  relationship?: string;
+  isPrimary?: boolean;
 }
 
 export interface CompanyInfo {

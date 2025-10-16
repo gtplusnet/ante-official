@@ -1,4 +1,4 @@
-import { guardianPublicApi, GuardianLoginRequest } from './guardian-public-api';
+import { guardianPublicApi, GuardianLoginRequest, StudentInfoDto } from './guardian-public-api';
 import { storeTokens, storeUserInfo, storeCompanyInfo, clearStoredTokens } from '@/lib/utils/storage';
 
 export interface LoginRequest {
@@ -31,17 +31,7 @@ export interface GuardianAuthResponse {
     lastName: string;
     middleName?: string;
     contactNumber: string;
-    students: Array<{
-      id: string;
-      studentNumber: string;
-      firstName: string;
-      lastName: string;
-      middleName?: string;
-      grade?: string;
-      section?: string;
-      relationship: string;
-      isPrimary: boolean;
-    }>;
+    students: StudentInfoDto[];
   };
   tokens: {
     accessToken: string;
@@ -79,17 +69,7 @@ class AuthApi {
           lastName: response.guardian.lastName,
           middleName: '',
           contactNumber: response.guardian.phoneNumber || '',
-          students: response.students.map(s => ({
-            id: s.id,
-            studentNumber: s.studentCode,
-            firstName: s.firstName,
-            lastName: s.lastName,
-            middleName: s.middleName,
-            grade: s.gradeLevel,
-            section: s.section,
-            relationship: s.relationship || 'Guardian',
-            isPrimary: s.isPrimary || false,
-          })),
+          students: response.students, // Pass through the full StudentInfoDto objects
         },
         tokens: {
           accessToken: response.token,
@@ -144,17 +124,7 @@ class AuthApi {
           lastName: response.guardian.lastName,
           middleName: '',
           contactNumber: response.guardian.phoneNumber || '',
-          students: response.students.map(s => ({
-            id: s.id,
-            studentNumber: s.studentCode,
-            firstName: s.firstName,
-            lastName: s.lastName,
-            middleName: s.middleName,
-            grade: s.gradeLevel,
-            section: s.section,
-            relationship: s.relationship || 'Guardian',
-            isPrimary: s.isPrimary || false,
-          })),
+          students: response.students, // Pass through the full StudentInfoDto objects
         },
         tokens: {
           accessToken: response.token,

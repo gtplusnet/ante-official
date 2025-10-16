@@ -45,7 +45,25 @@ export class SchoolGuardianPublicService {
       include: {
         students: {
           include: {
-            student: true,
+            student: {
+              include: {
+                section: {
+                  include: {
+                    gradeLevel: true,
+                  },
+                },
+                profilePhoto: true,
+                guardians: {
+                  include: {
+                    guardian: true,
+                  },
+                  where: {
+                    isPrimary: true,
+                  },
+                  take: 1,
+                },
+              },
+            },
           },
         },
       },
@@ -103,7 +121,7 @@ export class SchoolGuardianPublicService {
       data: updateData,
     });
 
-    // Format response
+    // Format response with full student data
     return {
       token,
       guardian: {
@@ -113,12 +131,56 @@ export class SchoolGuardianPublicService {
         email: guardian.email,
         phoneNumber: guardian.contactNumber,
       },
-      students: guardian.students.map((gs) => ({
-        id: gs.student.id,
-        firstName: gs.student.firstName,
-        lastName: gs.student.lastName,
-        studentCode: gs.student.studentNumber,
-      })),
+      students: guardian.students.map((gs) => {
+        const primaryGuardian = gs.student.guardians?.[0];
+        return {
+          id: gs.student.id,
+          studentNumber: gs.student.studentNumber,
+          firstName: gs.student.firstName,
+          lastName: gs.student.lastName,
+          middleName: gs.student.middleName,
+          dateOfBirth: gs.student.dateOfBirth?.toISOString() || '',
+          gender: gs.student.gender || '',
+          section: gs.student.section ? {
+            id: gs.student.section.id,
+            name: gs.student.section.name,
+            gradeLevelId: gs.student.section.gradeLevelId,
+            gradeLevel: gs.student.section.gradeLevel ? {
+              id: gs.student.section.gradeLevel.id,
+              code: gs.student.section.gradeLevel.code,
+              name: gs.student.section.gradeLevel.name,
+              educationLevel: gs.student.section.gradeLevel.educationLevel,
+            } : null,
+            adviserName: gs.student.section.adviserName || '',
+            schoolYear: gs.student.section.schoolYear || '',
+            capacity: gs.student.section.capacity,
+          } : undefined,
+          lrn: gs.student.lrn,
+          profilePhoto: gs.student.profilePhoto ? {
+            id: gs.student.profilePhoto.id.toString(),
+            url: gs.student.profilePhoto.url,
+            name: gs.student.profilePhoto.name,
+            size: gs.student.profilePhoto.size || undefined,
+            type: gs.student.profilePhoto.type || undefined,
+          } : undefined,
+          dateRegistered: gs.student.dateRegistered?.toISOString() || new Date().toISOString(),
+          isActive: gs.student.isActive,
+          guardian: primaryGuardian ? {
+            id: primaryGuardian.guardian.id,
+            name: `${primaryGuardian.guardian.firstName} ${primaryGuardian.guardian.lastName}`,
+            email: primaryGuardian.guardian.email,
+            contactNumber: primaryGuardian.guardian.contactNumber || '',
+            relationship: primaryGuardian.relationship || '',
+          } : undefined,
+          temporaryGuardianName: gs.student.temporaryGuardianName,
+          temporaryGuardianAddress: gs.student.temporaryGuardianAddress,
+          temporaryGuardianContactNumber: gs.student.temporaryGuardianContactNumber,
+          createdAt: gs.student.createdAt.toISOString(),
+          updatedAt: gs.student.updatedAt.toISOString(),
+          relationship: gs.relationship as RelationshipType,
+          isPrimary: gs.isPrimary,
+        };
+      }),
       permissions: [], // Can be expanded based on requirements
     };
   }
@@ -668,7 +730,21 @@ export class SchoolGuardianPublicService {
           include: {
             student: {
               include: {
-                section: true,
+                section: {
+                  include: {
+                    gradeLevel: true,
+                  },
+                },
+                profilePhoto: true,
+                guardians: {
+                  include: {
+                    guardian: true,
+                  },
+                  where: {
+                    isPrimary: true,
+                  },
+                  take: 1,
+                },
               },
             },
           },
@@ -690,14 +766,56 @@ export class SchoolGuardianPublicService {
       isActive: guardian.isActive,
       createdAt: guardian.createdAt.toISOString(),
       lastLogin: guardian.lastLogin?.toISOString(),
-      students: guardian.students.map((gs) => ({
-        id: gs.student.id,
-        firstName: gs.student.firstName,
-        lastName: gs.student.lastName,
-        studentCode: gs.student.studentNumber,
-        section: gs.student.section?.name,
-        relationship: gs.relationship as RelationshipType,
-      })),
+      students: guardian.students.map((gs) => {
+        const primaryGuardian = gs.student.guardians?.[0];
+        return {
+          id: gs.student.id,
+          studentNumber: gs.student.studentNumber,
+          firstName: gs.student.firstName,
+          lastName: gs.student.lastName,
+          middleName: gs.student.middleName,
+          dateOfBirth: gs.student.dateOfBirth?.toISOString() || '',
+          gender: gs.student.gender || '',
+          section: gs.student.section ? {
+            id: gs.student.section.id,
+            name: gs.student.section.name,
+            gradeLevelId: gs.student.section.gradeLevelId,
+            gradeLevel: gs.student.section.gradeLevel ? {
+              id: gs.student.section.gradeLevel.id,
+              code: gs.student.section.gradeLevel.code,
+              name: gs.student.section.gradeLevel.name,
+              educationLevel: gs.student.section.gradeLevel.educationLevel,
+            } : null,
+            adviserName: gs.student.section.adviserName || '',
+            schoolYear: gs.student.section.schoolYear || '',
+            capacity: gs.student.section.capacity,
+          } : undefined,
+          lrn: gs.student.lrn,
+          profilePhoto: gs.student.profilePhoto ? {
+            id: gs.student.profilePhoto.id.toString(),
+            url: gs.student.profilePhoto.url,
+            name: gs.student.profilePhoto.name,
+            size: gs.student.profilePhoto.size || undefined,
+            type: gs.student.profilePhoto.type || undefined,
+          } : undefined,
+          dateRegistered: gs.student.dateRegistered?.toISOString() || new Date().toISOString(),
+          isActive: gs.student.isActive,
+          guardian: primaryGuardian ? {
+            id: primaryGuardian.guardian.id,
+            name: `${primaryGuardian.guardian.firstName} ${primaryGuardian.guardian.lastName}`,
+            email: primaryGuardian.guardian.email,
+            contactNumber: primaryGuardian.guardian.contactNumber || '',
+            relationship: primaryGuardian.relationship || '',
+          } : undefined,
+          temporaryGuardianName: gs.student.temporaryGuardianName,
+          temporaryGuardianAddress: gs.student.temporaryGuardianAddress,
+          temporaryGuardianContactNumber: gs.student.temporaryGuardianContactNumber,
+          createdAt: gs.student.createdAt.toISOString(),
+          updatedAt: gs.student.updatedAt.toISOString(),
+          relationship: gs.relationship as RelationshipType,
+          isPrimary: gs.isPrimary,
+        };
+      }),
     };
   }
 
