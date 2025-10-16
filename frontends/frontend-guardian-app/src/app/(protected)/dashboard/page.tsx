@@ -22,6 +22,7 @@ interface StudentStatus {
   studentName: string;
   studentNumber: string;
   currentStatus: "in_school" | "out_of_school" | "no_attendance";
+  photoUrl?: string;
   lastAction?: {
     type: "check-in" | "check-out";
     timestamp: string;
@@ -100,6 +101,7 @@ export default function DashboardPage() {
           studentName: apiStatus.studentName,
           studentNumber: apiStatus.studentCode,
           currentStatus,
+          photoUrl: apiStatus.photoUrl,
           lastAction,
         };
       });
@@ -260,15 +262,23 @@ export default function DashboardPage() {
                 {studentStatuses.map((student) => (
                   <div key={student.studentId} className="flex flex-col items-start justify-start">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                        <span className="text-gray-600 text-sm font-medium">
-                          {student.studentName
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()}
-                        </span>
-                      </div>
+                      {student.photoUrl ? (
+                        <img
+                          src={student.photoUrl}
+                          alt={student.studentName}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                          <span className="text-gray-600 text-sm font-medium">
+                            {student.studentName
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()}
+                          </span>
+                        </div>
+                      )}
                       <div>
                         <p className="font-medium text-gray-900">{student.studentName}</p>
                         {student.lastAction && (
@@ -342,6 +352,7 @@ export default function DashboardPage() {
                             timestamp: new Date(log.timestamp),
                             type: log.type === "check-in" ? "entry" : "exit",
                             date: format(new Date(log.timestamp), "MMMM dd, yyyy"),
+                            photoUrl: log.photo,
                           }}
                         />
                       </div>

@@ -270,6 +270,7 @@ export class SchoolGuardianPublicService {
         student: {
           include: {
             section: true,
+            profilePhoto: true,
           },
         },
       },
@@ -283,6 +284,7 @@ export class SchoolGuardianPublicService {
       section: gs.student.section?.name,
       relationship: gs.relationship,
       addedAt: gs.createdAt,
+      photoUrl: gs.student.profilePhoto?.url,
     }));
   }
 
@@ -497,6 +499,7 @@ export class SchoolGuardianPublicService {
         studentName: `${student.firstName} ${student.lastName}`,
         studentCode: student.studentCode,
         status,
+        photoUrl: student.photoUrl,
         lastCheckIn: lastCheckIn
           ? {
               timestamp: lastCheckIn.timestamp.toISOString(),
