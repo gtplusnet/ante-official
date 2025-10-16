@@ -7,6 +7,7 @@ import { RoleDataResponse } from '@shared/response/role.response';
 import { api } from 'src/boot/axios';
 import { useProjectStore } from './project';
 import { useAssigneeStore } from './assignee';
+import { usePreferencesStore } from './preferences';
 import { getCurrentInstance } from 'vue';
 
 export const useAuthStore = defineStore('auth', {
@@ -40,12 +41,14 @@ export const useAuthStore = defineStore('auth', {
       // Clear IndexedDB cache for GSelect component
       await this.clearSelectCache();
 
-      // Clear global stores (project and assignee data)
+      // Clear global stores (project, assignee, and preferences data)
       try {
         const projectStore = useProjectStore();
         const assigneeStore = useAssigneeStore();
+        const preferencesStore = usePreferencesStore();
         projectStore.clearData();
         assigneeStore.clearData();
+        preferencesStore.clearPreferences();
       } catch (error) {
         console.error('Error clearing global stores:', error);
       }

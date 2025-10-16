@@ -35,7 +35,6 @@ const props = withDefaults(defineProps<Props>(), {
 // Emits
 const emit = defineEmits<{
   'event-click': [event: any];
-  'date-click': [date: Date, allDay: boolean];
   'event-drop': [info: any];
   'event-resize': [info: any];
   'date-select': [start: Date, end: Date, allDay: boolean];
@@ -120,7 +119,6 @@ const calendarOptions = computed<CalendarOptions>(() => ({
 
   // Event handlers
   eventClick: handleEventClick,
-  dateClick: handleDateClick,
   select: handleDateSelect,
   eventDrop: handleEventDrop,
   eventResize: handleEventResize,
@@ -185,10 +183,6 @@ const getContrastColor = (hexColor: string): string => {
 // Event handlers
 const handleEventClick = (clickInfo: EventClickArg) => {
   emit('event-click', clickInfo.event);
-};
-
-const handleDateClick = (dateClickInfo: any) => {
-  emit('date-click', dateClickInfo.date, dateClickInfo.allDay);
 };
 
 const handleDateSelect = (selectInfo: DateSelectArg) => {

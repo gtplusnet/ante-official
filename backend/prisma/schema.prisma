@@ -186,6 +186,7 @@ model Account {
   ownedCalendarCategories                CalendarCategory[]                 @relation("AccountCategories")
   uploadedEventAttachments               CalendarEventAttachment[]          @relation("EventAttachmentUploader")
   uploadedLeadAttachments                LeadAttachment[]                   @relation("LeadAttachmentUploader")
+  userPreferences                        UserPreferences?
 
   @@index([firstName])
   @@index([lastName])
@@ -4674,4 +4675,19 @@ model CalendarEventReminder {
   event CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@index([eventId])
+}
+
+// ===================================
+// User Preferences (Generic)
+// ===================================
+model UserPreferences {
+  id          String   @id @default(uuid())
+  accountId   String   @unique
+  preferences Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
 }

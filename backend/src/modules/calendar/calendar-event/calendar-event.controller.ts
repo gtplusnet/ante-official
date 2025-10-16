@@ -141,6 +141,51 @@ export class CalendarEventController {
   }
 
   // ICS Export endpoints
+  // IMPORTANT: Specific routes (export/all, export/range) must come BEFORE parameterized routes (export/:id)
+  @Get('export/all')
+  @Header('Content-Type', 'text/calendar; charset=utf-8')
+  @Header('Content-Disposition', 'attachment; filename="ante-calendar.ics"')
+  async exportAllEvents(
+    @Query('categoryIds') categoryIds: string,
+    @NestResponse() response: Response,
+  ) {
+    try {
+      const categoryIdsArray = categoryIds ? categoryIds.split(',').map(Number) : undefined;
+      const icsContent = await this.icsExportService.exportAllEvents(categoryIdsArray);
+      response.send(icsContent);
+    } catch (error) {
+      response.status(error.status || 500).json({
+        success: false,
+        message: error.message || 'Failed to export calendar',
+      });
+    }
+  }
+
+  @Get('export/range')
+  @Header('Content-Type', 'text/calendar; charset=utf-8')
+  @Header('Content-Disposition', 'attachment; filename="calendar-export.ics"')
+  async exportDateRange(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Query('categoryIds') categoryIds: string,
+    @NestResponse() response: Response,
+  ) {
+    try {
+      const categoryIdsArray = categoryIds ? categoryIds.split(',').map(Number) : undefined;
+      const icsContent = await this.icsExportService.exportDateRange(
+        new Date(startDate),
+        new Date(endDate),
+        categoryIdsArray,
+      );
+      response.send(icsContent);
+    } catch (error) {
+      response.status(error.status || 500).json({
+        success: false,
+        message: error.message || 'Failed to export date range',
+      });
+    }
+  }
+
   @Get('export/:id')
   @Header('Content-Type', 'text/calendar; charset=utf-8')
   @Header('Content-Disposition', 'attachment; filename="calendar-event.ics"')
@@ -173,31 +218,6 @@ export class CalendarEventController {
       response.status(error.status || 500).json({
         success: false,
         message: error.message || 'Failed to export events',
-      });
-    }
-  }
-
-  @Get('export/range')
-  @Header('Content-Type', 'text/calendar; charset=utf-8')
-  @Header('Content-Disposition', 'attachment; filename="calendar-export.ics"')
-  async exportDateRange(
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
-    @Query('categoryIds') categoryIds: string,
-    @NestResponse() response: Response,
-  ) {
-    try {
-      const categoryIdsArray = categoryIds ? categoryIds.split(',').map(Number) : undefined;
-      const icsContent = await this.icsExportService.exportDateRange(
-        new Date(startDate),
-        new Date(endDate),
-        categoryIdsArray,
-      );
-      response.send(icsContent);
-    } catch (error) {
-      response.status(error.status || 500).json({
-        success: false,
-        message: error.message || 'Failed to export date range',
       });
     }
   }

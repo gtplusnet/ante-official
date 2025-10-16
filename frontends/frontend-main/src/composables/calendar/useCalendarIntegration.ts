@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue';
 import { api } from 'src/boot/axios';
 import { useQuasar } from 'quasar';
+import { usePreferencesStore } from 'src/stores/preferences';
 
 // Types
 export interface CalendarSource {
@@ -45,26 +46,28 @@ const loading = ref(false);
 const error = ref<any>(null);
 
 // Calendar sources (singleton state)
+// All sources start as unchecked (enabled: false)
+// User preferences from backend will be loaded and applied during splash screen
 const calendarSources = ref<CalendarSource[]>([
     // Personal sources
     {
       id: 'personal-tasks',
       name: 'Task (Task Deadline)',
-      enabled: true,
+      enabled: false,
       color: '#FF6B6B',
       category: 'personal',
     },
     {
       id: 'personal-shifts',
       name: 'Shifting Schedule',
-      enabled: true,
+      enabled: false,
       color: '#4ECDC4',
       category: 'personal',
     },
     {
       id: 'personal-leaves',
       name: 'Leaves',
-      enabled: true,
+      enabled: false,
       color: '#95E1D3',
       category: 'personal',
     },
@@ -73,28 +76,28 @@ const calendarSources = ref<CalendarSource[]>([
     {
       id: 'company-projects',
       name: 'Projects (Project Deadline)',
-      enabled: true,
+      enabled: false,
       color: '#F38181',
       category: 'company',
     },
     {
       id: 'company-leaves',
       name: 'Leaves (All Employee)',
-      enabled: true,
+      enabled: false,
       color: '#FFA07A',
       category: 'company',
     },
     {
       id: 'company-local-holidays',
       name: 'Local Holiday',
-      enabled: true,
+      enabled: false,
       color: '#FFD93D',
       category: 'company',
     },
     {
       id: 'company-national-holidays',
       name: 'National Holiday',
-      enabled: true,
+      enabled: false,
       color: '#6BCB77',
       category: 'company',
     },
@@ -199,7 +202,7 @@ const getIntegratedFullCalendarEvents = computed(() => {
   return transformToFullCalendar(getAllIntegratedEvents.value);
 });
 
-// Toggle source
+// Toggle source and save to preferences
 const toggleSource = (sourceId: string) => {
   const index = calendarSources.value.findIndex((s) => s.id === sourceId);
   if (index !== -1) {
@@ -212,10 +215,17 @@ const toggleSource = (sourceId: string) => {
       },
       ...calendarSources.value.slice(index + 1)
     ];
+
+    // Save to preferences store
+    const preferencesStore = usePreferencesStore();
+    const enabledSourceIds = calendarSources.value
+      .filter(s => s.enabled)
+      .map(s => s.id);
+    preferencesStore.updatePreference('calendar.enabledSources', enabledSourceIds);
   }
 };
 
-// Toggle all sources in a category
+// Toggle all sources in a category and save to preferences
 const toggleAllSources = (category: 'personal' | 'company', enabled: boolean) => {
   // Create a new array with updated sources to trigger Vue reactivity
   calendarSources.value = calendarSources.value.map((source) =>
@@ -223,6 +233,13 @@ const toggleAllSources = (category: 'personal' | 'company', enabled: boolean) =>
       ? { ...source, enabled }
       : source
   );
+
+  // Save to preferences store
+  const preferencesStore = usePreferencesStore();
+  const enabledSourceIds = calendarSources.value
+    .filter(s => s.enabled)
+    .map(s => s.id);
+  preferencesStore.updatePreference('calendar.enabledSources', enabledSourceIds);
 };
 
 // Check if all sources in a category are enabled
@@ -237,9 +254,39 @@ const clearCache = () => {
   companyEventsCache.clear();
 };
 
+// Flag to ensure initialization happens only once
+let sourcesInitialized = false;
+
+// Initialize calendar sources from preferences
+const initializeCalendarSources = () => {
+  // Prevent multiple initializations
+  if (sourcesInitialized) return;
+
+  const preferencesStore = usePreferencesStore();
+
+  // Only initialize if preferences are loaded
+  if (preferencesStore.isLoaded) {
+    const enabledSourceIds = preferencesStore.getPreference('calendar.enabledSources', []);
+
+    // Apply saved preferences to calendar sources
+    if (enabledSourceIds.length > 0) {
+      calendarSources.value = calendarSources.value.map((source) => ({
+        ...source,
+        enabled: enabledSourceIds.includes(source.id)
+      }));
+    }
+
+    // Mark as initialized
+    sourcesInitialized = true;
+  }
+};
+
 // Export composable function
 export function useCalendarIntegration() {
   const $q = useQuasar();
+
+  // Initialize calendar sources from preferences on first use
+  initializeCalendarSources();
 
   // Fetch personal calendar events
   const fetchPersonalEvents = async (startDate: Date, endDate: Date, useCache = true) => {

@@ -102,6 +102,46 @@ export function useCalendarExport() {
   };
 
   /**
+   * Export ALL calendar events to ICS file (like Google Calendar)
+   * @param categoryIds - Optional array of category IDs to filter
+   * @param filename - Optional filename (defaults to 'ante-calendar.ics')
+   */
+  const exportAllEvents = async (categoryIds?: number[], filename?: string) => {
+    try {
+      isExporting.value = true;
+
+      const params = new URLSearchParams();
+      if (categoryIds && categoryIds.length > 0) {
+        params.append('categoryIds', categoryIds.join(','));
+      }
+
+      const url = `/calendar/event/export/all${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await api.get(url, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], { type: 'text/calendar; charset=utf-8' });
+      downloadFile(blob, filename || 'ante-calendar.ics');
+
+      Notify.create({
+        type: 'positive',
+        message: 'Full calendar exported successfully',
+        position: 'top',
+      });
+    } catch (error: any) {
+      console.error('Error exporting calendar:', error);
+      Notify.create({
+        type: 'negative',
+        message: error.response?.data?.message || 'Failed to export calendar',
+        position: 'top',
+      });
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
    * Export events within a date range to ICS file
    * @param options - Export options (startDate, endDate, categoryIds)
    * @param filename - Optional filename (defaults to 'calendar-export.ics')
@@ -159,6 +199,7 @@ export function useCalendarExport() {
     isExporting,
     exportEvent,
     exportEvents,
+    exportAllEvents,
     exportDateRange,
   };
 }

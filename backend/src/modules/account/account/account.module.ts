@@ -9,9 +9,10 @@ import { RoleService } from '@modules/role/role/role.service';
 import { RoleGroupService } from '@modules/role/role-group/role-group.service';
 import { CompanyService } from '@modules/company/company/company.service';
 import { AuthModule } from '@modules/auth/auth/auth.module';
+import { UserPreferencesModule } from '../user-preferences/user-preferences.module';
 
 @Module({
-  imports: [ExcelExportModule, CommonModule, AuthModule],
+  imports: [ExcelExportModule, CommonModule, AuthModule, UserPreferencesModule],
   providers: [
     AccountService,
     DeveloperAccountService,
