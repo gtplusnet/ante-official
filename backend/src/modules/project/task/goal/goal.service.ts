@@ -25,15 +25,18 @@ export class GoalService {
 
   /**
    * Get all goals with filtering by status
+   * Goals are company-wide - all employees see all company goals
    */
   async getGoals(filter?: GoalFilterDto) {
-    const accountId = this.utilityService.accountInformation.id;
     const companyId = this.utilityService.accountInformation.company?.id;
 
+    if (!companyId) {
+      throw new BadRequestException('User must belong to a company to access goals');
+    }
+
     const where: Prisma.GoalWhereInput = {
-      createdById: accountId,
+      companyId,
       isDeleted: false,
-      ...(companyId && { companyId }),
     };
 
     // Filter by status if provided
@@ -106,10 +109,14 @@ export class GoalService {
 
   /**
    * Get a single goal by ID with linked tasks
+   * Goals are company-wide - any company member can access
    */
   async getGoalById(id: number) {
-    const accountId = this.utilityService.accountInformation.id;
     const companyId = this.utilityService.accountInformation.company?.id;
+
+    if (!companyId) {
+      throw new BadRequestException('User must belong to a company to access goals');
+    }
 
     const goal = await this.prisma.goal.findUnique({
       where: { id },
@@ -157,15 +164,13 @@ export class GoalService {
       },
     });
 
-    if (!goal) {
+    if (!goal || goal.isDeleted) {
       throw new NotFoundException('Goal not found');
     }
 
-    // Check access - must be creator or same company
-    if (goal.createdById !== accountId) {
-      if (!companyId || goal.companyId !== companyId) {
-        throw new NotFoundException('Goal not found');
-      }
+    // Check company access - must belong to same company
+    if (goal.companyId !== companyId) {
+      throw new NotFoundException('Goal not found');
     }
 
     // Calculate progress
@@ -465,10 +470,14 @@ export class GoalService {
 
   /**
    * Validate that user has access to the goal
+   * Goals are company-wide - any company member can access/modify
    */
   private async validateGoalAccess(goalId: number) {
-    const accountId = this.utilityService.accountInformation.id;
     const companyId = this.utilityService.accountInformation.company?.id;
+
+    if (!companyId) {
+      throw new BadRequestException('User must belong to a company to access goals');
+    }
 
     const goal = await this.prisma.goal.findUnique({
       where: { id: goalId },
@@ -478,11 +487,9 @@ export class GoalService {
       throw new NotFoundException('Goal not found');
     }
 
-    // Check access - must be creator or same company
-    if (goal.createdById !== accountId) {
-      if (!companyId || goal.companyId !== companyId) {
-        throw new NotFoundException('Goal not found');
-      }
+    // Check company access - must belong to same company
+    if (goal.companyId !== companyId) {
+      throw new NotFoundException('Goal not found');
     }
 
     return goal;

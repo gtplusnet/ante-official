@@ -356,6 +356,28 @@ export default defineComponent({
   }
 
   .tasks-list {
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 3px;
+
+      &:hover {
+        background: #a8a8a8;
+      }
+    }
+
     .task-item {
       display: flex;
       align-items: flex-start;
