@@ -21,6 +21,8 @@ import {
   GuardianTableResponse,
   ConnectedStudentInfo,
 } from '@shared/response';
+import * as bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class GuardianService {
@@ -115,8 +117,12 @@ export class GuardianService {
       throw new BadRequestException('Email already exists in the system');
     }
 
-    // Encrypt password
-    const passwordEncryption = await this.encryption.encrypt(data.password);
+    // Hash password using bcrypt (compatible with Guardian Public API)
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    // Generate encryption key (required by schema, though we're using bcrypt)
+    // This maintains backward compatibility with the legacy encryption system
+    const key = Buffer.from(uuidv4().replace(/-/g, ''), 'hex');
 
     const dateOfBirth = data.dateOfBirth ? new Date(data.dateOfBirth) : null;
 
@@ -128,8 +134,8 @@ export class GuardianService {
         middleName: data.middleName,
         dateOfBirth: dateOfBirth,
         email: data.email,
-        password: passwordEncryption.encrypted,
-        key: passwordEncryption.iv,
+        password: hashedPassword,
+        key: key,
         contactNumber: data.contactNumber,
         alternateNumber: data.alternateNumber,
         address: data.address,
@@ -346,13 +352,17 @@ export class GuardianService {
       throw new NotFoundException('Guardian not found');
     }
 
-    const passwordEncryption = await this.encryption.encrypt(data.newPassword);
+    // Hash password using bcrypt (compatible with Guardian Public API)
+    const hashedPassword = await bcrypt.hash(data.newPassword, 10);
+
+    // Generate new encryption key (required by schema, though we're using bcrypt)
+    const key = Buffer.from(uuidv4().replace(/-/g, ''), 'hex');
 
     await this.prisma.guardian.update({
       where: { id: data.guardianId },
       data: {
-        password: passwordEncryption.encrypted,
-        key: passwordEncryption.iv,
+        password: hashedPassword,
+        key: key,
       },
     });
   }
