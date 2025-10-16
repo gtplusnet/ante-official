@@ -270,6 +270,7 @@ export class SchoolGuardianPublicService {
         student: {
           include: {
             section: true,
+            profilePhoto: true,
           },
         },
       },
@@ -283,6 +284,7 @@ export class SchoolGuardianPublicService {
       section: gs.student.section?.name,
       relationship: gs.relationship,
       addedAt: gs.createdAt,
+      photoUrl: gs.student.profilePhoto?.url,
     }));
   }
 
@@ -480,8 +482,8 @@ export class SchoolGuardianPublicService {
         },
       });
 
-      const checkIns = attendance.filter((a) => a.action === 'IN');
-      const checkOuts = attendance.filter((a) => a.action === 'OUT');
+      const checkIns = attendance.filter((a) => a.action === 'check_in' || a.action === 'IN');
+      const checkOuts = attendance.filter((a) => a.action === 'check_out' || a.action === 'OUT');
       const lastCheckIn = checkIns[0];
       const lastCheckOut = checkOuts[0];
 
@@ -497,6 +499,7 @@ export class SchoolGuardianPublicService {
         studentName: `${student.firstName} ${student.lastName}`,
         studentCode: student.studentCode,
         status,
+        photoUrl: student.photoUrl,
         lastCheckIn: lastCheckIn
           ? {
               timestamp: lastCheckIn.timestamp.toISOString(),
@@ -554,9 +557,9 @@ export class SchoolGuardianPublicService {
       }
     }
 
-    // Type filter
+    // Type filter (support both old 'IN'/'OUT' and new 'check_in'/'check_out' formats)
     if (query.type && query.type !== 'all') {
-      where.action = query.type === 'check-in' ? 'IN' : 'OUT';
+      where.action = { in: query.type === 'check-in' ? ['check_in', 'IN'] : ['check_out', 'OUT'] };
     }
 
     const [logs, total] = await Promise.all([
@@ -576,7 +579,7 @@ export class SchoolGuardianPublicService {
         id: log.id,
         studentId: log.personId,
         studentName: log.personName,
-        type: log.action === 'IN' ? 'check-in' : 'check-out',
+        type: (log.action === 'check_in' || log.action === 'IN') ? 'check-in' : 'check-out',
         timestamp: log.timestamp.toISOString(),
         gate: {
           id: log.deviceId || '',
@@ -766,8 +769,8 @@ export class SchoolGuardianPublicService {
    */
   private calculateTotalTime(attendance: any[]): string {
     let totalMinutes = 0;
-    const checkIns = attendance.filter((a) => a.action === 'IN');
-    const checkOuts = attendance.filter((a) => a.action === 'OUT');
+    const checkIns = attendance.filter((a) => a.action === 'check_in' || a.action === 'IN');
+    const checkOuts = attendance.filter((a) => a.action === 'check_out' || a.action === 'OUT');
 
     checkIns.forEach((checkIn) => {
       const correspondingCheckOut = checkOuts.find(

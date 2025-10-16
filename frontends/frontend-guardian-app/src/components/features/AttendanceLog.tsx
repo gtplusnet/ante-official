@@ -9,6 +9,7 @@ interface AttendanceLogItemProps {
     timestamp: Date;
     type: 'entry' | 'exit';
     date?: string;
+    photoUrl?: string;
   };
 }
 
@@ -17,11 +18,23 @@ export const AttendanceLogItem: React.FC<AttendanceLogItemProps> = ({ log }) => 
     <div className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer hover:scale-[1.02] active:scale-[0.98] active:shadow-sm">
       <div className="flex items-start gap-3">
         {/* Student Photo */}
-        <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-          <span className="text-gray-600 text-sm font-medium">
-            SN
-          </span>
-        </div>
+        {log.photoUrl ? (
+          <img
+            src={log.photoUrl}
+            alt={log.studentName}
+            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+          />
+        ) : (
+          <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-gray-600 text-sm font-medium">
+              {log.studentName
+                .split(' ')
+                .map((n) => n[0])
+                .join('')
+                .toUpperCase()}
+            </span>
+          </div>
+        )}
 
         {/* Log Details */}
         <div className="flex-1">
