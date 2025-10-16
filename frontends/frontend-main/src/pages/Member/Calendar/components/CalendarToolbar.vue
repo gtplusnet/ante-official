@@ -91,6 +91,39 @@
         </q-list>
       </q-btn-dropdown>
 
+      <!-- Export/Import Menu -->
+      <q-btn-dropdown
+        flat
+        round
+        dense
+        icon="more_vert"
+        size="md"
+        class="q-ml-sm"
+      >
+        <q-tooltip>More options</q-tooltip>
+        <q-list dense>
+          <q-item clickable v-close-popup @click="$emit('export-calendar')">
+            <q-item-section avatar>
+              <q-icon name="download" size="sm" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>Export Calendar</q-item-label>
+              <q-item-label caption>Download as .ics file</q-item-label>
+            </q-item-section>
+          </q-item>
+
+          <q-item clickable v-close-popup @click="$emit('import-calendar')">
+            <q-item-section avatar>
+              <q-icon name="upload" size="sm" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>Import Calendar</q-item-label>
+              <q-item-label caption>Upload .ics file</q-item-label>
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-btn-dropdown>
+
       <!-- Settings -->
       <q-btn
         flat
@@ -138,6 +171,8 @@ const emit = defineEmits<{
   'open-settings': [];
   'create-event': [];
   'search': [query: string];
+  'export-calendar': [];
+  'import-calendar': [];
 }>();
 
 // Local state

@@ -147,7 +147,7 @@ export function useCalendarEvents() {
     return (yiq >= 128) ? '#000000' : '#FFFFFF';
   };
 
-  // Fetch events with date range
+  // Fetch events with date range (using backend expansion)
   const fetchEvents = async (startDate: Date, endDate: Date, categoryIds?: number[], useCache = true) => {
     const cacheKey = `${startDate.toISOString()}_${endDate.toISOString()}_${categoryIds?.join(',') || 'all'}`;
 
@@ -173,11 +173,9 @@ export function useCalendarEvents() {
         params.categoryIds = categoryIds;
       }
 
-      const response = await api.get('/calendar/event', { params });
-      const allEvents = response.data || [];
-
-      // Expand recurring events
-      const expandedEvents = await expandRecurringEvents(allEvents, startDate, endDate);
+      // Use expanded endpoint - backend handles recurrence expansion
+      const response = await api.get('/calendar/event/expanded/all', { params });
+      const expandedEvents = response.data || [];
 
       // Cache the results
       eventCache.set(cacheKey, {
@@ -357,13 +355,8 @@ export function useCalendarEvents() {
       const response = await api.put(`/calendar/event/${eventId}`, updates);
       const data = response.data;
 
-      // Update local events
-      const index = events.value.findIndex(e => e.id === eventId);
-      if (index !== -1) {
-        events.value[index] = { ...events.value[index], ...data };
-      }
-
-      // Clear cache
+      // Clear cache - let the page component refresh via loadEvents()
+      // This ensures correct handling of both regular events and recurring instances
       eventCache.clear();
 
       $q.notify({
@@ -398,13 +391,8 @@ export function useCalendarEvents() {
       });
       const data = response.data;
 
-      // Update local events
-      const index = events.value.findIndex(e => e.id === eventId);
-      if (index !== -1) {
-        events.value[index] = { ...events.value[index], ...data };
-      }
-
-      // Clear cache
+      // Clear cache - calendar will auto-refresh via FullCalendar's event handlers
+      // This ensures correct handling of both regular events and recurring instances
       eventCache.clear();
 
       return data;

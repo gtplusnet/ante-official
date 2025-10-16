@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:  # Allow manual triggering
 
+concurrency:
+  group: deploy-backend-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   detect-changes:
     runs-on: [self-hosted, staging]
@@ -307,6 +311,7 @@ jobs:
             type=sha,prefix={{branch}}-
 
       - name: Build and push Docker image
+        timeout-minutes: 30
         uses: docker/build-push-action@v5
         with:
           context: ./backend
@@ -314,8 +319,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/ante-backend-staging:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/ante-backend-staging:buildcache,mode=max
           target: production-alpine
 
       - name: Trigger DigitalOcean deployment
