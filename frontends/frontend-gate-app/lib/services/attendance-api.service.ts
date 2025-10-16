@@ -154,7 +154,12 @@ export class AttendanceAPIService {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to fetch today\'s attendance')
+        const errorText = await response.text()
+        console.error(`[AttendanceAPIService] API returned ${response.status}: ${errorText}`)
+
+        // Don't throw error, just return empty array
+        // This allows the app to continue functioning
+        return []
       }
 
       const result: APIResponse<any[]> = await response.json()

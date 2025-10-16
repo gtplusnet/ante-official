@@ -120,13 +120,68 @@ class AuthApi {
   }
 
   async register(data: RegisterRequest): Promise<GuardianAuthResponse> {
-    // TODO: Registration endpoint not yet implemented in Public API
-    // Registration should be done through school admin portal
-    throw {
-      code: 'NOT_IMPLEMENTED',
-      message: 'Guardian registration is handled by the school administration. Please contact your school to create an account.',
-      details: 'Public API does not expose guardian registration endpoint',
-    };
+    try {
+      // Use Guardian Public API for registration
+      const response = await guardianPublicApi.register({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        middleName: data.middleName,
+        dateOfBirth: data.dateOfBirth,
+        email: data.email,
+        password: data.password,
+        contactNumber: data.contactNumber,
+        alternateNumber: data.alternateNumber,
+        address: data.address,
+        occupation: data.occupation,
+      });
+
+      // Transform response to match expected format (same as login)
+      const authResponse: GuardianAuthResponse = {
+        guardian: {
+          id: response.guardian.id,
+          email: response.guardian.email,
+          firstName: response.guardian.firstName,
+          lastName: response.guardian.lastName,
+          middleName: '',
+          contactNumber: response.guardian.phoneNumber || '',
+          students: response.students.map(s => ({
+            id: s.id,
+            studentNumber: s.studentCode,
+            firstName: s.firstName,
+            lastName: s.lastName,
+            middleName: s.middleName,
+            grade: s.gradeLevel,
+            section: s.section,
+            relationship: s.relationship || 'Guardian',
+            isPrimary: s.isPrimary || false,
+          })),
+        },
+        tokens: {
+          accessToken: response.token,
+          refreshToken: response.token, // Public API uses single token
+          expiresIn: 900, // 15 minutes default
+        },
+        company: {
+          id: parseInt(process.env.NEXT_PUBLIC_COMPANY_ID || '1'),
+          name: 'School',
+        },
+      };
+
+      // Store tokens, user info, and company info
+      await storeTokens(authResponse.tokens);
+      await storeUserInfo(authResponse.guardian);
+      await storeCompanyInfo(authResponse.company);
+
+      console.log('[AuthApi] Registration successful via Public API');
+      return authResponse;
+    } catch (error: any) {
+      console.error('[AuthApi] Register error:', error);
+      throw {
+        code: error.code || 'REGISTER_ERROR',
+        message: error.message || 'Unable to register. Please try again later.',
+        details: error.details,
+      };
+    }
   }
 
   async logout(): Promise<void> {

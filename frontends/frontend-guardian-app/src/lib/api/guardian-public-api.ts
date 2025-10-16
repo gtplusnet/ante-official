@@ -15,6 +15,19 @@ export interface GuardianLoginRequest {
   platform?: 'ios' | 'android' | 'web';
 }
 
+export interface GuardianRegisterRequest {
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  dateOfBirth: string; // ISO 8601 format (YYYY-MM-DD)
+  email: string;
+  password: string;
+  contactNumber: string; // 10 digits starting with 9 (Philippine format)
+  alternateNumber?: string;
+  address?: string;
+  occupation?: string;
+}
+
 export interface AddStudentRequest {
   studentId?: string;
   studentCode?: string;
@@ -185,6 +198,31 @@ class GuardianPublicApi {
       throw {
         code: error.code || 'LOGIN_ERROR',
         message: error.message || 'Unable to login. Please try again.',
+        details: error.details,
+      };
+    }
+  }
+
+  /**
+   * Register new guardian
+   */
+  async register(data: GuardianRegisterRequest): Promise<GuardianLoginResponse> {
+    try {
+      const response = await apiClient.post<GuardianLoginResponse>(
+        `${this.basePath}/auth/register`,
+        data
+      );
+
+      if (response.success && response.data) {
+        return response.data;
+      }
+
+      throw new Error('Registration failed: No data returned');
+    } catch (error: any) {
+      console.error('[GuardianPublicApi] Register error:', error);
+      throw {
+        code: error.code || 'REGISTER_ERROR',
+        message: error.message || 'Unable to register. Please try again.',
         details: error.details,
       };
     }

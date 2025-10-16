@@ -58,7 +58,7 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-md">
-      <Card>
+      <Card className={`transition-opacity duration-200 ${isLoading ? 'opacity-75' : 'opacity-100'}`}>
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center">School Gatekeep</CardTitle>
           <CardDescription className="text-center">
@@ -66,7 +66,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-6 pb-6">
             <div className="space-y-2">
               <label htmlFor="license" className="text-sm font-medium text-gray-700">
                 License Key
@@ -89,9 +89,10 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || !licenseKey}
+              isLoading={isLoading}
+              disabled={!licenseKey}
             >
-              {isLoading ? 'Validating...' : 'Activate'}
+              {isLoading ? 'Validating license...' : 'Activate'}
             </Button>
           </CardFooter>
         </form>

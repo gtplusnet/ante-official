@@ -13,10 +13,13 @@ export interface LeadDataResponse extends ProjectDataResponse {
   locationId?: string;
   abc?: any; // CurrencyFormat
   mmr?: any; // CurrencyFormat
+  implementationFee?: any; // CurrencyFormat
   initialCosting?: any; // CurrencyFormat
   contactDetails?: string;
   relationshipOwnerId?: string;
+  dealSource?: { key: string; label: string };
   leadSource?: string;
   leadType?: string | { key: string; label: string };
   clientEmailAddress?: string;
+  proposalStatus?: string;
 }

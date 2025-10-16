@@ -32,6 +32,7 @@ export const APIRequests = {
   deleteAllLeads: (quasar: QVueGlobals, password: string) => apiRequest<unknown>(quasar, 'DELETE', '/lead', { password }),
   getLeadBoard: (quasar: QVueGlobals, filters?: any) => apiRequest<unknown>(quasar, 'PUT', '/lead/board', filters || {}, { isLead: 'true' }),
   moveLead: (quasar: QVueGlobals, projectId: string, boardKey: string) => apiRequest<unknown>(quasar, 'PATCH', '/lead/move', { projectId, boardKey }),
+  updateProposalStatus: (quasar: QVueGlobals, projectId: string, proposalStatus: string) => apiRequest<unknown>(quasar, 'PATCH', '/lead/update-proposal-status', { projectId, proposalStatus }),
   getRelationshipOwnersList: (quasar: QVueGlobals, params?: any) => apiRequest<unknown>(quasar, 'GET', '/lead-relationship-owner/list', {}, params || {}),
   convertLeadToProject: (quasar: QVueGlobals, id: string) => apiRequest<ProjectDataResponse>(quasar, 'POST', `/lead/${id}/convert`, {}),
   getDealTypesSummary: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'GET', '/lead/deal-types-summary', {}, {}),

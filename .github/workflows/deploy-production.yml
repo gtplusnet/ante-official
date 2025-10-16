@@ -251,7 +251,14 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Deploy Gate App to Vercel
+      - name: Prepare production environment
+        run: |
+          cd frontends/frontend-gate-app
+          cp .env.production .env
+          echo "✅ Copied .env.production to .env"
+          cat .env
+
+      - name: Deploy Gate App to Vercel (Production)
         run: |
           cd frontends/frontend-gate-app
           npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
@@ -274,7 +281,18 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Deploy Guardian App to Vercel
+      - name: Prepare production environment
+        run: |
+          cd frontends/frontend-guardian-app
+          if [ -f .env.production ]; then
+            cp .env.production .env
+            echo "✅ Copied .env.production to .env"
+            cat .env
+          else
+            echo "⚠️ No .env.production file found, using Vercel environment variables"
+          fi
+
+      - name: Deploy Guardian App to Vercel (Production)
         run: |
           cd frontends/frontend-guardian-app
           npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes

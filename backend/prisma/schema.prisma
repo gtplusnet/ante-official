@@ -3323,25 +3323,26 @@ model PointOfContact {
 }
 
 model LeadDeal {
-  id                      Int             @id @default(autoincrement())
-  dealName                String          @db.VarChar(255)
+  id                      Int              @id @default(autoincrement())
+  dealName                String           @db.VarChar(255)
   dealTypeId              Int?
-  approvedBudgetContract  Float           @default(0)
-  monthlyRecurringRevenue Float           @default(0)
-  implementationFee       Float           @default(0)
-  totalContract           Float           @default(0)
+  approvedBudgetContract  Float            @default(0)
+  monthlyRecurringRevenue Float            @default(0)
+  implementationFee       Float            @default(0)
+  totalContract           Float            @default(0)
   closeDate               DateTime
-  winProbability          Int             @default(50)
+  winProbability          Int              @default(50)
   locationId              String?
   dealSourceId            Int?
   relationshipOwnerId     String?
   pointOfContactId        Int?
-  status                  LeadDealStatus  @default(OPPORTUNITY)
+  status                  LeadDealStatus   @default(OPPORTUNITY)
+  proposalStatus          ProposalStatus?
   companyId               Int?
   createdById             String
-  createdAt               DateTime        @default(now())
-  updatedAt               DateTime        @updatedAt
-  isDeleted               Boolean         @default(false)
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+  isDeleted               Boolean          @default(false)
   company                 Company?        @relation(fields: [companyId], references: [id])
   createdBy               Account         @relation("LeadDealCreatedBy", fields: [createdById], references: [id])
   dealSource              DealSource?     @relation(fields: [dealSourceId], references: [id])
@@ -4415,6 +4416,14 @@ enum LeadDealStatus {
   IN_NEGOTIATION
   WIN
   LOST
+}
+
+enum ProposalStatus {
+  PREPARING
+  READY
+  SENT
+  FOR_REVISION
+  FINALIZED
 }
 
 enum CRMActivityType {

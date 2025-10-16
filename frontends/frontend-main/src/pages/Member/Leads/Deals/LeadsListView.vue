@@ -20,8 +20,18 @@
             <td>{{ formatWord(lead.personInCharge.firstName) }} {{ formatWord(lead.personInCharge.lastName) }}</td>
             <td class="text-grey text-label-medium">{{ lead.budget.formatCurrency }}</td>
             <td>
-              <div class="stage-badge text-label-medium text-grey" :class="getStageClass(lead.leadBoardStage)">
-                {{ formatLeadStage(lead.leadBoardStage) }}
+              <div class="column q-gutter-xs">
+                <div class="stage-badge text-label-medium text-grey" :class="getStageClass(lead.leadBoardStage)">
+                  {{ formatLeadStage(lead.leadBoardStage) }}
+                </div>
+                <!-- Proposal Status Badge (only show when in Proposal stage) -->
+                <span
+                  v-if="lead.leadBoardStage === 'proposal'"
+                  class="proposal-status text-label-small"
+                  :class="getProposalStatusClass(lead.proposalStatus)"
+                >
+                  {{ getProposalStatusLabel(lead.proposalStatus) }}
+                </span>
               </div>
             </td>
             <td class="text-grey text-label-medium">{{ calculateDaysInStage(lead.updatedAt) }}</td>
@@ -59,6 +69,7 @@
       :leadViewId="leadViewId"
       @close="handleCloseDialog"
       @stageChanged="handleStageChanged"
+      @proposalStatusChanged="handleProposalStatusChanged"
     />
   </div>
 </template>
@@ -163,6 +174,34 @@ export default defineComponent({
       }
     };
 
+    const getProposalStatusClass = (status?: string): string => {
+      if (!status) return 'proposal-status-preparing'; // Default: Preparing
+
+      const classMap: Record<string, string> = {
+        PREPARING: 'proposal-status-preparing',
+        READY: 'proposal-status-ready',
+        SENT: 'proposal-status-sent',
+        FOR_REVISION: 'proposal-status-for-revision',
+        FINALIZED: 'proposal-status-finalized',
+      };
+
+      return classMap[status] || 'proposal-status-preparing';
+    };
+
+    const getProposalStatusLabel = (status?: string): string => {
+      if (!status) return 'Preparing';
+
+      const labelMap: Record<string, string> = {
+        PREPARING: 'Preparing',
+        READY: 'Ready',
+        SENT: 'Sent',
+        FOR_REVISION: 'For Revision',
+        FINALIZED: 'Finalized',
+      };
+
+      return labelMap[status] || 'Preparing';
+    };
+
     const handleCloseDialog = () => {
       isViewLeadDialogOpen.value = false;
       leadViewId.value = 0;
@@ -171,6 +210,17 @@ export default defineComponent({
     const handleStageChanged = () => {
       // Refresh the list view to reflect the stage change
       fetchData();
+    };
+
+    const handleProposalStatusChanged = (event: {
+      leadId: number;
+      newProposalStatus: string;
+    }): void => {
+      // Find the lead in the list and update its proposal status
+      const lead = leadList.value.find((l) => l.id === event.leadId);
+      if (lead) {
+        lead.proposalStatus = event.newProposalStatus;
+      }
     };
 
     // Methods
@@ -271,10 +321,13 @@ export default defineComponent({
       formatLeadStage,
       getStageClass,
       calculateDaysInStage,
+      getProposalStatusClass,
+      getProposalStatusLabel,
 
       // Methods
       handleCloseDialog,
       handleStageChanged,
+      handleProposalStatusChanged,
       fetchData,
       addLead,
       editLead,

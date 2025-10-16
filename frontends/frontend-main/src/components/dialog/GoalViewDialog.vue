@@ -42,10 +42,16 @@
                   </div>
                 </div>
 
-                <div v-if="goalDetails.deadline" class="stat-card">
-                  <q-icon name="o_schedule" size="24px" color="primary" />
+                <div class="stat-card" :class="{ 'overdue': isGoalOverdue }">
+                  <q-icon
+                    name="o_schedule"
+                    size="24px"
+                    :color="isGoalOverdue ? 'negative' : 'primary'"
+                  />
                   <div class="stat-content">
-                    <div class="stat-value">{{ goalDetails.deadline.formatted }}</div>
+                    <div class="stat-value" :class="{ 'text-negative text-weight-bold': isGoalOverdue }">
+                      {{ goalDetails.deadline ? goalDetails.deadline.dateFull : 'No due date' }}
+                    </div>
                     <div class="stat-label">Deadline</div>
                   </div>
                 </div>
@@ -164,7 +170,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, PropType } from 'vue';
+import { defineComponent, ref, computed, PropType } from 'vue';
 import { defineAsyncComponent } from 'vue';
 import { QDialog } from 'quasar';
 import GButton from 'src/components/shared/buttons/GButton.vue';
@@ -193,6 +199,19 @@ export default defineComponent({
     const dialogRef = ref<InstanceType<typeof QDialog>>();
     const loading = ref(false);
     const goalDetails = ref<GoalData | null>(null);
+
+    // Helper function to check if goal is overdue
+    const isGoalOverdue = computed(() => {
+      if (!goalDetails.value) return false;
+      if (goalDetails.value.status !== 'PENDING') return false;
+      if (!goalDetails.value.deadline || !goalDetails.value.deadline.raw) return false;
+
+      const deadlineDate = new Date(goalDetails.value.deadline.raw);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      return deadlineDate < today;
+    });
 
     const loadGoalDetails = async () => {
       if (!props.goal) return;
@@ -249,6 +268,7 @@ export default defineComponent({
       dialogRef,
       loading,
       goalDetails,
+      isGoalOverdue,
       loadGoalDetails,
       emitEdit,
       emitLinkTasks,
@@ -290,6 +310,11 @@ export default defineComponent({
       padding: 16px;
       background: #f5f5f5;
       border-radius: 8px;
+
+      &.overdue {
+        background-color: #ffebee;
+        border: 1px solid #ffcdd2;
+      }
 
       .stat-content {
         .stat-value {

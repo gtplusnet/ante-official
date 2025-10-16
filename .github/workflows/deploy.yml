@@ -203,10 +203,17 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Deploy Gate App to Vercel (Preview/Staging)
+      - name: Prepare staging environment
         run: |
           cd frontends/frontend-gate-app
-          npx vercel --token=${{ secrets.VERCEL_TOKEN }} --yes
+          cp .env.staging .env
+          echo "✅ Copied .env.staging to .env"
+          cat .env
+
+      - name: Deploy Gate App to Vercel (Staging Environment)
+        run: |
+          cd frontends/frontend-gate-app
+          npx vercel --token=${{ secrets.VERCEL_TOKEN }} --target=staging --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_GATE_APP }}
@@ -226,10 +233,21 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Deploy Guardian App to Vercel (Preview/Staging)
+      - name: Prepare staging environment
         run: |
           cd frontends/frontend-guardian-app
-          npx vercel --token=${{ secrets.VERCEL_TOKEN }} --yes
+          if [ -f .env.staging ]; then
+            cp .env.staging .env
+            echo "✅ Copied .env.staging to .env"
+            cat .env
+          else
+            echo "⚠️ No .env.staging file found, using Vercel environment variables"
+          fi
+
+      - name: Deploy Guardian App to Vercel (Staging Environment)
+        run: |
+          cd frontends/frontend-guardian-app
+          npx vercel --token=${{ secrets.VERCEL_TOKEN }} --target=staging --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_GUARDIAN_APP }}

@@ -71,16 +71,21 @@ export default function SettingsPage() {
     }
     
     // Load database counts
+    // Note: attendance store was removed in DB v6, only students/guardians remain
     Promise.all([
-      dbManager.count('attendance'),
       dbManager.count('students'),
       dbManager.count('guardians')
-    ]).then(([attendanceCount, studentCount, guardianCount]) => {
-      setAttendanceCount(attendanceCount)
+    ]).then(([studentCount, guardianCount]) => {
       setStudentCount(studentCount)
       setGuardianCount(guardianCount)
+      // Attendance count set to 0 as the store no longer exists
+      setAttendanceCount(0)
     }).catch(err => {
       console.error('Failed to get counts:', err)
+      // Set default values on error
+      setStudentCount(0)
+      setGuardianCount(0)
+      setAttendanceCount(0)
     })
   }, [])
 
@@ -192,7 +197,7 @@ export default function SettingsPage() {
             <CardTitle>General Settings</CardTitle>
             <CardDescription>Configure basic application settings</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-6 pb-6">
             <div>
               <label htmlFor="schoolName" className="block text-sm font-medium text-gray-700">
                 School Name
@@ -232,7 +237,7 @@ export default function SettingsPage() {
             <CardTitle>Scanner Settings</CardTitle>
             <CardDescription>Configure QR code scanner preferences</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-6 pb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Camera Preference
@@ -275,7 +280,7 @@ export default function SettingsPage() {
             <CardTitle>Data Management</CardTitle>
             <CardDescription>Manage local data and sync status</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-6 pb-6">
             {/* Sync Status */}
             <div className="rounded-lg bg-gray-50 p-4">
               <h4 className="mb-3 font-medium">Sync Status</h4>
@@ -351,7 +356,7 @@ export default function SettingsPage() {
             <CardTitle>Account</CardTitle>
             <CardDescription>Manage your license and account</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-6 pb-6">
             <div className="rounded-lg bg-gray-50 p-4 space-y-3">
               <div>
                 <p className="text-sm font-medium">License Key</p>

@@ -14,8 +14,27 @@ export interface StudentData {
   firstName: string
   lastName: string
   middleName?: string | null
-  profilePhotoId?: number | null
+  dateOfBirth?: Date | null
+  gender?: string | null
+  lrn?: string | null
   isActive: boolean
+  section?: {
+    id: string
+    name: string
+    gradeLevelId: number
+    gradeLevel: {
+      id: number
+      code: string
+      name: string
+      educationLevel: string
+    } | null
+    adviserName?: string | null
+    schoolYear?: string | null
+    capacity?: number | null
+  } | null
+  profilePhotoUrl?: string | null
+  createdAt?: Date
+  updatedAt?: Date
   companyId: number
 }
 
@@ -100,14 +119,20 @@ export class SyncAPIService {
 
       // Transform API response to match StudentData interface
       const studentsWithQR: StudentData[] = result.data.map((student: any) => ({
-        id: student.studentId, // API returns studentId, map to id
-        qrCode: `student:${student.studentId}`,
-        studentNumber: student.studentId,
+        id: student.id, // UUID from database
+        qrCode: `student:${student.id}`, // QR code uses UUID (matches scanned QR codes)
+        studentNumber: student.studentNumber, // Actual student number (e.g., "2024001")
         firstName: student.firstName,
         lastName: student.lastName,
-        middleName: null,
-        profilePhotoId: null,
-        isActive: true,
+        middleName: student.middleName || null,
+        dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth) : null,
+        gender: student.gender || null,
+        lrn: student.lrn || null,
+        isActive: student.isActive,
+        section: student.section || null,
+        profilePhotoUrl: student.profilePhotoUrl || null,
+        createdAt: student.createdAt ? new Date(student.createdAt) : undefined,
+        updatedAt: student.updatedAt ? new Date(student.updatedAt) : undefined,
         companyId: parseInt(localStorage.getItem('companyId') || '0')
       }))
 

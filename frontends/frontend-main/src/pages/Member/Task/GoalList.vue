@@ -111,9 +111,15 @@
                 <q-icon name="o_task_alt" size="18px" />
                 <span>{{ goal.completedTasks || 0 }} of {{ goal.totalTasks || 0 }}</span>
               </div>
-              <div v-if="goal.deadline" class="stat-item">
-                <q-icon name="o_schedule" size="18px" />
-                <span>{{ goal.deadline.formatted }}</span>
+              <div class="stat-item" :class="{ 'overdue': isGoalOverdue(goal) }">
+                <q-icon
+                  name="o_schedule"
+                  size="18px"
+                  :color="isGoalOverdue(goal) ? 'negative' : undefined"
+                />
+                <span :class="{ 'text-negative text-weight-bold': isGoalOverdue(goal) }">
+                  {{ goal.deadline ? goal.deadline.dateFull : 'No due date' }}
+                </span>
               </div>
             </div>
 
@@ -201,9 +207,9 @@
                 <q-icon name="o_task_alt" size="18px" />
                 <span>{{ goal.completedTasks || 0 }} of {{ goal.totalTasks || 0 }}</span>
               </div>
-              <div v-if="goal.deadline" class="stat-item">
+              <div class="stat-item">
                 <q-icon name="o_schedule" size="18px" />
-                <span>{{ goal.deadline.formatted }}</span>
+                <span>{{ goal.deadline ? goal.deadline.dateFull : 'No due date' }}</span>
               </div>
             </div>
 
@@ -297,6 +303,18 @@ export default defineComponent({
       const status = activeTab.value === 'pending' ? 'PENDING' : 'COMPLETED';
       return goals.value.filter(g => g.status === status);
     });
+
+    // Helper function to check if goal is overdue
+    const isGoalOverdue = (goal: GoalData): boolean => {
+      if (goal.status !== 'PENDING') return false;
+      if (!goal.deadline || !goal.deadline.raw) return false;
+
+      const deadlineDate = new Date(goal.deadline.raw);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      return deadlineDate < today;
+    };
 
     // Actions
     const openCreateDialog = () => {
@@ -413,6 +431,9 @@ export default defineComponent({
       showLinkTasksDialog,
       selectedGoal,
 
+      // Helpers
+      isGoalOverdue,
+
       // Actions
       openCreateDialog,
       openGoalMenu,
@@ -522,6 +543,13 @@ export default defineComponent({
         display: flex;
         align-items: center;
         gap: 4px;
+
+        &.overdue {
+          background-color: #ffebee;
+          padding: 4px 8px;
+          border-radius: 4px;
+          border: 1px solid #ffcdd2;
+        }
       }
     }
 
