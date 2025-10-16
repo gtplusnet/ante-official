@@ -4524,10 +4524,15 @@ model CalendarEvent {
   @@index([companyId])
 }
 
-// Recurrence Rules Table (Google Calendar style)
+// Recurrence Rules Table (Google Calendar style - RFC 5545 RRULE)
 model CalendarEventRecurrence {
   id             String    @id @default(uuid())
   eventId        String    @unique
+
+  // SOURCE OF TRUTH: RFC 5545 RRULE string
+  rrule          String? // e.g., "RRULE:FREQ=WEEKLY;BYDAY=MO,WE,FR;COUNT=10"
+
+  // UI HELPER FIELDS: Parsed from RRULE for easy display/editing
   recurrenceType String // daily, weekly, monthly, yearly, custom
   frequency      Int       @default(1) // every X days/weeks/months
   interval       String? // MO,TU,WE,TH,FR,SA,SU
@@ -4536,7 +4541,12 @@ model CalendarEventRecurrence {
   byMonth        Int[] // [1, 6, 12] for Jan, Jun, Dec
   count          Int? // number of occurrences
   until          DateTime? // end date
-  exceptions     String[] // dates to skip (ISO format)
+
+  // EXCEPTIONS & ADDITIONS
+  exdate         String[] @default([]) // Exception dates (ISO format) - dates to exclude
+  rdate          String[] @default([]) // Additional dates (ISO format) - extra occurrences
+  exceptions     String[] // DEPRECATED: Use exdate instead (kept for backward compatibility)
+
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 

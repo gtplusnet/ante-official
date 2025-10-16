@@ -44,7 +44,15 @@ export class RecurrenceDto {
 
   @IsArray()
   @IsOptional()
-  exceptions?: string[];
+  exdate?: string[]; // Exception dates (RFC 5545)
+
+  @IsArray()
+  @IsOptional()
+  rdate?: string[]; // Additional dates (RFC 5545)
+
+  @IsArray()
+  @IsOptional()
+  exceptions?: string[]; // DEPRECATED: Use exdate instead
 }
 
 // Reminder DTO
