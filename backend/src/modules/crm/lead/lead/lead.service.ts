@@ -12,6 +12,9 @@ import {
   CRMActivityType,
   CRMEntityType,
 } from '@prisma/client';
+import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
+import { MulterFile } from '../../../../types/multer';
 import { PrismaService } from '@common/prisma.service';
 import { UtilityService } from '@common/utility.service';
 import { TableQueryDTO, TableBodyDTO } from '@common/table.dto/table.dto';
@@ -42,6 +45,22 @@ export class LeadService {
   @Inject() private locationService: LocationService;
   @Inject() private companyService: CompanyService;
   @Inject() private crmActivityService: CRMActivityService;
+
+  private readonly s3Client: S3Client;
+  private readonly bucketName: string;
+
+  constructor() {
+    this.s3Client = new S3Client({
+      endpoint: process.env.DO_SPACES_ENDPOINT,
+      region: 'sgp1',
+      credentials: {
+        accessKeyId: process.env.DO_SPACES_KEY,
+        secretAccessKey: process.env.DO_SPACES_SECRET,
+      },
+      forcePathStyle: true,
+    });
+    this.bucketName = process.env.DO_SPACES_BUCKET;
+  }
 
   async createLead(params: LeadCreateDto) {
     const loggedInAccount: AccountDataResponse =
@@ -1552,5 +1571,151 @@ export class LeadService {
 
     // Remove order field from final result
     return result.map(({ stage, days, color }) => ({ stage, days, color }));
+  }
+
+  // Lead Attachment Methods
+  async uploadAttachment(leadId: number, file: MulterFile) {
+    // Verify lead exists and belongs to company
+    const lead = await this.prisma.leadDeal.findFirst({
+      where: {
+        id: leadId,
+        companyId: this.utilityService.companyId,
+      },
+    });
+
+    if (!lead) {
+      throw new NotFoundException('Lead not found');
+    }
+
+    if (!file) {
+      throw new BadRequestException('No file provided');
+    }
+
+    const serverName = process.env.SERVER_NAME;
+    const fileKey = `${serverName}/lead-attachments/${leadId}/${Date.now()}-${file.originalname}`;
+
+    // Upload to S3
+    const uploadParams = {
+      Bucket: this.bucketName,
+      Key: fileKey,
+      Body: file.buffer,
+      ACL: 'public-read' as const,
+      ContentType: file.mimetype,
+    };
+
+    const upload = new Upload({
+      client: this.s3Client,
+      params: uploadParams,
+    });
+
+    const response = await upload.done();
+
+    // Save to database
+    const attachment = await this.prisma.leadAttachment.create({
+      data: {
+        leadId: leadId,
+        fileName: file.originalname,
+        fileUrl: response.Location,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+        uploadedBy: this.utilityService.accountInformation.id,
+      },
+      include: {
+        uploader: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return attachment;
+  }
+
+  async getAttachments(leadId: number) {
+    // Verify lead exists and belongs to company
+    const lead = await this.prisma.leadDeal.findFirst({
+      where: {
+        id: leadId,
+        companyId: this.utilityService.companyId,
+      },
+    });
+
+    if (!lead) {
+      throw new NotFoundException('Lead not found');
+    }
+
+    const attachments = await this.prisma.leadAttachment.findMany({
+      where: {
+        leadId: leadId,
+      },
+      include: {
+        uploader: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        uploadedAt: 'desc',
+      },
+    });
+
+    return attachments;
+  }
+
+  async deleteAttachment(attachmentId: number) {
+    const attachment = await this.prisma.leadAttachment.findFirst({
+      where: {
+        id: attachmentId,
+      },
+      include: {
+        lead: {
+          select: {
+            companyId: true,
+          },
+        },
+      },
+    });
+
+    if (!attachment) {
+      throw new NotFoundException('Attachment not found');
+    }
+
+    // Verify attachment belongs to lead in user's company
+    if (attachment.lead.companyId !== this.utilityService.companyId) {
+      throw new NotFoundException('Attachment not found');
+    }
+
+    // Delete from S3
+    if (attachment.fileUrl) {
+      try {
+        const urlParts = attachment.fileUrl.split('/');
+        const key = urlParts.slice(3).join('/');
+
+        await this.s3Client.send(
+          new DeleteObjectCommand({
+            Bucket: this.bucketName,
+            Key: key,
+          }),
+        );
+      } catch (error) {
+        console.error('Error deleting file from S3:', error);
+        // Continue with database deletion even if S3 deletion fails
+      }
+    }
+
+    // Delete from database
+    await this.prisma.leadAttachment.delete({
+      where: { id: attachmentId },
+    });
+
+    return { success: true, message: 'Attachment deleted successfully' };
   }
 }

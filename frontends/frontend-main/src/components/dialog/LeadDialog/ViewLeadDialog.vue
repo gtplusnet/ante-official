@@ -1,68 +1,29 @@
 <template>
-  <q-dialog
-    ref="dialog"
-    :model-value="modelValue"
-    @before-show="fetchData"
-    @hide="onHide"
-  >
+  <q-dialog ref="dialog" :model-value="modelValue" @before-show="fetchData" @hide="onHide">
     <q-card class="view-lead-card">
       <q-card-section class="q-pa-lg">
         <div class="row items-center justify-between q-pb-xs">
           <span class="text-dark text-title-large-f-[18px]">{{
             leadInformation.name
-          }}</span>
+            }}</span>
           <div class="row q-gutter-x-md">
-            <q-btn
-              class="edit-btn"
-              dense
-              rounded
-              unelevated
-              icon="edit"
-              @click="openEditDialog"
-            />
-            <q-btn
-              class="close-btn"
-              dense
-              rounded
-              unelevated
-              icon="close"
-              @click="onHide"
-            />
+            <q-btn class="edit-btn" dense rounded unelevated icon="edit" @click="openEditDialog" />
+            <q-btn class="close-btn" dense rounded unelevated icon="close" @click="onHide" />
           </div>
         </div>
 
         <div class="row items-center q-gutter-x-sm q-mb-md">
           <!-- Current Stage Badge - Dynamic and Changeable -->
-          <q-badge
-            class="StageBadge cursor-pointer"
-            text-color="white"
-            :style="{ backgroundColor: currentStageColor }"
-          >
+          <q-badge class="StageBadge cursor-pointer" text-color="white" :style="{ backgroundColor: currentStageColor }">
             {{ currentStageDisplay }}
-            <q-icon
-              name="keyboard_arrow_down"
-              class="q-ml-xs stage-arrow"
-              :class="{ 'rotate-arrow': isStageMenuOpen }"
-            />
-            <q-menu
-              auto-close
-              @before-show="isStageMenuOpen = true"
-              @before-hide="isStageMenuOpen = false"
-            >
+            <q-icon name="keyboard_arrow_down" class="q-ml-xs stage-arrow"
+              :class="{ 'rotate-arrow': isStageMenuOpen }" />
+            <q-menu auto-close @before-show="isStageMenuOpen = true" @before-hide="isStageMenuOpen = false">
               <q-list style="min-width: 200px">
-                <q-item
-                  v-for="stage in stageOptions"
-                  :key="stage.key"
-                  clickable
-                  @click="handleStageChange(stage.key)"
-                  :active="leadInformation.leadBoardStage === stage.key"
-                >
+                <q-item v-for="stage in stageOptions" :key="stage.key" clickable @click="handleStageChange(stage.key)"
+                  :active="leadInformation.leadBoardStage === stage.key">
                   <q-item-section avatar>
-                    <q-icon
-                      name="fiber_manual_record"
-                      :style="{ color: stage.color }"
-                      size="12px"
-                    />
+                    <q-icon name="fiber_manual_record" :style="{ color: stage.color }" size="12px" />
                   </q-item-section>
                   <q-item-section>{{ stage.label }}</q-item-section>
                 </q-item>
@@ -71,37 +32,18 @@
           </q-badge>
 
           <!-- Proposal Status Badge - Dynamic -->
-          <q-badge
-            v-if="showProposalBadge"
-            class="ProposalBadge cursor-pointer"
-            text-color="white"
-            :style="{ backgroundColor: currentProposalColor }"
-          >
+          <q-badge v-if="showProposalBadge" class="ProposalBadge cursor-pointer" text-color="white"
+            :style="{ backgroundColor: currentProposalColor }">
             {{ currentProposalDisplay }}
-            <q-icon
-              name="keyboard_arrow_down"
-              class="q-ml-xs stage-arrow"
-              :class="{ 'rotate-arrow': isProposalMenuOpen }"
-            />
-            <q-menu
-              auto-close
-              @before-show="isProposalMenuOpen = true"
-              @before-hide="isProposalMenuOpen = false"
-            >
+            <q-icon name="keyboard_arrow_down" class="q-ml-xs stage-arrow"
+              :class="{ 'rotate-arrow': isProposalMenuOpen }" />
+            <q-menu auto-close @before-show="isProposalMenuOpen = true" @before-hide="isProposalMenuOpen = false">
               <q-list style="min-width: 200px">
-                <q-item
-                  v-for="status in proposalStatusOptions"
-                  :key="status.key"
-                  clickable
+                <q-item v-for="status in proposalStatusOptions" :key="status.key" clickable
                   @click="handleProposalStatusChange(status.key)"
-                  :active="leadInformation.proposalStatus === status.key"
-                >
+                  :active="leadInformation.proposalStatus === status.key">
                   <q-item-section avatar>
-                    <q-icon
-                      name="fiber_manual_record"
-                      :style="{ color: status.color }"
-                      size="12px"
-                    />
+                    <q-icon name="fiber_manual_record" :style="{ color: status.color }" size="12px" />
                   </q-item-section>
                   <q-item-section>{{ status.label }}</q-item-section>
                 </q-item>
@@ -120,68 +62,44 @@
             <div class="details-container q-pr-sm">
               <div class="detail-three-card-container q-pb-lg">
                 <!-- Total Contract -->
-                <div
-                  class="detail-three-card column items-center justify-center"
-                >
+                <div class="detail-three-card column items-center justify-center">
                   <div class="icon-div q-pa-sm">
-                    <q-icon
-                      name="o_payments"
-                      :style="{ color: 'var(--q-secondary)' }"
-                      size="18px"
-                    />
+                    <q-icon name="o_payments" :style="{ color: 'var(--q-secondary)' }" size="18px" />
                   </div>
                   <span class="title">{{
                     leadInformation.initialCosting?.formatCurrency || "₱0.00"
-                  }}</span>
+                    }}</span>
                   <span class="subtitle">Total Contract</span>
                 </div>
                 <!-- Win Probability -->
-                <div
-                  class="detail-three-card column items-center justify-center"
-                >
+                <div class="detail-three-card column items-center justify-center">
                   <div class="icon-div q-pa-sm">
-                    <q-icon
-                      name="o_beenhere"
-                      :style="{ color: 'var(--q-secondary)' }"
-                      size="18px"
-                    />
+                    <q-icon name="o_beenhere" :style="{ color: 'var(--q-secondary)' }" size="18px" />
                   </div>
                   <span class="title">{{
                     leadInformation.winProbability?.label || "0%"
-                  }}</span>
+                    }}</span>
                   <span class="subtitle">Win Probability</span>
                 </div>
                 <!-- Company -->
-                <div
-                  class="detail-three-card column items-center justify-center"
-                >
+                <div class="detail-three-card column items-center justify-center">
                   <div class="icon-div q-pa-sm">
-                    <q-icon
-                      name="business"
-                      :style="{ color: 'var(--q-secondary)' }"
-                      size="18px"
-                    />
+                    <q-icon name="business" :style="{ color: 'var(--q-secondary)' }" size="18px" />
                   </div>
                   <span class="title">{{
                     leadInformation.client?.company?.name || "No Company"
-                  }}</span>
+                    }}</span>
                   <span class="subtitle">Company</span>
                 </div>
                 <!-- Relationship Owner -->
-                <div
-                  class="detail-three-card column items-center justify-center"
-                >
+                <div class="detail-three-card column items-center justify-center">
                   <div class="icon-div q-pa-sm">
-                    <q-icon
-                      name="o_account_circle"
-                      :style="{ color: 'var(--q-secondary)' }"
-                      size="18px"
-                    />
+                    <q-icon name="o_account_circle" :style="{ color: 'var(--q-secondary)' }" size="18px" />
                   </div>
                   <span class="title">{{
                     formatWord(leadInformation.personInCharge?.firstName) +
-                      " " +
-                      formatWord(leadInformation.personInCharge?.lastName) ||
+                    " " +
+                    formatWord(leadInformation.personInCharge?.lastName) ||
                     "No Relationship Owner"
                   }}</span>
                   <span class="subtitle">Relationship Owner</span>
@@ -194,11 +112,7 @@
               </div>
               <div class="details-card q-pa-md q-mt-sm q-mb-lg">
                 <div class="row">
-                  <q-icon
-                    name="card_travel"
-                    size="16px"
-                    :style="{ color: 'var(--q-text-light-grey)' }"
-                  />
+                  <q-icon name="card_travel" size="16px" :style="{ color: 'var(--q-text-light-grey)' }" />
                   <div class="column q-ml-sm">
                     <span class="subtitle">Deal Type:</span>
                     <span class="details-value">{{
@@ -210,11 +124,7 @@
                 </div>
 
                 <div v-if="leadInformation.abc?.raw !== 0" class="row">
-                  <q-icon
-                    name="my_location"
-                    size="16px"
-                    :style="{ color: 'var(--q-text-light-grey)' }"
-                  />
+                  <q-icon name="my_location" size="16px" :style="{ color: 'var(--q-text-light-grey)' }" />
                   <div class="column q-ml-sm">
                     <span class="subtitle">Approved Budget Contract (ABC):</span>
                     <span class="details-value">{{ leadInformation.abc?.formatCurrency || "₱0.00" }}</span>
@@ -222,99 +132,67 @@
                 </div>
 
                 <div class="row">
-                  <q-icon
-                    name="today"
-                    size="16px"
-                    :style="{ color: 'var(--q-text-light-grey)' }"
-                  />
+                  <q-icon name="today" size="16px" :style="{ color: 'var(--q-text-light-grey)' }" />
                   <div class="column q-ml-sm">
-                    <span class="subtitle"
-                      >Monthly Recurring Revenue (MRR):</span
-                    >
+                    <span class="subtitle">Monthly Recurring Revenue (MRR):</span>
                     <span class="details-value">{{
                       leadInformation.mmr?.formatCurrency || "₱0.00"
-                    }}</span>
+                      }}</span>
                   </div>
                 </div>
 
                 <div class="row">
-                  <q-icon
-                    name="o_flag"
-                    size="16px"
-                    :style="{ color: 'var(--q-text-light-grey)' }"
-                  />
+                  <q-icon name="o_flag" size="16px" :style="{ color: 'var(--q-text-light-grey)' }" />
                   <div class="column q-ml-sm">
                     <span class="subtitle">Implementation Fee:</span>
                     <span class="details-value">{{
                       leadInformation.implementationFee?.formatCurrency ||
                       "₱0.00"
-                    }}</span>
+                      }}</span>
                   </div>
                 </div>
 
                 <div class="row">
-                  <q-icon
-                    name="o_group"
-                    size="16px"
-                    :style="{ color: 'var(--q-text-light-grey)' }"
-                  />
+                  <q-icon name="o_group" size="16px" :style="{ color: 'var(--q-text-light-grey)' }" />
                   <div class="column q-ml-sm">
                     <span class="subtitle">Point of Contact:</span>
                     <span class="details-value">{{
                       leadInformation.client?.name
-                    }}</span>
+                      }}</span>
                   </div>
                 </div>
 
                 <div class="row">
-                  <q-icon
-                    name="o_topic"
-                    size="16px"
-                    :style="{ color: 'var(--q-text-light-grey)' }"
-                  />
+                  <q-icon name="o_topic" size="16px" :style="{ color: 'var(--q-text-light-grey)' }" />
                   <div class="column q-ml-sm">
                     <span class="subtitle">Deal Source:</span>
                     <span class="details-value">{{
                       leadInformation.dealSource?.label || "N/A"
-                    }}</span>
+                      }}</span>
                   </div>
                 </div>
 
                 <div class="row justify-between q-gutter-x-md">
-                  <div
-                    class="col row items-center q-pa-sm"
-                    style="background-color: #f6f8fb; border-radius: 8px"
-                  >
+                  <div class="col row items-center q-pa-sm" style="background-color: #f6f8fb; border-radius: 8px">
                     <div class="column q-ml-sm">
                       <span class="subtitle">Close Date:</span>
                       <div class="row items-center">
-                        <q-icon
-                          name="event"
-                          size="18px"
-                          :style="{ color: 'var(--q-text-light-grey)' }"
-                        />
+                        <q-icon name="event" size="18px" :style="{ color: 'var(--q-text-light-grey)' }" />
                         <span class="details-value q-ml-xs">{{
                           closeDate
-                        }}</span>
+                          }}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div
-                    class="col row items-center q-pa-sm"
-                    style="background-color: #f6f8fb; border-radius: 8px"
-                  >
+                  <div class="col row items-center q-pa-sm" style="background-color: #f6f8fb; border-radius: 8px">
                     <div class="column q-ml-sm">
                       <span class="subtitle">Days in current stage:</span>
                       <div class="row items-center">
-                        <q-icon
-                          name="schedule"
-                          size="18px"
-                          :style="{ color: 'var(--q-text-light-grey)' }"
-                        />
+                        <q-icon name="schedule" size="18px" :style="{ color: 'var(--q-text-light-grey)' }" />
                         <span class="details-value q-ml-xs">{{
                           daysInCurrentStage
-                        }}</span>
+                          }}</span>
                       </div>
                     </div>
                   </div>
@@ -328,10 +206,8 @@
               <div class="lead-card q-pa-md q-mt-sm q-mb-lg">
                 <GlobalWidgetCardBox class="task-card-item">
                   <div class="row q-pb-xs">
-                    <span class="details-value"
-                      ><span class="text-grey-light">#033</span> Sample Task A
-                      (Static)</span
-                    >
+                    <span class="details-value"><span class="text-grey-light">#033</span> Sample Task A
+                      (Static)</span>
                   </div>
                   <div class="row justify-between items-center">
                     <div class="row q-gutter-x-sm">
@@ -348,10 +224,8 @@
 
                 <GlobalWidgetCardBox class="task-card-item">
                   <div class="row q-pb-xs">
-                    <span class="details-value"
-                      ><span class="text-grey-light">#034</span> Interior Design
-                      Attachment (Static)</span
-                    >
+                    <span class="details-value"><span class="text-grey-light">#034</span> Interior Design
+                      Attachment (Static)</span>
                   </div>
                   <div class="row justify-between items-center">
                     <div class="row q-gutter-x-sm">
@@ -368,10 +242,8 @@
 
                 <GlobalWidgetCardBox class="task-card-item">
                   <div class="row q-pb-xs">
-                    <span class="details-value"
-                      ><span class="text-grey-light">#035</span> Exterior Design
-                      Attachment (Static)</span
-                    >
+                    <span class="details-value"><span class="text-grey-light">#035</span> Exterior Design
+                      Attachment (Static)</span>
                   </div>
                   <div class="row justify-between items-center">
                     <div class="row q-gutter-x-sm">
@@ -395,11 +267,7 @@
                 <GlobalWidgetCardBox class="events-card-item q-pa-md">
                   <div class="column q-pb-xs">
                     <span class="details-value">
-                      <q-icon
-                        name="o_today"
-                        size="16px"
-                        style="color: #00897b"
-                      />
+                      <q-icon name="o_today" size="16px" style="color: #00897b" />
                       Site Inspection (Static)
                     </span>
                   </div>
@@ -412,11 +280,7 @@
                 <GlobalWidgetCardBox class="events-card-item q-pa-md">
                   <div class="column q-pb-xs">
                     <span class="details-value">
-                      <q-icon
-                        name="card_travel"
-                        size="16px"
-                        style="color: #1e88e5"
-                      />
+                      <q-icon name="card_travel" size="16px" style="color: #1e88e5" />
                       Meeting with Investor (Static)
                     </span>
                   </div>
@@ -432,16 +296,10 @@
                 <q-icon name="o_note_add" size="20px" />Notes/ Next Actions
               </div>
               <div class="lead-card q-pa-md q-mt-sm q-mb-lg">
-                <div
-                  class="notes-card-item row justify-between q-px-md q-py-sm"
-                >
+                <div class="notes-card-item row justify-between q-px-md q-py-sm">
                   <div class="col">
                     <div>
-                      <q-badge
-                        class="noteBadge"
-                        :class="{ pinned: true }"
-                        text-color="white"
-                      >
+                      <q-badge class="noteBadge" :class="{ pinned: true }" text-color="white">
                         <q-icon name="my_location" class="text-dark" />
                         <div class="text-dark text-label-large">Pinned</div>
                       </q-badge>
@@ -462,20 +320,10 @@
                     </div>
                   </div>
                   <div class="menu-time column items-end justify-between">
-                    <q-btn
-                      color="grey-7"
-                      dense
-                      round
-                      flat
-                      icon="more_vert"
-                      class="q-mb-sm"
-                    >
+                    <q-btn color="grey-7" dense round flat icon="more_vert" class="q-mb-sm">
                       <q-menu auto-close anchor="bottom end" self="top end">
                         <div class="q-pa-sm">
-                          <div
-                            clickable
-                            class="row q-py-xs q-gutter-x-sm cursor-pointer"
-                          >
+                          <div clickable class="row q-py-xs q-gutter-x-sm cursor-pointer">
                             <div class="row items-center text-dark">
                               <q-icon name="my_location" size="20px" />
                             </div>
@@ -483,10 +331,7 @@
                               Unpin
                             </div>
                           </div>
-                          <div
-                            clickable
-                            class="row q-py-xs q-gutter-x-sm item-center cursor-pointer"
-                          >
+                          <div clickable class="row q-py-xs q-gutter-x-sm item-center cursor-pointer">
                             <div class="row items-center text-dark">
                               <q-icon name="edit" size="20px" />
                             </div>
@@ -494,10 +339,7 @@
                               Edit
                             </div>
                           </div>
-                          <div
-                            clickable
-                            class="row q-py-xs q-gutter-x-sm cursor-pointer"
-                          >
+                          <div clickable class="row q-py-xs q-gutter-x-sm cursor-pointer">
                             <div class="row items-center text-dark">
                               <q-icon name="delete" size="20px" />
                             </div>
@@ -514,9 +356,7 @@
                   </div>
                 </div>
 
-                <div
-                  class="notes-card-item row justify-between q-px-md q-py-sm"
-                >
+                <div class="notes-card-item row justify-between q-px-md q-py-sm">
                   <div class="col">
                     <div>
                       <!-- <q-badge class="noteBadge" :class="{ pinned: true }" text-color="white">
@@ -530,7 +370,7 @@
                     <div class="text-dark text-label-large q-pb-xs">
                       {{
                         truncateFormat(
-                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore."
+                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
                         )
                       }}
                     </div>
@@ -544,20 +384,10 @@
                     </div>
                   </div>
                   <div class="menu-time column items-end justify-between">
-                    <q-btn
-                      color="grey-7"
-                      dense
-                      round
-                      flat
-                      icon="more_vert"
-                      class="q-mb-sm"
-                    >
+                    <q-btn color="grey-7" dense round flat icon="more_vert" class="q-mb-sm">
                       <q-menu auto-close anchor="bottom end" self="top end">
                         <div class="q-pa-sm">
-                          <div
-                            clickable
-                            class="row q-py-xs q-gutter-x-sm cursor-pointer"
-                          >
+                          <div clickable class="row q-py-xs q-gutter-x-sm cursor-pointer">
                             <div class="row items-center text-dark">
                               <q-icon name="my_location" size="20px" />
                             </div>
@@ -565,10 +395,7 @@
                               Unpin
                             </div>
                           </div>
-                          <div
-                            clickable
-                            class="row q-py-xs q-gutter-x-sm item-center cursor-pointer"
-                          >
+                          <div clickable class="row q-py-xs q-gutter-x-sm item-center cursor-pointer">
                             <div class="row items-center text-dark">
                               <q-icon name="edit" size="20px" />
                             </div>
@@ -576,10 +403,7 @@
                               Edit
                             </div>
                           </div>
-                          <div
-                            clickable
-                            class="row q-py-xs q-gutter-x-sm cursor-pointer"
-                          >
+                          <div clickable class="row q-py-xs q-gutter-x-sm cursor-pointer">
                             <div class="row items-center text-dark">
                               <q-icon name="delete" size="20px" />
                             </div>
@@ -602,10 +426,45 @@
                 <q-icon name="attach_file" size="20px" />Attachments
               </div>
               <div class="lead-card q-pa-md q-mt-sm q-mb-lg">
-                <div class="attachments-card-item">
-                  <div class="text-label-medium row items-center">
-                    <span class="q-mr-sm">sample_file.pdf (Static)</span>
-                    <q-icon name="o_delete" size="14px" />
+                <!-- Loading State -->
+                <div v-if="isLoadingAttachments" class="text-center q-pa-md">
+                  <q-spinner color="primary" size="40px" />
+                  <div class="text-grey q-mt-sm">Loading attachments...</div>
+                </div>
+
+                <!-- Empty State -->
+                <div v-else-if="!attachments.length" class="text-center q-pa-md">
+                  <q-icon name="attach_file" size="48px" color="grey-5" />
+                  <div class="text-grey q-mt-sm">No attachments yet</div>
+                </div>
+
+                <!-- Attachments List -->
+                <div v-else class="column q-gutter-y-sm">
+                  <div v-for="attachment in attachments" :key="attachment.id" class="attachments-card-item">
+                    <div class="row items-center justify-between">
+                      <div class="col">
+                        <div class="row items-center">
+                          <q-icon name="description" size="20px" class="q-mr-sm" color="primary" />
+                          <div class="column">
+                            <span class="text-label-medium text-weight-medium">{{ attachment.fileName }}</span>
+                            <div class="text-caption text-grey">
+                              {{ formatFileSize(attachment.fileSize) }} • Uploaded {{
+                                formatUploadDate(attachment.uploadedAt) }}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row items-center q-gutter-x-xs q-ml-md">
+                        <g-button flat round dense size="sm" icon-size="sm" icon="download" color="primary"
+                          @click="downloadAttachment(attachment)">
+                          <q-tooltip>Download</q-tooltip>
+                        </g-button>
+                        <g-button flat round dense icon-size="sm" size="sm" icon="delete" color="negative"
+                          @click="handleAttachmentDelete(attachment)">
+                          <q-tooltip>Delete</q-tooltip>
+                        </g-button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -616,84 +475,52 @@
               </div>
               <div class="activities-card q-pa-md q-mt-sm q-mb-lg">
                 <div class="activities-card-item row">
-                  <q-icon
-                    name="o_bookmark_add"
-                    size="18px"
-                    :style="{ color: 'var(--q-text-light-grey)' }"
-                  />
+                  <q-icon name="o_bookmark_add" size="18px" :style="{ color: 'var(--q-text-light-grey)' }" />
                   <div class="column q-ml-sm">
                     <span class="subtitle">january 29, 2025</span>
-                    <span class="details-value"
-                      >Lead was created and added to the pipeline.
-                      (Static)</span
-                    >
+                    <span class="details-value">Lead was created and added to the pipeline.
+                      (Static)</span>
                     <div>
                       <span class="subtitle">Note/ Next Actions:</span>
-                      <span class="subtitle text-dark"
-                        >Note/ Next Actions (Static)</span
-                      >
+                      <span class="subtitle text-dark">Note/ Next Actions (Static)</span>
                     </div>
                   </div>
                 </div>
 
                 <div class="activities-card-item row">
-                  <q-icon
-                    name="content_paste_go"
-                    size="18px"
-                    :style="{ color: 'var(--q-text-light-grey)' }"
-                  />
+                  <q-icon name="content_paste_go" size="18px" :style="{ color: 'var(--q-text-light-grey)' }" />
                   <div class="column q-ml-sm">
                     <span class="subtitle">February 1, 2025</span>
-                    <span class="details-value"
-                      >Lead was moved from Opportunity to Initial Meeting.
-                      (Static)</span
-                    >
+                    <span class="details-value">Lead was moved from Opportunity to Initial Meeting.
+                      (Static)</span>
                     <div>
                       <span class="subtitle">Note/ Next Actions:</span>
-                      <span class="subtitle text-dark"
-                        >Note/ Next Actions (Static)</span
-                      >
+                      <span class="subtitle text-dark">Note/ Next Actions (Static)</span>
                     </div>
                   </div>
                 </div>
 
                 <div class="activities-card-item row">
-                  <q-icon
-                    name="content_paste_go"
-                    size="18px"
-                    :style="{ color: 'var(--q-text-light-grey)' }"
-                  />
+                  <q-icon name="content_paste_go" size="18px" :style="{ color: 'var(--q-text-light-grey)' }" />
                   <div class="column q-ml-sm">
                     <span class="subtitle">February 15, 2025</span>
-                    <span class="details-value"
-                      >Lead was moved from Initial Meeting to Proposal.
-                      (Static)</span
-                    >
+                    <span class="details-value">Lead was moved from Initial Meeting to Proposal.
+                      (Static)</span>
                     <div>
                       <span class="subtitle">Note/ Next Actions:</span>
-                      <span class="subtitle text-dark"
-                        >Note/ Next Actions (Static)</span
-                      >
+                      <span class="subtitle text-dark">Note/ Next Actions (Static)</span>
                     </div>
                   </div>
                 </div>
 
                 <div class="activities-card-item row">
-                  <q-icon
-                    name="o_border_color"
-                    size="18px"
-                    :style="{ color: 'var(--q-text-light-grey)' }"
-                  />
+                  <q-icon name="o_border_color" size="18px" :style="{ color: 'var(--q-text-light-grey)' }" />
                   <div class="column q-ml-sm">
                     <span class="subtitle">March 1, 2025 </span>
-                    <span class="details-value"
-                      >Lead note was updated. (Static)</span
-                    >
+                    <span class="details-value">Lead note was updated. (Static)</span>
                     <div>
                       <span class="subtitle">Note/ Next Actions:</span>
-                      <span class="subtitle text-dark"
-                        >Note/ Next Actions (Static)</span
-                      >
+                      <span class="subtitle text-dark">Note/ Next Actions (Static)</span>
                     </div>
                   </div>
                 </div>
@@ -702,62 +529,25 @@
           </div>
 
           <div class="col-4 column q-pl-md">
-            <div
-              class="text-title-small q-mb-sm"
-              :style="{ color: 'var(--q-text-light-grey)' }"
-            >
+            <div class="text-title-small q-mb-sm" :style="{ color: 'var(--q-text-light-grey)' }">
               Main Actions
             </div>
-            <div
-              class="more-actions column items-center justify-center q-mb-lg"
-            >
-              <GButton
-                variant="outline"
-                no-caps
-                color="primary"
-                icon="swap_horiz"
-                label="Convert To Project"
-                class="full-width row items-start"
-                @click="handleConvertToProject"
-              />
+            <div class="more-actions column items-center justify-center q-mb-lg">
+              <GButton variant="outline" no-caps color="primary" icon="swap_horiz" label="Convert To Project"
+                class="full-width row items-start" @click="handleConvertToProject" />
 
-              <GButton
-                variant="outline"
-                no-caps
-                color="primary"
-                icon="o_collections_bookmark"
-                @click="openBillOfQuantityDialog"
-                label="Bill Of Quantity"
-                class="full-width row items-start"
-              />
+              <GButton variant="outline" no-caps color="primary" icon="o_collections_bookmark"
+                @click="openBillOfQuantityDialog" label="Bill Of Quantity" class="full-width row items-start" />
             </div>
 
-            <div
-              class="text-title-small q-mb-sm"
-              :style="{ color: 'var(--q-text-light-grey)' }"
-            >
+            <div class="text-title-small q-mb-sm" :style="{ color: 'var(--q-text-light-grey)' }">
               Quick Actions
             </div>
             <div class="quick-actions column items-center justify-center">
-              <GButton
-                unelevated
-                no-caps
-                color="primary"
-                variant="tonal"
-                icon="attachment"
-                label="Attachment"
-                class="full-width row items-start"
-              />
-              <GButton
-                unelevated
-                no-caps
-                color="primary"
-                variant="tonal"
-                icon="o_note_add"
-                label="Add Note"
-                class="full-width row items-start"
-                @click="openAddNoteDialog"
-              />
+              <GButton unelevated no-caps color="primary" variant="tonal" icon="attachment" label="Attachment"
+                class="full-width row items-start" @click="handleAttachmentClick" />
+              <GButton unelevated no-caps color="primary" variant="tonal" icon="o_note_add" label="Add Note"
+                class="full-width row items-start" @click="openAddNoteDialog" />
             </div>
 
             <!-- <div class="text-subtitle2" :style="{ color: 'var(--q-text-light-grey)' }">Notes/ Next Actions:</div>
@@ -780,27 +570,20 @@
       </q-card-section>
 
       <!-- Bill of Quantity Dialog -->
-      <bill-of-quantity-dialog
-        v-if="isBillOfQuantityDialogOpen"
-        v-model="isBillOfQuantityDialogOpen"
-        :projectId="leadInformation.id"
-      />
+      <bill-of-quantity-dialog v-if="isBillOfQuantityDialogOpen" v-model="isBillOfQuantityDialogOpen"
+        :projectId="leadInformation.id" />
 
       <!-- Add Note Dialog -->
-      <AddNoteDialog
-        v-model="isAddNoteDialogOpen"
-        :noteData="editingNote"
-        @saveDone="handleNoteSaved"
-        @close="isAddNoteDialogOpen = false"
-      />
+      <AddNoteDialog v-model="isAddNoteDialogOpen" :noteData="editingNote" @saveDone="handleNoteSaved"
+        @close="isAddNoteDialogOpen = false" />
 
       <!-- Lead Edit Dialog -->
-      <lead-create-dialog
-        v-model="isLeadEditDialogOpen"
-        :leadData="leadInformation"
-        @close="handleLeadEdited"
-        @saveDone="handleLeadEdited"
-      />
+      <lead-create-dialog v-model="isLeadEditDialogOpen" :leadData="leadInformation" @close="handleLeadEdited"
+        @saveDone="handleLeadEdited" />
+
+      <!-- Attachment Upload Dialog -->
+      <LeadAttachmentUploadDialog v-if="isAttachmentUploadDialogOpen" ref="attachmentUploadDialogRef"
+        :leadId="leadViewId" @uploaded="handleAttachmentsUploaded" @close="isAttachmentUploadDialogOpen = false" />
     </q-card>
   </q-dialog>
 </template>
@@ -812,9 +595,8 @@ import GButton from "src/components/shared/buttons/GButton.vue";
 import GlobalWidgetCardBox from "src/components/shared/global/GlobalWidgetCardBox.vue";
 import { APIRequests } from "src/utility/api.handler";
 import { LeadDataResponse } from "@shared/response";
-import { useQuasar, Dialog } from "quasar";
-import { ref, computed } from "vue";
-import { defineAsyncComponent } from "vue";
+import { useQuasar, Dialog, QBtn, date } from "quasar";
+import { ref, computed, defineAsyncComponent } from "vue";
 import { formatWord } from "src/utility/formatter";
 import { useRouter } from "vue-router";
 
@@ -832,6 +614,10 @@ const LeadCreateDialog = defineAsyncComponent(
   () => import("./LeadCreateDialog.vue")
 );
 
+const LeadAttachmentUploadDialog = defineAsyncComponent(
+  () => import("./LeadAttachmentUploadDialog.vue")
+);
+
 export default {
   name: "ViewLeadDialog",
   components: {
@@ -841,6 +627,7 @@ export default {
     EmailComposeDialog,
     AddNoteDialog,
     LeadCreateDialog,
+    LeadAttachmentUploadDialog,
   },
   props: {
     modelValue: {
@@ -867,6 +654,12 @@ export default {
     const isLeadEditDialogOpen = ref(false);
     const isStageMenuOpen = ref(false);
     const isProposalMenuOpen = ref(false);
+
+    // Attachment state
+    const attachments = ref<any[]>([]);
+    const isLoadingAttachments = ref(false);
+    const isAttachmentUploadDialogOpen = ref(false);
+    const attachmentUploadDialogRef = ref<any>(null);
 
     const winProbabilityLabel = computed(() => {
       const prob = leadInformation.value?.winProbability;
@@ -1002,6 +795,8 @@ export default {
         const id = props.leadViewId.toString();
         const response = await APIRequests.getLeadInformation($q, { id });
         leadInformation.value = response;
+        // Also fetch attachments
+        await fetchAttachments();
       } catch (error) {
         console.error("Failed to fetch lead data:", error);
         $q.notify({
@@ -1245,6 +1040,86 @@ export default {
       }
     };
 
+    // Attachment Methods
+    const fetchAttachments = async () => {
+      try {
+        isLoadingAttachments.value = true;
+        const response = await APIRequests.getLeadAttachments($q, props.leadViewId.toString());
+        attachments.value = response;
+      } catch (error) {
+        console.error("Failed to fetch attachments:", error);
+      } finally {
+        isLoadingAttachments.value = false;
+      }
+    };
+
+    const handleAttachmentClick = () => {
+      isAttachmentUploadDialogOpen.value = true;
+      // Use nextTick to ensure dialog is mounted before calling show()
+      setTimeout(() => {
+        attachmentUploadDialogRef.value?.show();
+      }, 100);
+    };
+
+    const handleAttachmentsUploaded = async () => {
+      // Refresh attachments list after successful upload
+      await fetchAttachments();
+    };
+
+    const handleAttachmentDelete = (attachment: any) => {
+      Dialog.create({
+        title: "Delete Attachment",
+        message: `Are you sure you want to delete "${attachment.fileName}"?`,
+        cancel: {
+          label: "Cancel",
+          color: "grey",
+        },
+        ok: {
+          label: "Delete",
+          color: "negative",
+        },
+        persistent: true,
+      }).onOk(async () => {
+        try {
+          await APIRequests.deleteLeadAttachment($q, attachment.id.toString());
+
+          $q.notify({
+            color: "positive",
+            message: "Attachment deleted successfully",
+            icon: "check",
+            position: "top",
+          });
+
+          // Refresh attachments list
+          await fetchAttachments();
+        } catch (error) {
+          console.error("Failed to delete attachment:", error);
+          $q.notify({
+            color: "negative",
+            message: "Failed to delete attachment",
+            icon: "report_problem",
+            position: "top",
+          });
+        }
+      });
+    };
+
+    const downloadAttachment = (attachment: any) => {
+      window.open(attachment.fileUrl, "_blank");
+    };
+
+    const formatFileSize = (bytes: number): string => {
+      if (bytes === 0) return "0 Bytes";
+      const k = 1024;
+      const sizes = ["Bytes", "KB", "MB", "GB"];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
+    };
+
+    const formatUploadDate = (uploadedAt: string): string => {
+      return date.formatDate(new Date(uploadedAt), "MMM D, YYYY");
+    };
+
     return {
       notesText,
       leadInformation,
@@ -1280,6 +1155,18 @@ export default {
       handleLeadEdited,
       handleStageChange,
       handleProposalStatusChange,
+      // Attachment state and methods
+      attachments,
+      isLoadingAttachments,
+      isAttachmentUploadDialogOpen,
+      attachmentUploadDialogRef,
+      fetchAttachments,
+      handleAttachmentClick,
+      handleAttachmentsUploaded,
+      handleAttachmentDelete,
+      downloadAttachment,
+      formatFileSize,
+      formatUploadDate,
     };
   },
 };
