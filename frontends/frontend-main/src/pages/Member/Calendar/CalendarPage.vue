@@ -38,7 +38,6 @@
             :events="fullCalendarEvents"
             :editable="true"
             @event-click="handleEventClick"
-            @date-click="handleDateClick"
             @event-drop="handleEventDrop"
             @event-resize="handleEventResize"
             @date-select="handleDateRangeSelect"
@@ -527,16 +526,28 @@ const handleEventClick = (event: any) => {
   }
 };
 
-const handleDateClick = (clickedDate: Date, allDay: boolean) => {
-  // Use quick create for single date clicks
-  openQuickCreate(clickedDate);
-};
-
 const handleDateRangeSelect = (start: Date, end: Date, allDay: boolean) => {
-  selectedDialogDate.value = start;
-  selectedDialogEndDate.value = end;
-  selectedAllDay.value = allDay;
-  showCreateDialog.value = true;
+  // Check if this is a single-day selection (clicking on empty space)
+  // or a multi-day range selection (dragging across multiple days)
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+
+  // FullCalendar's select event includes end time, so we need to check if it's the same day
+  // For all-day events, end is typically the next day at 00:00
+  const isSingleDay = allDay
+    ? date.formatDate(startDate, 'YYYY-MM-DD') === date.formatDate(date.subtractFromDate(endDate, { days: 1 }), 'YYYY-MM-DD')
+    : date.formatDate(startDate, 'YYYY-MM-DD') === date.formatDate(endDate, 'YYYY-MM-DD');
+
+  if (isSingleDay) {
+    // Single day click - open quick create dialog
+    openQuickCreate(startDate);
+  } else {
+    // Multi-day range selection - open full create event dialog
+    selectedDialogDate.value = startDate;
+    selectedDialogEndDate.value = endDate;
+    selectedAllDay.value = allDay;
+    showCreateDialog.value = true;
+  }
 };
 
 const handleEventDrop = async (info: any) => {
