@@ -143,7 +143,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Fetch fresh profile data from Public API
       const profileData = await guardianPublicApi.getProfile();
 
-      // Update user with fresh API data
+      // Update user with fresh API data - now includes full student data
       const refreshedUser: GuardianAuthInfo = {
         id: profileData.id,
         email: profileData.email,
@@ -157,14 +157,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         lastLogin: profileData.lastLogin ? new Date(profileData.lastLogin) : undefined,
         students: profileData.students.map(s => ({
           id: s.id,
-          studentNumber: s.studentCode,
+          studentNumber: s.studentNumber,
           firstName: s.firstName,
           lastName: s.lastName,
           middleName: s.middleName,
-          grade: s.gradeLevel,
+          dateOfBirth: s.dateOfBirth,
+          gender: s.gender,
           section: s.section,
+          lrn: s.lrn,
+          profilePhoto: s.profilePhoto,
+          dateRegistered: s.dateRegistered,
+          isActive: s.isActive,
+          guardian: s.guardian,
+          temporaryGuardianName: s.temporaryGuardianName,
+          temporaryGuardianAddress: s.temporaryGuardianAddress,
+          temporaryGuardianContactNumber: s.temporaryGuardianContactNumber,
+          createdAt: s.createdAt,
+          updatedAt: s.updatedAt,
           relationship: s.relationship || 'Parent',
-          isPrimary: s.isPrimary || true
+          isPrimary: s.isPrimary !== undefined ? s.isPrimary : true,
         }))
       };
 

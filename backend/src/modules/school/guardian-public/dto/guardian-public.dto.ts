@@ -695,13 +695,7 @@ export class GuardianLoginResponseDto {
     email: string;
     phoneNumber?: string;
   };
-  students: Array<{
-    id: string;
-    firstName: string;
-    lastName: string;
-    studentCode: string;
-    section?: string;
-  }>;
+  students: StudentFullInfoDto[];
   permissions?: string[];
   expiresIn?: never; // Token doesn't expire
 }
@@ -850,6 +844,77 @@ export class NotificationDto {
   iconType?: string;
 }
 
+export class GradeLevelInfoDto {
+  @ApiProperty({ description: 'Grade level ID' })
+  id: number;
+
+  @ApiProperty({ description: 'Grade level code' })
+  code: string;
+
+  @ApiProperty({ description: 'Grade level name' })
+  name: string;
+
+  @ApiProperty({ description: 'Education level' })
+  educationLevel: string;
+}
+
+export class SectionInfoDto {
+  @ApiProperty({ description: 'Section ID' })
+  id: string;
+
+  @ApiProperty({ description: 'Section name' })
+  name: string;
+
+  @ApiProperty({ description: 'Grade level ID' })
+  gradeLevelId: number;
+
+  @ApiProperty({ description: 'Grade level info', type: GradeLevelInfoDto })
+  gradeLevel: GradeLevelInfoDto | null;
+
+  @ApiProperty({ description: 'Adviser name' })
+  adviserName: string;
+
+  @ApiProperty({ description: 'School year' })
+  schoolYear: string;
+
+  @ApiPropertyOptional({ description: 'Section capacity' })
+  capacity?: number;
+}
+
+export class FileInfoDto {
+  @ApiProperty({ description: 'File ID' })
+  id: string;
+
+  @ApiProperty({ description: 'File URL' })
+  url: string;
+
+  @ApiProperty({ description: 'File name' })
+  name: string;
+
+  @ApiPropertyOptional({ description: 'File size' })
+  size?: number;
+
+  @ApiPropertyOptional({ description: 'File type' })
+  type?: string;
+}
+
+export class GuardianInfoDto {
+  @ApiProperty({ description: 'Guardian ID' })
+  id: string;
+
+  @ApiProperty({ description: 'Guardian name' })
+  name: string;
+
+  @ApiProperty({ description: 'Guardian email' })
+  email: string;
+
+  @ApiProperty({ description: 'Guardian contact number' })
+  contactNumber: string;
+
+  @ApiProperty({ description: 'Relationship to student' })
+  relationship: string;
+}
+
 export class StudentInfoDto {
   @ApiProperty({ description: 'Student ID' })
   id: string;
@@ -880,6 +945,71 @@ export class StudentInfoDto {
 
   @ApiPropertyOptional({ description: 'Student photo URL' })
   photoUrl?: string;
+
+  @ApiPropertyOptional({ description: 'Is primary guardian' })
+  isPrimary?: boolean;
+}
+
+export class StudentFullInfoDto {
+  @ApiProperty({ description: 'Student ID' })
+  id: string;
+
+  @ApiProperty({ description: 'Student number/code' })
+  studentNumber: string;
+
+  @ApiProperty({ description: 'Student first name' })
+  firstName: string;
+
+  @ApiProperty({ description: 'Student last name' })
+  lastName: string;
+
+  @ApiPropertyOptional({ description: 'Student middle name' })
+  middleName?: string;
+
+  @ApiProperty({ description: 'Date of birth' })
+  dateOfBirth: string;
+
+  @ApiProperty({ description: 'Gender' })
+  gender: string;
+
+  @ApiPropertyOptional({ description: 'Section information', type: SectionInfoDto })
+  section?: SectionInfoDto;
+
+  @ApiPropertyOptional({ description: 'Learner Reference Number (LRN)' })
+  lrn?: string;
+
+  @ApiPropertyOptional({ description: 'Profile photo', type: FileInfoDto })
+  profilePhoto?: FileInfoDto;
+
+  @ApiProperty({ description: 'Date registered' })
+  dateRegistered: string;
+
+  @ApiProperty({ description: 'Active status' })
+  isActive: boolean;
+
+  @ApiPropertyOptional({ description: 'Guardian information', type: GuardianInfoDto })
+  guardian?: GuardianInfoDto;
+
+  @ApiPropertyOptional({ description: 'Temporary guardian name' })
+  temporaryGuardianName?: string;
+
+  @ApiPropertyOptional({ description: 'Temporary guardian address' })
+  temporaryGuardianAddress?: string;
+
+  @ApiPropertyOptional({ description: 'Temporary guardian contact number' })
+  temporaryGuardianContactNumber?: string;
+
+  @ApiProperty({ description: 'Created timestamp' })
+  createdAt: string;
+
+  @ApiProperty({ description: 'Updated timestamp' })
+  updatedAt: string;
+
+  @ApiPropertyOptional({
+    description: 'Relationship to guardian',
+    enum: RelationshipType,
+  })
+  relationship?: RelationshipType;
 
   @ApiPropertyOptional({ description: 'Is primary guardian' })
   isPrimary?: boolean;
@@ -933,9 +1063,9 @@ export class GuardianProfileDto {
 
   @ApiProperty({
     description: 'List of associated students',
-    type: [StudentInfoDto],
+    type: [StudentFullInfoDto],
   })
-  students: StudentInfoDto[];
+  students: StudentFullInfoDto[];
 
   @ApiPropertyOptional({ description: 'Active device tokens count' })
   activeDevices?: number;
