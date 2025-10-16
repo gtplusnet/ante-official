@@ -9,6 +9,7 @@ dist
 .gitignore
 .dockerignore
 Dockerfile
+Dockerfile.*
 .vscode
 .idea
 coverage
@@ -19,3 +20,11 @@ debug/
 logs/
 *.md
 !README.md
+test/
+*.test.ts
+*.spec.ts
+.github/
+.editorconfig
+.prettierrc
+.eslintrc.js
+tsconfig.build.tsbuildinfo
