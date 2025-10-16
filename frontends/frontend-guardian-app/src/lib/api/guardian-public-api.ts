@@ -140,6 +140,23 @@ export interface StudentInfoDto {
   isPrimary?: boolean;
 }
 
+export interface StudentPreviewDto {
+  id: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  studentNumber: string;
+  gender?: string;
+  dateOfBirth?: string;
+  section?: string;
+  gradeLevel?: string;
+  profilePhoto?: {
+    id: number;
+    url: string;
+    name: string;
+  } | null;
+}
+
 export interface GuardianProfileDto {
   id: string;
   firstName: string;
@@ -259,6 +276,31 @@ class GuardianPublicApi {
       throw {
         code: error.code || 'GET_STUDENTS_ERROR',
         message: error.message || 'Failed to get students',
+        details: error.details,
+      };
+    }
+  }
+
+  /**
+   * Preview student information before adding
+   */
+  async previewStudent(studentId: string): Promise<StudentPreviewDto> {
+    try {
+      const response = await apiClient.get<StudentPreviewDto>(
+        `${this.basePath}/students/preview`,
+        { params: { studentId } }
+      );
+
+      if (response.success && response.data) {
+        return response.data;
+      }
+
+      throw new Error('Preview student failed: No data returned');
+    } catch (error: any) {
+      console.error('[GuardianPublicApi] Preview student error:', error);
+      throw {
+        code: error.code || 'PREVIEW_STUDENT_ERROR',
+        message: error.message || 'Failed to preview student',
         details: error.details,
       };
     }

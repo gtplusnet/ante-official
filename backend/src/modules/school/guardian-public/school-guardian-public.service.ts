@@ -287,9 +287,10 @@ export class SchoolGuardianPublicService {
   }
 
   /**
-   * Add student to guardian account
+   * Preview student information before adding
+   * Allows guardian to verify they're adding the correct student
    */
-  async addStudentToGuardian(guardianId: string, studentIdentifier: string): Promise<any> {
+  async previewStudent(guardianId: string, studentId: string): Promise<any> {
     // Find guardian
     const guardian = await this.prisma.guardian.findUnique({
       where: { id: guardianId },
@@ -299,26 +300,24 @@ export class SchoolGuardianPublicService {
       throw new NotFoundException('Guardian not found');
     }
 
-    // Find student by ID or code
+    // Find student by ID (no company filter for preview - allows dynamic assignment)
     const student = await this.prisma.student.findFirst({
       where: {
-        AND: [
-          { companyId: guardian.companyId },
-          {
-            OR: [
-              { id: studentIdentifier },
-              { studentNumber: studentIdentifier },
-            ],
-          },
-        ],
+        id: studentId,
+        isDeleted: false,
       },
       include: {
-        section: true,
+        section: {
+          include: {
+            gradeLevel: true,
+          },
+        },
+        profilePhoto: true,
       },
     });
 
     if (!student) {
-      throw new NotFoundException('Student not found or does not belong to your school');
+      throw new NotFoundException('Student not found');
     }
 
     // Check if already linked
@@ -331,6 +330,91 @@ export class SchoolGuardianPublicService {
 
     if (existing) {
       throw new ConflictException('Student is already linked to your account');
+    }
+
+    // Return student preview information
+    return {
+      id: student.id,
+      firstName: student.firstName,
+      lastName: student.lastName,
+      middleName: student.middleName,
+      studentNumber: student.studentNumber,
+      gender: student.gender,
+      dateOfBirth: student.dateOfBirth?.toISOString(),
+      section: student.section?.name,
+      gradeLevel: student.section?.gradeLevel?.name,
+      profilePhoto: student.profilePhoto ? {
+        id: student.profilePhoto.id,
+        url: student.profilePhoto.url,
+        name: student.profilePhoto.name,
+      } : null,
+    };
+  }
+
+  /**
+   * Add student to guardian account
+   */
+  async addStudentToGuardian(guardianId: string, studentIdentifier: string): Promise<any> {
+    // Find guardian
+    const guardian = await this.prisma.guardian.findUnique({
+      where: { id: guardianId },
+    });
+
+    if (!guardian) {
+      throw new NotFoundException('Guardian not found');
+    }
+
+    // Find student by ID or code (no company filter - dynamic assignment)
+    const student = await this.prisma.student.findFirst({
+      where: {
+        OR: [
+          { id: studentIdentifier },
+          { studentNumber: studentIdentifier },
+        ],
+        isDeleted: false,
+      },
+      include: {
+        section: true,
+      },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    // Check if already linked
+    const existing = await this.prisma.studentGuardian.findFirst({
+      where: {
+        guardianId,
+        studentId: student.id,
+      },
+    });
+
+    if (existing) {
+      throw new ConflictException('Student is already linked to your account');
+    }
+
+    // Check if this is guardian's first student
+    const guardianStudentCount = await this.prisma.studentGuardian.count({
+      where: { guardianId },
+    });
+
+    if (guardianStudentCount === 0) {
+      // First student - update guardian's company to match student's company
+      await this.prisma.guardian.update({
+        where: { id: guardianId },
+        data: {
+          companyId: student.companyId,
+          updatedAt: new Date(),
+        },
+      });
+    } else {
+      // Not first student - validate same company
+      if (guardian.companyId !== student.companyId) {
+        throw new ConflictException(
+          'Student belongs to a different school. You can only add students from the same school.',
+        );
+      }
     }
 
     // Create link
