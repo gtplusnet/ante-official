@@ -80,6 +80,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   // Initialize push notifications
   const initialize = useCallback(async () => {
+    // Check if push notifications are enabled
+    const pushEnabled = process.env.NEXT_PUBLIC_ENABLE_PUSH_NOTIFICATIONS === 'true';
+    if (!pushEnabled) {
+      console.log('Push notifications are disabled via feature flag');
+      return;
+    }
+
     if (!user) {
       console.log('User not authenticated, skipping push notification initialization');
       return;
@@ -87,7 +94,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     const supported = await pushNotificationService.isSupported();
     setIsSupported(supported);
-    
+
     if (!supported) {
       console.log('Push notifications not supported on this device/browser');
       return;

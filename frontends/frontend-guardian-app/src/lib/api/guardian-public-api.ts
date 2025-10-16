@@ -90,6 +90,7 @@ export interface StudentAttendanceStatusDto {
   studentName: string;
   studentCode: string;
   status: 'in-school' | 'out-of-school' | 'unknown';
+  photoUrl?: string;
   lastCheckIn?: AttendanceEventDto;
   lastCheckOut?: AttendanceEventDto;
   todayAttendance: TodayAttendanceDto;
