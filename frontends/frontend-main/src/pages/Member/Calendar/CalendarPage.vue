@@ -10,6 +10,8 @@
         @open-settings="openSettings"
         @create-event="openQuickCreate"
         @search="handleSearch"
+        @export-calendar="openExportDialog"
+        @import-calendar="openImportDialog"
       />
 
       <div class="calendar-body">
@@ -201,6 +203,12 @@
       :category="selectedCategory"
       @saved="handleCategorySaved"
     />
+
+    <ImportCalendarDialog
+      v-if="showImportDialog"
+      v-model="showImportDialog"
+      @imported="handleCalendarImported"
+    />
   </div>
 </template>
 
@@ -215,6 +223,7 @@ import MySchedulesWidget from '../Dashboard/MySchedulesWidget/MySchedulesWidget.
 import { useCalendarEvents } from 'src/composables/calendar/useCalendarEvents';
 import { useCalendarCategories } from 'src/composables/calendar/useCalendarCategories';
 import { useCalendarIntegration } from 'src/composables/calendar/useCalendarIntegration';
+import { useCalendarExport } from 'src/composables/calendar/useCalendarExport';
 import { date } from 'quasar';
 
 // Lazy-loaded dialogs (CLAUDE.md - ALL dialogs must be lazy loaded)
@@ -228,6 +237,10 @@ const EventDetailsDialog = defineAsyncComponent(() =>
 
 const CategoryDialog = defineAsyncComponent(() =>
   import('./dialogs/CategoryDialog.vue')
+);
+
+const ImportCalendarDialog = defineAsyncComponent(() =>
+  import('./dialogs/ImportCalendarDialog.vue')
 );
 
 // Composables
@@ -257,6 +270,8 @@ const {
   loading: integratedLoading
 } = useCalendarIntegration();
 
+const { exportDateRange } = useCalendarExport();
+
 // State
 const currentView = ref('dayGridMonth');
 const currentDate = ref(new Date());
@@ -268,6 +283,7 @@ const showQuickCreate = ref(false);
 const showCreateDialog = ref(false);
 const showDetailsDialog = ref(false);
 const showCategoryDialog = ref(false);
+const showImportDialog = ref(false);
 
 // Selected data
 const selectedEvent = ref<any>(null);
@@ -656,6 +672,38 @@ const openSettings = () => {
   $q.notify({
     type: 'info',
     message: 'Calendar settings coming soon'
+  });
+};
+
+const openExportDialog = async () => {
+  try {
+    const startDate = getStartDateForView();
+    const endDate = getEndDateForView();
+
+    // Get selected category IDs
+    const categoryIds = selectedCategories.value.length > 0
+      ? selectedCategories.value
+      : undefined;
+
+    await exportDateRange(
+      { startDate, endDate, categoryIds },
+      `calendar-${date.formatDate(new Date(), 'YYYY-MM-DD')}.ics`
+    );
+  } catch (error) {
+    console.error('Error exporting calendar:', error);
+  }
+};
+
+const openImportDialog = () => {
+  showImportDialog.value = true;
+};
+
+const handleCalendarImported = async () => {
+  // Reload events after import
+  await loadEvents();
+  $q.notify({
+    type: 'positive',
+    message: 'Calendar imported successfully'
   });
 };
 

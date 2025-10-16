@@ -177,6 +177,8 @@ import { CalendarEventService } from '@modules/calendar/calendar-event/calendar-
 import { CalendarIntegrationService } from '@modules/calendar/calendar-event/calendar-integration.service';
 import { CalendarCategoryService } from '@modules/calendar/calendar-category/calendar-category.service';
 import { RRuleService } from '@modules/calendar/calendar-event/rrule.service';
+import { IcsExportService } from '@modules/calendar/calendar-event/ics-export.service';
+import { IcsImportService } from '@modules/calendar/calendar-event/ics-import.service';
 
 const ENV = process.env.NODE_ENV;
 
@@ -390,6 +392,8 @@ const ENV = process.env.NODE_ENV;
     CalendarIntegrationService,
     CalendarCategoryService,
     RRuleService,
+    IcsExportService,
+    IcsImportService,
     // Add RoleGroupService back for UserOrgService dependency
     RoleGroupService,
     // Add PurchaseOrderService back for EquipmentService dependency

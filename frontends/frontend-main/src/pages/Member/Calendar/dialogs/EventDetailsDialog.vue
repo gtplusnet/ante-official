@@ -20,6 +20,16 @@
               flat
               round
               dense
+              icon="download"
+              @click="handleExport"
+              :loading="isExporting"
+            >
+              <q-tooltip>Export to .ics</q-tooltip>
+            </q-btn>
+            <q-btn
+              flat
+              round
+              dense
               icon="edit"
               @click="handleEdit"
             >
@@ -154,6 +164,7 @@
 import { ref, computed, watch, defineAsyncComponent } from 'vue';
 import { useQuasar, date as qDate } from 'quasar';
 import { useCalendarEvents } from 'src/composables/calendar/useCalendarEvents';
+import { useCalendarExport } from 'src/composables/calendar/useCalendarExport';
 
 // Lazy load CreateEventDialog
 const CreateEventDialog = defineAsyncComponent(() =>
@@ -178,6 +189,7 @@ const emit = defineEmits<{
 // Composables
 const $q = useQuasar();
 const { deleteEvent } = useCalendarEvents();
+const { isExporting, exportEvent } = useCalendarExport();
 
 // State
 const showDialog = ref(props.modelValue);
@@ -295,6 +307,16 @@ const handleUpdated = (updatedEvent: any) => {
   emit('updated', updatedEvent);
   showEditDialog.value = false;
   showDialog.value = false;
+};
+
+const handleExport = async () => {
+  if (!props.event?.id) return;
+
+  try {
+    await exportEvent(props.event.id);
+  } catch (error) {
+    console.error('Error exporting event:', error);
+  }
 };
 
 // Watchers
