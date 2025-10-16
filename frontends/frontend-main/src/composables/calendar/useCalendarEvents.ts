@@ -449,6 +449,20 @@ export function useCalendarEvents() {
     return transformToFullCalendar(events.value);
   });
 
+  // Subscribe to real-time changes (Supabase)
+  const subscribeToChanges = (callback: (payload: any) => void) => {
+    // This is a placeholder for Supabase real-time subscriptions
+    // You can implement actual Supabase subscriptions here if needed
+    console.log('[useCalendarEvents] Real-time subscription initialized');
+
+    // Return a channel object with unsubscribe method
+    return {
+      unsubscribe: () => {
+        console.log('[useCalendarEvents] Real-time subscription closed');
+      }
+    };
+  };
+
   return {
     // State
     events,
@@ -461,6 +475,7 @@ export function useCalendarEvents() {
     updateEvent,
     quickUpdateEvent,
     deleteEvent,
+    subscribeToChanges,
 
     // Computed
     getFullCalendarEvents,

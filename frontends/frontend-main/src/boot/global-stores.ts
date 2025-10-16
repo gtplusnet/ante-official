@@ -4,6 +4,7 @@ import { Quasar, QSpinnerOrbit } from 'quasar';
 import { useAuthStore } from '../stores/auth';
 import { useProjectStore } from '../stores/project';
 import { useAssigneeStore } from '../stores/assignee';
+import { usePreferencesStore } from '../stores/preferences';
 import LoadingSplash from '../components/shared/LoadingSplash.vue';
 
 /**
@@ -57,16 +58,19 @@ export async function initializeGlobalStores(store?: any): Promise<boolean> {
     // Get store instances
     const projectStore = useProjectStore(store);
     const assigneeStore = useAssigneeStore(store);
+    const preferencesStore = usePreferencesStore(store);
 
-    // Load both stores in parallel for faster initialization
+    // Load all stores in parallel for faster initialization
     const results = await Promise.allSettled([
       projectStore.fetchProjects(),
-      assigneeStore.fetchAssignees()
+      assigneeStore.fetchAssignees(),
+      preferencesStore.fetchPreferences()
     ]);
 
     // Check results
     const projectSuccess = results[0].status === 'fulfilled';
     const assigneeSuccess = results[1].status === 'fulfilled';
+    const preferencesSuccess = results[2].status === 'fulfilled';
 
     if (!projectSuccess) {
       console.error('[GlobalStores] Failed to load projects:', results[0]);
@@ -74,14 +78,18 @@ export async function initializeGlobalStores(store?: any): Promise<boolean> {
     if (!assigneeSuccess) {
       console.error('[GlobalStores] Failed to load assignees:', results[1]);
     }
+    if (!preferencesSuccess) {
+      console.error('[GlobalStores] Failed to load preferences:', results[2]);
+    }
 
     console.log('[GlobalStores] Initialization complete:', {
       projects: projectSuccess,
-      assignees: assigneeSuccess
+      assignees: assigneeSuccess,
+      preferences: preferencesSuccess
     });
 
     // Return true if at least one store loaded successfully
-    return projectSuccess || assigneeSuccess;
+    return projectSuccess || assigneeSuccess || preferencesSuccess;
   } catch (error) {
     console.error('[GlobalStores] Unexpected error during initialization:', error);
     return false;
