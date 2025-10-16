@@ -186,6 +186,40 @@ export class SchoolGuardianPublicController {
   }
 
   /**
+   * Preview student information before adding
+   * GET /api/public/school-guardian/students/preview
+   */
+  @Get('students/preview')
+  @UseGuards(GuardianPublicAuthGuard)
+  @ApiOperation({ summary: 'Preview student information before adding' })
+  @ApiResponse({ status: 200, description: 'Student preview retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Student not found' })
+  @ApiResponse({ status: 409, description: 'Student already linked' })
+  @ApiQuery({ name: 'studentId', required: true, type: String })
+  async previewStudent(
+    @Request() req: any,
+    @Query('studentId') studentId: string,
+  ) {
+    try {
+      const student = await this.guardianService.previewStudent(
+        req.user.id,
+        studentId,
+      );
+      return {
+        success: true,
+        data: student,
+        message: 'Student preview retrieved successfully',
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof ConflictException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to preview student');
+    }
+  }
+
+  /**
    * Add student to guardian account
    * POST /api/public/school-guardian/students/add
    */

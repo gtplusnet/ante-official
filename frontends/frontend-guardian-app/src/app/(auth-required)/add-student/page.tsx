@@ -47,7 +47,7 @@ export default function AddStudentPage() {
     return match ? match[1] : null;
   };
   
-  // Verify student exists
+  // Verify student exists and fetch preview
   const verifyStudent = async (studentId: string) => {
     try {
       setVerifyingStudent(true);
@@ -58,22 +58,28 @@ export default function AddStudentPage() {
         return false;
       }
 
-      // Get current students to check if already connected
-      const students = await guardianPublicApi.getStudents();
-      const isAlreadyConnected = students.some(s => s.id === studentId);
+      // Preview student information (includes validation and duplicate check)
+      const preview = await guardianPublicApi.previewStudent(studentId);
 
-      if (isAlreadyConnected) {
-        setError('This student is already connected to your account.');
-        return false;
-      }
-
-      // For now, assume student exists if we got this far
-      // The backend will validate when we try to add
-      setStudentInfo({ id: studentId });
+      // Set the full student information
+      setStudentInfo(preview);
       return true;
     } catch (error: any) {
       console.error('Student verification error:', error);
-      setError('Failed to verify student. Please try again.');
+
+      // Handle specific error codes
+      if (error.code === 'PREVIEW_STUDENT_ERROR') {
+        if (error.message?.includes('already linked')) {
+          setError('This student is already connected to your account.');
+        } else if (error.message?.includes('not found')) {
+          setError('Student not found or does not belong to your school.');
+        } else {
+          setError(error.message || 'Failed to verify student. Please try again.');
+        }
+      } else {
+        setError('Failed to verify student. Please try again.');
+      }
+
       return false;
     } finally {
       setVerifyingStudent(false);
@@ -278,9 +284,9 @@ export default function AddStudentPage() {
                 
                 <div className="mb-4">
                   <div className="flex items-center gap-4 mb-4">
-                    {studentInfo.profilePhotoId ? (
-                      <img 
-                        src={`/api/photos/${studentInfo.profilePhotoId}`} 
+                    {studentInfo.profilePhoto?.url ? (
+                      <img
+                        src={studentInfo.profilePhoto.url}
                         alt={`${studentInfo.firstName} ${studentInfo.lastName}`}
                         className="w-16 h-16 rounded-full object-cover"
                       />
