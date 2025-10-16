@@ -10,8 +10,12 @@ import {
   Patch,
   Delete,
   Param,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { MulterFile } from '../../../../types/multer';
 import { ProjectBoardDto } from '@modules/project/project/project/project.validator.dto';
 import {
   LeadCreateDto,
@@ -153,6 +157,44 @@ export class LeadController {
     const id = parseInt(leadId, 10);
     return this.utilityService.responseHandler(
       this.leadService.convertLeadToProject(id),
+      response,
+    );
+  }
+
+  @Post(':id/attachment')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadAttachment(
+    @NestResponse() response: Response,
+    @Param('id') leadId: string,
+    @UploadedFile() file: MulterFile,
+  ) {
+    const id = parseInt(leadId, 10);
+    return this.utilityService.responseHandler(
+      this.leadService.uploadAttachment(id, file),
+      response,
+    );
+  }
+
+  @Get(':id/attachments')
+  async getAttachments(
+    @NestResponse() response: Response,
+    @Param('id') leadId: string,
+  ) {
+    const id = parseInt(leadId, 10);
+    return this.utilityService.responseHandler(
+      this.leadService.getAttachments(id),
+      response,
+    );
+  }
+
+  @Delete('attachment/:attachmentId')
+  async deleteAttachment(
+    @NestResponse() response: Response,
+    @Param('attachmentId') attachmentId: string,
+  ) {
+    const id = parseInt(attachmentId, 10);
+    return this.utilityService.responseHandler(
+      this.leadService.deleteAttachment(id),
       response,
     );
   }
