@@ -90,6 +90,13 @@ export class AuthMiddleware implements NestMiddleware {
       return next();
     }
 
+    // Skip auth for POS endpoints (they use PosDeviceAuthGuard instead)
+    if (actualPath.startsWith('/pos')) {
+      this.benchmark.endNested(benchmarkKey, 'Route Check', { skipped: true });
+      this.benchmark.end(benchmarkKey);
+      return next();
+    }
+
     // Skip auth for exchange token endpoints (consume and validate are public)
     if (
       actualPath === '/auth/exchange/consume' ||

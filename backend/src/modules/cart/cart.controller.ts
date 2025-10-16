@@ -161,6 +161,6 @@ export class CartController {
     const branchId = request.branchId;
     const result = await this.cartService.checkout(accountId, branchId, body);
 
-    return request['utility'].responseHandler(result, request);
+    return result; // Direct return - NestJS handles JSON serialization
   }
 }

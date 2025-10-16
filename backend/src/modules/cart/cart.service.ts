@@ -233,9 +233,7 @@ export class CartService {
       const childItem = items.find((i) => i.id === childData.itemId);
       if (!childItem) continue;
 
-      const childPrice = childItem.sellingPrice;
-      const childSubtotal = childPrice * childData.quantity;
-
+      // Child items have no price - only the parent bundle has a price
       const childCartItem = (await this.prisma.cartItem.create({
         data: {
           cartId: cart.id,
@@ -245,9 +243,9 @@ export class CartService {
           itemImage: null, // Item model doesn't have imageUrl field
           itemType: childItem.itemType,
           quantity: childData.quantity,
-          unitPrice: childPrice,
-          subtotal: childSubtotal,
-          totalAfterDiscount: childSubtotal,
+          unitPrice: 0,
+          subtotal: 0,
+          totalAfterDiscount: 0,
           isIncluded: childData.isIncluded,
         },
       })) as CartItemResponse;
@@ -522,6 +520,84 @@ export class CartService {
       );
     }
 
+    // Validate inventory if branch has warehouse
+    let warehouseId: string | null = null;
+    const inventoryDeductions: Map<string, number> = new Map();
+
+    if (branchId) {
+      const branchData = await this.prisma.project.findUnique({
+        where: { id: branchId },
+        select: { mainWarehouseId: true },
+      });
+
+      if (branchData?.mainWarehouseId) {
+        warehouseId = branchData.mainWarehouseId;
+
+        // Collect all items that need inventory check (exclude parent ITEM_GROUP)
+        const itemsToCheck: Array<{ itemId: string; quantity: number; name: string }> = [];
+
+        for (const cartItem of cart.items) {
+          // Skip parent ITEM_GROUP items (they don't have inventory)
+          if (cartItem.itemType === 'ITEM_GROUP' && !cartItem.parentCartItemId) {
+            continue;
+          }
+
+          // Include individual products and child items of groups (if isIncluded)
+          if (cartItem.itemId && (cartItem.parentCartItemId ? cartItem.isIncluded : true)) {
+            itemsToCheck.push({
+              itemId: cartItem.itemId,
+              quantity: cartItem.quantity,
+              name: cartItem.itemName,
+            });
+          }
+        }
+
+        // Aggregate quantities if same item appears multiple times
+        // Also keep track of item names
+        const itemNames: Map<string, string> = new Map();
+        for (const item of itemsToCheck) {
+          const currentQty = inventoryDeductions.get(item.itemId) || 0;
+          inventoryDeductions.set(item.itemId, currentQty + item.quantity);
+          itemNames.set(item.itemId, item.name); // Store item name
+        }
+
+        // Check inventory for each unique item
+        const insufficientItems: Array<{ name: string; needed: number; available: number }> = [];
+
+        for (const [itemId, neededQty] of inventoryDeductions.entries()) {
+          const inventoryRecord = await this.prisma.inventoryItem.findUnique({
+            where: {
+              warehouseId_itemId: {
+                warehouseId,
+                itemId,
+              },
+            },
+          });
+
+          const availableQty = inventoryRecord?.stockCount || 0;
+
+          if (availableQty < neededQty) {
+            insufficientItems.push({
+              name: itemNames.get(itemId) || 'Unknown Item',
+              needed: neededQty,
+              available: availableQty,
+            });
+          }
+        }
+
+        // If any items have insufficient stock, throw error
+        if (insufficientItems.length > 0) {
+          const itemDetails = insufficientItems
+            .map((item) => `${item.name} (needed: ${item.needed}, available: ${item.available})`)
+            .join(', ');
+
+          throw new BadRequestException(
+            `Insufficient inventory for the following items: ${itemDetails}`,
+          );
+        }
+      }
+    }
+
     // Get laborer if provided
     let laborerName: string | undefined;
     if (data.laborerId) {
@@ -599,31 +675,65 @@ export class CartService {
         },
       });
 
-      // Create sale items
-      const saleItems = await Promise.all(
-        cart.items.map((item) =>
-          tx.saleItem.create({
-            data: {
-              saleId: sale.id,
-              itemId: item.itemId,
-              parentSaleItemId: item.parentCartItemId
-                ? cart.items.find((ci) => ci.id === item.parentCartItemId)?.id
-                : null,
-              itemName: item.itemName,
-              itemImage: item.itemImage,
-              itemType: item.itemType,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              subtotal: item.subtotal,
-              discountType: item.discountType,
-              discountPercentage: item.discountPercentage,
-              discountAmount: item.discountAmount,
-              totalAfterDiscount: item.totalAfterDiscount,
-              isIncluded: item.isIncluded,
-            },
-          }),
-        ),
-      );
+      // Create sale items - must create parent items first, then child items
+      const saleItems: any[] = [];
+      const cartToSaleItemMap = new Map<string, string>(); // Map cart item ID to sale item ID
+
+      // First, create all parent items (items without parentCartItemId)
+      const parentItems = cart.items.filter((item) => !item.parentCartItemId);
+      for (const item of parentItems) {
+        const saleItem = await tx.saleItem.create({
+          data: {
+            saleId: sale.id,
+            itemId: item.itemId,
+            parentSaleItemId: null,
+            itemName: item.itemName,
+            itemImage: item.itemImage,
+            itemType: item.itemType,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            subtotal: item.subtotal,
+            discountType: item.discountType,
+            discountPercentage: item.discountPercentage,
+            discountAmount: item.discountAmount,
+            totalAfterDiscount: item.totalAfterDiscount,
+            isIncluded: item.isIncluded,
+          },
+        });
+        saleItems.push(saleItem);
+        cartToSaleItemMap.set(item.id, saleItem.id);
+      }
+
+      // Then, create all child items (items with parentCartItemId)
+      const childItems = cart.items.filter((item) => item.parentCartItemId);
+      for (const item of childItems) {
+        const parentSaleItemId = cartToSaleItemMap.get(item.parentCartItemId);
+        if (!parentSaleItemId) {
+          throw new BadRequestException(
+            `Parent sale item not found for child item ${item.itemName}`,
+          );
+        }
+
+        const saleItem = await tx.saleItem.create({
+          data: {
+            saleId: sale.id,
+            itemId: item.itemId,
+            parentSaleItemId,
+            itemName: item.itemName,
+            itemImage: item.itemImage,
+            itemType: item.itemType,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            subtotal: item.subtotal,
+            discountType: item.discountType,
+            discountPercentage: item.discountPercentage,
+            discountAmount: item.discountAmount,
+            totalAfterDiscount: item.totalAfterDiscount,
+            isIncluded: item.isIncluded,
+          },
+        });
+        saleItems.push(saleItem);
+      }
 
       // Create sale payments
       const salePayments = await Promise.all(
@@ -638,6 +748,38 @@ export class CartService {
           }),
         ),
       );
+
+      // Deduct inventory if warehouse exists
+      if (warehouseId && inventoryDeductions.size > 0) {
+        for (const [itemId, quantity] of inventoryDeductions.entries()) {
+          // Get current inventory
+          const inventoryRecord = await tx.inventoryItem.findUnique({
+            where: {
+              warehouseId_itemId: {
+                warehouseId,
+                itemId,
+              },
+            },
+          });
+
+          if (inventoryRecord) {
+            // Deduct inventory
+            await tx.inventoryItem.update({
+              where: {
+                warehouseId_itemId: {
+                  warehouseId,
+                  itemId,
+                },
+              },
+              data: {
+                stockCount: {
+                  decrement: quantity,
+                },
+              },
+            });
+          }
+        }
+      }
 
       // Clear cart items
       await tx.cartItem.deleteMany({

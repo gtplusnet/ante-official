@@ -10,6 +10,7 @@ import {
 import { PrismaService } from '@common/prisma.service';
 import { POSDeviceService } from '@modules/pos-device/pos-device.service';
 import { RedisService } from '@infrastructure/redis/redis.service';
+import { UtilityService } from '@common/utility.service';
 import { PosDeviceRequest } from '../interfaces/pos-device.request';
 
 @Injectable()
@@ -18,6 +19,7 @@ export class PosDeviceAuthGuard implements CanActivate {
     @Inject() private readonly posDeviceService: POSDeviceService,
     @Inject() private readonly prismaService: PrismaService,
     @Inject() private readonly redisService: RedisService,
+    @Inject() private readonly utilityService: UtilityService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -105,6 +107,7 @@ export class PosDeviceAuthGuard implements CanActivate {
     request.cashier = cashier as any;
     request.branchId = device.branchId;
     request.companyId = device.companyId;
+    request['utility'] = this.utilityService;
 
     return true;
   }

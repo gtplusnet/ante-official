@@ -1,3 +1,12 @@
+export class PosChildItemResponse {
+  itemId: string;
+  itemName: string;
+  quantity: number;
+  unitPrice: number;
+  isIncluded: boolean;
+  stockCount: number;
+}
+
 export class PosItemResponse {
   id: string;
   name: string;
@@ -13,6 +22,8 @@ export class PosItemResponse {
   uom: string;
   companyId?: number;
   branchId?: number;
+  stockCount?: number;
+  childItems?: PosChildItemResponse[];
 }
 
 export class PosItemsListResponse {

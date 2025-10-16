@@ -48,7 +48,10 @@ export class PosController {
     description: 'Cashier does not belong to the same company as the POS device',
   })
   async getPosItems(@Req() request: PosDeviceRequest) {
-    const result = await this.posService.getPosItems(request.companyId);
+    const result = await this.posService.getPosItems(
+      request.companyId,
+      request.branchId,
+    );
 
     return request['utility'].responseHandler(result, request);
   }
