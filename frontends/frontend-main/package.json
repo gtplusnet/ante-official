@@ -59,6 +59,7 @@
     "pinia": "^2.0.11",
     "qrcode.vue": "^3.6.0",
     "quasar": "^2.16.0",
+    "rrule": "^2.8.1",
     "socket.io-client": "^4.8.0",
     "vue": "^3.4.18",
     "vue-dragscroll": "^4.0.6",

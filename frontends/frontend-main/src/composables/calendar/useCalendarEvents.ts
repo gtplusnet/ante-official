@@ -147,7 +147,7 @@ export function useCalendarEvents() {
     return (yiq >= 128) ? '#000000' : '#FFFFFF';
   };
 
-  // Fetch events with date range
+  // Fetch events with date range (using backend expansion)
   const fetchEvents = async (startDate: Date, endDate: Date, categoryIds?: number[], useCache = true) => {
     const cacheKey = `${startDate.toISOString()}_${endDate.toISOString()}_${categoryIds?.join(',') || 'all'}`;
 
@@ -173,11 +173,9 @@ export function useCalendarEvents() {
         params.categoryIds = categoryIds;
       }
 
-      const response = await api.get('/calendar/event', { params });
-      const allEvents = response.data || [];
-
-      // Expand recurring events
-      const expandedEvents = await expandRecurringEvents(allEvents, startDate, endDate);
+      // Use expanded endpoint - backend handles recurrence expansion
+      const response = await api.get('/calendar/event/expanded/all', { params });
+      const expandedEvents = response.data || [];
 
       // Cache the results
       eventCache.set(cacheKey, {

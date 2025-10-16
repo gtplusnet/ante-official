@@ -38,6 +38,17 @@ export class CalendarEventController {
     );
   }
 
+  @Get('expanded/all')
+  async getExpandedEvents(
+    @Query() query: GetEventsQueryDto,
+    @NestResponse() response: Response,
+  ) {
+    return this.utilityService.responseHandler(
+      this.calendarEventService.getExpandedEvents(query),
+      response,
+    );
+  }
+
   @Get(':id')
   async getEventById(
     @Param('id') id: string,

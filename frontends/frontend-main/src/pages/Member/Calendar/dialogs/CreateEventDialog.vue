@@ -168,100 +168,10 @@
 
           <!-- Recurrence -->
           <div class="form-field">
-            <q-expansion-item
-              dense
-              expand-separator
-              icon="repeat"
-              label="Recurrence"
-              class="recurrence-expansion"
-            >
-              <q-card flat>
-                <q-card-section class="recurrence-section">
-                  <q-select
-                    v-model="form.recurrenceType"
-                    :options="recurrenceOptions"
-                    label="Repeat"
-                    outlined
-                    dense
-                    class="full-width q-mb-md"
-                  />
-
-                  <template v-if="form.recurrenceType !== 'none'">
-                    <!-- Frequency -->
-                    <div class="frequency-row q-mb-md">
-                      <span class="frequency-label">Repeat every</span>
-                      <q-input
-                        v-model.number="form.frequency"
-                        type="number"
-                        outlined
-                        dense
-                        min="1"
-                        class="frequency-input"
-                      />
-                      <span class="frequency-unit">{{ getFrequencyUnit(form.recurrenceType) }}</span>
-                    </div>
-
-                    <!-- Days of week (for weekly recurrence) -->
-                    <div v-if="form.recurrenceType === 'weekly'" class="q-mb-md">
-                      <div class="field-label">Repeat on</div>
-                      <div class="days-of-week">
-                        <q-btn
-                          v-for="day in weekDays"
-                          :key="day.value"
-                          :label="day.short"
-                          :outline="!form.byDay.includes(day.value)"
-                          :unelevated="form.byDay.includes(day.value)"
-                          color="primary"
-                          size="sm"
-                          @click="toggleDay(day.value)"
-                          class="day-button"
-                        />
-                      </div>
-                    </div>
-
-                    <!-- End date -->
-                    <div class="recurrence-end">
-                      <q-radio
-                        v-model="recurrenceEndType"
-                        val="never"
-                        label="Never"
-                        dense
-                      />
-                      <q-radio
-                        v-model="recurrenceEndType"
-                        val="until"
-                        label="On"
-                        dense
-                      />
-                      <q-input
-                        v-if="recurrenceEndType === 'until'"
-                        v-model="form.until"
-                        type="date"
-                        outlined
-                        dense
-                        class="until-input"
-                      />
-                      <q-radio
-                        v-model="recurrenceEndType"
-                        val="count"
-                        label="After"
-                        dense
-                      />
-                      <q-input
-                        v-if="recurrenceEndType === 'count'"
-                        v-model.number="form.count"
-                        type="number"
-                        outlined
-                        dense
-                        min="1"
-                        suffix="occurrences"
-                        class="count-input"
-                      />
-                    </div>
-                  </template>
-                </q-card-section>
-              </q-card>
-            </q-expansion-item>
+            <RecurrenceSelector
+              v-model="form.recurrence"
+              :event-start-date="eventStartDate"
+            />
           </div>
 
           <!-- Visibility -->
@@ -307,6 +217,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useQuasar, date as qDate } from 'quasar';
 import { useCalendarEvents } from 'src/composables/calendar/useCalendarEvents';
 import { useCalendarCategories } from 'src/composables/calendar/useCalendarCategories';
+import RecurrenceSelector from '../components/RecurrenceSelector.vue';
 
 // Props
 interface Props {
@@ -340,18 +251,6 @@ const { categories, fetchCategories } = useCalendarCategories();
 // State
 const showDialog = ref(props.modelValue);
 const loading = ref(false);
-const recurrenceEndType = ref<'never' | 'until' | 'count'>('never');
-
-// Week days
-const weekDays = [
-  { value: 'SU', short: 'S', full: 'Sunday' },
-  { value: 'MO', short: 'M', full: 'Monday' },
-  { value: 'TU', short: 'T', full: 'Tuesday' },
-  { value: 'WE', short: 'W', full: 'Wednesday' },
-  { value: 'TH', short: 'T', full: 'Thursday' },
-  { value: 'FR', short: 'F', full: 'Friday' },
-  { value: 'SA', short: 'S', full: 'Saturday' }
-];
 
 // Form
 const form = ref({
@@ -366,11 +265,7 @@ const form = ref({
   colorCode: '#2196F3',
   categoryId: null as number | null,
   visibility: 'private',
-  recurrenceType: 'none',
-  frequency: 1,
-  byDay: [] as string[],
-  until: '',
-  count: null as number | null
+  recurrence: null as any // Recurrence data from RecurrenceSelector
 });
 
 // Computed
@@ -378,38 +273,15 @@ const isEditing = computed(() => !!props.event);
 
 const categoryOptions = computed(() => categories.value);
 
-const recurrenceOptions = [
-  { label: 'Does not repeat', value: 'none' },
-  { label: 'Daily', value: 'daily' },
-  { label: 'Weekly', value: 'weekly' },
-  { label: 'Monthly', value: 'monthly' },
-  { label: 'Yearly', value: 'yearly' }
-];
+const eventStartDate = computed(() => {
+  if (!form.value.startDate) return new Date();
+  return new Date(`${form.value.startDate}T${form.value.startTime || '09:00'}:00`);
+});
 
 const visibilityOptions = [
   { label: 'Private', value: 'private' },
   { label: 'Public', value: 'public' }
 ];
-
-// Methods
-const getFrequencyUnit = (type: string): string => {
-  switch (type) {
-    case 'daily': return 'day(s)';
-    case 'weekly': return 'week(s)';
-    case 'monthly': return 'month(s)';
-    case 'yearly': return 'year(s)';
-    default: return '';
-  }
-};
-
-const toggleDay = (day: string) => {
-  const index = form.value.byDay.indexOf(day);
-  if (index > -1) {
-    form.value.byDay.splice(index, 1);
-  } else {
-    form.value.byDay.push(day);
-  }
-};
 
 const initializeForm = () => {
   if (props.event) {
@@ -430,11 +302,7 @@ const initializeForm = () => {
       colorCode: event.colorCode || '#2196F3',
       categoryId: event.categoryId || null,
       visibility: event.visibility || 'private',
-      recurrenceType: 'none',
-      frequency: 1,
-      byDay: [],
-      until: '',
-      count: null
+      recurrence: event.recurrence || null
     };
   } else {
     // Create mode
@@ -453,11 +321,7 @@ const initializeForm = () => {
       colorCode: '#2196F3',
       categoryId: null,
       visibility: 'private',
-      recurrenceType: 'none',
-      frequency: 1,
-      byDay: [],
-      until: '',
-      count: null
+      recurrence: null
     };
   }
 };
@@ -483,7 +347,7 @@ const handleSubmit = async () => {
       ? new Date(`${form.value.endDate}T23:59:59`).toISOString()
       : new Date(`${form.value.endDate}T${form.value.endTime}:00`).toISOString();
 
-    const eventData = {
+    const eventData: any = {
       title: form.value.title,
       description: form.value.description || null,
       location: form.value.location || null,
@@ -494,6 +358,11 @@ const handleSubmit = async () => {
       categoryId: form.value.categoryId,
       visibility: form.value.visibility
     };
+
+    // Add recurrence data if provided
+    if (form.value.recurrence) {
+      eventData.recurrence = form.value.recurrence;
+    }
 
     if (isEditing.value) {
       await updateEvent(props.event.id, eventData);

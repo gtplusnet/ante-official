@@ -7,11 +7,13 @@ import {
   QuickUpdateEventDto,
   GetEventsQueryDto,
 } from './calendar-event.dto';
+import { RRuleService } from './rrule.service';
 
 @Injectable()
 export class CalendarEventService {
   @Inject() private readonly prisma: PrismaService;
   @Inject() private readonly utility: UtilityService;
+  @Inject() private readonly rruleService: RRuleService;
 
   /**
    * Get events within a date range
@@ -116,6 +118,15 @@ export class CalendarEventService {
       throw new BadRequestException('Start date must be before end date');
     }
 
+    // Build RRULE if recurrence provided
+    let rrule: string | null = null;
+    if (data.recurrence) {
+      rrule = this.rruleService.buildRRule({
+        ...data.recurrence,
+        dtstart: new Date(data.startDateTime),
+      });
+    }
+
     // Create the event with relations
     const event = await this.prisma.calendarEvent.create({
       data: {
@@ -135,6 +146,8 @@ export class CalendarEventService {
         ...(data.recurrence && {
           recurrence: {
             create: {
+              rrule, // Source of truth
+              // Helper fields for UI
               recurrenceType: data.recurrence.recurrenceType,
               frequency: data.recurrence.frequency,
               interval: data.recurrence.interval,
@@ -143,6 +156,8 @@ export class CalendarEventService {
               byMonth: data.recurrence.byMonth || [],
               count: data.recurrence.count,
               until: data.recurrence.until ? new Date(data.recurrence.until) : null,
+              exdate: data.recurrence.exdate || [],
+              rdate: data.recurrence.rdate || [],
               exceptions: data.recurrence.exceptions || [],
             },
           },
@@ -350,5 +365,54 @@ export class CalendarEventService {
     });
 
     return { success: true, message: 'Event deleted successfully' };
+  }
+
+  /**
+   * Get expanded events (with recurring instances)
+   */
+  async getExpandedEvents(query: GetEventsQueryDto) {
+    // Get all events in the date range
+    const events = await this.getEvents(query);
+    const expanded = [];
+
+    const startDate = new Date(query.startDate);
+    const endDate = new Date(query.endDate);
+
+    for (const event of events) {
+      if (!event.recurrence?.rrule) {
+        // Non-recurring event - add as is
+        expanded.push(event);
+      } else {
+        // Recurring event - expand using rrule.js
+        const instances = this.rruleService.expandRRule(
+          event.recurrence.rrule,
+          new Date(event.startDateTime),
+          startDate,
+          endDate,
+          event.recurrence.exdate || [],
+        );
+
+        // Calculate event duration
+        const duration =
+          new Date(event.endDateTime).getTime() -
+          new Date(event.startDateTime).getTime();
+
+        // Create an instance object for each occurrence
+        for (const instanceDate of instances) {
+          const instanceEnd = new Date(instanceDate.getTime() + duration);
+
+          expanded.push({
+            ...event,
+            id: `${event.id}_${instanceDate.getTime()}`, // Unique ID for each instance
+            startDateTime: instanceDate.toISOString(),
+            endDateTime: instanceEnd.toISOString(),
+            isRecurringInstance: true,
+            parentEventId: event.id,
+          });
+        }
+      }
+    }
+
+    return expanded;
   }
 }
