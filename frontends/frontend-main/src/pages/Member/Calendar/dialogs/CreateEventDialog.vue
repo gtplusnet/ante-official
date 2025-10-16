@@ -2,11 +2,10 @@
   <q-dialog
     v-model="showDialog"
     persistent
-    maximized
-    transition-show="slide-up"
-    transition-hide="slide-down"
+    transition-show="scale"
+    transition-hide="scale"
   >
-    <q-card class="event-dialog">
+    <q-card class="event-dialog" style="min-width: 600px; max-width: 800px">
       <!-- Header -->
       <q-card-section class="dialog-header">
         <div class="header-content">
@@ -157,7 +156,7 @@
               outlined
               dense
               type="textarea"
-              rows="4"
+              rows="3"
               class="full-width"
             >
               <template v-slot:prepend>
@@ -166,29 +165,44 @@
             </q-input>
           </div>
 
-          <!-- Recurrence -->
-          <div class="form-field">
-            <RecurrenceSelector
-              v-model="form.recurrence"
-              :event-start-date="eventStartDate"
-            />
-          </div>
+          <!-- Advanced Options (Collapsible) -->
+          <q-expansion-item
+            class="advanced-options"
+            dense
+            dense-toggle
+            expand-separator
+            icon="tune"
+            label="Advanced options"
+            header-class="text-grey-7"
+          >
+            <q-card flat>
+              <q-card-section class="q-pt-md">
+                <!-- Recurrence -->
+                <div class="form-field">
+                  <RecurrenceSelector
+                    v-model="form.recurrence"
+                    :event-start-date="eventStartDate"
+                  />
+                </div>
 
-          <!-- Visibility -->
-          <div class="form-field">
-            <q-select
-              v-model="form.visibility"
-              :options="visibilityOptions"
-              label="Visibility"
-              outlined
-              dense
-              class="full-width"
-            >
-              <template v-slot:prepend>
-                <q-icon name="visibility" size="20px" />
-              </template>
-            </q-select>
-          </div>
+                <!-- Visibility -->
+                <div class="form-field q-mb-none">
+                  <q-select
+                    v-model="form.visibility"
+                    :options="visibilityOptions"
+                    label="Visibility"
+                    outlined
+                    dense
+                    class="full-width"
+                  >
+                    <template v-slot:prepend>
+                      <q-icon name="visibility" size="20px" />
+                    </template>
+                  </q-select>
+                </div>
+              </q-card-section>
+            </q-card>
+          </q-expansion-item>
         </q-form>
       </q-card-section>
 
@@ -226,6 +240,7 @@ interface Props {
   initialDate?: Date;
   initialEndDate?: Date | null;
   initialAllDay?: boolean;
+  prefillData?: any; // Data from quick create
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -233,7 +248,8 @@ const props = withDefaults(defineProps<Props>(), {
   event: null,
   initialDate: () => new Date(),
   initialEndDate: null,
-  initialAllDay: false
+  initialAllDay: false,
+  prefillData: null
 });
 
 // Emits
@@ -303,6 +319,25 @@ const initializeForm = () => {
       categoryId: event.categoryId || null,
       visibility: event.visibility || 'private',
       recurrence: event.recurrence || null
+    };
+  } else if (props.prefillData) {
+    // Prefill from quick create
+    const startDate = new Date(props.prefillData.date);
+    const endDate = qDate.addToDate(startDate, { hours: 1 });
+
+    form.value = {
+      title: props.prefillData.title || '',
+      description: '',
+      location: '',
+      startDate: props.prefillData.date,
+      startTime: props.prefillData.time || qDate.formatDate(startDate, 'HH:mm'),
+      endDate: qDate.formatDate(endDate, 'YYYY-MM-DD'),
+      endTime: qDate.formatDate(qDate.addToDate(new Date(`${props.prefillData.date}T${props.prefillData.time || '09:00'}`), { hours: 1 }), 'HH:mm'),
+      allDay: props.prefillData.allDay || false,
+      colorCode: '#2196F3',
+      categoryId: props.prefillData.categoryId || null,
+      visibility: 'private',
+      recurrence: null
     };
   } else {
     // Create mode
@@ -428,12 +463,11 @@ onMounted(async () => {
 .event-dialog {
   display: flex;
   flex-direction: column;
-  max-width: 600px;
-  margin: auto;
 
   .dialog-header {
     background: white;
-    padding: 16px;
+    padding: 16px 24px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 
     .header-content {
       display: flex;
@@ -449,7 +483,7 @@ onMounted(async () => {
   }
 
   .dialog-body {
-    flex: 1;
+    max-height: 70vh;
     overflow-y: auto;
     padding: 24px;
 
@@ -493,6 +527,22 @@ onMounted(async () => {
         height: 20px;
         border-radius: 50%;
         border: 2px solid rgba(0, 0, 0, 0.1);
+      }
+
+      .advanced-options {
+        margin-top: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 4px;
+        background: #fafafa;
+
+        :deep(.q-item) {
+          padding: 8px 12px;
+          min-height: 40px;
+        }
+
+        :deep(.q-card) {
+          background: white;
+        }
       }
 
       .recurrence-section {

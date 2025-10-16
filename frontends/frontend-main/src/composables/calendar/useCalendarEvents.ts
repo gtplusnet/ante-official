@@ -355,13 +355,8 @@ export function useCalendarEvents() {
       const response = await api.put(`/calendar/event/${eventId}`, updates);
       const data = response.data;
 
-      // Update local events
-      const index = events.value.findIndex(e => e.id === eventId);
-      if (index !== -1) {
-        events.value[index] = { ...events.value[index], ...data };
-      }
-
-      // Clear cache
+      // Clear cache - let the page component refresh via loadEvents()
+      // This ensures correct handling of both regular events and recurring instances
       eventCache.clear();
 
       $q.notify({
@@ -396,13 +391,8 @@ export function useCalendarEvents() {
       });
       const data = response.data;
 
-      // Update local events
-      const index = events.value.findIndex(e => e.id === eventId);
-      if (index !== -1) {
-        events.value[index] = { ...events.value[index], ...data };
-      }
-
-      // Clear cache
+      // Clear cache - calendar will auto-refresh via FullCalendar's event handlers
+      // This ensures correct handling of both regular events and recurring instances
       eventCache.clear();
 
       return data;

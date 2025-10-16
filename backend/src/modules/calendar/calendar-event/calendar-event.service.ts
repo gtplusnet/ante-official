@@ -64,13 +64,26 @@ export class CalendarEventService {
 
   /**
    * Get a single event by ID
+   * Supports both regular event IDs and recurring instance IDs (format: parentId_timestamp)
    */
   async getEventById(id: string) {
     const companyId = this.utility.accountInformation.company?.id;
 
+    // Check if this is a recurring event instance ID (format: parentId_timestamp)
+    let parentEventId = id;
+    let instanceTimestamp: number | null = null;
+
+    if (id.includes('_')) {
+      const parts = id.split('_');
+      if (parts.length === 2 && !isNaN(Number(parts[1]))) {
+        parentEventId = parts[0];
+        instanceTimestamp = Number(parts[1]);
+      }
+    }
+
     const event = await this.prisma.calendarEvent.findFirst({
       where: {
-        id,
+        id: parentEventId,
         companyId,
         isActive: true,
       },
@@ -97,6 +110,28 @@ export class CalendarEventService {
 
     if (!event) {
       throw new NotFoundException('Event not found');
+    }
+
+    // If this is a recurring instance request, generate the specific instance
+    if (instanceTimestamp !== null && event.recurrence?.rrule) {
+      const instanceDate = new Date(instanceTimestamp);
+
+      // Calculate event duration
+      const duration =
+        new Date(event.endDateTime).getTime() -
+        new Date(event.startDateTime).getTime();
+
+      const instanceEnd = new Date(instanceDate.getTime() + duration);
+
+      // Return the instance with modified dates
+      return {
+        ...event,
+        id, // Keep the composite ID
+        startDateTime: instanceDate.toISOString(),
+        endDateTime: instanceEnd.toISOString(),
+        isRecurringInstance: true,
+        parentEventId: event.id,
+      };
     }
 
     return event;
@@ -213,13 +248,23 @@ export class CalendarEventService {
 
   /**
    * Update an event
+   * Note: Updating a recurring instance will update the parent event
    */
   async updateEvent(id: string, data: UpdateEventDto) {
     const companyId = this.utility.accountInformation.company?.id;
 
+    // Extract parent event ID if this is a recurring instance
+    let parentEventId = id;
+    if (id.includes('_')) {
+      const parts = id.split('_');
+      if (parts.length === 2 && !isNaN(Number(parts[1]))) {
+        parentEventId = parts[0];
+      }
+    }
+
     // Check if event exists and belongs to company
     const existingEvent = await this.prisma.calendarEvent.findFirst({
-      where: { id, companyId, isActive: true },
+      where: { id: parentEventId, companyId, isActive: true },
     });
 
     if (!existingEvent) {
@@ -233,9 +278,9 @@ export class CalendarEventService {
       }
     }
 
-    // Update event
+    // Update event (using parent event ID)
     const event = await this.prisma.calendarEvent.update({
-      where: { id },
+      where: { id: parentEventId },
       data: {
         ...(data.title && { title: data.title }),
         ...(data.description !== undefined && { description: data.description }),
@@ -270,16 +315,16 @@ export class CalendarEventService {
 
     // Handle attendees update if provided
     if (data.attendeeIds) {
-      // Delete existing attendees
+      // Delete existing attendees (using parent event ID)
       await this.prisma.calendarEventAttendee.deleteMany({
-        where: { eventId: id },
+        where: { eventId: parentEventId },
       });
 
       // Create new attendees
       if (data.attendeeIds.length > 0) {
         await this.prisma.calendarEventAttendee.createMany({
           data: data.attendeeIds.map((accountId) => ({
-            eventId: id,
+            eventId: parentEventId,
             accountId,
             responseStatus: 'pending',
             isOrganizer: false,
@@ -294,13 +339,23 @@ export class CalendarEventService {
 
   /**
    * Quick update for drag/drop and resize
+   * Note: Updating a recurring instance will update the parent event
    */
   async quickUpdateEvent(id: string, data: QuickUpdateEventDto) {
     const companyId = this.utility.accountInformation.company?.id;
 
+    // Extract parent event ID if this is a recurring instance
+    let parentEventId = id;
+    if (id.includes('_')) {
+      const parts = id.split('_');
+      if (parts.length === 2 && !isNaN(Number(parts[1]))) {
+        parentEventId = parts[0];
+      }
+    }
+
     // Check if event exists and belongs to company
     const existingEvent = await this.prisma.calendarEvent.findFirst({
-      where: { id, companyId, isActive: true },
+      where: { id: parentEventId, companyId, isActive: true },
     });
 
     if (!existingEvent) {
@@ -312,9 +367,9 @@ export class CalendarEventService {
       throw new BadRequestException('Start date must be before end date');
     }
 
-    // Update only start and end times
+    // Update only start and end times (using parent event ID)
     const event = await this.prisma.calendarEvent.update({
-      where: { id },
+      where: { id: parentEventId },
       data: {
         startDateTime: new Date(data.startDateTime),
         endDateTime: new Date(data.endDateTime),
@@ -345,22 +400,32 @@ export class CalendarEventService {
 
   /**
    * Delete an event (soft delete)
+   * Note: Deleting a recurring instance will delete the parent event
    */
   async deleteEvent(id: string) {
     const companyId = this.utility.accountInformation.company?.id;
 
+    // Extract parent event ID if this is a recurring instance
+    let parentEventId = id;
+    if (id.includes('_')) {
+      const parts = id.split('_');
+      if (parts.length === 2 && !isNaN(Number(parts[1]))) {
+        parentEventId = parts[0];
+      }
+    }
+
     // Check if event exists and belongs to company
     const existingEvent = await this.prisma.calendarEvent.findFirst({
-      where: { id, companyId, isActive: true },
+      where: { id: parentEventId, companyId, isActive: true },
     });
 
     if (!existingEvent) {
       throw new NotFoundException('Event not found');
     }
 
-    // Soft delete
+    // Soft delete (using parent event ID)
     await this.prisma.calendarEvent.update({
-      where: { id },
+      where: { id: parentEventId },
       data: { isActive: false },
     });
 
