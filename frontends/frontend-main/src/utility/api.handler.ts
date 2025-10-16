@@ -35,6 +35,13 @@ export const APIRequests = {
   updateProposalStatus: (quasar: QVueGlobals, projectId: string, proposalStatus: string) => apiRequest<unknown>(quasar, 'PATCH', '/lead/update-proposal-status', { projectId, proposalStatus }),
   getRelationshipOwnersList: (quasar: QVueGlobals, params?: any) => apiRequest<unknown>(quasar, 'GET', '/lead-relationship-owner/list', {}, params || {}),
   convertLeadToProject: (quasar: QVueGlobals, id: string) => apiRequest<ProjectDataResponse>(quasar, 'POST', `/lead/${id}/convert`, {}),
+  uploadLeadAttachment: (quasar: QVueGlobals, leadId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiRequest<unknown>(quasar, 'POST', `/lead/${leadId}/attachment`, formData);
+  },
+  getLeadAttachments: (quasar: QVueGlobals, leadId: string) => apiRequest<unknown>(quasar, 'GET', `/lead/${leadId}/attachments`, {}, {}),
+  deleteLeadAttachment: (quasar: QVueGlobals, attachmentId: string) => apiRequest<unknown>(quasar, 'DELETE', `/lead/attachment/${attachmentId}`, {}),
   getDealTypesSummary: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'GET', '/lead/deal-types-summary', {}, {}),
   getClosingDatesSummary: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'GET', '/lead/closing-dates-summary', {}, {}),
   getSalesProbabilitySummary: (quasar: QVueGlobals) => apiRequest<unknown>(quasar, 'GET', '/lead/sales-probability-summary', {}, {}),

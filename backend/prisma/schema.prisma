@@ -185,6 +185,7 @@ model Account {
   createdCalendarCategories              CalendarCategory[]                 @relation("CategoryCreator")
   ownedCalendarCategories                CalendarCategory[]                 @relation("AccountCategories")
   uploadedEventAttachments               CalendarEventAttachment[]          @relation("EventAttachmentUploader")
+  uploadedLeadAttachments                LeadAttachment[]                   @relation("LeadAttachmentUploader")
 
   @@index([firstName])
   @@index([lastName])
@@ -3350,11 +3351,28 @@ model LeadDeal {
   location                Location?       @relation(fields: [locationId], references: [id])
   pointOfContact          PointOfContact? @relation(fields: [pointOfContactId], references: [id])
   relationshipOwner       Account?        @relation("LeadDealRelationshipOwner", fields: [relationshipOwnerId], references: [id])
+  attachments             LeadAttachment[]
 
   @@index([dealName])
   @@index([closeDate])
   @@index([companyId, isDeleted])
   @@index([status])
+}
+
+model LeadAttachment {
+  id         Int      @id @default(autoincrement())
+  leadId     Int
+  fileName   String
+  fileUrl    String
+  fileSize   Int
+  mimeType   String
+  uploadedBy String
+  uploadedAt DateTime @default(now())
+
+  lead       LeadDeal @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  uploader   Account  @relation("LeadAttachmentUploader", fields: [uploadedBy], references: [id])
+
+  @@index([leadId])
 }
 
 model CRMActivity {
