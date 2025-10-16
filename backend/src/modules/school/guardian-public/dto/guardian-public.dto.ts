@@ -756,6 +756,9 @@ export class StudentAttendanceStatusDto {
   @ApiProperty({ description: 'Current attendance status', enum: AttendanceStatus })
   status: AttendanceStatus;
 
+  @ApiPropertyOptional({ description: 'Student photo URL' })
+  photoUrl?: string;
+
   @ApiPropertyOptional({ description: 'Last check-in details', type: AttendanceEventDto })
   lastCheckIn?: AttendanceEventDto;
 
