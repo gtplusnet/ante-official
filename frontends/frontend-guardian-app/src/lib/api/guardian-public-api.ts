@@ -212,6 +212,11 @@ export interface GuardianProfileDto {
   notificationPreferences?: Record<string, any>;
   students: StudentInfoDto[];
   activeDevices?: number;
+  profilePhoto?: {
+    id: string;
+    url: string;
+    name: string;
+  };
 }
 
 export interface GuardianLoginResponse {
