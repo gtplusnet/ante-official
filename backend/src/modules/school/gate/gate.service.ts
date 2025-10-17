@@ -1,15 +1,18 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '@common/prisma.service';
 import { CreateGateDto, UpdateGateDto, DeleteGateDto } from './gate.validator';
 import { TableBodyDTO, TableQueryDTO } from '@common/table.dto/table.dto';
 import { TableHandlerService } from '@common/table.handler/table.handler.service';
 import { UtilityService } from '@common/utility.service';
+import { AttendanceService } from '../attendance/attendance.service';
 
 @Injectable()
 export class GateService {
   @Inject() private prisma: PrismaService;
   @Inject() private tableHandler: TableHandlerService;
   @Inject() private utility: UtilityService;
+  @Inject(forwardRef(() => AttendanceService))
+  private attendanceService: AttendanceService;
 
   async createGate(data: CreateGateDto, companyId: number) {
     const gate = await this.prisma.gate.create({
@@ -373,7 +376,6 @@ export class GateService {
 
     const person = student || guardian;
     const personType = student ? 'student' : 'guardian';
-    const personName = `${person.firstName} ${person.lastName}`;
 
     // Check last action for this person today
     const today = new Date();
@@ -397,7 +399,41 @@ export class GateService {
       ? 'check_in'
       : 'check_out';
 
-    // Create attendance record
+    // For students, use AttendanceService (includes push notifications + WebSocket)
+    if (student) {
+      const result = action === 'check_in'
+        ? await this.attendanceService.recordCheckIn({
+            studentId: student.studentNumber,
+            gateId: params.gateId,
+            timestamp: params.timestamp,
+            photo: params.photo,
+            temperature: params.temperature,
+            companyId: params.companyId,
+          })
+        : await this.attendanceService.recordCheckOut({
+            studentId: student.studentNumber,
+            gateId: params.gateId,
+            timestamp: params.timestamp,
+            photo: params.photo,
+            companyId: params.companyId,
+          });
+
+      // Return in expected format
+      return {
+        id: result.attendanceId,
+        qrCode: params.qrCode,
+        personId: student.id,
+        personName: result.studentName,
+        personType: 'student' as const,
+        action,
+        timestamp: params.timestamp,
+        deviceId: params.gateId,
+        profilePhoto: params.photo,
+      };
+    }
+
+    // For guardians, create attendance record directly (no notifications needed)
+    const personName = `${person.firstName} ${person.lastName}`;
     const attendance = await this.prisma.schoolAttendance.create({
       data: {
         qrCode: params.qrCode,
