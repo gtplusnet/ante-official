@@ -10,7 +10,7 @@ export class GuardianPushNotificationService implements OnModuleInit {
   private firebaseApp: admin.app.App;
   private initialized = false;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async onModuleInit() {
     try {
@@ -145,16 +145,29 @@ export class GuardianPushNotificationService implements OnModuleInit {
     action: 'check_in' | 'check_out',
     time: Date,
   ): Promise<void> {
-    const actionText = action === 'check_in' ? 'checked in' : 'checked out';
+    // Helper function to capitalize first letter of each word (Title Case)
+    const toTitleCase = (str: string): string => {
+      return str
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    };
+
+    const formattedStudentName = toTitleCase(studentName);
     const timeStr = time.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
     });
 
+    const actionText = action === 'check_in'
+      ? `arrived at ${timeStr}.`
+      : `left the campus at ${timeStr}.`;
+
     const notification = {
       title: 'Attendance Update',
-      body: `${studentName} has ${actionText} at ${timeStr}`,
+      body: `${formattedStudentName} ${actionText}`,
       data: {
         type: 'attendance',
         action,
