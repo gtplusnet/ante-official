@@ -256,6 +256,60 @@ export class GuardianPushNotificationService implements OnModuleInit {
   }
 
   /**
+   * Remove invalid FCM token from database
+   * This is called when Firebase reports a token as invalid
+   */
+  private async removeInvalidFCMToken(fcmToken: string): Promise<void> {
+    try {
+      // Find all guardian tokens with this FCM token
+      const guardianTokens = await this.prisma.guardianToken.findMany({
+        where: {
+          isRevoked: false,
+        },
+      });
+
+      let cleanedCount = 0;
+      const cleanedGuardians: string[] = [];
+
+      for (const guardianToken of guardianTokens) {
+        const deviceInfo = (guardianToken.deviceInfo as any) || {};
+
+        // Check if this token has the invalid FCM token
+        if (deviceInfo.fcmToken === fcmToken) {
+          // Remove FCM token but keep the auth token and other device info
+          delete deviceInfo.fcmToken;
+          delete deviceInfo.fcmTokenUpdatedAt;
+
+          await this.prisma.guardianToken.update({
+            where: { id: guardianToken.id },
+            data: { deviceInfo },
+          });
+
+          cleanedCount++;
+          cleanedGuardians.push(guardianToken.guardianId);
+
+          this.logger.log(
+            `Cleaned up invalid FCM token for guardian ${guardianToken.guardianId}`,
+          );
+        }
+      }
+
+      if (cleanedCount > 0) {
+        this.logger.warn(
+          `Removed invalid FCM token from ${cleanedCount} device(s). ` +
+          `Guardians affected: ${cleanedGuardians.join(', ')}. ` +
+          `Mobile app will need to refresh FCM token.`,
+        );
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to remove invalid FCM token ${fcmToken}:`,
+        error,
+      );
+    }
+  }
+
+  /**
    * Send notification to a specific FCM token
    */
   private async sendNotification(
@@ -320,11 +374,17 @@ export class GuardianPushNotificationService implements OnModuleInit {
         error.code === 'messaging/invalid-registration-token' ||
         error.code === 'messaging/registration-token-not-registered'
       ) {
-        this.logger.debug(`Invalid FCM token: ${fcmToken}`);
-        // Could remove invalid token from database here
+        this.logger.warn(`Invalid FCM token detected: ${fcmToken.substring(0, 20)}...`);
+
+        // Automatically clean up the invalid token from database
+        await this.removeInvalidFCMToken(fcmToken);
+
+        this.logger.log(
+          `FCM token cleanup completed. Mobile app will need to refresh token for future notifications.`,
+        );
       } else {
         this.logger.error(
-          `Failed to send notification to token ${fcmToken}:`,
+          `Failed to send notification to token ${fcmToken.substring(0, 20)}...:`,
           error,
         );
       }
