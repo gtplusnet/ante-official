@@ -22,7 +22,8 @@
     "strictPropertyInitialization": false,
     "noImplicitOverride": false,
     "noPropertyAccessFromIndexSignature": false,
-    "noUncheckedIndexedAccess": false
+    "noUncheckedIndexedAccess": false,
+    "skipLibCheck": true
   },
   "include": [
     "src/**/*",

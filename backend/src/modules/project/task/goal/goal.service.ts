@@ -191,6 +191,101 @@ export class GoalService {
   }
 
   /**
+   * Get goal progress data with accurate completion dates
+   * Returns daily completion data for chart rendering
+   */
+  async getGoalProgress(id: number) {
+    const companyId = this.utilityService.accountInformation.company?.id;
+
+    if (!companyId) {
+      throw new BadRequestException('User must belong to a company to access goals');
+    }
+
+    const goal = await this.prisma.goal.findUnique({
+      where: { id },
+      include: {
+        tasks: {
+          where: {
+            isDeleted: false,
+            boardLane: {
+              key: BoardLaneKeys.DONE,
+            },
+            completedAt: {
+              not: null,
+            },
+          },
+          select: {
+            id: true,
+            completedAt: true,
+            title: true,
+          },
+          orderBy: {
+            completedAt: 'asc',
+          },
+        },
+      },
+    });
+
+    if (!goal || goal.isDeleted) {
+      throw new NotFoundException('Goal not found');
+    }
+
+    // Check company access - must belong to same company
+    if (goal.companyId !== companyId) {
+      throw new NotFoundException('Goal not found');
+    }
+
+    // Get total tasks (including incomplete ones)
+    const totalTasks = await this.prisma.task.count({
+      where: {
+        goalId: id,
+        isDeleted: false,
+      },
+    });
+
+    // Group completions by date
+    const completionsByDate = new Map<string, number>();
+
+    goal.tasks.forEach((task) => {
+      if (task.completedAt) {
+        const date = new Date(task.completedAt);
+        // Normalize to local date string (YYYY-MM-DD)
+        const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        completionsByDate.set(dateKey, (completionsByDate.get(dateKey) || 0) + 1);
+      }
+    });
+
+    // Build progress array
+    const progressData: Array<{
+      date: string;
+      tasksCompleted: number;
+      cumulativeCompleted: number;
+    }> = [];
+
+    let cumulative = 0;
+    const sortedDates = Array.from(completionsByDate.keys()).sort();
+
+    sortedDates.forEach((date) => {
+      const count = completionsByDate.get(date) || 0;
+      cumulative += count;
+      progressData.push({
+        date,
+        tasksCompleted: count,
+        cumulativeCompleted: cumulative,
+      });
+    });
+
+    return {
+      goalId: goal.id,
+      totalTasks,
+      completedTasks: goal.tasks.length,
+      createdAt: goal.createdAt.toISOString(),
+      deadline: goal.deadline ? goal.deadline.toISOString() : null,
+      progressData,
+    };
+  }
+
+  /**
    * Create a new goal
    */
   async createGoal(createDto: GoalCreateDto) {
@@ -550,6 +645,9 @@ export class GoalService {
             name: task.project.name,
           }
         : null,
+      dueDate: task.dueDate ? this.utilityService.formatDate(task.dueDate) : null,
+      createdAt: this.utilityService.formatDate(task.createdAt),
+      updatedAt: this.utilityService.formatDate(task.updatedAt),
     };
   }
 }

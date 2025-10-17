@@ -464,6 +464,7 @@ model Task {
   updatedById             String
   assignedToId            String?
   dueDate                 DateTime?
+  completedAt             DateTime?
   isRead                  Boolean                  @default(false)
   assignedByDifficultySet Int                      @default(0)
   assignedToDifficultySet Int                      @default(0)

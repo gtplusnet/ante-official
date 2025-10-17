@@ -45,6 +45,22 @@ export class GoalController {
   }
 
   /**
+   * Get goal progress data with accurate completion dates
+   * GET /task/goal/:id/progress
+   * NOTE: Must come before /:id route to avoid route conflicts
+   */
+  @Get(':id/progress')
+  async getGoalProgress(
+    @NestResponse() response: Response,
+    @Param() params: GoalIdDto,
+  ) {
+    return this.utilityService.responseHandler(
+      this.goalService.getGoalProgress(params.id),
+      response,
+    );
+  }
+
+  /**
    * Get single goal by ID with linked tasks
    * GET /task/goal/:id
    */
