@@ -22,7 +22,7 @@ export default function LogHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [allLogs, setAllLogs] = useState<AttendanceLog[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<AttendanceLog[]>([]);
-  const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
+  const [selectedLog, setSelectedLog] = useState<AttendanceLog | null>(null);
   const [showLogDetail, setShowLogDetail] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -188,7 +188,7 @@ export default function LogHistoryPage() {
                   <tr 
                     key={log.id}
                     onClick={() => {
-                      setSelectedLogId(log.id);
+                      setSelectedLog(log);
                       setShowLogDetail(true);
                     }}
                     className="cursor-pointer hover:bg-gray-50 transition-colors duration-200"
@@ -266,9 +266,9 @@ export default function LogHistoryPage() {
         isOpen={showLogDetail}
         onClose={() => {
           setShowLogDetail(false);
-          setSelectedLogId(null);
+          setSelectedLog(null);
         }}
-        logId={selectedLogId || ''}
+        log={selectedLog}
       />
     </AuthenticatedLayout>
   );
