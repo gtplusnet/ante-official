@@ -100,7 +100,7 @@ export interface StudentFullInfo {
 export interface CompanyInfo {
   id: number;
   name: string;
-  logo?: string;
+  logoUrl?: string;
 }
 
 // Request/Response Types

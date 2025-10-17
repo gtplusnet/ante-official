@@ -33,7 +33,7 @@ export class SchoolGuardianPublicService {
     private readonly prisma: PrismaService,
     private readonly utility: UtilityService,
     private readonly uploadPhotoService: UploadPhotoService,
-  ) {}
+  ) { }
 
   /**
    * Guardian login - generates permanent token
@@ -46,6 +46,7 @@ export class SchoolGuardianPublicService {
         isActive: true,
       },
       include: {
+        company: true, // Include company data
         students: {
           include: {
             student: {
@@ -185,6 +186,11 @@ export class SchoolGuardianPublicService {
         };
       }),
       permissions: [], // Can be expanded based on requirements
+      company: {
+        id: guardian.company.id,
+        name: guardian.company.companyName,
+        logoUrl: guardian.company.logoUrl || undefined,
+      },
     };
   }
 
@@ -297,6 +303,11 @@ export class SchoolGuardianPublicService {
       },
       students: [], // New registration has no students yet
       permissions: [],
+      company: {
+        id: company.id,
+        name: company.companyName,
+        logoUrl: company.logoUrl || undefined,
+      },
     };
   }
 
@@ -567,15 +578,15 @@ export class SchoolGuardianPublicService {
         photoUrl: student.photoUrl,
         lastCheckIn: lastCheckIn
           ? {
-              timestamp: lastCheckIn.timestamp.toISOString(),
-              gate: lastCheckIn.location || 'Unknown Gate',
-            }
+            timestamp: lastCheckIn.timestamp.toISOString(),
+            gate: lastCheckIn.location || 'Unknown Gate',
+          }
           : undefined,
         lastCheckOut: lastCheckOut
           ? {
-              timestamp: lastCheckOut.timestamp.toISOString(),
-              gate: lastCheckOut.location || 'Unknown Gate',
-            }
+            timestamp: lastCheckOut.timestamp.toISOString(),
+            gate: lastCheckOut.location || 'Unknown Gate',
+          }
           : undefined,
         todayAttendance: {
           checkIns: checkIns.length,
@@ -772,12 +783,12 @@ export class SchoolGuardianPublicService {
       lastLogin: guardian.lastLogin?.toISOString(),
       profilePhoto: guardian.profilePhoto
         ? {
-            id: guardian.profilePhoto.id.toString(),
-            url: guardian.profilePhoto.url,
-            name: guardian.profilePhoto.name,
-            size: guardian.profilePhoto.size,
-            type: guardian.profilePhoto.mimetype,
-          }
+          id: guardian.profilePhoto.id.toString(),
+          url: guardian.profilePhoto.url,
+          name: guardian.profilePhoto.name,
+          size: guardian.profilePhoto.size,
+          type: guardian.profilePhoto.mimetype,
+        }
         : undefined,
       students: guardian.students.map((gs) => {
         const primaryGuardian = gs.student.guardians?.[0];

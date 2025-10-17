@@ -26,7 +26,7 @@ export const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
   className = ''
 }) => {
   const [isNavOpen, setIsNavOpen] = useState(false);
-  const { user, loading: authLoading } = useAuth();
+  const { user, company, loading: authLoading } = useAuth();
 
   // Convert user to Guardian format for Navigation
   const guardianForNav = user ? {
@@ -55,6 +55,7 @@ export const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
         isOpen={isNavOpen}
         onClose={() => setIsNavOpen(false)}
         guardian={guardianForNav}
+        company={company}
       />
       {children}
     </MobileLayout>
