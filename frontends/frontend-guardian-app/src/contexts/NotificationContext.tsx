@@ -189,13 +189,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         if (token) {
           console.log('🔍 [Push] Checking registration status with backend...');
           try {
-            const response = await apiClient.get('/api/guardian/device-token/status');
+            const response = await apiClient.get<{ registered: boolean }>('/api/guardian/device-token/status');
             console.log('📊 [Push] Backend registration status:', response);
             
-            if (response.success && !response.registered) {
+            if (response.success && response.data && !response.data.registered) {
               console.log('⚠️ [Push] Token not registered with backend, re-registering...');
               await pushNotificationService.retryRegistration();
-            } else if (response.success && response.registered) {
+            } else if (response.success && response.data && response.data.registered) {
               console.log('✅ [Push] Token already registered with backend');
               setRegistrationStatus('registered');
             }
