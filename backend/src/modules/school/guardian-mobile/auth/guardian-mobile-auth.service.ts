@@ -12,6 +12,7 @@ import { PrismaService } from '@common/prisma.service';
 import { EncryptionService } from '@common/encryption.service';
 import { UtilityService } from '@common/utility.service';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { Guardian } from '@prisma/client';
 import {
   GuardianLoginDto,
@@ -358,34 +359,31 @@ export class GuardianMobileAuthService {
       throw new NotFoundException('Guardian not found');
     }
 
-    // Verify current password
-    const decryptedPassword = await this.encryptionService.decrypt(
+    // Verify current password using bcrypt
+    const isPasswordValid = await bcrypt.compare(
+      dto.currentPassword,
       guardian.password,
-      guardian.key,
     );
 
-    if (decryptedPassword !== dto.currentPassword) {
+    if (!isPasswordValid) {
       throw new UnauthorizedException('Current password is incorrect');
     }
 
-    // Encrypt new password
-    // Hash password with bcrypt
-    const saltRounds = 10;
-    const _passwordHash = await bcrypt.hash(dto.newPassword, saltRounds);
+    // Hash new password with bcrypt (compatible with login system)
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
 
-    // Keep legacy encryption for backward compatibility
-    const passwordEncryption = await this.encryptionService.encrypt(
-      dto.newPassword,
+    // Generate new encryption key (required by schema)
+    const key = Buffer.from(
+      crypto.randomBytes(16).toString('hex').slice(0, 32),
+      'hex',
     );
 
     // Update password
     await this.prisma.guardian.update({
       where: { id: guardianId },
       data: {
-        password: passwordEncryption.encrypted,
-        key: passwordEncryption.iv,
-        // passwordHash will be added after migration
-        // passwordHash: passwordHash,
+        password: hashedPassword,
+        key: key,
       },
     });
 

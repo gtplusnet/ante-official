@@ -45,6 +45,11 @@ export interface UpdateProfileRequest {
   preferredLanguage?: string;
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface GetAttendanceLogsParams {
   studentId?: string;
   limit?: number;
@@ -518,6 +523,34 @@ class GuardianPublicApi {
         code: error.code || 'UPDATE_PROFILE_ERROR',
         message: error.message || 'Failed to update profile',
         details: error.details,
+      };
+    }
+  }
+
+  /**
+   * Change password
+   */
+  async changePassword(data: ChangePasswordRequest): Promise<{ message: string }> {
+    try {
+      const response = await apiClient.post<{ message: string }>(
+        '/api/guardian/auth/change-password',
+        data
+      );
+
+      if (response.success && response.data) {
+        return response.data;
+      }
+      
+      if ((response as any).message) {
+        return response as any;
+      }
+
+      throw new Error('Change password failed: No data returned');
+    } catch (error: any) {
+      throw {
+        code: error.code || 'CHANGE_PASSWORD_ERROR',
+        message: error.message || error.response?.data?.message || 'Failed to change password',
+        details: error.details || error.response?.data,
       };
     }
   }

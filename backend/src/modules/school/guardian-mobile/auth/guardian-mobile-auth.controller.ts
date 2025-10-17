@@ -103,7 +103,11 @@ export class GuardianMobileAuthController {
     @Req() req: Request & { user: any },
     @Body() dto: ChangePasswordDto,
   ) {
-    return this.authService.changePassword(req.user.id, dto);
+    const result = await this.authService.changePassword(req.user.id, dto);
+    return {
+      success: true,
+      data: result,
+    };
   }
 
   @Post('profile')
