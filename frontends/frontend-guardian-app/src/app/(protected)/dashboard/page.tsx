@@ -107,8 +107,8 @@ export default function DashboardPage() {
           studentNumber: apiStatus.studentCode,
           currentStatus,
           photoUrl: apiStatus.photoUrl,
-          grade: studentInfo?.grade,
-          section: studentInfo?.section,
+          grade: studentInfo?.section?.gradeLevel?.name,
+          section: studentInfo?.section?.name,
           lastAction,
         };
       });
