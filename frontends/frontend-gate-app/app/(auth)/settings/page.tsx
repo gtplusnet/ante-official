@@ -29,6 +29,25 @@ export default function SettingsPage() {
   const [guardianCount, setGuardianCount] = useState(0)
   const [lastDataRefresh, setLastDataRefresh] = useState(new Date())
 
+  // Function to load database counts
+  const loadDatabaseCounts = async () => {
+    try {
+      const [studentCnt, guardianCnt] = await Promise.all([
+        dbManager.count('students'),
+        dbManager.count('guardians')
+      ])
+      setStudentCount(studentCnt)
+      setGuardianCount(guardianCnt)
+      setAttendanceCount(0) // Attendance count set to 0 as the store no longer exists
+      console.log(`Loaded counts: ${studentCnt} students, ${guardianCnt} guardians`)
+    } catch (err) {
+      console.error('Failed to get counts:', err)
+      setStudentCount(0)
+      setGuardianCount(0)
+      setAttendanceCount(0)
+    }
+  }
+
   useEffect(() => {
     // Load saved settings
     const savedInterval = localStorage.getItem('syncInterval')
@@ -71,22 +90,29 @@ export default function SettingsPage() {
     }
     
     // Load database counts
-    // Note: attendance store was removed in DB v6, only students/guardians remain
-    Promise.all([
-      dbManager.count('students'),
-      dbManager.count('guardians')
-    ]).then(([studentCount, guardianCount]) => {
-      setStudentCount(studentCount)
-      setGuardianCount(guardianCount)
-      // Attendance count set to 0 as the store no longer exists
-      setAttendanceCount(0)
-    }).catch(err => {
-      console.error('Failed to get counts:', err)
-      // Set default values on error
-      setStudentCount(0)
-      setGuardianCount(0)
-      setAttendanceCount(0)
-    })
+    loadDatabaseCounts()
+
+    // Refresh counts when page becomes visible (user navigates back to this page)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('Page visible again, refreshing counts...')
+        loadDatabaseCounts()
+      }
+    }
+
+    // Also refresh when window gains focus (for in-app navigation)
+    const handleFocus = () => {
+      console.log('Window focused, refreshing counts...')
+      loadDatabaseCounts()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
   }, [])
 
   const handleSave = async () => {
@@ -111,6 +137,30 @@ export default function SettingsPage() {
 
       const result = await syncService.syncAll()
 
+      // Save to IndexedDB (not just localStorage)
+      console.log('Saving synced data to IndexedDB...')
+      await dbManager.clearAllStores()
+      
+      // Save students to IndexedDB
+      if (result.students.length > 0) {
+        const studentsToSave = result.students.map(student => ({
+          ...student,
+          syncedAt: new Date()
+        }))
+        await dbManager.putAll('students', studentsToSave)
+        console.log(`Saved ${studentsToSave.length} students to IndexedDB`)
+      }
+      
+      // Save guardians to IndexedDB
+      if (result.guardians.length > 0) {
+        const guardiansToSave = result.guardians.map(guardian => ({
+          ...guardian,
+          syncedAt: new Date()
+        }))
+        await dbManager.putAll('guardians', guardiansToSave)
+        console.log(`Saved ${guardiansToSave.length} guardians to IndexedDB`)
+      }
+
       // Update counts
       setStudentCount(result.students.length)
       setGuardianCount(result.guardians.length)
@@ -130,12 +180,12 @@ export default function SettingsPage() {
       try {
         await dbManager.clearAllStores()
         console.log('Local data cleared successfully')
-        // Reset all counts
-        setAttendanceCount(0)
-        setStudentCount(0)
-        setGuardianCount(0)
+        // Reload counts from database to reflect changes
+        await loadDatabaseCounts()
+        alert('Local data cleared successfully!')
       } catch (error) {
         console.error('Failed to clear data:', error)
+        alert('Failed to clear data. Please check console for details.')
       }
     }
   }

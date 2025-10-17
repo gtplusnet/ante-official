@@ -158,10 +158,10 @@ export default function ManageStudentsPage() {
                           <p className="text-sm text-gray-500">
                             Student No: {student.studentNumber}
                           </p>
-                          {(student.grade || student.section) && (
+                          {(student.section?.gradeLevel?.name || student.section?.name) && (
                             <p className="text-sm text-gray-500 flex items-center gap-1">
                               <FiBook className="w-3 h-3" />
-                              {student.grade || 'Grade N/A'} {student.section ? `- ${student.section}` : ''}
+                              {student.section?.gradeLevel?.name || 'Grade N/A'} {student.section?.name ? `- ${student.section.name}` : ''}
                             </p>
                           )}
                         </div>
