@@ -5,6 +5,7 @@ import { MobileLayout } from './MobileLayout';
 import { Header } from './Header';
 import { Navigation } from './Navigation';
 import { LoadingScreen } from '../ui/LoadingScreen';
+import { PushNotificationChip } from '../features/PushNotificationChip';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface AuthenticatedLayoutProps {
@@ -49,6 +50,7 @@ export const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
         onBackClick={onBackClick}
         showNotification={showNotification}
       />
+      <PushNotificationChip />
       <Navigation
         isOpen={isNavOpen}
         onClose={() => setIsNavOpen(false)}

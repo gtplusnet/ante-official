@@ -26,6 +26,7 @@ lerna-debug.log*
 .env.development
 .env.production
 .env.staging
+.env.backup-*
 !.env.example
 
 # Prisma

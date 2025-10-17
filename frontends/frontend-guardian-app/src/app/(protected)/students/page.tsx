@@ -2,9 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { MobileLayout } from "@/components/layout/MobileLayout";
-import { Header } from "@/components/layout/Header";
-import { Navigation } from "@/components/layout/Navigation";
+import { AuthenticatedLayout } from "@/components/layout/AuthenticatedLayout";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { StudentDetailModal } from "@/components/features/StudentDetailModal";
@@ -19,7 +17,6 @@ import { format } from "date-fns";
 type Student = StudentFullInfo;
 
 export default function StudentsPage() {
-  const [isNavOpen, setIsNavOpen] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [showStudentDetail, setShowStudentDetail] = useState(false);
   const router = useRouter();
@@ -57,20 +54,7 @@ export default function StudentsPage() {
   }
 
   return (
-    <MobileLayout className="bg-gray-50">
-      <Header title="Student Information" onMenuClick={() => setIsNavOpen(true)} />
-
-      <Navigation
-        isOpen={isNavOpen}
-        onClose={() => setIsNavOpen(false)}
-        guardian={{
-          id: user?.id || "",
-          name: user ? `${user.firstName} ${user.lastName}` : "",
-          email: user?.email || "",
-          photoUrl: undefined,
-        }}
-      />
-
+    <AuthenticatedLayout title="Student Information" showNotification={true} className="bg-gray-50">
       <PullToRefresh onRefresh={handleRefresh} className="flex-1">
         <div className="px-4 py-4">
           {/* Header Section */}
@@ -192,6 +176,6 @@ export default function StudentsPage() {
         }}
         studentId={selectedStudentId || ""}
       />
-    </MobileLayout>
+    </AuthenticatedLayout>
   );
 }

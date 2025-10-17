@@ -1,13 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { MobileLayout } from "@/components/layout/MobileLayout";
-import { Header } from "@/components/layout/Header";
-import { Navigation } from "@/components/layout/Navigation";
+import { AuthenticatedLayout } from "@/components/layout/AuthenticatedLayout";
 import { Card } from "@/components/ui/Card";
 import { AttendanceLogItem } from "@/components/features/AttendanceLog";
 import { AttendanceLogDetailModal } from "@/components/features/AttendanceLogDetailModal";
-import { PushNotificationWidget } from "@/components/features/PushNotificationWidget";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { FiSun, FiAlertCircle } from "react-icons/fi";
@@ -33,7 +30,6 @@ interface StudentStatus {
 }
 
 export default function DashboardPage() {
-  const [isNavOpen, setIsNavOpen] = useState(false);
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
   const [showLogDetail, setShowLogDetail] = useState(false);
   const [studentStatuses, setStudentStatuses] = useState<StudentStatus[]>([]);
@@ -46,16 +42,6 @@ export default function DashboardPage() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   const { user, loading: authLoading } = useAuth();
-
-  // Convert user to Guardian format for Navigation
-  const guardianForNav = user
-    ? {
-        id: user.id,
-        name: `${user.firstName} ${user.lastName}`,
-        email: user.email,
-        photoUrl: undefined,
-      }
-    : { id: "", name: "", email: "" };
 
   // Fetch student statuses from Public API
   const fetchStudentStatuses = useCallback(async () => {
@@ -205,11 +191,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <MobileLayout className="bg-gray-50">
-      <Header title="Dashboard" onMenuClick={() => setIsNavOpen(true)} />
-
-      <Navigation isOpen={isNavOpen} onClose={() => setIsNavOpen(false)} guardian={guardianForNav} />
-
+    <AuthenticatedLayout title="Dashboard" showNotification={true} className="bg-gray-50">
       <PullToRefresh onRefresh={refreshData} className="flex-1">
         <div className="px-4 py-4">
           {/* Greeting Section with Refresh */}
@@ -229,9 +211,6 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-
-          {/* Push Notification Widget */}
-          <PushNotificationWidget />
 
           {/* Attendance Tracker */}
           <Card className="mb-6" padding="lg">
@@ -383,6 +362,6 @@ export default function DashboardPage() {
         }}
         logId={selectedLogId || ""}
       />
-    </MobileLayout>
+    </AuthenticatedLayout>
   );
 }

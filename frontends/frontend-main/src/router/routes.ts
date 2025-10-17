@@ -885,6 +885,11 @@ const routesConfig: RouteRecordRaw[] = [
         component: () => import('pages/Member/School/GuardianAPI/GuardianAPIDocumentation.vue'),
       },
       {
+        name: 'member_school_guardian_notifications',
+        path: 'school/guardian-api/notifications',
+        component: () => import('pages/Member/School/GuardianNotifications.vue'),
+      },
+      {
         name: 'member_school_year_management',
         path: 'school-management/school-year',
         component: () => import('pages/Member/SchoolManagement/SchoolYearManagement.vue'),

@@ -22,6 +22,14 @@ export class GuardianPushNotificationService implements OnModuleInit {
 
   private async initializeFirebase() {
     try {
+      // Check if Firebase app already exists (prevents duplicate initialization)
+      if (admin.apps.length > 0) {
+        this.firebaseApp = admin.app();
+        this.initialized = true;
+        this.logger.log('Using existing Firebase Admin SDK instance');
+        return;
+      }
+
       // Check if Firebase service account is configured
       const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
 

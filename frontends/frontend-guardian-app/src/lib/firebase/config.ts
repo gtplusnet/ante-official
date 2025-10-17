@@ -12,6 +12,11 @@ export const firebaseConfig = {
   measurementId: "G-RC8GC9NSME"
 };
 
+// VAPID key for web push notifications
+// Using hardcoded value as fallback since PM2 doesn't load .env.local
+// Updated from Firebase Console: October 17, 2025
+export const FIREBASE_VAPID_KEY = "BHEvUgy6Ir44xBkut77qq_cGgVQSoaTCPE0nbcKIYnOAu0D8uB7C-vgW4QFVgoN7IFrMUTLf9CarhPYvHzVUPXc";
+
 // Initialize Firebase
 export const firebaseApp = initializeApp(firebaseConfig);
 

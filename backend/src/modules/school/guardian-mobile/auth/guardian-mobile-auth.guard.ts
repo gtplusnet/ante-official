@@ -28,34 +28,45 @@ export class GuardianAuthGuard implements CanActivate {
     }
 
     try {
-      // Verify JWT token
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get<string>(
-          'GUARDIAN_JWT_SECRET',
-          'guardian-default-secret',
-        ),
-      });
-
-      // Check if token exists in database and is not revoked
-      const tokenRecord = await this.prisma.guardianToken.findFirst({
-        where: {
-          token,
-          guardianId: payload.sub,
-          isRevoked: false,
-          expiresAt: {
-            gt: new Date(),
+      let guardianId: string;
+      
+      // Try to verify as JWT first (for mobile auth tokens)
+      try {
+        const payload = await this.jwtService.verifyAsync(token, {
+          secret: this.configService.get<string>(
+            'GUARDIAN_JWT_SECRET',
+            'guardian-default-secret',
+          ),
+        });
+        guardianId = payload.sub;
+        console.log('GuardianAuthGuard - JWT token verified');
+      } catch (jwtError) {
+        // If JWT verification fails, treat as plain token (from Public Guardian API)
+        console.log('GuardianAuthGuard - Not a JWT, checking as plain token');
+        
+        // Look up token directly in database
+        const tokenRecord = await this.prisma.guardianToken.findFirst({
+          where: {
+            token,
+            isRevoked: false,
+            expiresAt: {
+              gt: new Date(),
+            },
           },
-        },
-      });
+        });
 
-      if (!tokenRecord) {
-        throw new UnauthorizedException('Invalid token');
+        if (!tokenRecord) {
+          throw new UnauthorizedException('Invalid token');
+        }
+
+        guardianId = tokenRecord.guardianId;
+        console.log('GuardianAuthGuard - Plain token verified');
       }
 
       // Get guardian information
       const guardian = await this.prisma.guardian.findFirst({
         where: {
-          id: payload.sub,
+          id: guardianId,
           isActive: true,
           isDeleted: false,
         },

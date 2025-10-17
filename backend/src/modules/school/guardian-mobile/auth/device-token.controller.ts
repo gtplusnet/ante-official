@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Get,
   Delete,
   Body,
   Param,
@@ -67,6 +68,52 @@ export class GuardianDeviceTokenController {
       return {
         success: false,
         message: 'Failed to register device token',
+      };
+    }
+  }
+
+  @Get('status')
+  @HttpCode(HttpStatus.OK)
+  async getDeviceTokenStatus(@Req() req: any) {
+    try {
+      // Find the current guardian token
+      const guardianToken = await this.prisma.guardianToken.findFirst({
+        where: {
+          guardianId: req.user.id,
+          isRevoked: false,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (!guardianToken) {
+        return {
+          success: false,
+          registered: false,
+          message: 'No active session found',
+        };
+      }
+
+      const deviceInfo = (guardianToken.deviceInfo as any) || {};
+
+      return {
+        success: true,
+        registered: !!deviceInfo.fcmToken,
+        deviceInfo: deviceInfo
+          ? {
+              platform: deviceInfo.platform,
+              deviceId: deviceInfo.deviceId,
+              hasToken: !!deviceInfo.fcmToken,
+              tokenUpdatedAt: deviceInfo.fcmTokenUpdatedAt,
+            }
+          : null,
+      };
+    } catch (error) {
+      console.error('Error checking device token status:', error);
+      return {
+        success: false,
+        registered: false,
+        message: 'Failed to check device token status',
+        error: error.message,
       };
     }
   }

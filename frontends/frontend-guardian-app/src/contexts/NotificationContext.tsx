@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { pushNotificationService } from '@/lib/services/push-notification.service';
+import { apiClient } from '@/lib/api/api-client';
 import { PushNotificationSchema, ActionPerformed } from '@capacitor/push-notifications';
 import { useAuth } from './AuthContext';
 
@@ -14,6 +15,9 @@ interface NotificationContextValue {
   initialize: () => Promise<void>;
   requestPermission: () => Promise<boolean>;
   showInAppNotification: (title: string, body: string) => void;
+  registrationStatus: 'idle' | 'registering' | 'registered' | 'failed';
+  registrationError: string | null;
+  retryRegistration: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextValue | undefined>(undefined);
@@ -28,6 +32,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [lastNotification, setLastNotification] = useState<PushNotificationSchema | null>(null);
   const [inAppNotification, setInAppNotification] = useState<{ title: string; body: string } | null>(null);
+  const [registrationStatus, setRegistrationStatus] = useState<'idle' | 'registering' | 'registered' | 'failed'>('idle');
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
   
   const router = useRouter();
   const { user } = useAuth();
@@ -78,6 +84,20 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     setPermissionGranted(false);
   }, []);
 
+  // Handle registration success
+  const handleRegistrationSuccess = useCallback(() => {
+    console.log('✅ [Push] Registration successful');
+    setRegistrationStatus('registered');
+    setRegistrationError(null);
+  }, []);
+
+  // Handle registration error
+  const handleRegistrationError = useCallback((error: string) => {
+    console.error('❌ [Push] Registration error:', error);
+    setRegistrationStatus('failed');
+    setRegistrationError(error);
+  }, []);
+
   // Initialize push notifications
   const initialize = useCallback(async () => {
     // Check if push notifications are enabled
@@ -104,11 +124,18 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       onNotificationReceived: handleNotificationReceived,
       onNotificationActionPerformed: handleNotificationAction,
       onTokenReceived: handleTokenReceived,
-      onPermissionDenied: handlePermissionDenied
+      onPermissionDenied: handlePermissionDenied,
+      onRegistrationSuccess: handleRegistrationSuccess,
+      onRegistrationError: handleRegistrationError,
     });
 
     setPermissionGranted(initialized);
-  }, [user, handleNotificationReceived, handleNotificationAction, handleTokenReceived, handlePermissionDenied]);
+    
+    // Update registration status from service
+    const status = await pushNotificationService.getRegistrationStatus();
+    setRegistrationStatus(status.tokenRegistered ? 'registered' : status.error ? 'failed' : 'idle');
+    setRegistrationError(status.error || null);
+  }, [user, handleNotificationReceived, handleNotificationAction, handleTokenReceived, handlePermissionDenied, handleRegistrationSuccess, handleRegistrationError]);
 
   // Request permission manually
   const requestPermission = useCallback(async (): Promise<boolean> => {
@@ -132,12 +159,60 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }, 5000);
   }, []);
 
+  // Retry registration manually
+  const retryRegistration = useCallback(async () => {
+    console.log('🔄 [Push] Manual retry requested from context...');
+    setRegistrationStatus('registering');
+    setRegistrationError(null);
+    
+    const success = await pushNotificationService.retryRegistration();
+    
+    // Update status from service
+    const status = await pushNotificationService.getRegistrationStatus();
+    setRegistrationStatus(status.tokenRegistered ? 'registered' : status.error ? 'failed' : 'idle');
+    setRegistrationError(status.error || null);
+  }, []);
+
   // Initialize on mount and when user changes
   useEffect(() => {
     if (user) {
       initialize();
     }
   }, [user, initialize]);
+
+  // Automatic re-registration check on login
+  useEffect(() => {
+    const checkAndReregister = async () => {
+      if (user && permissionGranted) {
+        // Check if we have FCM token but it might not be registered with backend
+        const token = pushNotificationService.getToken();
+        if (token) {
+          console.log('🔍 [Push] Checking registration status with backend...');
+          try {
+            const response = await apiClient.get<{ registered: boolean }>('/api/guardian/device-token/status');
+            console.log('📊 [Push] Backend registration status:', response);
+            
+            if (response.success && response.data && !response.data.registered) {
+              console.log('⚠️ [Push] Token not registered with backend, re-registering...');
+              await pushNotificationService.retryRegistration();
+            } else if (response.success && response.data && response.data.registered) {
+              console.log('✅ [Push] Token already registered with backend');
+              setRegistrationStatus('registered');
+            }
+          } catch (error) {
+            console.error('❌ [Push] Failed to check registration status:', error);
+          }
+        }
+      }
+    };
+
+    // Run check with a small delay to ensure auth is fully set up
+    const timer = setTimeout(() => {
+      checkAndReregister();
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [user, permissionGranted]);
 
   // Cleanup on logout
   useEffect(() => {
@@ -155,7 +230,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     lastNotification,
     initialize,
     requestPermission,
-    showInAppNotification
+    showInAppNotification,
+    registrationStatus,
+    registrationError,
+    retryRegistration,
   };
 
   return (

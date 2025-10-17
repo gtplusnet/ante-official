@@ -122,6 +122,7 @@ export default {
         requiredScope: ['SCHOOL_GUARDIAN_API_ACCESS'],
         child: [
           { icon: 'o_description', title: 'API Documentation', key: 'member_school_guardian_api_documentation', requiredScope: ['SCHOOL_GUARDIAN_API_DOCUMENTATION_ACCESS'] },
+          { icon: 'o_notifications_active', title: 'Push Notifications', key: 'member_school_guardian_notifications', requiredScope: ['SCHOOL_GUARDIAN_NOTIFICATION_ACCESS'] },
         ],
       },
       {
