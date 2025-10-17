@@ -1614,12 +1614,24 @@ export class TaskService {
     if (!boardLaneInformation)
       throw new NotFoundException('Board lane not found');
 
+    // Prepare update data with completedAt tracking
+    const updateData: any = {
+      boardLaneId: boardLaneInformation.id,
+    };
+
+    // Set completedAt when moving to DONE lane
+    if (keyValue === BoardLaneKeys.DONE && taskInformation.boardLane.key !== BoardLaneKeys.DONE) {
+      updateData.completedAt = new Date();
+    }
+    // Clear completedAt when moving FROM DONE to another lane
+    else if (keyValue !== BoardLaneKeys.DONE && taskInformation.boardLane.key === BoardLaneKeys.DONE) {
+      updateData.completedAt = null;
+    }
+
     // update task information
     const result = await this.prisma.task.update({
       where: { id: taskId.id },
-      data: {
-        boardLaneId: boardLaneInformation.id,
-      },
+      data: updateData,
     });
 
     // Emit discussion event for status change

@@ -16,73 +16,83 @@
           </div>
 
           <div v-else-if="goalDetails">
-            <!-- Goal Info -->
-            <div class="goal-info-section q-mb-lg">
-              <div class="goal-header q-mb-md">
-                <h5 class="q-my-none">{{ goalDetails.name }}</h5>
-                <q-badge
-                  :color="goalDetails.status === 'COMPLETED' ? 'positive' : 'primary'"
-                  :label="goalDetails.status"
-                  class="q-ml-sm"
-                />
-              </div>
+            <!-- Goal Header (Full Width) -->
+            <div class="goal-header q-mb-sm">
+              <h5 class="q-my-none">{{ goalDetails.name }}</h5>
+              <q-badge
+                :color="goalDetails.status === 'COMPLETED' ? 'positive' : 'primary'"
+                :label="goalDetails.status"
+                class="q-ml-sm"
+              />
+            </div>
 
-              <div v-if="goalDetails.description" class="goal-description q-mb-md">
-                <div class="text-grey-7 text-caption q-mb-xs">Description</div>
-                <div class="text-body2">{{ goalDetails.description }}</div>
-              </div>
+            <!-- Description (Full Width) -->
+            <div v-if="goalDetails.description" class="goal-description q-mb-sm">
+              <div class="text-grey-7 text-caption q-mb-xs">Description</div>
+              <div class="text-body2">{{ goalDetails.description }}</div>
+            </div>
 
-              <!-- Stats -->
-              <div class="goal-stats-row q-mb-md">
-                <div class="stat-card">
-                  <q-icon name="o_task_alt" size="24px" color="primary" />
-                  <div class="stat-content">
-                    <div class="stat-value">{{ goalDetails.completedTasks || 0 }} / {{ goalDetails.totalTasks || 0 }}</div>
-                    <div class="stat-label">Tasks Completed</div>
-                  </div>
-                </div>
-
-                <div class="stat-card" :class="{ 'overdue': isGoalOverdue }">
-                  <q-icon
-                    name="o_schedule"
-                    size="24px"
-                    :color="isGoalOverdue ? 'negative' : 'primary'"
-                  />
-                  <div class="stat-content">
-                    <div class="stat-value" :class="{ 'text-negative text-weight-bold': isGoalOverdue }">
-                      {{ goalDetails.deadline ? goalDetails.deadline.dateFull : 'No due date' }}
+            <!-- 2-Column Layout: Stats (Left) + Chart (Right) -->
+            <div class="goal-content-row q-mb-md">
+              <!-- Left Column: Stats -->
+              <div class="goal-stats-column">
+                <!-- Stats -->
+                <div class="goal-stats-row q-mb-sm">
+                  <div class="stat-card">
+                    <q-icon name="o_task_alt" size="20px" color="primary" />
+                    <div class="stat-content">
+                      <div class="stat-value">{{ goalDetails.completedTasks || 0 }} / {{ goalDetails.totalTasks || 0 }}</div>
+                      <div class="stat-label">Tasks Completed</div>
                     </div>
-                    <div class="stat-label">Deadline</div>
+                  </div>
+
+                  <div class="stat-card" :class="{ 'overdue': isGoalOverdue }">
+                    <q-icon
+                      name="o_schedule"
+                      size="20px"
+                      :color="isGoalOverdue ? 'negative' : 'primary'"
+                    />
+                    <div class="stat-content">
+                      <div class="stat-value" :class="{ 'text-negative text-weight-bold': isGoalOverdue }">
+                        {{ goalDetails.deadline ? goalDetails.deadline.dateFull : 'No due date' }}
+                      </div>
+                      <div class="stat-label">Deadline</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Progress -->
+                <div class="progress-section q-mb-sm">
+                  <div class="progress-header q-mb-xs">
+                    <span class="text-grey-7 text-caption">Progress</span>
+                    <span class="text-primary text-weight-bold">{{ Math.round(goalDetails.progress) }}%</span>
+                  </div>
+                  <q-linear-progress
+                    :value="goalDetails.progress / 100"
+                    :color="goalDetails.status === 'COMPLETED' ? 'positive' : 'primary'"
+                    size="8px"
+                    rounded
+                  />
+                </div>
+
+                <!-- Created By -->
+                <div class="meta-info">
+                  <div class="text-grey-7 text-caption">
+                    Created by {{ goalDetails.createdBy.firstName }} {{ goalDetails.createdBy.lastName }}
+                    on {{ goalDetails.createdAt.formatted }}
                   </div>
                 </div>
               </div>
 
-              <!-- Progress -->
-              <div class="progress-section q-mb-md">
-                <div class="progress-header q-mb-xs">
-                  <span class="text-grey-7 text-caption">Progress</span>
-                  <span class="text-primary text-weight-bold">{{ Math.round(goalDetails.progress) }}%</span>
-                </div>
-                <q-linear-progress
-                  :value="goalDetails.progress / 100"
-                  :color="goalDetails.status === 'COMPLETED' ? 'positive' : 'primary'"
-                  size="12px"
-                  rounded
-                />
-              </div>
-
-              <!-- Created By -->
-              <div class="meta-info">
-                <div class="text-grey-7 text-caption">
-                  Created by {{ goalDetails.createdBy.firstName }} {{ goalDetails.createdBy.lastName }}
-                  on {{ goalDetails.createdAt.formatted }}
-                </div>
+              <!-- Right Column: Progress Chart -->
+              <div class="goal-chart-column">
+                <GoalProgressChart :goal="goalDetails" />
               </div>
             </div>
 
             <!-- Linked Tasks -->
             <div class="linked-tasks-section">
-              <div class="section-header q-mb-md">
+              <div class="section-header q-mb-sm">
                 <h6 class="q-my-none">Linked Tasks ({{ goalDetails.tasks?.length || 0 }})</h6>
                 <q-btn
                   flat
@@ -95,8 +105,8 @@
                 />
               </div>
 
-              <div v-if="!goalDetails.tasks || goalDetails.tasks.length === 0" class="text-center q-pa-lg text-grey-6">
-                <q-icon name="o_task_alt" size="48px" class="q-mb-sm" />
+              <div v-if="!goalDetails.tasks || goalDetails.tasks.length === 0" class="text-center q-pa-md text-grey-6">
+                <q-icon name="o_task_alt" size="40px" class="q-mb-xs" />
                 <div>No tasks linked to this goal</div>
               </div>
 
@@ -125,7 +135,7 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="action-buttons q-mt-lg text-right">
+            <div class="action-buttons q-mt-md text-right">
               <GButton
                 v-if="goalDetails.status === 'PENDING'"
                 no-caps
@@ -170,8 +180,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, PropType } from 'vue';
-import { defineAsyncComponent } from 'vue';
+import { defineComponent, ref, computed, PropType, defineAsyncComponent } from 'vue';
 import { QDialog } from 'quasar';
 import GButton from 'src/components/shared/buttons/GButton.vue';
 import { useGoalStore, type GoalData } from 'src/stores/goal';
@@ -181,11 +190,17 @@ const TemplateDialog = defineAsyncComponent(() =>
   import('src/components/dialog/TemplateDialog.vue')
 );
 
+// Lazy-loaded chart component (for bundle optimization)
+const GoalProgressChart = defineAsyncComponent(() =>
+  import('src/components/charts/GoalProgressChart.vue')
+);
+
 export default defineComponent({
   name: 'GoalViewDialog',
   components: {
     GButton,
-    TemplateDialog
+    TemplateDialog,
+    GoalProgressChart
   },
   props: {
     goal: {
@@ -280,36 +295,55 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-.goal-info-section {
-  .goal-header {
-    display: flex;
-    align-items: center;
+// Goal Header (Full Width)
+.goal-header {
+  display: flex;
+  align-items: center;
 
-    h5 {
-      flex: 1;
-      font-size: 20px;
-      font-weight: 600;
-    }
+  h5 {
+    flex: 1;
+    font-size: 18px;
+    font-weight: 600;
   }
+}
 
-  .goal-description {
-    .text-body2 {
-      white-space: pre-wrap;
-    }
+// Description (Full Width)
+.goal-description {
+  .text-body2 {
+    white-space: pre-wrap;
+    font-size: 13px;
   }
+}
+
+// 2-Column Layout Container
+.goal-content-row {
+  display: flex;
+  gap: 16px;
+
+  // Responsive: stack on mobile
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+// Left Column: Stats
+.goal-stats-column {
+  flex: 1;
+  min-width: 0; // Prevent overflow
 
   .goal-stats-row {
     display: flex;
-    gap: 16px;
+    gap: 12px;
 
     .stat-card {
       flex: 1;
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 16px;
+      gap: 10px;
+      padding: 10px;
       background: #f5f5f5;
-      border-radius: 8px;
+      border-radius: 6px;
 
       &.overdue {
         background-color: #ffebee;
@@ -318,13 +352,13 @@ export default defineComponent({
 
       .stat-content {
         .stat-value {
-          font-size: 18px;
+          font-size: 16px;
           font-weight: 600;
           line-height: 1.2;
         }
 
         .stat-label {
-          font-size: 12px;
+          font-size: 11px;
           color: #666;
         }
       }
@@ -340,9 +374,18 @@ export default defineComponent({
   }
 }
 
+// Right Column: Chart
+.goal-chart-column {
+  flex: 1;
+  min-width: 0; // Prevent overflow
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+
 .linked-tasks-section {
   border-top: 1px solid #e0e0e0;
-  padding-top: 20px;
+  padding-top: 12px;
 
   .section-header {
     display: flex;
@@ -350,19 +393,41 @@ export default defineComponent({
     align-items: center;
 
     h6 {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 600;
     }
   }
 
   .tasks-list {
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 3px;
+
+      &:hover {
+        background: #a8a8a8;
+      }
+    }
+
     .task-item {
       display: flex;
       align-items: flex-start;
-      gap: 12px;
-      padding: 12px;
+      gap: 10px;
+      padding: 8px;
       border-radius: 4px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       background: #fafafa;
 
       &:hover {
@@ -374,12 +439,14 @@ export default defineComponent({
 
         .task-title {
           font-weight: 500;
-          margin-bottom: 4px;
+          margin-bottom: 3px;
+          font-size: 13px;
         }
 
         .task-meta {
           display: flex;
-          gap: 8px;
+          gap: 6px;
+          font-size: 11px;
         }
       }
     }

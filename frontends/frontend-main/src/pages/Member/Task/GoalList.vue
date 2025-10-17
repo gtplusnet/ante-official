@@ -106,6 +106,17 @@
               {{ goal.description }}
             </div>
 
+            <!-- Creator information -->
+            <div class="goal-creator">
+              <q-avatar size="20px" class="creator-avatar">
+                <img v-if="goal.createdBy?.image" :src="goal.createdBy.image" />
+                <span v-else>{{ getCreatorInitials(goal) }}</span>
+              </q-avatar>
+              <span class="creator-name">
+                {{ goal.createdBy ? `${goal.createdBy.firstName} ${goal.createdBy.lastName}` : 'Unknown' }}
+              </span>
+            </div>
+
             <div class="goal-stats">
               <div class="stat-item">
                 <q-icon name="o_task_alt" size="18px" />
@@ -200,6 +211,17 @@
 
             <div v-if="goal.description" class="goal-description">
               {{ goal.description }}
+            </div>
+
+            <!-- Creator information -->
+            <div class="goal-creator">
+              <q-avatar size="20px" class="creator-avatar">
+                <img v-if="goal.createdBy?.image" :src="goal.createdBy.image" />
+                <span v-else>{{ getCreatorInitials(goal) }}</span>
+              </q-avatar>
+              <span class="creator-name">
+                {{ goal.createdBy ? `${goal.createdBy.firstName} ${goal.createdBy.lastName}` : 'Unknown' }}
+              </span>
             </div>
 
             <div class="goal-stats">
@@ -314,6 +336,13 @@ export default defineComponent({
       today.setHours(0, 0, 0, 0);
 
       return deadlineDate < today;
+    };
+
+    // Helper function to get creator initials
+    const getCreatorInitials = (goal: GoalData): string => {
+      if (!goal.createdBy) return '?';
+      const { firstName, lastName } = goal.createdBy;
+      return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
     };
 
     // Actions
@@ -433,6 +462,7 @@ export default defineComponent({
 
       // Helpers
       isGoalOverdue,
+      getCreatorInitials,
 
       // Actions
       openCreateDialog,
@@ -530,6 +560,26 @@ export default defineComponent({
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
+    }
+
+    .goal-creator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      color: #757575;
+
+      .creator-avatar {
+        font-size: 10px;
+        font-weight: 600;
+        background: #e0e0e0;
+        color: #616161;
+      }
+
+      .creator-name {
+        font-weight: 500;
+      }
     }
 
     .goal-stats {

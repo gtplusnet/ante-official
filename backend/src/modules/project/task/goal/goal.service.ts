@@ -25,15 +25,18 @@ export class GoalService {
 
   /**
    * Get all goals with filtering by status
+   * Goals are company-wide - all employees see all company goals
    */
   async getGoals(filter?: GoalFilterDto) {
-    const accountId = this.utilityService.accountInformation.id;
     const companyId = this.utilityService.accountInformation.company?.id;
 
+    if (!companyId) {
+      throw new BadRequestException('User must belong to a company to access goals');
+    }
+
     const where: Prisma.GoalWhereInput = {
-      createdById: accountId,
+      companyId,
       isDeleted: false,
-      ...(companyId && { companyId }),
     };
 
     // Filter by status if provided
@@ -106,10 +109,14 @@ export class GoalService {
 
   /**
    * Get a single goal by ID with linked tasks
+   * Goals are company-wide - any company member can access
    */
   async getGoalById(id: number) {
-    const accountId = this.utilityService.accountInformation.id;
     const companyId = this.utilityService.accountInformation.company?.id;
+
+    if (!companyId) {
+      throw new BadRequestException('User must belong to a company to access goals');
+    }
 
     const goal = await this.prisma.goal.findUnique({
       where: { id },
@@ -157,15 +164,13 @@ export class GoalService {
       },
     });
 
-    if (!goal) {
+    if (!goal || goal.isDeleted) {
       throw new NotFoundException('Goal not found');
     }
 
-    // Check access - must be creator or same company
-    if (goal.createdById !== accountId) {
-      if (!companyId || goal.companyId !== companyId) {
-        throw new NotFoundException('Goal not found');
-      }
+    // Check company access - must belong to same company
+    if (goal.companyId !== companyId) {
+      throw new NotFoundException('Goal not found');
     }
 
     // Calculate progress
@@ -182,6 +187,101 @@ export class GoalService {
       completedTasks,
       progress,
       tasks: goal.tasks.map((task) => this.formatTaskResponse(task)),
+    };
+  }
+
+  /**
+   * Get goal progress data with accurate completion dates
+   * Returns daily completion data for chart rendering
+   */
+  async getGoalProgress(id: number) {
+    const companyId = this.utilityService.accountInformation.company?.id;
+
+    if (!companyId) {
+      throw new BadRequestException('User must belong to a company to access goals');
+    }
+
+    const goal = await this.prisma.goal.findUnique({
+      where: { id },
+      include: {
+        tasks: {
+          where: {
+            isDeleted: false,
+            boardLane: {
+              key: BoardLaneKeys.DONE,
+            },
+            completedAt: {
+              not: null,
+            },
+          },
+          select: {
+            id: true,
+            completedAt: true,
+            title: true,
+          },
+          orderBy: {
+            completedAt: 'asc',
+          },
+        },
+      },
+    });
+
+    if (!goal || goal.isDeleted) {
+      throw new NotFoundException('Goal not found');
+    }
+
+    // Check company access - must belong to same company
+    if (goal.companyId !== companyId) {
+      throw new NotFoundException('Goal not found');
+    }
+
+    // Get total tasks (including incomplete ones)
+    const totalTasks = await this.prisma.task.count({
+      where: {
+        goalId: id,
+        isDeleted: false,
+      },
+    });
+
+    // Group completions by date
+    const completionsByDate = new Map<string, number>();
+
+    goal.tasks.forEach((task) => {
+      if (task.completedAt) {
+        const date = new Date(task.completedAt);
+        // Normalize to local date string (YYYY-MM-DD)
+        const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        completionsByDate.set(dateKey, (completionsByDate.get(dateKey) || 0) + 1);
+      }
+    });
+
+    // Build progress array
+    const progressData: Array<{
+      date: string;
+      tasksCompleted: number;
+      cumulativeCompleted: number;
+    }> = [];
+
+    let cumulative = 0;
+    const sortedDates = Array.from(completionsByDate.keys()).sort();
+
+    sortedDates.forEach((date) => {
+      const count = completionsByDate.get(date) || 0;
+      cumulative += count;
+      progressData.push({
+        date,
+        tasksCompleted: count,
+        cumulativeCompleted: cumulative,
+      });
+    });
+
+    return {
+      goalId: goal.id,
+      totalTasks,
+      completedTasks: goal.tasks.length,
+      createdAt: goal.createdAt.toISOString(),
+      deadline: goal.deadline ? goal.deadline.toISOString() : null,
+      progressData,
     };
   }
 
@@ -465,10 +565,14 @@ export class GoalService {
 
   /**
    * Validate that user has access to the goal
+   * Goals are company-wide - any company member can access/modify
    */
   private async validateGoalAccess(goalId: number) {
-    const accountId = this.utilityService.accountInformation.id;
     const companyId = this.utilityService.accountInformation.company?.id;
+
+    if (!companyId) {
+      throw new BadRequestException('User must belong to a company to access goals');
+    }
 
     const goal = await this.prisma.goal.findUnique({
       where: { id: goalId },
@@ -478,11 +582,9 @@ export class GoalService {
       throw new NotFoundException('Goal not found');
     }
 
-    // Check access - must be creator or same company
-    if (goal.createdById !== accountId) {
-      if (!companyId || goal.companyId !== companyId) {
-        throw new NotFoundException('Goal not found');
-      }
+    // Check company access - must belong to same company
+    if (goal.companyId !== companyId) {
+      throw new NotFoundException('Goal not found');
     }
 
     return goal;
@@ -543,6 +645,9 @@ export class GoalService {
             name: task.project.name,
           }
         : null,
+      dueDate: task.dueDate ? this.utilityService.formatDate(task.dueDate) : null,
+      createdAt: this.utilityService.formatDate(task.createdAt),
+      updatedAt: this.utilityService.formatDate(task.updatedAt),
     };
   }
 }

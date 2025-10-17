@@ -193,6 +193,29 @@ export const useGoalStore = defineStore('goal', () => {
     }
   };
 
+  const fetchGoalProgress = async (goalId: number) => {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      console.log('[GoalStore] Fetching goal progress:', goalId);
+
+      const response = await api.get(`/task/goal/${goalId}/progress`);
+
+      if (response.data) {
+        return response.data;
+      }
+
+      return null;
+    } catch (err) {
+      error.value = err as Error;
+      console.error('[GoalStore] Failed to fetch goal progress:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const createGoal = async (goalData: CreateGoalData): Promise<GoalData | null> => {
     try {
       loading.value = true;
@@ -515,6 +538,7 @@ export const useGoalStore = defineStore('goal', () => {
     // API Actions
     fetchGoals,
     fetchGoalById,
+    fetchGoalProgress,
     createGoal,
     updateGoalInDB,
     completeGoal,
