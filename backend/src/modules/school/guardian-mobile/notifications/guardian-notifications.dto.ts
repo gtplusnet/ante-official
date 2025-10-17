@@ -4,6 +4,7 @@ import {
   IsNumber,
   IsBoolean,
   IsEnum,
+  IsArray,
   Min,
   Max,
 } from 'class-validator';
@@ -48,6 +49,11 @@ export class GetNotificationsDto {
   @Type(() => Boolean)
   @IsBoolean()
   unread?: boolean;
+
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  unreadOnly?: boolean;
 }
 
 export class CreateNotificationDto {
@@ -101,4 +107,10 @@ export class AnnouncementDto {
 
   @IsOptional()
   data?: any;
+}
+
+export class MarkNotificationsReadDto {
+  @IsArray()
+  @IsString({ each: true })
+  notificationIds: string[];
 }

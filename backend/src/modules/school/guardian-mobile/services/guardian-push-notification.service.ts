@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '@common/prisma.service';
+import { GuardianNotificationsService } from '../notifications/guardian-notifications.service';
 import * as admin from 'firebase-admin';
 import { ServiceAccount } from 'firebase-admin';
 import { Message } from 'firebase-admin/messaging';
@@ -10,7 +11,10 @@ export class GuardianPushNotificationService implements OnModuleInit {
   private firebaseApp: admin.app.App;
   private initialized = false;
 
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly guardianNotificationsService: GuardianNotificationsService,
+  ) { }
 
   async onModuleInit() {
     try {
@@ -165,18 +169,39 @@ export class GuardianPushNotificationService implements OnModuleInit {
       ? `arrived at ${timeStr}.`
       : `left the campus at ${timeStr}.`;
 
+    const notificationData = {
+      type: 'attendance',
+      action,
+      studentName,
+      timestamp: time.toISOString(),
+    };
+
     const notification = {
       title: 'Attendance Update',
       body: `${formattedStudentName} ${actionText}`,
-      data: {
-        type: 'attendance',
-        action,
-        studentName,
-        timestamp: time.toISOString(),
-      },
+      data: notificationData,
     };
 
+    // Send push notification
     await this.sendToGuardians(guardianIds, notification);
+
+    // Create in-app notifications in database
+    try {
+      await this.guardianNotificationsService.createNotificationForGuardians(
+        guardianIds,
+        {
+          type: 'attendance',
+          title: 'Attendance Update',
+          message: `${formattedStudentName} ${actionText}`,
+          priority: 'normal',
+          data: notificationData,
+        },
+      );
+      this.logger.log(`Created in-app notifications for ${guardianIds.length} guardians`);
+    } catch (error) {
+      this.logger.error('Failed to create in-app notifications:', error);
+      // Don't throw - we don't want notification creation failures to break push notifications
+    }
   }
 
   /**
@@ -188,18 +213,36 @@ export class GuardianPushNotificationService implements OnModuleInit {
     amount: number,
     dueDate: Date,
   ): Promise<void> {
+    const notificationData = {
+      type: 'payment',
+      studentName,
+      amount: amount.toString(),
+      dueDate: dueDate.toISOString(),
+    };
+
     const notification = {
       title: 'Payment Reminder',
       body: `Tuition payment of ₱${amount.toLocaleString()} for ${studentName} is due on ${dueDate.toLocaleDateString()}`,
-      data: {
-        type: 'payment',
-        studentName,
-        amount: amount.toString(),
-        dueDate: dueDate.toISOString(),
-      },
+      data: notificationData,
     };
 
+    // Send push notification
     await this.sendToGuardian(guardianId, notification);
+
+    // Create in-app notification in database
+    try {
+      await this.guardianNotificationsService.createNotification(guardianId, {
+        type: 'payment_reminder',
+        title: 'Payment Reminder',
+        message: `Tuition payment of ₱${amount.toLocaleString()} for ${studentName} is due on ${dueDate.toLocaleDateString()}`,
+        priority: 'high',
+        data: notificationData,
+      });
+      this.logger.log(`Created in-app payment reminder notification for guardian ${guardianId}`);
+    } catch (error) {
+      this.logger.error('Failed to create in-app payment reminder notification:', error);
+      // Don't throw - we don't want notification creation failures to break push notifications
+    }
   }
 
   /**
@@ -210,16 +253,37 @@ export class GuardianPushNotificationService implements OnModuleInit {
     title: string,
     message: string,
   ): Promise<void> {
+    const notificationData = {
+      type: 'announcement',
+      timestamp: new Date().toISOString(),
+    };
+
     const notification = {
       title,
       body: message,
-      data: {
-        type: 'announcement',
-        timestamp: new Date().toISOString(),
-      },
+      data: notificationData,
     };
 
+    // Send push notification
     await this.sendToGuardians(guardianIds, notification);
+
+    // Create in-app notifications in database
+    try {
+      await this.guardianNotificationsService.createNotificationForGuardians(
+        guardianIds,
+        {
+          type: 'announcement',
+          title,
+          message,
+          priority: 'normal',
+          data: notificationData,
+        },
+      );
+      this.logger.log(`Created in-app announcement notifications for ${guardianIds.length} guardians`);
+    } catch (error) {
+      this.logger.error('Failed to create in-app announcement notifications:', error);
+      // Don't throw - we don't want notification creation failures to break push notifications
+    }
   }
 
   /**
