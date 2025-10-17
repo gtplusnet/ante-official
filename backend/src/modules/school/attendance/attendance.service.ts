@@ -1,4 +1,4 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, Inject, forwardRef, Logger } from '@nestjs/common';
 import { PrismaService } from '@common/prisma.service';
 import { UtilityService } from '@common/utility.service';
 import { TableHandlerService } from '@common/table.handler/table.handler.service';
@@ -9,14 +9,18 @@ import {
 import { IAttendanceTableRow } from './attendance.interface';
 import { format } from 'date-fns';
 import { SocketGateway } from '@modules/communication/socket/socket/socket.gateway';
+import { GuardianPushNotificationService } from '../guardian-mobile/services/guardian-push-notification.service';
 
 @Injectable()
 export class AttendanceService {
+  private readonly logger = new Logger(AttendanceService.name);
+
   @Inject() private prisma: PrismaService;
   @Inject() private utilityService: UtilityService;
   @Inject() private tableHandler: TableHandlerService;
   @Inject(forwardRef(() => SocketGateway))
   private socketGateway: SocketGateway;
+  @Inject() private guardianPushNotificationService: GuardianPushNotificationService;
 
   async getAttendanceTable(query: any, body: AttendanceTableDto) {
     this.tableHandler.initialize(query, body, 'attendance');
@@ -313,6 +317,19 @@ export class AttendanceService {
       this.socketGateway.emitStatsUpdate(data.companyId, stats);
     }
 
+    // Send push notifications to guardians (async, don't wait)
+    this.sendGuardianNotifications(
+      student.id,
+      `${student.firstName} ${student.lastName}`,
+      'check_in',
+      attendance.timestamp,
+    ).catch((error) => {
+      this.logger.error(
+        `Failed to send guardian notifications for student ${student.id}:`,
+        error,
+      );
+    });
+
     return {
       attendanceId: attendance.id,
       studentId: data.studentId,
@@ -402,6 +419,19 @@ export class AttendanceService {
       this.socketGateway.emitStatsUpdate(data.companyId, stats);
     }
 
+    // Send push notifications to guardians (async, don't wait)
+    this.sendGuardianNotifications(
+      student.id,
+      `${student.firstName} ${student.lastName}`,
+      'check_out',
+      attendance.timestamp,
+    ).catch((error) => {
+      this.logger.error(
+        `Failed to send guardian notifications for student ${student.id}:`,
+        error,
+      );
+    });
+
     return {
       attendanceId: attendance.id,
       studentId: data.studentId,
@@ -467,5 +497,59 @@ export class AttendanceService {
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     return `${hours}h ${minutes}m`;
+  }
+
+  /**
+   * Send push notifications to all guardians assigned to a student
+   * @private
+   */
+  private async sendGuardianNotifications(
+    studentId: string,
+    studentName: string,
+    action: 'check_in' | 'check_out',
+    timestamp: Date,
+  ): Promise<void> {
+    try {
+      // Fetch all guardians assigned to this student
+      const studentGuardians = await this.prisma.studentGuardian.findMany({
+        where: {
+          studentId,
+        },
+        select: {
+          guardianId: true,
+        },
+      });
+
+      if (studentGuardians.length === 0) {
+        this.logger.debug(
+          `No guardians found for student ${studentId}, skipping notifications`,
+        );
+        return;
+      }
+
+      const guardianIds = studentGuardians.map((sg) => sg.guardianId);
+
+      this.logger.log(
+        `Sending ${action} notification for student ${studentName} to ${guardianIds.length} guardian(s)`,
+      );
+
+      // Send attendance notification to all guardians
+      await this.guardianPushNotificationService.sendAttendanceNotification(
+        guardianIds,
+        studentName,
+        action,
+        timestamp,
+      );
+
+      this.logger.log(
+        `Successfully sent ${action} notifications for student ${studentName}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error sending guardian notifications for student ${studentId}:`,
+        error,
+      );
+      // Don't throw - we don't want notification failures to break attendance recording
+    }
   }
 }
