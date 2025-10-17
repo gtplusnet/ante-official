@@ -50,7 +50,7 @@ export default function AccountPage() {
     name: user ? `${user.firstName} ${user.lastName}` : '',
     email: user?.email || '',
     phone: user?.contactNumber || 'Not set',
-    photoUrl: '',
+    photoUrl: user?.profilePhoto?.url || '',
     connectedStudents: user?.students?.length || 0,
   };
 

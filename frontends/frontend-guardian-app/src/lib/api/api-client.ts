@@ -65,7 +65,8 @@ class ApiClient {
         const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
                               originalRequest.url?.includes('/auth/register') ||
                               originalRequest.url?.includes('/auth/forgot-password') ||
-                              originalRequest.url?.includes('/auth/reset-password');
+                              originalRequest.url?.includes('/auth/reset-password') ||
+                              originalRequest.url?.includes('/auth/change-password');
 
         if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
           if (this.isRefreshing) {

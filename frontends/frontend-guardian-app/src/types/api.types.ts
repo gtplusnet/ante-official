@@ -22,6 +22,7 @@ export interface GuardianAuthInfo {
   alternateNumber?: string;
   address?: string;
   occupation?: string;
+  profilePhoto?: FileInfo;
   lastLogin?: Date;
   students: StudentFullInfo[];
 }

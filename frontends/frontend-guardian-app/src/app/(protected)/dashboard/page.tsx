@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { guardianPublicApi, StudentAttendanceStatusDto, AttendanceLogDto } from "@/lib/api/guardian-public-api";
 import { usePolling } from "@/hooks/usePolling";
 import { format } from "date-fns";
+import { AttendanceLog } from "@/types";
 
 // Transform API status to display format
 interface StudentStatus {
@@ -30,7 +31,7 @@ interface StudentStatus {
 }
 
 export default function DashboardPage() {
-  const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
+  const [selectedLog, setSelectedLog] = useState<AttendanceLog | null>(null);
   const [showLogDetail, setShowLogDetail] = useState(false);
   const [studentStatuses, setStudentStatuses] = useState<StudentStatus[]>([]);
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceLogDto[]>([]);
@@ -324,27 +325,34 @@ export default function DashboardPage() {
                 <div key={date} className="mb-6">
                   <p className="text-sm text-gray-500 mb-3 text-center">{date}</p>
                   <div className="space-y-3">
-                    {logs.map((log) => (
-                      <div
-                        key={log.id}
-                        onClick={() => {
-                          setSelectedLogId(log.id);
-                          setShowLogDetail(true);
-                        }}
-                      >
-                        <AttendanceLogItem
-                          log={{
-                            id: log.id,
-                            studentId: log.studentId,
-                            studentName: log.studentName,
-                            timestamp: new Date(log.timestamp),
-                            type: log.type === "check-in" ? "entry" : "exit",
-                            date: format(new Date(log.timestamp), "MMMM dd, yyyy"),
-                            photoUrl: log.photo,
+                    {logs.map((log) => {
+                      const attendanceLog: AttendanceLog = {
+                        id: log.id,
+                        studentId: log.studentId,
+                        studentName: log.studentName,
+                        timestamp: new Date(log.timestamp),
+                        type: log.type === "check-in" ? "entry" : "exit",
+                        location: log.gate.name,
+                      };
+                      
+                      return (
+                        <div
+                          key={log.id}
+                          onClick={() => {
+                            setSelectedLog(attendanceLog);
+                            setShowLogDetail(true);
                           }}
-                        />
-                      </div>
-                    ))}
+                        >
+                          <AttendanceLogItem
+                            log={{
+                              ...attendanceLog,
+                              date: format(new Date(log.timestamp), "MMMM dd, yyyy"),
+                              photoUrl: log.photo,
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ))
@@ -358,9 +366,9 @@ export default function DashboardPage() {
         isOpen={showLogDetail}
         onClose={() => {
           setShowLogDetail(false);
-          setSelectedLogId(null);
+          setSelectedLog(null);
         }}
-        logId={selectedLogId || ""}
+        log={selectedLog}
       />
     </AuthenticatedLayout>
   );

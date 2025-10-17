@@ -7,8 +7,10 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@common/prisma.service';
 import { UtilityService } from '@common/utility.service';
+import { UploadPhotoService } from '@infrastructure/file-upload/upload-photo/upload-photo.service';
 import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcrypt';
+import { MulterFile } from '../../../types/multer';
 import {
   GuardianLoginDto,
   GuardianRegisterDto,
@@ -30,6 +32,7 @@ export class SchoolGuardianPublicService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly utility: UtilityService,
+    private readonly uploadPhotoService: UploadPhotoService,
   ) {}
 
   /**
@@ -726,6 +729,7 @@ export class SchoolGuardianPublicService {
     const guardian = await this.prisma.guardian.findUnique({
       where: { id: guardianId },
       include: {
+        profilePhoto: true,
         students: {
           include: {
             student: {
@@ -766,6 +770,15 @@ export class SchoolGuardianPublicService {
       isActive: guardian.isActive,
       createdAt: guardian.createdAt.toISOString(),
       lastLogin: guardian.lastLogin?.toISOString(),
+      profilePhoto: guardian.profilePhoto
+        ? {
+            id: guardian.profilePhoto.id.toString(),
+            url: guardian.profilePhoto.url,
+            name: guardian.profilePhoto.name,
+            size: guardian.profilePhoto.size,
+            type: guardian.profilePhoto.mimetype,
+          }
+        : undefined,
       students: guardian.students.map((gs) => {
         const primaryGuardian = gs.student.guardians?.[0];
         return {
@@ -904,5 +917,75 @@ export class SchoolGuardianPublicService {
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     return `${hours}h ${minutes}m`;
+  }
+
+  /**
+   * Upload profile photo
+   */
+  async uploadProfilePhoto(
+    guardianId: string,
+    file: MulterFile,
+  ): Promise<GuardianProfileDto> {
+    // Validate file type
+    const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      throw new BadRequestException(
+        'Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.',
+      );
+    }
+
+    // Validate file size (5MB max)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      throw new BadRequestException('File size must be less than 5MB');
+    }
+
+    // Find guardian
+    const guardian = await this.prisma.guardian.findUnique({
+      where: { id: guardianId },
+    });
+
+    if (!guardian) {
+      throw new NotFoundException('Guardian not found');
+    }
+
+    // Upload to DigitalOcean Spaces
+    const photoUrl = await this.uploadPhotoService.uploadPhoto(file);
+
+    // Save file record to database
+    const fileRecord = await this.prisma.files.create({
+      data: {
+        name: `guardian-${guardianId}-profile-photo`,
+        originalName: file.originalname,
+        url: photoUrl,
+        size: file.size,
+        mimetype: file.mimetype,
+        type: 'IMAGE',
+        encoding: file.encoding || 'utf-8',
+        fieldName: file.fieldname,
+        companyId: guardian.companyId,
+        module: 'CMS',
+      },
+    });
+
+    // Delete old profile photo if exists
+    if (guardian.profilePhotoId) {
+      await this.prisma.files.delete({
+        where: { id: guardian.profilePhotoId },
+      }).catch(() => {
+        // Ignore error if file doesn't exist
+      });
+    }
+
+    // Update guardian's profilePhotoId
+    await this.prisma.guardian.update({
+      where: { id: guardianId },
+      data: {
+        profilePhotoId: fileRecord.id,
+      },
+    });
+
+    // Return updated profile
+    return this.getGuardianProfile(guardianId);
   }
 }

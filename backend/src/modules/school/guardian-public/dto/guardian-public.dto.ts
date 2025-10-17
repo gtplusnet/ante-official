@@ -1061,6 +1061,9 @@ export class GuardianProfileDto {
   @ApiPropertyOptional({ description: 'Notification preferences' })
   notificationPreferences?: Record<string, any>;
 
+  @ApiPropertyOptional({ description: 'Profile photo', type: FileInfoDto })
+  profilePhoto?: FileInfoDto;
+
   @ApiProperty({
     description: 'List of associated students',
     type: [StudentFullInfoDto],

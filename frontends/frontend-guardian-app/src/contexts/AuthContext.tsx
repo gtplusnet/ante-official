@@ -154,6 +154,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         alternateNumber: '',
         address: profileData.address,
         occupation: profileData.occupation,
+        profilePhoto: profileData.profilePhoto,
         lastLogin: profileData.lastLogin ? new Date(profileData.lastLogin) : undefined,
         students: profileData.students.map(s => ({
           id: s.id,

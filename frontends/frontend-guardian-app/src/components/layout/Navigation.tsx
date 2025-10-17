@@ -79,10 +79,18 @@ export const Navigation: React.FC<NavigationProps> = ({ isOpen, onClose, guardia
             
             {/* Guardian Info */}
             <div className={`flex items-center gap-3 transition-all duration-700 delay-100 ${isAnimating ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
-              <div className="w-12 h-12 bg-primary-300 rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-110">
-                <span className="text-xl font-semibold">
-                  {guardian.name.split(' ').map(n => n[0]).join('')}
-                </span>
+              <div className="w-12 h-12 bg-primary-300 rounded-full flex items-center justify-center overflow-hidden transition-transform duration-300 hover:scale-110">
+                {guardian.photoUrl ? (
+                  <img 
+                    src={guardian.photoUrl} 
+                    alt={guardian.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xl font-semibold">
+                    {guardian.name.split(' ').map(n => n[0]).join('')}
+                  </span>
+                )}
               </div>
               <div>
                 <p className="font-medium">{guardian.name}</p>

@@ -45,6 +45,11 @@ export interface UpdateProfileRequest {
   preferredLanguage?: string;
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface GetAttendanceLogsParams {
   studentId?: string;
   limit?: number;
@@ -207,6 +212,11 @@ export interface GuardianProfileDto {
   notificationPreferences?: Record<string, any>;
   students: StudentInfoDto[];
   activeDevices?: number;
+  profilePhoto?: {
+    id: string;
+    url: string;
+    name: string;
+  };
 }
 
 export interface GuardianLoginResponse {
@@ -517,6 +527,67 @@ class GuardianPublicApi {
       throw {
         code: error.code || 'UPDATE_PROFILE_ERROR',
         message: error.message || 'Failed to update profile',
+        details: error.details,
+      };
+    }
+  }
+
+  /**
+   * Change password
+   */
+  async changePassword(data: ChangePasswordRequest): Promise<{ message: string }> {
+    try {
+      const response = await apiClient.post<{ message: string }>(
+        '/api/guardian/auth/change-password',
+        data
+      );
+
+      if (response.success && response.data) {
+        return response.data;
+      }
+      
+      if ((response as any).message) {
+        return response as any;
+      }
+
+      throw new Error('Change password failed: No data returned');
+    } catch (error: any) {
+      throw {
+        code: error.code || 'CHANGE_PASSWORD_ERROR',
+        message: error.message || error.response?.data?.message || 'Failed to change password',
+        details: error.details || error.response?.data,
+      };
+    }
+  }
+
+  /**
+   * Upload profile photo
+   */
+  async uploadProfilePhoto(file: File): Promise<GuardianProfileDto> {
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+
+      const response = await apiClient.post<GuardianProfileDto>(
+        `${this.basePath}/profile/photo`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      if (response.success && response.data) {
+        return response.data;
+      }
+
+      throw new Error('Upload profile photo failed: No data returned');
+    } catch (error: any) {
+      console.error('[GuardianPublicApi] Upload profile photo error:', error);
+      throw {
+        code: error.code || 'UPLOAD_PHOTO_ERROR',
+        message: error.message || 'Failed to upload profile photo',
         details: error.details,
       };
     }

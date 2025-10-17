@@ -10,8 +10,7 @@ import { Badge } from '@/components/ui/Badge';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import { useAuth } from '@/contexts/AuthContext';
-// studentsApi removed - using Supabase
-import { storeUserInfo, storeCompanyInfo } from '@/lib/utils/storage';
+import { guardianPublicApi } from '@/lib/api/guardian-public-api';
 import { 
   FiUser, 
   FiUserX,
@@ -46,26 +45,15 @@ export default function ManageStudentsPage() {
       setError('');
       
       // Call API to disconnect student
-      // TODO: Replace with Supabase implementation
-      const response = await Promise.resolve({
-        studentId: selectedStudent,
-        guardian: { students: [] } as any,
-        company: null
-      });
-      
-      // Update stored user info with the response
-      if (response.guardian) {
-        await storeUserInfo(response.guardian);
-        if (response.company) {
-          await storeCompanyInfo(response.company);
-        }
-      }
+      await guardianPublicApi.removeStudent(selectedStudent);
       
       // Refresh auth context to update user's students
       await refreshAuth();
       
       // Check if this was the last student
-      if (response.guardian && (!response.guardian.students || response.guardian.students.length === 0)) {
+      const remainingStudents = user?.students?.filter(s => s.id !== selectedStudent) || [];
+      
+      if (remainingStudents.length === 0) {
         // Small delay to ensure state updates are complete
         setTimeout(() => {
           // Redirect to add-student page if no students left

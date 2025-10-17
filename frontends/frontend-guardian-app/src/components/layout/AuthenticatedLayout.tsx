@@ -33,7 +33,7 @@ export const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
     id: user.id,
     name: `${user.firstName} ${user.lastName}`,
     email: user.email,
-    photoUrl: undefined
+    photoUrl: user.profilePhoto?.url
   } : { id: '', name: '', email: '' };
 
   if (authLoading) {
