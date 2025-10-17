@@ -554,6 +554,39 @@ class GuardianPublicApi {
       };
     }
   }
+
+  /**
+   * Upload profile photo
+   */
+  async uploadProfilePhoto(file: File): Promise<GuardianProfileDto> {
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+
+      const response = await apiClient.post<GuardianProfileDto>(
+        `${this.basePath}/profile/photo`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      if (response.success && response.data) {
+        return response.data;
+      }
+
+      throw new Error('Upload profile photo failed: No data returned');
+    } catch (error: any) {
+      console.error('[GuardianPublicApi] Upload profile photo error:', error);
+      throw {
+        code: error.code || 'UPLOAD_PHOTO_ERROR',
+        message: error.message || 'Failed to upload profile photo',
+        details: error.details,
+      };
+    }
+  }
 }
 
 // Export singleton instance

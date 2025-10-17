@@ -1259,6 +1259,7 @@ model Files {
   projectAccomplishment            ProjectAccomplishment[]
   Queue                            Queue[]
   Student                          Student[]
+  Guardian                         Guardian[]
 
   @@index([companyId, type])
   @@index([companyId, folderId])
@@ -2789,6 +2790,7 @@ model Guardian {
   address                 String?
   occupation              String?
   companyId               Int
+  profilePhotoId          Int?
   isDeleted               Boolean                @default(false)
   createdAt               DateTime               @default(now())
   updatedAt               DateTime               @updatedAt
@@ -2805,6 +2807,7 @@ model Guardian {
   preferredLanguage       String                 @default("en")
   passwordHash            String?                @db.VarChar(255)
   company                 Company                @relation(fields: [companyId], references: [id])
+  profilePhoto            Files?                 @relation(fields: [profilePhotoId], references: [id])
   guardianNotifications   GuardianNotification[]
   tokens                  GuardianToken[]
   schoolNotifications     SchoolNotification[]

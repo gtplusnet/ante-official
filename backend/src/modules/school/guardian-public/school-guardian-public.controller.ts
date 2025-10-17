@@ -17,7 +17,10 @@ import {
   ConflictException,
   Render,
   ValidationPipe,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
   ApiOperation,
@@ -26,10 +29,12 @@ import {
   ApiQuery,
   ApiParam,
   ApiBody,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { SchoolGuardianPublicService } from './school-guardian-public.service';
 import { GuardianPublicAuthGuard } from './guards/guardian-public-auth.guard';
 import { Public } from '@common/decorators/public.decorator';
+import { MulterFile } from '../../../types/multer';
 import {
   GuardianLoginDto,
   GuardianRegisterDto,
@@ -408,6 +413,46 @@ export class SchoolGuardianPublicController {
       };
     } catch (error) {
       throw new BadRequestException('Failed to update profile');
+    }
+  }
+
+  /**
+   * Upload profile photo
+   * POST /api/public/school-guardian/profile/photo
+   */
+  @Post('profile/photo')
+  @UseGuards(GuardianPublicAuthGuard)
+  @UseInterceptors(FileInterceptor('photo'))
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Upload guardian profile photo' })
+  @ApiConsumes('multipart/form-data')
+  @ApiResponse({ status: 200, description: 'Photo uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid file or file too large' })
+  async uploadProfilePhoto(
+    @Request() req: any,
+    @UploadedFile() file: MulterFile,
+  ) {
+    try {
+      if (!file) {
+        throw new BadRequestException('No file uploaded');
+      }
+
+      const updatedProfile = await this.guardianService.uploadProfilePhoto(
+        req.user.id,
+        file,
+      );
+      
+      return {
+        success: true,
+        data: updatedProfile,
+        message: 'Profile photo uploaded successfully',
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to upload profile photo');
     }
   }
 }

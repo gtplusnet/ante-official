@@ -35,6 +35,7 @@ export default function EditProfilePage() {
   const router = useRouter();
   const { user, refreshAuth } = useAuth();
   const [profilePhoto, setProfilePhoto] = useState<string>('');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [formData, setFormData] = useState<ProfileData>({
     firstName: '',
     lastName: '',
@@ -62,6 +63,10 @@ export default function EditProfilePage() {
         address: user.address || '',
         occupation: user.occupation || '',
       });
+      // Load profile photo if available
+      if ((user as any).profilePhoto?.url) {
+        setProfilePhoto((user as any).profilePhoto.url);
+      }
       setIsLoading(false);
     } else {
       // If no user after mount, stop loading (middleware should redirect)
@@ -80,27 +85,67 @@ export default function EditProfilePage() {
     setErrorMessage('');
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setErrorMessage('Photo size must be less than 5MB');
-        return;
-      }
+    if (!file) return;
 
-      // Check file type
-      if (!file.type.startsWith('image/')) {
-        setErrorMessage('Please upload an image file');
-        return;
-      }
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMessage('Photo size must be less than 5MB');
+      return;
+    }
 
-      // In real app, upload to server
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfilePhoto(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      setErrorMessage('Please upload an image file');
+      return;
+    }
+
+    // Clear any previous messages
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    // Show local preview immediately
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfilePhoto(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    setIsUploadingPhoto(true);
+    try {
+      console.log('[EditProfile] Uploading profile photo...');
+      
+      const updatedProfile = await guardianPublicApi.uploadProfilePhoto(file);
+      
+      console.log('[EditProfile] Profile photo uploaded successfully');
+      
+      // Update profile photo with server URL
+      if (updatedProfile.profilePhoto?.url) {
+        setProfilePhoto(updatedProfile.profilePhoto.url);
+      }
+      
+      // Refresh auth context to update user data
+      await refreshAuth();
+      
+      setSuccessMessage('Profile photo updated successfully!');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+    } catch (error: any) {
+      console.error('[EditProfile] Photo upload failed:', error);
+      setErrorMessage(error.message || 'Failed to upload photo. Please try again.');
+      // Revert to previous photo on error
+      if ((user as any).profilePhoto?.url) {
+        setProfilePhoto((user as any).profilePhoto.url);
+      } else {
+        setProfilePhoto('');
+      }
+    } finally {
+      setIsUploadingPhoto(false);
     }
   };
 
@@ -232,10 +277,17 @@ export default function EditProfilePage() {
                       {getInitials()}
                     </span>
                   )}
+                  {isUploadingPhoto && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                    </div>
+                  )}
                 </div>
                 <label
                   htmlFor="photo-upload"
-                  className="absolute bottom-0 right-0 p-2 bg-primary-500 text-white rounded-full shadow-lg cursor-pointer hover:bg-primary-600 transition-colors"
+                  className={`absolute bottom-0 right-0 p-2 bg-primary-500 text-white rounded-full shadow-lg cursor-pointer hover:bg-primary-600 transition-colors ${
+                    isUploadingPhoto ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
                   <FiCamera className="w-5 h-5" />
                   <input
@@ -244,10 +296,16 @@ export default function EditProfilePage() {
                     accept="image/*"
                     onChange={handlePhotoUpload}
                     className="hidden"
+                    disabled={isUploadingPhoto}
                   />
                 </label>
               </div>
-              {profilePhoto && (
+              {isUploadingPhoto && (
+                <p className="text-sm text-primary-600 mt-3 animate-pulse">
+                  Uploading photo...
+                </p>
+              )}
+              {profilePhoto && !isUploadingPhoto && (
                 <button
                   type="button"
                   onClick={removePhoto}
@@ -258,7 +316,10 @@ export default function EditProfilePage() {
                 </button>
               )}
               <p className="text-xs text-gray-500 mt-2">
-                Photo upload coming soon. Currently using initials.
+                {isUploadingPhoto 
+                  ? 'Please wait while we upload your photo...'
+                  : 'Click the camera icon to upload a new photo (max 5MB)'
+                }
               </p>
             </div>
           </Card>

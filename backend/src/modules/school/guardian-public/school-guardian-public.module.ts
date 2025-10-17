@@ -3,6 +3,7 @@ import { SchoolGuardianPublicController } from './school-guardian-public.control
 import { SchoolGuardianPublicService } from './school-guardian-public.service';
 import { GuardianPublicAuthGuard } from './guards/guardian-public-auth.guard';
 import { CommonModule } from '@common/common.module';
+import { UploadPhotoService } from '@infrastructure/file-upload/upload-photo/upload-photo.service';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { CommonModule } from '@common/common.module';
   providers: [
     SchoolGuardianPublicService,
     GuardianPublicAuthGuard,
+    UploadPhotoService,
   ],
   exports: [
     SchoolGuardianPublicService,
