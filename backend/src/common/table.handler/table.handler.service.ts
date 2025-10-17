@@ -24,8 +24,8 @@ export class TableHandlerService {
   }
   constructTableQuery() {
     // Validate and set default values
-    if (!this.query.hasOwnProperty('page')) this.query.page = 1;
-    if (!this.query.hasOwnProperty('perPage')) this.query.perPage = 10;
+    if (!Object.prototype.hasOwnProperty.call(this.query, 'page')) this.query.page = 1;
+    if (!Object.prototype.hasOwnProperty.call(this.query, 'perPage')) this.query.perPage = 10;
 
     const currentPage = Math.max(1, Number(this.query.page) || 1);
     const take = Math.max(1, Math.min(100, Number(this.query.perPage) || 10)); // Limit to max 100 per page
@@ -62,7 +62,7 @@ export class TableHandlerService {
 
     const defaultOrderType = this.tableInformation.defaultOrderType || 'asc';
     const sortType =
-      this.query.hasOwnProperty('sortType') &&
+      Object.prototype.hasOwnProperty.call(this.query, 'sortType') &&
       ['asc', 'desc'].includes(this.query.sortType)
         ? this.query.sortType
         : defaultOrderType;
@@ -71,7 +71,7 @@ export class TableHandlerService {
     const orderByColumn = this.tableInformation.defaultOrderBy || 'createdAt';
     orderBy[orderByColumn] = sortType;
 
-    if (this.query.hasOwnProperty('sort') && this.query.sort) {
+    if (Object.prototype.hasOwnProperty.call(this.query, 'sort') && this.query.sort) {
       const customOrderBy = this.tableInformation.sort.find(
         (sort) => sort.key == this.query.sort,
       );
@@ -86,7 +86,7 @@ export class TableHandlerService {
     skip = currentPage * take - take;
 
     let where = {};
-    if (this.body.hasOwnProperty('filters')) {
+    if (Object.prototype.hasOwnProperty.call(this.body, 'filters')) {
       this.body.filters.forEach((filter) => {
         for (const filterKey in filter) {
           const customFilter = this.tableInformation.filter.find(
@@ -109,7 +109,7 @@ export class TableHandlerService {
               where = { ...where, ...nestedWhere };
             } else {
               if (
-                customFilter.hasOwnProperty('isNumber') &&
+                Object.prototype.hasOwnProperty.call(customFilter, 'isNumber') &&
                 customFilter.isNumber
               ) {
                 filter[filterKey] = Number(filter[filterKey]);
@@ -128,7 +128,7 @@ export class TableHandlerService {
       });
     }
 
-    if (this.body.hasOwnProperty('searchKeyword') && this.body.searchKeyword) {
+    if (Object.prototype.hasOwnProperty.call(this.body, 'searchKeyword') && this.body.searchKeyword) {
       const searchKeyword = this.body.searchKeyword;
       const searchColumn = this.body.searchBy;
 
