@@ -63,6 +63,8 @@ export default function TuitionPage() {
       className="bg-gray-50"
     >
       <div className="px-4 py-4">
+
+        <div className="mb-6 p-4 bg-yellow-50 text-yellow-800 rounded-lg">This Feature is currently under development. Please check back later.</div>
         {/* Family Summary Card */}
         <Card className="mb-6 bg-gradient-to-br from-primary-500 to-primary-600 text-white">
           <div className="mb-4">
