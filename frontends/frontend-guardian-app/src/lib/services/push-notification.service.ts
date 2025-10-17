@@ -1,21 +1,32 @@
 import { PushNotifications, Token, PushNotificationSchema, ActionPerformed } from '@capacitor/push-notifications';
-import { getFirebaseMessaging } from '@/lib/firebase/config';
+import { getFirebaseMessaging, FIREBASE_VAPID_KEY } from '@/lib/firebase/config';
 import { getToken, onMessage } from 'firebase/messaging';
 import { apiClient } from '@/lib/api/api-client';
 import { Capacitor } from '@capacitor/core';
 import { detectBrowser } from '@/lib/utils/browser-detection';
+import { getStoredTokens } from '@/lib/utils/storage';
 
 export interface NotificationHandlers {
   onNotificationReceived?: (notification: PushNotificationSchema) => void;
   onNotificationActionPerformed?: (notification: ActionPerformed) => void;
   onTokenReceived?: (token: string) => void;
   onPermissionDenied?: () => void;
+  onRegistrationError?: (error: string) => void;
+  onRegistrationSuccess?: () => void;
+}
+
+export interface RegistrationStatus {
+  tokenObtained: boolean;
+  tokenRegistered: boolean;
+  error?: string;
 }
 
 class PushNotificationService {
   private initialized = false;
   private fcmToken: string | null = null;
   private handlers: NotificationHandlers = {};
+  private registrationError: string | null = null;
+  private registrationStatus: 'idle' | 'registering' | 'registered' | 'failed' = 'idle';
 
   /**
    * Initialize push notifications
@@ -123,13 +134,14 @@ class PushNotificationService {
       }
       console.log('✅ [Push] Notification permission granted');
 
-      // Check VAPID key
-      const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+      // Check VAPID key - use hardcoded fallback if env var not available (PM2 doesn't load .env.local)
+      const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || FIREBASE_VAPID_KEY;
       console.log('🔑 [Push] VAPID key configured:', vapidKey ? 'Yes' : 'No');
+      console.log('🔑 [Push] VAPID key source:', process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY ? 'Environment' : 'Hardcoded');
       console.log('🔑 [Push] VAPID key preview:', vapidKey ? vapidKey.substring(0, 20) + '...' : 'Not found');
 
       if (!vapidKey) {
-        console.error('❌ [Push] VAPID key not found in environment variables');
+        console.error('❌ [Push] VAPID key not found in environment variables or config');
         return false;
       }
 
@@ -214,12 +226,27 @@ class PushNotificationService {
   }
 
   /**
-   * Register FCM token with backend
+   * Register FCM token with backend (with retry logic)
    */
   private async registerToken(token: string): Promise<void> {
+    this.registrationStatus = 'registering';
+    this.registrationError = null;
+    
     try {
       console.log('🔄 [Push] Registering device token with backend...');
       console.log('📱 [Push] Token to register:', token.substring(0, 50) + '...');
+      
+      // Check if authenticated first
+      const tokens = await getStoredTokens();
+      if (!tokens?.accessToken) {
+        const errorMsg = 'Not authenticated - please login again';
+        console.error('🔐 [Push] Auth check failed:', errorMsg);
+        this.registrationError = errorMsg;
+        this.registrationStatus = 'failed';
+        this.handlers.onRegistrationError?.(errorMsg);
+        throw new Error(errorMsg);
+      }
+      console.log('🔐 [Push] Auth check passed');
       
       // Detect platform
       const platform = Capacitor.isNativePlatform() 
@@ -241,16 +268,55 @@ class PushNotificationService {
       
       console.log('📊 [Push] Registration payload:', { ...payload, token: token.substring(0, 50) + '...' });
       
-      const response = await apiClient.post('/api/guardian/device-token', payload);
-      console.log('✅ [Push] Device token registered successfully:', response);
-    } catch (error: any) {
-      console.error('❌ [Push] Failed to register device token:', error);
+      // Retry logic (3 attempts with 1 second delay)
+      let retries = 3;
+      let lastError: any = null;
+      
+      while (retries > 0) {
+        try {
+          console.log(`🚀 [Push] Registration attempt ${4 - retries}/3...`);
+          const response = await apiClient.post('/api/guardian/device-token', payload);
+          console.log('✅ [Push] Device token registered successfully:', response);
+          this.registrationStatus = 'registered';
+          this.handlers.onRegistrationSuccess?.();
+          return; // Success!
+        } catch (error: any) {
+          lastError = error;
+          
+          // Check for authentication errors (don't retry)
+          if (error.response?.status === 401 || error.code === 'UNAUTHENTICATED') {
+            const errorMsg = 'Session expired - please login again';
+            console.error('🔐 [Push] Authentication error:', errorMsg);
+            this.registrationError = errorMsg;
+            this.registrationStatus = 'failed';
+            this.handlers.onRegistrationError?.(errorMsg);
+            throw new Error(errorMsg);
+          }
+          
+          retries--;
+          if (retries > 0) {
+            console.log(`⚠️ [Push] Registration failed, retrying in 1s... (${retries} attempts left)`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+      }
+      
+      // All retries failed
+      const errorMsg = lastError?.message || 'Failed to register device token after 3 attempts';
+      console.error('❌ [Push] All registration attempts failed:', errorMsg);
       console.error('❌ [Push] Error details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        message: error.message
+        status: lastError?.response?.status,
+        statusText: lastError?.response?.statusText,
+        data: lastError?.response?.data,
+        message: lastError?.message
       });
+      this.registrationError = errorMsg;
+      this.registrationStatus = 'failed';
+      this.handlers.onRegistrationError?.(errorMsg);
+      throw lastError;
+      
+    } catch (error: any) {
+      // Error already logged and handled above
       throw error;
     }
   }
@@ -355,6 +421,50 @@ class PushNotificationService {
       }
     }
     // For native platforms, you would use Local Notifications plugin
+  }
+
+  /**
+   * Get current registration status
+   */
+  async getRegistrationStatus(): Promise<RegistrationStatus> {
+    return {
+      tokenObtained: !!this.fcmToken,
+      tokenRegistered: this.registrationStatus === 'registered',
+      error: this.registrationError || undefined,
+    };
+  }
+
+  /**
+   * Retry token registration manually
+   */
+  async retryRegistration(): Promise<boolean> {
+    if (!this.fcmToken) {
+      console.error('❌ [Push] No FCM token available to register');
+      return false;
+    }
+
+    try {
+      console.log('🔄 [Push] Manually retrying token registration...');
+      await this.registerToken(this.fcmToken);
+      return true;
+    } catch (error) {
+      console.error('❌ [Push] Manual retry failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get current registration error
+   */
+  getRegistrationError(): string | null {
+    return this.registrationError;
+  }
+
+  /**
+   * Get current registration status string
+   */
+  getRegistrationStatusString(): 'idle' | 'registering' | 'registered' | 'failed' {
+    return this.registrationStatus;
   }
 }
 
