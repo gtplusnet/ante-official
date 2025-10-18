@@ -3,20 +3,20 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Scanner, ScannerHandle } from "./components/Scanner";
+import { Scanner, ScannerHandle } from "@/app/(auth)/scan/components/Scanner";
 import { useNavigationGuard } from "@/lib/hooks/useNavigationGuard";
 import { playSound, cleanupAudio, resetAudio } from "@/lib/utils/sound";
 import { getAttendanceAPIService, AttendanceRecord, AttendanceStats } from "@/lib/services/attendance-api.service";
 import { websocketService } from "@/lib/services/websocket.service";
 import { getStorageManager, Student, Guardian } from "@/lib/utils/storage";
 import { format } from "date-fns";
-import { formatLocalTime, debugTimezone } from "@/lib/utils/date";
-import { AlertCircle, CheckCircle, Clock, Users, Wifi, WifiOff, RefreshCw, ExternalLink, UserCheck, Camera, Maximize, Minimize } from "lucide-react";
+import { debugTimezone } from "@/lib/utils/date";
+import { AlertCircle, CheckCircle, Wifi, WifiOff, Minimize } from "lucide-react";
 import { useNetworkStatus } from "@/lib/hooks/useNetworkStatus";
-import Link from "next/link";
 import ScanDialog from "@/components/ui/ScanDialog";
 
 export default function ScanPage() {
+  const router = useRouter();
   const [lastScanned, setLastScanned] = useState<string | null>(null);
   const [scanTime, setScanTime] = useState<string | null>(null);
   const [recentScans, setRecentScans] = useState<AttendanceRecord[]>([]);
@@ -45,6 +45,7 @@ export default function ScanPage() {
     status: "success" | "error" | "processing";
     message?: string;
   } | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const lastScanRef = useRef<string>("");
   const lastScanTimeRef = useRef<number>(0);
   const scannerRef = useRef<ScannerHandle>(null);
@@ -637,49 +638,51 @@ export default function ScanPage() {
   };
 
   // Toggle fullscreen mode
-  const router = useRouter();
-
-  const handleNavigateToFullscreen = () => {
-    router.push("/scan-fullscreen");
+  const toggleFullscreen = async () => {
+    router.push("/scan");
   };
+
+  // Listen for fullscreen changes (handles ESC key and F11)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!document.fullscreenElement;
+      setIsFullscreen(isCurrentlyFullscreen);
+
+      // If exiting fullscreen (not entering), navigate back to scan page
+      if (!isCurrentlyFullscreen && isFullscreen) {
+        router.push("/scan");
+      }
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, [isFullscreen, router]);
 
   console.log("ScanPage rendering, isInitialized:", isInitialized);
 
   return (
-    <div className="mx-auto max-w-6xl">
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Camera View */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Scanner {manualInputMode && "- Manual Input"}</CardTitle>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
-                  <span className="text-sm font-medium text-gray-600">
-                    Gate: <span className="text-gray-900">{gateName}</span>
-                  </span>
-                  <button onClick={handleNavigateToFullscreen} className="ml-2 p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors" title="Open Fullscreen View">
-                    <Maximize className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-gray-900">
-              <Scanner ref={scannerRef} onScan={handleScan} isActive={isScannerActive} useFrontCamera={useFrontCamera} manualInputMode={manualInputMode} onToggleMode={handleToggleMode} onCameraChange={(useFront) => setUseFrontCamera(useFront)} />
-            </div>
+    <div className="relative bg-black h-screen w-screen">
+      <button className="absolute top-4 right-40 z-20 p-2.5 rounded-lg bg-gray-600/70 text-white" onClick={toggleFullscreen}>
+        <Minimize className="h-4 w-4" />
+      </button>
+      {/* Camera View */}
+      <div className="bg-white w-full h-full flex flex-col">
+        <div className="flex-1 relative">
+          <div className="relative rounded-lg bg-gray-900 h-full w-full">
+            <Scanner ref={scannerRef} onScan={handleScan} isActive={isScannerActive} useFrontCamera={useFrontCamera} manualInputMode={manualInputMode} onToggleMode={handleToggleMode} onCameraChange={(useFront) => setUseFrontCamera(useFront)} />
 
             {/* Sync Status - Under Camera */}
-            <div className="mt-4 space-y-2">
+            <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
               <div className="rounded-lg bg-blue-50 p-3">
                 <p className="text-sm text-blue-800">
                   <strong>Offline Mode:</strong> All scans are saved locally and will sync when connected.
                 </p>
               </div>
 
-              <div className="rounded-lg border p-3">
+              <div className="rounded-lg border p-3 bg-white">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     {realtimeConnected ? <Wifi className="h-4 w-4 text-green-600" /> : isOnline ? <Wifi className="h-4 w-4 text-yellow-600" /> : <WifiOff className="h-4 w-4 text-gray-400" />}
@@ -694,148 +697,24 @@ export default function ScanPage() {
                 {!isOnline && <p className="text-xs text-gray-500 mt-2">Offline - scans saved locally</p>}
               </div>
             </div>
-
-            {scanStatus && (
-              <div className={`mt-4 rounded-lg p-4 animate-in fade-in slide-in-from-bottom-2 ${scanStatus === "success" ? "bg-green-50" : "bg-red-50"}`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    {scanStatus === "success" ? <CheckCircle className="h-5 w-5 text-green-600" /> : <AlertCircle className="h-5 w-5 text-red-600" />}
-                    <div>
-                      <p className={`text-sm font-medium ${scanStatus === "success" ? "text-green-800" : "text-red-800"}`}>{scanStatus === "success" ? "Successfully Scanned" : "Scan Error"}</p>
-                      <p className={`text-lg font-semibold ${scanStatus === "success" ? "text-green-900" : "text-red-900"}`}>{scanMessage}</p>
-                    </div>
-                  </div>
-                  <p className={`text-sm ${scanStatus === "success" ? "text-green-700" : "text-red-700"}`} suppressHydrationWarning>
-                    {scanTime}
-                  </p>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <div>
-          {/* Stats - Moved to top */}
-          <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-2">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Today's Total</p>
-                    <p className="text-3xl font-bold">{stats.todayTotal}</p>
-                  </div>
-                  <Users className="h-8 w-8 text-gray-400" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Check In/Out</p>
-                  <p className="text-2xl font-bold">
-                    <span className="text-green-600">{stats.checkIns}</span>
-                    <span className="text-gray-400 mx-1">/</span>
-                    <span className="text-red-600">{stats.checkOuts}</span>
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Last Scan</p>
-                    <p className="text-lg font-bold" suppressHydrationWarning>
-                      {stats.lastScanTime ? format(stats.lastScanTime, "h:mm:ss a") : "No scans"}
-                    </p>
-                  </div>
-                  <Clock className="h-8 w-8 text-gray-400" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-              <Link href="/checked-in" className="block">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">View Checked In</p>
-                      <p className="text-base font-semibold text-blue-600">See List →</p>
-                    </div>
-                    <UserCheck className="h-8 w-8 text-blue-600" />
-                  </div>
-                </CardContent>
-              </Link>
-            </Card>
           </div>
 
-          {/* Recent Scans */}
-          <Card>
-            <CardHeader>
+          {scanStatus && (
+            <div className={`absolute top-4 left-4 right-4 rounded-lg p-4 animate-in fade-in slide-in-from-bottom-2 ${scanStatus === "success" ? "bg-green-50" : "bg-red-50"}`}>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CardTitle>Recent Scans</CardTitle>
-                  {realtimeConnected && (
-                    <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                      <span className="h-1.5 w-1.5 rounded-full bg-green-600 animate-pulse"></span>
-                      Live
-                    </span>
-                  )}
-                </div>
-                <Link href="/synced-data" className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors">
-                  View All
-                  <ExternalLink className="h-3 w-3" />
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4 max-h-[410px] overflow-y-auto">
-                {recentScans.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <Clock className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                    <p>No scans recorded today</p>
+                <div className="flex items-center space-x-2">
+                  {scanStatus === "success" ? <CheckCircle className="h-5 w-5 text-green-600" /> : <AlertCircle className="h-5 w-5 text-red-600" />}
+                  <div>
+                    <p className={`text-sm font-medium ${scanStatus === "success" ? "text-green-800" : "text-red-800"}`}>{scanStatus === "success" ? "Successfully Scanned" : "Scan Error"}</p>
+                    <p className={`text-lg font-semibold ${scanStatus === "success" ? "text-green-900" : "text-red-900"}`}>{scanMessage}</p>
                   </div>
-                ) : (
-                  recentScans.map((scan, index) => (
-                    <div
-                      key={scan.id}
-                      className={`flex items-center justify-between rounded-lg border p-4 transition-all ${
-                        index === 0 && new Date(scan.timestamp).getTime() > Date.now() - 5000 ? "border-green-500 bg-green-50 animate-in fade-in slide-in-from-top-2" : "border-gray-200"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        {/* Profile Photo */}
-                        <div className="flex-shrink-0">
-                          <img
-                            src={scan.profilePhotoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(scan.personName)}&background=${scan.personType === "student" ? "3b82f6" : "10b981"}&color=ffffff&size=128&font-size=0.5&rounded=true`}
-                            alt={scan.personName}
-                            className="w-16 h-16 object-cover rounded-full"
-                          />
-                        </div>
-
-                        {/* Person Info */}
-                        <div>
-                          <p className="font-semibold">{scan.personName}</p>
-                          <p className="text-sm text-gray-600">
-                            {scan.personType === "student" ? "Student" : "Guardian"}
-                            {scan.location && <span className="ml-2">• {scan.location}</span>}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium" suppressHydrationWarning>
-                          {format(new Date(scan.timestamp), "MMM d, yyyy")}
-                        </p>
-                        <p className="text-sm text-gray-600" suppressHydrationWarning>
-                          {format(new Date(scan.timestamp), "h:mm:ss a")}
-                        </p>
-                        <p className={`text-sm font-semibold ${scan.action === "check_in" ? "text-green-600" : "text-red-600"}`}>{scan.action === "check_in" ? "Check In" : "Check Out"}</p>
-                      </div>
-                    </div>
-                  ))
-                )}
+                </div>
+                <p className={`text-sm ${scanStatus === "success" ? "text-green-700" : "text-red-700"}`} suppressHydrationWarning>
+                  {scanTime}
+                </p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          )}
         </div>
       </div>
 
