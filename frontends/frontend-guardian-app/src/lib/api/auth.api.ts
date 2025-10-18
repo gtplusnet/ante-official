@@ -77,8 +77,9 @@ class AuthApi {
           expiresIn: 900, // 15 minutes default
         },
         company: {
-          id: parseInt(process.env.NEXT_PUBLIC_COMPANY_ID || '1'),
-          name: 'School',
+          id: response.company.id,
+          name: response.company.name,
+          logoUrl: response.company.logoUrl,
         },
       };
 
@@ -132,8 +133,9 @@ class AuthApi {
           expiresIn: 900, // 15 minutes default
         },
         company: {
-          id: parseInt(process.env.NEXT_PUBLIC_COMPANY_ID || '1'),
-          name: 'School',
+          id: response.company.id,
+          name: response.company.name,
+          logoUrl: response.company.logoUrl,
         },
       };
 

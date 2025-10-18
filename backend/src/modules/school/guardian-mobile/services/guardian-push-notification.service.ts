@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '@common/prisma.service';
+import { GuardianNotificationsService } from '../notifications/guardian-notifications.service';
 import * as admin from 'firebase-admin';
 import { ServiceAccount } from 'firebase-admin';
 import { Message } from 'firebase-admin/messaging';
@@ -10,7 +11,10 @@ export class GuardianPushNotificationService implements OnModuleInit {
   private firebaseApp: admin.app.App;
   private initialized = false;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly guardianNotificationsService: GuardianNotificationsService,
+  ) { }
 
   async onModuleInit() {
     try {
@@ -145,25 +149,59 @@ export class GuardianPushNotificationService implements OnModuleInit {
     action: 'check_in' | 'check_out',
     time: Date,
   ): Promise<void> {
-    const actionText = action === 'check_in' ? 'checked in' : 'checked out';
+    // Helper function to capitalize first letter of each word (Title Case)
+    const toTitleCase = (str: string): string => {
+      return str
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    };
+
+    const formattedStudentName = toTitleCase(studentName);
     const timeStr = time.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
     });
 
-    const notification = {
-      title: 'Attendance Update',
-      body: `${studentName} has ${actionText} at ${timeStr}`,
-      data: {
-        type: 'attendance',
-        action,
-        studentName,
-        timestamp: time.toISOString(),
-      },
+    const actionText = action === 'check_in'
+      ? `arrived at ${timeStr}.`
+      : `left the campus at ${timeStr}.`;
+
+    const notificationData = {
+      type: 'attendance',
+      action,
+      studentName,
+      timestamp: time.toISOString(),
     };
 
+    const notification = {
+      title: 'Attendance Update',
+      body: `${formattedStudentName} ${actionText}`,
+      data: notificationData,
+    };
+
+    // Send push notification
     await this.sendToGuardians(guardianIds, notification);
+
+    // Create in-app notifications in database
+    try {
+      await this.guardianNotificationsService.createNotificationForGuardians(
+        guardianIds,
+        {
+          type: 'attendance',
+          title: 'Attendance Update',
+          message: `${formattedStudentName} ${actionText}`,
+          priority: 'normal',
+          data: notificationData,
+        },
+      );
+      this.logger.log(`Created in-app notifications for ${guardianIds.length} guardians`);
+    } catch (error) {
+      this.logger.error('Failed to create in-app notifications:', error);
+      // Don't throw - we don't want notification creation failures to break push notifications
+    }
   }
 
   /**
@@ -175,18 +213,36 @@ export class GuardianPushNotificationService implements OnModuleInit {
     amount: number,
     dueDate: Date,
   ): Promise<void> {
+    const notificationData = {
+      type: 'payment',
+      studentName,
+      amount: amount.toString(),
+      dueDate: dueDate.toISOString(),
+    };
+
     const notification = {
       title: 'Payment Reminder',
       body: `Tuition payment of ₱${amount.toLocaleString()} for ${studentName} is due on ${dueDate.toLocaleDateString()}`,
-      data: {
-        type: 'payment',
-        studentName,
-        amount: amount.toString(),
-        dueDate: dueDate.toISOString(),
-      },
+      data: notificationData,
     };
 
+    // Send push notification
     await this.sendToGuardian(guardianId, notification);
+
+    // Create in-app notification in database
+    try {
+      await this.guardianNotificationsService.createNotification(guardianId, {
+        type: 'payment_reminder',
+        title: 'Payment Reminder',
+        message: `Tuition payment of ₱${amount.toLocaleString()} for ${studentName} is due on ${dueDate.toLocaleDateString()}`,
+        priority: 'high',
+        data: notificationData,
+      });
+      this.logger.log(`Created in-app payment reminder notification for guardian ${guardianId}`);
+    } catch (error) {
+      this.logger.error('Failed to create in-app payment reminder notification:', error);
+      // Don't throw - we don't want notification creation failures to break push notifications
+    }
   }
 
   /**
@@ -197,16 +253,37 @@ export class GuardianPushNotificationService implements OnModuleInit {
     title: string,
     message: string,
   ): Promise<void> {
+    const notificationData = {
+      type: 'announcement',
+      timestamp: new Date().toISOString(),
+    };
+
     const notification = {
       title,
       body: message,
-      data: {
-        type: 'announcement',
-        timestamp: new Date().toISOString(),
-      },
+      data: notificationData,
     };
 
+    // Send push notification
     await this.sendToGuardians(guardianIds, notification);
+
+    // Create in-app notifications in database
+    try {
+      await this.guardianNotificationsService.createNotificationForGuardians(
+        guardianIds,
+        {
+          type: 'announcement',
+          title,
+          message,
+          priority: 'normal',
+          data: notificationData,
+        },
+      );
+      this.logger.log(`Created in-app announcement notifications for ${guardianIds.length} guardians`);
+    } catch (error) {
+      this.logger.error('Failed to create in-app announcement notifications:', error);
+      // Don't throw - we don't want notification creation failures to break push notifications
+    }
   }
 
   /**
@@ -239,6 +316,60 @@ export class GuardianPushNotificationService implements OnModuleInit {
         error,
       );
       return [];
+    }
+  }
+
+  /**
+   * Remove invalid FCM token from database
+   * This is called when Firebase reports a token as invalid
+   */
+  private async removeInvalidFCMToken(fcmToken: string): Promise<void> {
+    try {
+      // Find all guardian tokens with this FCM token
+      const guardianTokens = await this.prisma.guardianToken.findMany({
+        where: {
+          isRevoked: false,
+        },
+      });
+
+      let cleanedCount = 0;
+      const cleanedGuardians: string[] = [];
+
+      for (const guardianToken of guardianTokens) {
+        const deviceInfo = (guardianToken.deviceInfo as any) || {};
+
+        // Check if this token has the invalid FCM token
+        if (deviceInfo.fcmToken === fcmToken) {
+          // Remove FCM token but keep the auth token and other device info
+          delete deviceInfo.fcmToken;
+          delete deviceInfo.fcmTokenUpdatedAt;
+
+          await this.prisma.guardianToken.update({
+            where: { id: guardianToken.id },
+            data: { deviceInfo },
+          });
+
+          cleanedCount++;
+          cleanedGuardians.push(guardianToken.guardianId);
+
+          this.logger.log(
+            `Cleaned up invalid FCM token for guardian ${guardianToken.guardianId}`,
+          );
+        }
+      }
+
+      if (cleanedCount > 0) {
+        this.logger.warn(
+          `Removed invalid FCM token from ${cleanedCount} device(s). ` +
+          `Guardians affected: ${cleanedGuardians.join(', ')}. ` +
+          `Mobile app will need to refresh FCM token.`,
+        );
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to remove invalid FCM token ${fcmToken}:`,
+        error,
+      );
     }
   }
 
@@ -307,11 +438,17 @@ export class GuardianPushNotificationService implements OnModuleInit {
         error.code === 'messaging/invalid-registration-token' ||
         error.code === 'messaging/registration-token-not-registered'
       ) {
-        this.logger.debug(`Invalid FCM token: ${fcmToken}`);
-        // Could remove invalid token from database here
+        this.logger.warn(`Invalid FCM token detected: ${fcmToken.substring(0, 20)}...`);
+
+        // Automatically clean up the invalid token from database
+        await this.removeInvalidFCMToken(fcmToken);
+
+        this.logger.log(
+          `FCM token cleanup completed. Mobile app will need to refresh token for future notifications.`,
+        );
       } else {
         this.logger.error(
-          `Failed to send notification to token ${fcmToken}:`,
+          `Failed to send notification to token ${fcmToken.substring(0, 20)}...:`,
           error,
         );
       }

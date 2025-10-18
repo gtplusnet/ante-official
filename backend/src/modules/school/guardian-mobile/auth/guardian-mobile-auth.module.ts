@@ -8,6 +8,7 @@ import { GuardianAuthGuard } from './guardian-mobile-auth.guard';
 import { GuardianDeviceTokenController } from './device-token.controller';
 import { GuardianPushNotificationTestController } from './push-notification-test.controller';
 import { GuardianPushNotificationService } from '../services/guardian-push-notification.service';
+import { GuardianNotificationsModule } from '../notifications/guardian-notifications.module';
 import { PrismaService } from '@common/prisma.service';
 import { EncryptionService } from '@common/encryption.service';
 import { UtilityService } from '@common/utility.service';
@@ -17,6 +18,7 @@ import { winstonConfig } from '@common/logger';
 @Module({
   imports: [
     ConfigModule,
+    GuardianNotificationsModule,
     WinstonModule.forRoot({
       transports: winstonConfig.transports,
       format: winstonConfig.format,
@@ -55,4 +57,4 @@ import { winstonConfig } from '@common/logger';
     GuardianPushNotificationService,
   ],
 })
-export class GuardianMobileAuthModule {}
+export class GuardianMobileAuthModule { }

@@ -104,14 +104,14 @@ export default function AccountPage() {
           action: () => router.push('/account/change-password'),
           showArrow: true,
         },
-        {
-          id: 'sessions',
-          label: 'Active Sessions',
-          icon: FiSmartphone,
-          value: '2 devices',
-          action: () => router.push('/account/sessions'),
-          showArrow: true,
-        },
+        // {
+        //   id: 'sessions',
+        //   label: 'Active Sessions',
+        //   icon: FiSmartphone,
+        //   value: '2 devices',
+        //   action: () => router.push('/account/sessions'),
+        //   showArrow: true,
+        // },
       ],
     },
     {
@@ -125,13 +125,13 @@ export default function AccountPage() {
           action: () => router.push('/account/notifications'),
           showArrow: true,
         },
-        {
-          id: 'app-settings',
-          label: 'App Preferences',
-          icon: FiSettings,
-          action: () => router.push('/account/preferences'),
-          showArrow: true,
-        },
+        // {
+        //   id: 'app-settings',
+        //   label: 'App Preferences',
+        //   icon: FiSettings,
+        //   action: () => router.push('/account/preferences'),
+        //   showArrow: true,
+        // },
         {
           id: 'app-update',
           label: updateAvailable ? 'Update Available' : 'Check for Updates',
@@ -156,32 +156,32 @@ export default function AccountPage() {
         },
       ],
     },
-    {
-      id: 'privacy',
-      title: 'Privacy & Data',
-      items: [
-        {
-          id: 'privacy-settings',
-          label: 'Privacy Settings',
-          icon: FiShield,
-          action: () => router.push('/account/privacy'),
-          showArrow: true,
-        },
-      ],
-    },
-    {
-      id: 'support',
-      title: 'Help & Support',
-      items: [
-        {
-          id: 'help',
-          label: 'Help Center',
-          icon: FiHelpCircle,
-          action: () => router.push('/account/help'),
-          showArrow: true,
-        },
-      ],
-    },
+    // {
+    //   id: 'privacy',
+    //   title: 'Privacy & Data',
+    //   items: [
+    //     {
+    //       id: 'privacy-settings',
+    //       label: 'Privacy Settings',
+    //       icon: FiShield,
+    //       action: () => router.push('/account/privacy'),
+    //       showArrow: true,
+    //     },
+    //   ],
+    // },
+    // {
+    //   id: 'support',
+    //   title: 'Help & Support',
+    //   items: [
+    //     {
+    //       id: 'help',
+    //       label: 'Help Center',
+    //       icon: FiHelpCircle,
+    //       action: () => router.push('/account/help'),
+    //       showArrow: true,
+    //     },
+    //   ],
+    // },
     {
       id: 'logout',
       title: '',

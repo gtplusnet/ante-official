@@ -17,6 +17,7 @@ import { GuardianAuthGuard } from '../auth/guardian-mobile-auth.guard';
 import {
   GetNotificationsDto,
   CreateNotificationDto,
+  MarkNotificationsReadDto,
 } from './guardian-notifications.dto';
 
 @Controller('api/guardian/notifications')
@@ -24,7 +25,7 @@ import {
 export class GuardianNotificationsController {
   constructor(
     private readonly notificationsService: GuardianNotificationsService,
-  ) {}
+  ) { }
 
   @Get()
   async getNotifications(@Req() req: any, @Query() query: GetNotificationsDto) {
@@ -32,9 +33,12 @@ export class GuardianNotificationsController {
       req.user.id,
       query,
     );
+    // Frontend expects notifications array directly, not nested in data
     return {
       success: true,
-      data: result,
+      notifications: result.notifications,
+      total: result.total,
+      hasMore: result.hasMore,
     };
   }
 
@@ -130,6 +134,19 @@ export class GuardianNotificationsController {
       data: notification,
     };
   }
+
+  @Post('read')
+  @HttpCode(HttpStatus.OK)
+  async markMultipleAsRead(@Req() req: any, @Body() body: MarkNotificationsReadDto) {
+    const result = await this.notificationsService.markMultipleAsRead(
+      req.user.id,
+      body.notificationIds,
+    );
+    return {
+      success: true,
+      data: result,
+    };
+  }
 }
 
 // Also create alias controller for frontend compatibility
@@ -138,7 +155,7 @@ export class GuardianNotificationsController {
 export class GuardianNotificationsAliasController {
   constructor(
     private readonly notificationsService: GuardianNotificationsService,
-  ) {}
+  ) { }
 
   @Get()
   async getNotifications(@Req() req: any, @Query() query: GetNotificationsDto) {
@@ -146,9 +163,12 @@ export class GuardianNotificationsAliasController {
       req.user.id,
       query,
     );
+    // Frontend expects notifications array directly, not nested in data
     return {
       success: true,
-      data: result,
+      notifications: result.notifications,
+      total: result.total,
+      hasMore: result.hasMore,
     };
   }
 
@@ -245,6 +265,19 @@ export class GuardianNotificationsAliasController {
     return {
       success: true,
       data: notification,
+    };
+  }
+
+  @Post('read')
+  @HttpCode(HttpStatus.OK)
+  async markMultipleAsRead(@Req() req: any, @Body() body: MarkNotificationsReadDto) {
+    const result = await this.notificationsService.markMultipleAsRead(
+      req.user.id,
+      body.notificationIds,
+    );
+    return {
+      success: true,
+      data: result,
     };
   }
 }

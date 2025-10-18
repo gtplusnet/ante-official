@@ -55,7 +55,7 @@ import {
 export class SchoolGuardianPublicController {
   constructor(
     private readonly guardianService: SchoolGuardianPublicService,
-  ) {}
+  ) { }
 
   /**
    * API Documentation page
@@ -338,7 +338,11 @@ export class SchoolGuardianPublicController {
       );
       return {
         success: true,
-        data: notifications,
+        data: {
+          notifications: notifications.notifications,
+          total: notifications.total,
+          unreadCount: notifications.unreadCount,
+        },
         message: 'Notifications retrieved successfully',
         timestamp: new Date().toISOString(),
       };
@@ -441,7 +445,7 @@ export class SchoolGuardianPublicController {
         req.user.id,
         file,
       );
-      
+
       return {
         success: true,
         data: updatedProfile,

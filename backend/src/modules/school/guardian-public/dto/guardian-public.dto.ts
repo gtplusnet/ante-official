@@ -698,6 +698,11 @@ export class GuardianLoginResponseDto {
   students: StudentFullInfoDto[];
   permissions?: string[];
   expiresIn?: never; // Token doesn't expire
+  company: {
+    id: number;
+    name: string;
+    logoUrl?: string;
+  };
 }
 
 export enum AttendanceStatus {

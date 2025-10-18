@@ -10,6 +10,7 @@ import { Response } from 'express';
 import { UtilityService } from '@common/utility.service';
 import { PrismaService } from '@common/prisma.service';
 import { GuardianPushNotificationService } from '../guardian-mobile/services/guardian-push-notification.service';
+import { GuardianNotificationsService } from '../guardian-mobile/notifications/guardian-notifications.service';
 
 class SendNotificationDTO {
   title: string;
@@ -23,7 +24,8 @@ export class GuardianNotificationController {
     private readonly utilityService: UtilityService,
     private readonly prisma: PrismaService,
     private readonly pushNotificationService: GuardianPushNotificationService,
-  ) {}
+    private readonly guardianNotificationsService: GuardianNotificationsService,
+  ) { }
 
   /**
    * Get list of subscribed guardians with push notification tokens
@@ -77,9 +79,9 @@ export class GuardianNotificationController {
           // Determine device type
           let deviceType = 'Web';
           if (deviceInfo.platform) {
-            deviceType = deviceInfo.platform === 'ios' ? 'iOS' : 
-                        deviceInfo.platform === 'android' ? 'Android' : 
-                        'Web';
+            deviceType = deviceInfo.platform === 'ios' ? 'iOS' :
+              deviceInfo.platform === 'android' ? 'Android' :
+                'Web';
           } else if (deviceInfo.deviceType) {
             deviceType = deviceInfo.deviceType;
           }
@@ -182,6 +184,32 @@ export class GuardianNotificationController {
         targetGuardianIds,
         notification,
       );
+
+      // Create in-app notifications in database (so they appear in Guardian App)
+      try {
+        await this.guardianNotificationsService.createNotificationForGuardians(
+          targetGuardianIds,
+          {
+            type: 'admin', // Custom notification type from admin
+            title,
+            message: body,
+            priority: 'normal',
+            data: {
+              type: 'admin',
+              timestamp: new Date().toISOString(),
+            },
+          },
+        );
+        console.log(
+          `Created in-app notifications for ${targetGuardianIds.length} guardians`,
+        );
+      } catch (error) {
+        console.error(
+          'Failed to create in-app notifications:',
+          error,
+        );
+        // Don't throw - notification creation failure shouldn't break push notifications
+      }
 
       return res.status(HttpStatus.OK).json({
         success: true,
